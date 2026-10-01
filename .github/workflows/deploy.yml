@@ -14,6 +14,7 @@ jobs:
       - run: npm run build
         env:
           CI: false
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
       - uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr --delete
