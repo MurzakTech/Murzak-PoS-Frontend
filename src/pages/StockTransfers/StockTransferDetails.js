@@ -7,7 +7,7 @@ import {
   Container,
   Card,
   CardContent,
-  Grid,
+  GridLegacy as Grid,
   Divider,
   Chip,
   IconButton,

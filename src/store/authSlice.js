@@ -244,10 +244,13 @@ export const registerUser = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async ({ email, password }, { rejectWithValue, dispatch }) => {
+  async ({ email, phone, password }, { rejectWithValue, dispatch }) => {
     try {
+      // Send whichever identifier the person signed in with (email or phone).
+      // Previously only the email was forwarded, so phone sign-in sent no identifier at all.
       const response = await axiosInstance.post(ENDPOINTS.login, {
-        email,
+        ...(email ? { email } : {}),
+        ...(phone ? { phone } : {}),
         password,
       });
       const data = extractResponseData(response);
@@ -337,9 +340,6 @@ export const fetchCurrentUser = createAsyncThunk(
       const response = await axiosInstance.get(ENDPOINTS.me);
       const data = extractResponseData(response);
       
-      // Debug: Log the full response to see what we're getting
-      console.log('fetchCurrentUser - Full response data:', data);
-      
       // New response structure: { user: {...}, company: {...}, pos_profile: {...}, default_warehouse: "...", pos_industry: {...}, roles: [...], permissions: {...} }
       const userData = data.user || data;
       const companyData = data.company || null;
@@ -379,10 +379,6 @@ export const fetchCurrentUser = createAsyncThunk(
         pos_industry_code: posIndustryData?.name || posIndustryData?.industry_code || null,
         pos_industry_name: posIndustryData?.industry_name || null,
       };
-      
-      // Debug: Log the constructed userProfile
-      console.log('fetchCurrentUser - Constructed userProfile:', userProfile);
-      console.log('fetchCurrentUser - User profile keys:', Object.keys(userProfile));
       
       // Store complete user profile in localStorage
       localStorage.setItem('user', JSON.stringify(userProfile));

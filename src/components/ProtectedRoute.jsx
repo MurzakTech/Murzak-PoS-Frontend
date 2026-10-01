@@ -1,24 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
-import { Box, CircularProgress, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
+import { PageSkeleton, FullPageLoader } from './Common/LoadingState';
 import Layout from './Layout/Layout';
 import useRoleAccess from '../hooks/useRoleAccess';
 
-// Content loader component for use within Layout
-const ContentLoader = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: 'calc(100vh - 200px)',
-      width: '100%',
-    }}
-  >
-    <CircularProgress />
-  </Box>
-);
+const ContentLoader = PageSkeleton;
 
 const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = null }) => {
   const location = useLocation();
@@ -78,18 +66,7 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
       );
     }
     // Otherwise show full-screen loader (for routes without Layout)
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
+    return <FullPageLoader />;
   }
 
   // If not authenticated → redirect to login (preserving intended destination)

@@ -14,7 +14,7 @@ import {
   MenuItem,
   Divider,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
 } from '@mui/material';
 import {
   Add,

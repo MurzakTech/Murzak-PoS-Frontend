@@ -10,7 +10,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
   Alert,
   Autocomplete,
   Chip,

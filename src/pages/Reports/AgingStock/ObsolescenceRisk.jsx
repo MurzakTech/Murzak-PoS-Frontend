@@ -12,7 +12,7 @@ import {
   MenuItem,
   Paper,
   Chip,
-  Grid,
+  GridLegacy as Grid,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { useAppSelector } from '../../../store/hooks';

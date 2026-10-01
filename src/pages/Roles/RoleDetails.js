@@ -4,7 +4,7 @@ import {
   Box,
   Typography,
   Button,
-  Grid,
+  GridLegacy as Grid,
   Chip,
   IconButton,
   Container,

@@ -10,7 +10,7 @@ import {
   Chip,
   CircularProgress,
   Typography,
-  Grid,
+  GridLegacy as Grid,
   InputAdornment,
   Button,
   Paper,

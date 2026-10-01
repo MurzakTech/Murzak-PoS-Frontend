@@ -10,7 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid,
+  GridLegacy as Grid,
   Paper,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';

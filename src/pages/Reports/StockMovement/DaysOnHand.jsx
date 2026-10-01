@@ -7,7 +7,7 @@ import {
   Alert,
   Button,
   Chip,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   TextField,
 } from '@mui/material';

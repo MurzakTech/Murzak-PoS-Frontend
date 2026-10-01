@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Button, useTheme, Divider } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import logoMain from '../assets/logo_main.png';
+import logoMain from '../assets/logo_mark.png';
 
 const TermsOfService = () => {
   const navigate = useNavigate();

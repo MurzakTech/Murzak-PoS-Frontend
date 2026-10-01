@@ -16,7 +16,7 @@ import {
   CircularProgress,
   FormControlLabel,
   Checkbox,
-  Grid,
+  GridLegacy as Grid,
   Divider,
   useTheme,
   Paper,
@@ -45,7 +45,7 @@ import {
   clearAbbreviationCheck,
 } from '../store/onboardingSlice';
 import { showNotification } from '../store/notificationSlice';
-import logoMain from '../assets/logo_main.png';
+import logoMain from '../assets/logo_mark.png';
 
 const MotionCard = motion(Card);
 const MotionButton = motion(Button);

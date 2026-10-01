@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Card, CardContent, Typography, Box } from '@mui/material';
+import { GridLegacy as Grid, Card, CardContent, Typography, Box } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 
 /**

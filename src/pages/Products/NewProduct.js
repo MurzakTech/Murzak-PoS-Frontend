@@ -13,7 +13,7 @@ import {
   CircularProgress,
   Switch,
   FormControlLabel,
-  Grid,
+  GridLegacy as Grid,
   Container,
   Alert,
   InputAdornment,

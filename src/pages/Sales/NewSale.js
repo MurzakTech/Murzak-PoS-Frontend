@@ -4,7 +4,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useDebounce } from '../../hooks/useDebounce';
 import {
   Box,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Typography,
   TextField,

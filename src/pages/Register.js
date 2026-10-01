@@ -18,7 +18,7 @@ import {
   CircularProgress,
   FormControlLabel,
   Checkbox,
-  Grid,
+  GridLegacy as Grid,
   Divider,
   LinearProgress,
   InputAdornment,
@@ -64,8 +64,9 @@ import {
   clearAbbreviationCheck,
 } from '../store/onboardingSlice';
 import { showNotification } from '../store/notificationSlice';
-import logoMain from '../assets/logo_main.png';
-import logoIcon from '../assets/logo_icon.png';
+import logoMain from '../assets/logo_mark.png';
+import { normalizeKenyanPhone, isValidKenyanMobile, PHONE_ERROR } from '../utils/phone';
+import logoIcon from '../assets/logo_mark.png';
 import posIcon from '../assets/pos-icon.png';
 
 const MotionCard = motion(Card);
@@ -99,6 +100,8 @@ const Register = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [enableETIMS, setEnableETIMS] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // The POS profile step runs by itself with recommended settings; the manual form only appears if that fails
+  const [posAutoAttempted, setPosAutoAttempted] = useState(false);
   const [stepCompleted, setStepCompleted] = useState({
     step0: false,
     step1: false,
@@ -306,7 +309,7 @@ const Register = () => {
       first_name: data.firstName,
       last_name: data.lastName,
       password: data.password,
-      phone: data.phone || undefined,
+      phone: data.phone ? normalizeKenyanPhone(data.phone) : undefined,
       send_welcome_email: false,
       pos_industry: data.pos_industry || undefined,
     };
@@ -367,9 +370,7 @@ const Register = () => {
         severity: 'success',
         title: 'Company Created',
       }));
-      setTimeout(() => {
-        setActiveStep(2);
-      }, 1000);
+      setActiveStep(2);
     } else {
       dispatch(showNotification({
         message: 'Failed to create company. Please try again.',
@@ -492,6 +493,16 @@ const Register = () => {
     }
   };
 
+  // Skip a step that has nothing to decide: create the POS profile with the recommended
+  // defaults as soon as the company exists. People can change these in Settings later.
+  useEffect(() => {
+    if (activeStep === 2 && company && !posProfile && !isLoading && !posAutoAttempted) {
+      setPosAutoAttempted(true);
+      handleSubmitPOSProfile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep, company, posProfile, isLoading, posAutoAttempted]);
+
   const renderStepContent = (step) => {
     switch (step) {
       case 0: // Account Information
@@ -601,10 +612,8 @@ const Register = () => {
                 name="phone"
                 control={control}
                 rules={{
-                  pattern: {
-                    value: /^254[17]\d{8}$|^2547\d{8}$/,
-                    message: 'Format: 254XXXXXXXXX',
-                  },
+                  // Optional; when given, accept the usual ways of writing a Kenyan number
+                  validate: (v) => !v || isValidKenyanMobile(v) || PHONE_ERROR,
                 }}
                 render={({ field }) => (
                   <TextField
@@ -614,7 +623,7 @@ const Register = () => {
                     type="tel"
                     size="small"
                     error={!!errors.phone}
-                    helperText={errors.phone?.message || 'Format: 254XXXXXXXXX'}
+                    helperText={errors.phone?.message || 'For example 0712 345 678'}
                     disabled={authLoading || isAuthenticated}
                     InputProps={{
                       startAdornment: (
@@ -1006,10 +1015,10 @@ const Register = () => {
           >
             <Box sx={{ mb: 4 }}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
-                POS Configuration
+                Setting up your till
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                Customize your Point of Sale settings
+                We are applying recommended settings: stock updates automatically, and discounts and price changes are allowed at the till. You can change any of this later in Settings.
               </Typography>
             </Box>
 
@@ -1043,6 +1052,13 @@ const Register = () => {
               </Alert>
             )}
 
+            {posAutoAttempted && !isLoading && !posProfile && (
+              <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+                We could not set this up automatically. Check the options below and press Next to try again.
+              </Alert>
+            )}
+
+            {posAutoAttempted && !isLoading && !posProfile && (
             <Stack spacing={1.5}>
               <Controller
                 name="profile_name"
@@ -1123,6 +1139,7 @@ const Register = () => {
                 </Grid>
               </Box>
             </Stack>
+            )}
           </MotionBox>
         );
 

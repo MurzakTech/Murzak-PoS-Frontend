@@ -15,7 +15,7 @@ import {
   CircularProgress,
   Checkbox,
   TextField,
-  Grid,
+  GridLegacy as Grid,
   FormControlLabel,
   Chip,
   Tooltip,
