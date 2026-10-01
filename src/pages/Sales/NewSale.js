@@ -1,94 +1,18 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { useDebounce } from '../../hooks/useDebounce';
-import {
-  Box,
-  GridLegacy as Grid,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Card,
-  CardContent,
-  IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
-  InputAdornment,
-  AppBar,
-  Toolbar,
-  Checkbox,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  useTheme,
-  useMediaQuery,
-  Tooltip,
-  Fade,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Autocomplete,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Backdrop,
-  Chip,
-  LinearProgress,
-  FormControlLabel,
-  Pagination,
-  TablePagination,
-  Stack,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Remove as RemoveIcon,
-  Delete as DeleteIcon,
-  Receipt as ReceiptIcon,
-  Person as PersonIcon,
-  LocalOffer as LocalOfferIcon,
-  QrCodeScanner as QrCodeScannerIcon,
-  Percent as PercentIcon,
-  CurrencyExchange as CurrencyExchangeIcon,
-  AttachMoney as AttachMoneyIcon,
-  CheckBox as CheckBoxIcon,
-  CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Print as PrintIcon,
-  Save as SaveIcon,
-  Dashboard as DashboardIcon,
-  Close as CloseIcon,
-  PersonAdd as PersonAddIcon,
-  ArrowBack as ArrowBackIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  AccountBalance as TaxIcon,
-} from '@mui/icons-material';
+import { Alert, Backdrop, Box, CircularProgress, Snackbar, Typography } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { useThemeMode } from '../../theme/ThemeProvider';
 import {
   getProducts,
-  getStockQuantity,
   getItemGroups,
   getProductPrice,
 } from '../../store/productSlice';
 import { earnLoyaltyPoints } from '../../store/loyaltySlice';
 import { useInventoryDiscounts } from '../../hooks/useInventoryDiscounts';
-import DiscountBadge from '../../components/Inventory/DiscountBadge';
-import { calculateDiscountAmount, calculateDiscountedPrice } from '../../utils/discountCalculator';
+import { calculateDiscountAmount, calculateDiscountedPrice, formatDiscountDisplay } from '../../utils/discountCalculator';
 import {
   createPOSInvoice,
   createSalesInvoice,
@@ -96,33 +20,93 @@ import {
   createPOSOpeningEntry,
   getPOSOpeningEntry,
   closePOSOpeningEntry,
+  listPOSOpeningEntries,
+  resumePOSSession,
   listPaymentMethods,
   getReceivableAccount,
 } from '../../store/salesSlice';
-import { listWarehouses } from '../../store/warehouseSlice';
+import { listWarehouses, setActiveWarehouse } from '../../store/warehouseSlice';
 import { getStockBalanceMultiple } from '../../store/inventorySlice';
 import { showNotification } from '../../store/notificationSlice';
 import { listCustomers, createCustomer } from '../../store/customerSlice';
 import LoyaltyRedemption from '../../components/Sales/LoyaltyRedemption';
+import PosHeader from './pos/PosHeader';
+import ProductPanel from './pos/ProductPanel';
+import OrderPanel from './pos/OrderPanel';
+import PaymentPanel from './pos/PaymentPanel';
+import OpenTill from './pos/OpenTill';
+import CustomerDialog from './pos/CustomerDialog';
+import ReceiptDialog from './pos/ReceiptDialog';
+import CloseTillDialog from './pos/CloseTillDialog';
+import HeldSalesDialog from './pos/HeldSalesDialog';
+import PosConfirm from './pos/PosConfirm';
+import { round2 } from './pos/money';
 
-// Motion components for animations (matching onboarding design)
-const MotionButton = motion(Button);
+/**
+ * Point of sale (till).
+ *
+ * Full-screen selling screen for a POS machine: products on the left, the current
+ * sale on the right, and a dedicated payment step. All selling rules (stock,
+ * discounts, credit limits, loyalty, invoice creation) live in this file; the
+ * screens themselves are in ./pos.
+ */
+
+const TILE_PAGE = 60;
+const HELD_KEY = 'pos_held_sales_v1';
+const AUTOPRINT_KEY = 'pos_auto_print';
+
+const readHeldSales = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HELD_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+const readAutoPrint = () => {
+  try {
+    return localStorage.getItem(AUTOPRINT_KEY) !== 'false';
+  } catch (e) {
+    return true;
+  }
+};
+
+// Barcodes may arrive as a single field or a list, as strings or { barcode } rows
+const barcodesOf = (p) => {
+  const out = [];
+  if (p.barcode) out.push(String(p.barcode).toLowerCase());
+  if (Array.isArray(p.barcodes)) {
+    p.barcodes.forEach((b) => {
+      const v = typeof b === 'string' ? b : b?.barcode;
+      if (v) out.push(String(v).toLowerCase());
+    });
+  }
+  return out;
+};
+const productMatches = (p, term) => {
+  const t = (term || '').trim().toLowerCase();
+  if (!t) return true;
+  return (
+    (p.item_name || '').toLowerCase().includes(t) ||
+    (p.item_code || '').toLowerCase().includes(t) ||
+    (p.description || '').toLowerCase().includes(t) ||
+    barcodesOf(p).some((b) => b.includes(t))
+  );
+};
+const exactCodeMatch = (p, t) => (p.item_code || '').toLowerCase() === t || barcodesOf(p).includes(t);
 
 const NewSale = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { mode: themeMode, toggleColorMode } = useThemeMode();
 
   // Redux selectors
-  const { products, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups, itemGroups } = useAppSelector((state) => state.product);
+  const { products, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
   const { 
     isLoading: isCreatingInvoice, 
-    selectedPOSInvoice,
     paymentMethods,
     isLoadingPaymentMethods,
     receivableAccount,
-    isLoadingReceivableAccount,
   } = useAppSelector((state) => state.sales);
   const { warehouses, isLoading: isLoadingWarehouses, activeWarehouse } = useAppSelector((state) => state.warehouse);
   const { user } = useAppSelector((state) => state.auth);
@@ -158,15 +142,12 @@ const NewSale = () => {
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [completedInvoice, setCompletedInvoice] = useState(null);
   const [completedSaleData, setCompletedSaleData] = useState(null); // Store cart and payment data for receipt
-  const [stockChecking, setStockChecking] = useState({});
   const [posProfile, setPosProfile] = useState('');
-  const [posProfileDialogOpen, setPosProfileDialogOpen] = useState(false);
-  const [updateStock, setUpdateStock] = useState(true);
+  const [updateStock] = useState(true); // always update stock for POS sales
   
   // Use activeWarehouse from global selection
   const defaultWarehouse = activeWarehouse?.name || activeWarehouse?.warehouse_name || '';
   const [productStocks, setProductStocks] = useState({}); // { item_code: { warehouse: qty } }
-  const [sessionDialogOpen, setSessionDialogOpen] = useState(false);
   const [closeSessionDialogOpen, setCloseSessionDialogOpen] = useState(false);
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [customerSearchTerm, setCustomerSearchTerm] = useState('');
@@ -174,9 +155,13 @@ const NewSale = () => {
   const [creditAmount, setCreditAmount] = useState(0);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [amountGiven, setAmountGiven] = useState(0);
-  const [saleType, setSaleType] = useState('Retail');
-  const [productsPage, setProductsPage] = useState(0);
-  const [productsRowsPerPage, setProductsRowsPerPage] = useState(25);
+  const [tileLimit, setTileLimit] = useState(TILE_PAGE); // how many product tiles are drawn
+  const [shiftChecked, setShiftChecked] = useState(false); // have we looked for an already-open shift?
+  const [heldSales, setHeldSales] = useState(readHeldSales);
+  const [heldDialogOpen, setHeldDialogOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [autoPrint, setAutoPrint] = useState(readAutoPrint);
   
   // Loyalty redemption state
   const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState(0);
@@ -193,7 +178,6 @@ const NewSale = () => {
     handleSubmit: handlePosOpeningSubmit,
     reset: resetPosOpeningForm,
     formState: { errors: posOpeningErrors },
-    watch: watchPosOpening,
   } = useForm({
     defaultValues: {
       pos_profile: userPosProfile || '',
@@ -223,10 +207,6 @@ const NewSale = () => {
       tax_id: '',
     },
   });
-
-  // Get default warehouse from user profile or POS profile
-  const userDefaultWarehouse = user?.default_warehouse || '';
-  const posProfileWarehouse = user?.pos_profile_data?.warehouse || '';
 
   // Fetch products, item groups, and warehouses on mount
   useEffect(() => {
@@ -434,11 +414,46 @@ const NewSale = () => {
     }
   }, [cartDiscountsMap, isLoadingCartDiscounts, cart.length]);
 
-  // Show POS opening dialog when no session is open
+  // If this cashier already has a shift open on the server (page refreshed, till restarted),
+  // pick it back up instead of asking them to open a second one.
+  useEffect(() => {
+    if (isPOSSessionOpen) {
+      setShiftChecked(true);
+      return undefined;
+    }
+    if (shiftChecked || !userCompany) return undefined;
+    let cancelled = false;
+    const me = user?.email || user?.name || user?.user;
+    dispatch(listPOSOpeningEntries({
+      company: userCompany,
+      status: 'Open',
+      ...(me ? { user: me } : {}),
+      limit_start: 0,
+      limit_page_length: 20,
+    }))
+      .then((result) => {
+        if (cancelled) return;
+        if (listPOSOpeningEntries.fulfilled.match(result)) {
+          // Only ever adopt a shift that clearly belongs to the signed-in person
+          const mine = (result.payload.posOpeningEntries || []).find((e) => e.status === 'Open' && e.user && me && e.user === me);
+          if (mine) dispatch(resumePOSSession(mine));
+        }
+        setShiftChecked(true);
+      })
+      .catch(() => !cancelled && setShiftChecked(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, isPOSSessionOpen, shiftChecked, userCompany, user]);
+
+  // Use the shift's own POS profile when we picked one up
+  useEffect(() => {
+    if (posOpeningEntry?.pos_profile && !posProfile) setPosProfile(posOpeningEntry.pos_profile);
+  }, [posOpeningEntry?.pos_profile, posProfile]);
+
+  // Prepare the opening-balance form whenever no shift is open
   useEffect(() => {
     if (userCompany && !isPOSSessionOpen) {
-      // Always show dialog to enter POS opening details
-      setPosProfileDialogOpen(true);
       // Reset form with default values - include one default payment method row
       resetPosOpeningForm({
         pos_profile: userPosProfile || '',
@@ -475,7 +490,6 @@ const NewSale = () => {
 
     if (createPOSOpeningEntry.fulfilled.match(result)) {
       setPosProfile(formData.pos_profile.trim());
-      setPosProfileDialogOpen(false);
       resetPosOpeningForm();
     } else if (createPOSOpeningEntry.rejected.match(result)) {
       // Navigate to dashboard on error
@@ -494,8 +508,6 @@ const NewSale = () => {
   const handleViewSessionDetails = () => {
     if (posOpeningEntry?.name) {
       navigate(`/sales/pos-opening-entries/${posOpeningEntry.name}`);
-    } else {
-      setSessionDialogOpen(true);
     }
   };
 
@@ -532,10 +544,7 @@ const NewSale = () => {
   // Filter products with memoization
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesSearch = 
-        (product.item_name || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        (product.item_code || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        (product.description || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+      const matchesSearch = productMatches(product, debouncedSearchTerm);
       const matchesCategory = selectedCategory === 'all' || 
                              (product.item_group || '').toLowerCase() === selectedCategory.toLowerCase();
       return matchesSearch && matchesCategory;
@@ -545,12 +554,12 @@ const NewSale = () => {
   // Fetch discounts for paginated products (for product table display)
   const productDiscountItems = useMemo(() => 
     filteredProducts
-      .slice(productsPage * productsRowsPerPage, productsPage * productsRowsPerPage + productsRowsPerPage)
+      .slice(0, tileLimit)
       .map(product => ({
         item_code: product.item_code,
         item_group: product.item_group,
       })),
-    [filteredProducts, productsPage, productsRowsPerPage]
+    [filteredProducts, tileLimit]
   );
   
   // Fetch discounts for products in grid
@@ -568,25 +577,6 @@ const NewSale = () => {
   }), [productDiscountsMap, cartDiscountsMap]);
   
   const isLoadingDiscounts = isLoadingCartDiscounts || isLoadingProductDiscounts;
-
-  // Check stock availability
-  const checkStock = useCallback(async (itemCode, warehouse) => {
-    if (!itemCode || !warehouse || !userCompany) return null;
-    
-    setStockChecking(prev => ({ ...prev, [itemCode]: true }));
-    try {
-      const result = await dispatch(getStockQuantity({ 
-        item_code: itemCode, 
-        company: userCompany,
-        warehouse,
-      }));
-      setStockChecking(prev => ({ ...prev, [itemCode]: false }));
-      return result.payload?.qty || 0;
-    } catch (error) {
-      setStockChecking(prev => ({ ...prev, [itemCode]: false }));
-      return null;
-    }
-  }, [dispatch, userCompany]);
 
   // Add to cart with stock validation
   const addToCart = async (product) => {
@@ -643,8 +633,31 @@ const NewSale = () => {
         }
         return newCart;
       });
-      setSnackbarMessage(`${product.item_name || product.name} added to cart`);
-      setSnackbarSeverity('success');
+    }
+    // Keep the scanner/search field ready for the next item
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  // Set an exact quantity (typed in the cart)
+  const setQuantity = (itemCode, raw) => {
+    const value = parseFloat(raw);
+    const line = cart.find((i) => i.item_code === itemCode);
+    if (!line || !Number.isFinite(value) || value <= 0) return;
+    updateQuantity(itemCode, value - line.qty);
+  };
+
+  // Enter in the search box: a scanned barcode adds that product straight away
+  const handleSearchEnter = () => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return;
+    const exact = products.find((p) => exactCodeMatch(p, term));
+    const matches = exact ? [exact] : products.filter((p) => productMatches(p, term));
+    if (matches.length === 1) {
+      addToCart(matches[0]);
+      setSearchTerm('');
+    } else if (matches.length === 0) {
+      setSnackbarMessage(`No product found for "${searchTerm.trim()}"`);
+      setSnackbarSeverity('warning');
       setSnackbarOpen(true);
     }
   };
@@ -682,48 +695,23 @@ const NewSale = () => {
       }
       return newCart;
     });
-    setSnackbarMessage('Item removed from cart');
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
   };
 
-  // Calculate totals
-  const calculateItemsTotal = () => {
-    return cart.reduce((sum, item) => sum + (item.rate * item.qty), 0);
-  };
-
-  const calculateDiscount = () => {
-    return cart.reduce((sum, item) => sum + (item.discount_amount || 0), 0);
-  };
-
-  const calculateManualDiscountAmount = () => {
+  // Totals are computed once whenever the cart or discounts change
+  const itemsTotal = useMemo(() => round2(cart.reduce((sum, item) => sum + item.rate * item.qty, 0)), [cart]);
+  const itemDiscountTotal = useMemo(() => round2(cart.reduce((sum, item) => sum + (item.discount_amount || 0), 0)), [cart]);
+  const manualDiscountAmount = useMemo(() => {
     const base = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    if (manualDiscountType === 'percentage') {
-      return (base * (manualDiscountValue || 0)) / 100;
-    }
-    return Math.min(manualDiscountValue || 0, base);
-  };
-
-  const calculateSubtotal = () => {
-    // Use discounted subtotals from cart items
+    if (manualDiscountType === 'percentage') return round2((base * (manualDiscountValue || 0)) / 100);
+    return round2(Math.min(manualDiscountValue || 0, base));
+  }, [cart, manualDiscountType, manualDiscountValue]);
+  const grandTotal = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    // Subtract loyalty discount and any manually-applied whole-sale discount
-    return Math.max(0, subtotal - loyaltyDiscountAmount - calculateManualDiscountAmount());
-  };
+    return round2(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount));
+  }, [cart, loyaltyDiscountAmount, manualDiscountAmount]);
 
-  // Calculate change/balance
-  const calculateChange = () => {
-    if (!amountGiven || amountGiven <= 0) return 0;
-    const total = calculateSubtotal();
-    return Math.max(0, amountGiven - total);
-  };
-
-  // Calculate balance (amount still owed)
-  const calculateBalance = () => {
-    if (!amountGiven || amountGiven <= 0) return calculateSubtotal();
-    const total = calculateSubtotal();
-    return Math.max(0, total - amountGiven);
-  };
+  const calculateManualDiscountAmount = () => manualDiscountAmount;
+  const calculateSubtotal = () => grandTotal;
 
   // Handle checkout button click - Enter checkout mode
   const handleCheckoutClick = () => {
@@ -766,8 +754,6 @@ const NewSale = () => {
       return;
     }
 
-    const itemsTotal = calculateItemsTotal();
-    const discountAmount = 0;
     const grandTotal = calculateSubtotal(); // Already includes loyalty discount
 
     // Helper function to earn loyalty points after successful sale
@@ -976,10 +962,6 @@ const NewSale = () => {
             setManualDiscountType('percentage');
             setManualDiscountValue(0);
             setSearchTerm('');
-            
-            setSnackbarMessage('Sales Invoice (POS) created successfully!');
-            setSnackbarSeverity('success');
-            setSnackbarOpen(true);
             return;
           }
         } else {
@@ -1020,10 +1002,6 @@ const NewSale = () => {
         setManualDiscountType('percentage');
         setManualDiscountValue(0);
         setSearchTerm('');
-        
-        setSnackbarMessage('POS Invoice created successfully!');
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
@@ -1031,14 +1009,6 @@ const NewSale = () => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  };
-
-  // Handle barcode scanning
-  const handleScanBarcode = () => {
-    // This would integrate with actual barcode scanner
-    setSnackbarMessage('Barcode scanner integration needed');
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
   };
 
   // Handle snackbar close
@@ -1055,6 +1025,11 @@ const NewSale = () => {
     setCompletedInvoice(null);
     setCompletedSaleData(null);
     dispatch(clearSelectedPOSInvoice());
+    // Each new sale starts as a walk-in, so it can never be billed to the previous customer
+    handleSelectCustomer(null);
+    setPaymentMode('Cash');
+    setCreditAmount(0);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
   // Print receipt
@@ -1064,14 +1039,14 @@ const NewSale = () => {
 
   // Auto-print receipt when dialog opens
   useEffect(() => {
-    if (receiptDialogOpen && completedInvoice) {
+    if (autoPrint && receiptDialogOpen && completedInvoice) {
       // Small delay to ensure dialog is fully rendered
       const timer = setTimeout(() => {
         window.print();
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [receiptDialogOpen, completedInvoice]);
+  }, [autoPrint, receiptDialogOpen, completedInvoice]);
 
   // Navigate to invoice details
   const handleViewInvoice = () => {
@@ -1145,9 +1120,8 @@ const NewSale = () => {
   // Check if split payments are valid (sum equals grand total)
   const isSplitPaymentsValid = useMemo(() => {
     if (!splitPayments) return true;
-    const grandTotal = calculateSubtotal();
     return Math.abs(splitPaymentsTotal - grandTotal) < 0.01;
-  }, [splitPayments, splitPaymentsTotal, cart]); // cart is used by calculateSubtotal
+  }, [splitPayments, splitPaymentsTotal, grandTotal]);
 
   // Check if credit limit is valid for split payments
   const isSplitPaymentsCreditValid = useMemo(() => {
@@ -1192,9 +1166,9 @@ const NewSale = () => {
   // Keep single-payment amount in sync with total when split is disabled
   useEffect(() => {
     if (!splitPayments) {
-      setPayments([{ mode: paymentMode, amount: calculateSubtotal() }]);
+      setPayments([{ mode: paymentMode, amount: grandTotal }]);
     }
-  }, [splitPayments, paymentMode, cart, calculateSubtotal]);
+  }, [splitPayments, paymentMode, grandTotal]);
 
   // Filter customers based on search term
   const filteredCustomers = useMemo(() => {
@@ -1293,2444 +1267,466 @@ const NewSale = () => {
   // Check if any required APIs are still loading
   const isAnyAPILoading = isLoadingProducts || isLoadingItemGroups || isLoadingWarehouses || isLoadingPaymentMethods;
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      // Don't trigger if typing in input or textarea
-      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-        // Allow Ctrl/Cmd shortcuts even in inputs
-        if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-          event.preventDefault();
-          searchInputRef.current?.focus();
-        }
-        return;
-      }
 
-      // ESC to navigate to dashboard
-      if (event.key === 'Escape') {
-        navigate('/dashboard');
+  // ---------------------------------------------------------------- hold, recall, clear
+  const persistHeld = (next) => {
+    setHeldSales(next);
+    try {
+      localStorage.setItem(HELD_KEY, JSON.stringify(next));
+    } catch (e) {
+      // not critical
+    }
+  };
+
+  const resetSale = () => {
+    setCart([]);
+    setIsCheckoutMode(false);
+    setAmountGiven(0);
+    setManualDiscountType('percentage');
+    setManualDiscountValue(0);
+    setLoyaltyPointsToRedeem(0);
+    setLoyaltyDiscountAmount(0);
+    setSearchTerm('');
+    handleSelectCustomer(null);
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const holdCurrentSale = () => {
+    if (cart.length === 0) return;
+    persistHeld([
+      ...heldSales,
+      {
+        id: Date.now(),
+        heldAt: new Date().toISOString(),
+        cart,
+        customer,
+        customerId,
+        selectedCustomerObj,
+        customerPriceList,
+        manualDiscountType,
+        manualDiscountValue,
+      },
+    ]);
+    resetSale();
+    setSnackbarMessage('Sale put on hold. Find it under Held sales at the top.');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
+  };
+
+  const recallHeldSale = (id) => {
+    const held = heldSales.find((h) => h.id === id);
+    if (!held || cart.length > 0) return;
+    setCart(held.cart);
+    setCustomer(held.customer || 'Walk-in Customer');
+    setCustomerId(held.customerId || null);
+    setSelectedCustomerObj(held.selectedCustomerObj || null);
+    setCustomerPriceList(held.customerPriceList || 'Standard Selling');
+    setManualDiscountType(held.manualDiscountType || 'percentage');
+    setManualDiscountValue(held.manualDiscountValue || 0);
+    persistHeld(heldSales.filter((h) => h.id !== id));
+    setHeldDialogOpen(false);
+  };
+
+  const requestExit = () => {
+    if (cart.length > 0) setLeaveDialogOpen(true);
+    else navigate('/dashboard');
+  };
+
+  const handlePaymentModeChange = (mode) => {
+    setPaymentMode(mode);
+    // Credit starts at the full total; other methods have no credit part
+    setCreditAmount(mode === 'Credit' ? grandTotal : 0);
+  };
+
+  const toggleAutoPrint = () => {
+    setAutoPrint((prev) => {
+      try {
+        localStorage.setItem(AUTOPRINT_KEY, String(!prev));
+      } catch (e) {
+        // not critical
       }
-      
-      // Ctrl/Cmd + K to focus search
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+      return !prev;
+    });
+  };
+
+  const handleChangeLineWarehouse = (itemCode, newWarehouse) => {
+    setCart((prevCart) =>
+      prevCart.map((cartItem) =>
+        cartItem.item_code === itemCode
+          ? {
+              ...cartItem,
+              warehouse: newWarehouse,
+              // Clear the offer: it is looked up again for the new store
+              discount_rule: undefined,
+              discount_amount: 0,
+              subtotal: cartItem.rate * cartItem.qty,
+            }
+          : cartItem
+      )
+    );
+  };
+
+  // ---------------------------------------------------------------- derived values for the screen
+  const cartQtyMap = useMemo(() => {
+    const map = {};
+    cart.forEach((i) => {
+      map[i.item_code] = i.qty;
+    });
+    return map;
+  }, [cart]);
+
+  const getTileData = (product) => {
+    const itemCode = product.item_code;
+    let base = product.standard_rate || product.price || 0;
+    if (customerId && customerPriceList !== 'Standard Selling' && customerProductPrices[itemCode] !== undefined) {
+      base = customerProductPrices[itemCode];
+    }
+    const rule = discountsMap[itemCode];
+    const stock = defaultWarehouse ? productStocks[itemCode]?.[defaultWarehouse] ?? null : null;
+    return {
+      price: rule ? calculateDiscountedPrice(base, rule) : base,
+      originalPrice: rule ? base : null,
+      discountLabel: rule ? formatDiscountDisplay(rule) : null,
+      stockQty: stock !== null ? parseFloat(stock) : null,
+      cartQty: cartQtyMap[itemCode] || 0,
+      uom: product.stock_uom || 'Nos',
+    };
+  };
+
+  const currency = user?.company_currency || 'KES';
+  const cashierName = user?.full_name || user?.first_name || user?.email || 'Cashier';
+  const storeName = activeWarehouse?.warehouse_name || activeWarehouse?.name || defaultWarehouse;
+  const isCreditWithoutCustomer = !splitPayments && paymentMode === 'Credit' && !customerId;
+
+  const canComplete = !(
+    cart.length === 0 ||
+    isCreatingInvoice ||
+    !isPOSSessionOpen ||
+    isCreditWithoutCustomer ||
+    (splitPayments
+      ? !isSplitPaymentsValid || !isSplitPaymentsCreditValid
+      : (paymentMode === 'Credit' && (!creditAmount || creditAmount <= 0 || creditAmount > grandTotal)) ||
+        (paymentMode === 'Cash' && (!amountGiven || amountGiven < grandTotal)))
+  );
+
+  const customerView = {
+    name: customerId ? customer : 'Walk-in customer',
+    detail: customerId
+      ? [
+          customerPriceList !== 'Standard Selling' ? `${customerPriceList} prices` : null,
+          creditInfo && creditInfo.credit_limit > 0 ? `Credit available ${currency} ${Number(creditInfo.available_credit || 0).toLocaleString('en-KE')}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ') || 'Registered customer'
+      : 'Tap to choose or add a customer',
+  };
+
+  const totals = {
+    itemsTotal,
+    itemDiscount: itemDiscountTotal,
+    manualDiscount: manualDiscountAmount,
+    loyaltyDiscount: loyaltyDiscountAmount,
+    grandTotal,
+  };
+
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || leaveDialogOpen || clearDialogOpen;
+
+  // ---------------------------------------------------------------- keyboard
+  // F2 or Ctrl+K: search. F4: customer. F9 or Ctrl+Enter: charge / complete. Esc: back one step (never leaves the till).
+  // Typing while focus is elsewhere (a barcode scanner) lands in the search box.
+  const latest = useRef({});
+  latest.current = { anyDialogOpen, isPOSSessionOpen, isCheckoutMode, cart, isCreatingInvoice, canComplete, searchTerm, handleCheckout, handleCheckoutClick, handleOpenCustomerDialog };
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const s = latest.current;
+      if (s.anyDialogOpen || !s.isPOSSessionOpen) return;
+      const tag = event.target.tagName;
+      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target.isContentEditable;
+      const mod = event.ctrlKey || event.metaKey;
+
+      if ((mod && event.key.toLowerCase() === 'k') || event.key === 'F2') {
         event.preventDefault();
+        if (!s.isCheckoutMode) searchInputRef.current?.focus();
+      } else if (event.key === 'F4') {
+        event.preventDefault();
+        s.handleOpenCustomerDialog();
+      } else if ((mod && event.key === 'Enter') || event.key === 'F9') {
+        event.preventDefault();
+        if (s.cart.length === 0 || s.isCreatingInvoice) return;
+        if (s.isCheckoutMode) {
+          if (s.canComplete) s.handleCheckout();
+        } else {
+          s.handleCheckoutClick();
+        }
+      } else if (event.key === 'Escape') {
+        if (s.isCheckoutMode) {
+          setIsCheckoutMode(false);
+          setAmountGiven(0);
+        } else if (s.searchTerm) {
+          setSearchTerm('');
+        }
+      } else if (!typing && !mod && !s.isCheckoutMode && event.key.length === 1) {
         searchInputRef.current?.focus();
       }
-      
-      // Ctrl/Cmd + Enter to complete sale
-      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-        if (cart.length > 0 && isPOSSessionOpen && !isCreatingInvoice) {
-          event.preventDefault();
-          handleCheckout();
-        }
-      }
     };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+  // A half-finished sale should survive an accidental refresh prompt
+  useEffect(() => {
+    if (cart.length === 0) return undefined;
+    const warn = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
     };
-  }, [navigate, cart.length, isPOSSessionOpen, isCreatingInvoice]);
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [cart.length]);
+
+  // Show more tiles reset when the filter changes
+  useEffect(() => setTileLimit(TILE_PAGE), [debouncedSearchTerm, selectedCategory]);
+
+  const showShiftCheck = !isPOSSessionOpen && !shiftChecked;
 
   return (
-    <Box sx={{ 
-      width: '100%',
-      height: '100vh',
-      backgroundColor: theme.palette.background.default,
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-    }}>
-      {/* Enhanced Header with AppBar - Full Screen */}
-      <AppBar position="static" color="default" elevation={0} sx={{ borderRadius: 0, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Toolbar sx={{ px: 3, py: 1, minHeight: '56px !important' }}>
-          <Grid container alignItems="center" spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Tooltip title="Return to Dashboard (Press ESC)">
-                  <IconButton
-                    onClick={() => navigate('/dashboard')}
-                    color="primary"
-                    size="small"
-                    sx={{ p: 1 }}
-                    aria-label="Return to Dashboard, press Escape key"
-                  >
-                    <DashboardIcon />
-                  </IconButton>
-                </Tooltip>
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                    <Typography variant="h5" fontWeight="bold" color="primary" sx={{ lineHeight: 1.2 }}>
-                      POS
-                    </Typography>
-                    {isPOSSessionOpen && (
-                      <Chip 
-                        label="✓ Session Open" 
-                        color="success" 
-                        size="small"
-                        sx={{ 
-                          height: 24, 
-                          fontSize: '0.75rem', 
-                          fontWeight: 'medium',
-                          cursor: 'pointer',
-                          '&:focus-visible': {
-                            outline: `2px solid ${theme.palette.primary.main}`,
-                            outlineOffset: '2px',
-                          },
-                        }}
-                        onClick={handleViewSessionDetails}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleViewSessionDetails();
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        aria-label="View session details, click to view"
-                        title="Click to view session details"
-                      />
-                    )}
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.2, mt: 0.25 }}>
-                    {new Date().toLocaleTimeString()}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', ml: 'auto' }}>
-                {/* Close Session - Only show when session is open and not in checkout mode */}
-                {isPOSSessionOpen && !isCheckoutMode && (
-                  <Tooltip title="Close POS Session">
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<CloseIcon fontSize="small" />}
-                      onClick={handleCloseSession}
-                      disabled={isClosingPOSOpening}
-                      size="medium"
-                      sx={{ borderRadius: 1.5, px: 2, textTransform: 'none' }}
-                      aria-label="Close POS Session"
-                    >
-                      {isClosingPOSOpening ? (
-                        <>
-                          <CircularProgress size={16} sx={{ mr: 1 }} color="inherit" />
-                          Closing...
-                        </>
-                      ) : (
-                        'Close Session'
-                      )}
-                    </Button>
-                  </Tooltip>
-                )}
-                
-                {/* Save Draft - Show when cart has items and not in checkout mode */}
-                {!isCheckoutMode && cart.length > 0 && (
-                  <Tooltip title="Save as Draft">
-                    <Button
-                      variant="outlined"
-                      startIcon={<SaveIcon fontSize="small" />}
-                      disabled={cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen}
-                      size="medium"
-                      sx={{ borderRadius: 1.5, px: 2, textTransform: 'none' }}
-                      aria-label="Save current sale as draft"
-                    >
-                      Save Draft
-                    </Button>
-                  </Tooltip>
-                )}
-                
-                {/* Complete Sale / Checkout - Dynamic based on checkout mode */}
-                {!isCheckoutMode ? (
-                  <Tooltip title="Proceed to checkout">
-                    <MotionButton
-                      variant="contained"
-                      color="primary"
-                      startIcon={<ShoppingCartIcon fontSize="small" />}
-                      onClick={handleCheckoutClick}
-                      disabled={cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen}
-                      size="medium"
-                      whileHover={{ scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 1.02 }}
-                      whileTap={{ scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 0.98 }}
-                      sx={{ borderRadius: 1.5, px: 2, textTransform: 'none', fontWeight: 'bold' }}
-                      aria-label={`Proceed to checkout. ${cart.length} items in cart. Total: KES ${calculateSubtotal().toFixed(2)}`}
-                    >
-                      {cart.length === 0 ? 'Add Items' : 'Checkout →'}
-                    </MotionButton>
-                  </Tooltip>
-                ) : (
-                  <Tooltip title="Complete sale and process payment">
-                    <MotionButton
-                      variant="contained"
-                      color="primary"
-                      startIcon={<ShoppingCartIcon fontSize="small" />}
-                      onClick={handleCheckout}
-                      disabled={
-                        cart.length === 0 || 
-                        isCreatingInvoice || 
-                        !isPOSSessionOpen ||
-                        (splitPayments 
-                          ? (!isSplitPaymentsValid || !isSplitPaymentsCreditValid)
-                          : (
-                            (paymentMode === 'Credit' && (!creditAmount || creditAmount <= 0 || creditAmount > calculateSubtotal())) ||
-                            (paymentMode === 'Cash' && (!amountGiven || amountGiven < calculateSubtotal()))
-                          )
-                        )
-                      }
-                      size="medium"
-                      whileHover={{ 
-                        scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 1.02 
-                      }}
-                      whileTap={{ 
-                        scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 0.98 
-                      }}
-                      sx={{ borderRadius: 1.5, px: 2, textTransform: 'none', fontWeight: 'bold' }}
-                      aria-label={`Complete sale. ${cart.length} items in cart. Total: KES ${calculateSubtotal().toFixed(2)}`}
-                    >
-                      {isCreatingInvoice ? (
-                        <>
-                          <CircularProgress size={16} sx={{ mr: 1 }} color="inherit" aria-label="Processing" />
-                          Processing...
-                        </>
-                      ) : (
-                        'Complete Sale'
-                      )}
-                    </MotionButton>
-                  </Tooltip>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
+      <PosHeader
+        storeName={storeName}
+        warehouses={warehouses}
+        canChangeStore={cart.length === 0}
+        onChangeStore={(w) => dispatch(setActiveWarehouse(w))}
+        cashierName={cashierName}
+        sessionOpen={isPOSSessionOpen}
+        onSessionDetails={handleViewSessionDetails}
+        heldCount={heldSales.length}
+        onOpenHeld={() => setHeldDialogOpen(true)}
+        onExit={requestExit}
+        onCloseSession={handleCloseSession}
+        onGoHistory={() => navigate('/sales/history')}
+        themeMode={themeMode}
+        onToggleTheme={toggleColorMode}
+        autoPrint={autoPrint}
+        onToggleAutoPrint={toggleAutoPrint}
+      />
 
-      {/* Screen reader announcement region */}
-      <Box
-        ref={cartAnnouncementRef}
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        sx={{
-          position: 'absolute',
-          left: '-10000px',
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden',
+      {/* Screen reader announcements for cart changes */}
+      <Box ref={cartAnnouncementRef} role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }} />
+
+      {showShiftCheck ? (
+        <Box sx={{ flex: 1, display: 'grid', placeItems: 'center' }} aria-busy="true">
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Checking your shift...</Typography>
+          </Box>
+        </Box>
+      ) : !isPOSSessionOpen ? (
+        <OpenTill
+          control={posOpeningFormControl}
+          fields={balanceFields}
+          errors={posOpeningErrors}
+          paymentModes={paymentModes}
+          onAdd={handleAddBalanceDetail}
+          onRemove={removeBalance}
+          onSubmit={handlePosOpeningSubmit(handleOpenPOSSession)}
+          loading={isLoadingPOSOpening}
+          apiLoading={isAnyAPILoading}
+          cashierName={cashierName}
+          storeName={storeName}
+          currency={currency}
+          onExit={() => navigate('/dashboard')}
+        />
+      ) : (
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+          <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            {isCheckoutMode ? (
+              <PaymentPanel
+                currency={currency}
+                total={grandTotal}
+                paymentModes={paymentModes}
+                paymentMode={paymentMode}
+                onPaymentModeChange={handlePaymentModeChange}
+                splitPayments={splitPayments}
+                setSplitPayments={setSplitPayments}
+                payments={payments}
+                onUpdatePayment={updatePaymentField}
+                onAddPayment={addPaymentRow}
+                onRemovePayment={removePaymentRow}
+                splitTotal={splitPaymentsTotal}
+                splitValid={isSplitPaymentsValid}
+                splitCreditValid={isSplitPaymentsCreditValid}
+                amountGiven={amountGiven}
+                setAmountGiven={setAmountGiven}
+                creditAmount={creditAmount}
+                setCreditAmount={setCreditAmount}
+                creditInfo={creditInfo}
+                hasCustomer={!!customerId}
+                customerName={customer}
+                loyaltySlot={
+                  customerId ? (
+                    <Box sx={{ mb: 2.5 }}>
+                      <LoyaltyRedemption
+                        customerId={customerId}
+                        invoiceTotal={grandTotal + loyaltyDiscountAmount}
+                        onRedemptionChange={(points, discountAmount) => {
+                          setLoyaltyPointsToRedeem(points);
+                          setLoyaltyDiscountAmount(discountAmount);
+                        }}
+                        disabled={isCreatingInvoice}
+                        company={userCompany}
+                      />
+                    </Box>
+                  ) : null
+                }
+                canComplete={canComplete}
+                onComplete={handleCheckout}
+                isCreating={isCreatingInvoice}
+                onBack={() => {
+                  setIsCheckoutMode(false);
+                  setAmountGiven(0);
+                }}
+              />
+            ) : (
+              <ProductPanel
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                searchInputRef={searchInputRef}
+                onSearchEnter={handleSearchEnter}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                products={filteredProducts}
+                visibleCount={tileLimit}
+                onShowMore={() => setTileLimit((n) => n + TILE_PAGE)}
+                isLoading={isLoadingProducts}
+                getTileData={getTileData}
+                addToCart={addToCart}
+                hasStore={!!defaultWarehouse}
+                priceListNote={
+                  customerId && customerPriceList !== 'Standard Selling'
+                    ? { loading: isLoadingCustomerPrices, text: isLoadingCustomerPrices ? `Loading ${customerPriceList} prices...` : `Showing ${customerPriceList} prices` }
+                    : null
+                }
+                onAddProducts={() => navigate('/products/new')}
+              />
+            )}
+          </Box>
+
+          <Box sx={{ width: { xs: '100%', md: 400, lg: 440 }, flexShrink: 0, minHeight: 0, height: { xs: '48%', md: 'auto' } }}>
+            <OrderPanel
+              cart={cart}
+              readOnly={isCheckoutMode}
+              currency={currency}
+              customer={customerView}
+              onCustomerClick={handleOpenCustomerDialog}
+              onInc={(code) => updateQuantity(code, 1)}
+              onDec={(code) => updateQuantity(code, -1)}
+              onSetQty={setQuantity}
+              onRemove={removeFromCart}
+              warehouses={warehouses}
+              defaultWarehouse={defaultWarehouse}
+              onChangeWarehouse={handleChangeLineWarehouse}
+              totals={totals}
+              manualDiscountType={manualDiscountType}
+              manualDiscountValue={manualDiscountValue}
+              onManualDiscountChange={(type, value) => {
+                setManualDiscountType(type);
+                setManualDiscountValue(value);
+              }}
+              isLoadingDiscounts={isLoadingDiscounts}
+              onCheckout={handleCheckoutClick}
+              onHold={holdCurrentSale}
+              onClear={() => setClearDialogOpen(true)}
+              isBusy={isCreatingInvoice}
+              footerExtra={isCheckoutMode ? <Box /> : undefined}
+            />
+          </Box>
+        </Box>
+      )}
+
+      {/* Dialogs */}
+      <CustomerDialog
+        open={customerDialogOpen}
+        onClose={handleCloseCustomerDialog}
+        showAddForm={showAddCustomerForm}
+        setShowAddForm={setShowAddCustomerForm}
+        resetForm={resetCustomerForm}
+        handleFormSubmit={handleCustomerFormSubmit}
+        onCreate={handleCreateCustomer}
+        formControl={customerFormControl}
+        formErrors={customerFormErrors}
+        isCreating={isCreatingCustomer}
+        searchTerm={customerSearchTerm}
+        setSearchTerm={setCustomerSearchTerm}
+        customers={filteredCustomers}
+        isLoading={isLoadingCustomers}
+        onSelect={handleSelectCustomer}
+        currency={currency}
+      />
+
+      <ReceiptDialog
+        open={receiptDialogOpen}
+        invoice={completedInvoice}
+        saleData={completedSaleData}
+        companyName={userCompany}
+        cashierName={cashierName}
+        currency={currency}
+        onNewSale={handleReceiptClose}
+        onPrint={handlePrintReceipt}
+        onViewInvoice={handleViewInvoice}
+      />
+
+      <CloseTillDialog
+        open={closeSessionDialogOpen}
+        onClose={() => setCloseSessionDialogOpen(false)}
+        onConfirm={handleCloseSessionConfirm}
+        loading={isClosingPOSOpening}
+        entry={posOpeningEntry}
+      />
+
+      <HeldSalesDialog
+        open={heldDialogOpen}
+        onClose={() => setHeldDialogOpen(false)}
+        held={heldSales}
+        onRecall={recallHeldSale}
+        onDelete={(id) => persistHeld(heldSales.filter((h) => h.id !== id))}
+        canRecall={cart.length === 0}
+        currency={currency}
+      />
+
+      <PosConfirm
+        open={leaveDialogOpen}
+        title="Leave the till?"
+        message="The sale in progress has items in it. If you leave now, it will be lost. You can put it on hold instead."
+        confirmLabel="Leave and discard"
+        cancelLabel="Stay"
+        onClose={() => setLeaveDialogOpen(false)}
+        onConfirm={() => {
+          setLeaveDialogOpen(false);
+          navigate('/dashboard');
         }}
       />
 
-      <Box sx={{ 
-        flex: 1, 
-        display: 'flex', 
-        overflow: 'hidden', 
-        p: 2, 
-        gap: 2,
-        flexDirection: isMobile ? 'column' : 'row',
-        opacity: isPOSSessionOpen ? 1 : 0.6,
-        pointerEvents: isPOSSessionOpen ? 'auto' : 'none',
-        height: 'calc(100vh - 80px)',
-        position: 'relative',
-      }}>
-        {!isPOSSessionOpen && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-            }}
-          >
-            <Paper
-              elevation={4}
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                borderRadius: 2,
-                maxWidth: 360,
-              }}
-            >
-              <Typography variant="h6" fontWeight={600} gutterBottom>
-                No Active POS Session
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Open a session to start taking sales.
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => setPosProfileDialogOpen(true)}
-                sx={{ textTransform: 'none' }}
-              >
-                Open POS Session
-              </Button>
-            </Paper>
-          </Box>
-        )}
-        {/* Right Column - Customer & Order Summary */}
-        <Box sx={{ 
-          flex: isMobile ? '1 1 100%' : '1 1 40%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          minWidth: 0,
-        }}>
-          <Paper sx={{ 
-            p: 2, 
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            borderRadius: 2,
-            boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-          }}>
-            {/* Scrollable Content Area */}
-            <Box sx={{ 
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'auto',
-              minHeight: 0,
-            }}>
-            {/* Customer Selection */}
-            <Box sx={{ flexShrink: 0, mb: 2 }}>
-              <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                Customer
-              </Typography>
-              <TextField
-                fullWidth
-                placeholder="Walk-in Customer"
-                variant="outlined"
-                size="small"
-                value={customer}
-                readOnly={!!customerId} // Read-only when real customer is selected (must use dialog)
-                onChange={(e) => {
-                  const newValue = e.target.value;
-                  // Only allow manual changes if it's walk-in customer
-                  if (!customerId || 
-                      newValue.toLowerCase() === 'walk-in customer' || 
-                      newValue.toLowerCase() === 'walk-in' ||
-                      !newValue) {
-                    setCustomer(newValue);
-                    // Reset customer-specific data if changed to walk-in
-                    if (!newValue || 
-                        newValue.toLowerCase() === 'walk-in customer' || 
-                        newValue.toLowerCase() === 'walk-in') {
-                      setCustomerId(null);
-                      setSelectedCustomerObj(null);
-                      setCustomerPriceList('Standard Selling');
-                      setCustomerProductPrices({});
-                    }
-                  }
-                }}
-                label="Customer"
-                aria-label="Customer name or identifier. Click the person icon to select a customer."
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon sx={{ fontSize: 16, color: 'text.disabled' }} aria-hidden="true" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Select or Add Customer">
-                        <IconButton
-                          size="small"
-                          onClick={handleOpenCustomerDialog}
-                          aria-label="Select or add customer"
-                          sx={{
-                            '&:focus-visible': {
-                              outline: `2px solid ${theme.palette.primary.main}`,
-                              outlineOffset: '2px',
-                            },
-                          }}
-                        >
-                          <PersonAddIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1.5
-                  },
-                  '& .MuiInputBase-input': { fontSize: '0.8125rem' }
-                }}
-              />
-            </Box>
-
-            {/* Order Summary Header */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              mb: 2,
-              flexShrink: 0,
-            }}>
-              <Typography variant="h6" fontWeight={600}>
-                {isCheckoutMode ? 'Sale Summary' : 'Order Summary'}
-              </Typography>
-              {cart.length > 0 && (
-                <Chip 
-                  label={`${cart.length} item${cart.length !== 1 ? 's' : ''}`}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-            
-            {/* Cart Items Table - Show only in checkout mode or if cart has items */}
-            <Box sx={{ mb: 3, flexGrow: 1, overflow: 'auto' }}>
-              {cart.length === 0 && !isCheckoutMode ? (
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    height: '200px',
-                    color: 'text.secondary'
-                  }}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <ShoppingCartIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} aria-hidden="true" />
-                  <Typography variant="h6">No items in cart</Typography>
-                  <Typography variant="body2">Add products from the list</Typography>
-                </Box>
-              ) : cart.length > 0 ? (
-                <TableContainer sx={{ maxHeight: 300 }}>
-                  <Table 
-                    size="small" 
-                    stickyHeader
-                    aria-label="Shopping cart items"
-                  >
-                    <caption style={{ captionSide: 'top', textAlign: 'left', padding: '8px', fontSize: '0.875rem' }}>
-                      Cart contains {cart.length} item{cart.length !== 1 ? 's' : ''}. Total: KES {calculateSubtotal().toFixed(2)}
-                    </caption>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell scope="col" sx={{ fontWeight: 'bold' }}>Qty</TableCell>
-                        <TableCell scope="col" sx={{ fontWeight: 'bold' }}>Product</TableCell>
-                        <TableCell scope="col" sx={{ fontWeight: 'bold' }}>Warehouse</TableCell>
-                        <TableCell scope="col" align="right" sx={{ fontWeight: 'bold' }}>Rate</TableCell>
-                        <TableCell scope="col" align="center" sx={{ fontWeight: 'bold' }}>Discount</TableCell>
-                        <TableCell scope="col" align="right" sx={{ fontWeight: 'bold' }}>Subtotal</TableCell>
-                        <TableCell scope="col" padding="none" width={40}></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {cart.map((item) => (
-                        <Fade in key={item.item_code} timeout={300}>
-                          <TableRow hover>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Tooltip title="Decrease Quantity">
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => updateQuantity(item.item_code, -1)}
-                                    aria-label={`Decrease quantity of ${item.item_name || item.item_code}`}
-                                    sx={{
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${theme.palette.primary.main}`,
-                                        outlineOffset: '2px',
-                                      },
-                                    }}
-                                  >
-                                    <RemoveIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                                <Typography 
-                                  variant="body1" 
-                                  sx={{ minWidth: 30, textAlign: 'center' }}
-                                  aria-label={`Quantity: ${item.qty}`}
-                                >
-                                  {item.qty}
-                                </Typography>
-                                <Tooltip title="Increase Quantity">
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => updateQuantity(item.item_code, 1)}
-                                    aria-label={`Increase quantity of ${item.item_name || item.item_code}`}
-                                    sx={{
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${theme.palette.primary.main}`,
-                                        outlineOffset: '2px',
-                                      },
-                                    }}
-                                  >
-                                    <AddIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
-                                {item.item_name || item.item_code}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <FormControl size="small" sx={{ minWidth: 150 }}>
-                                <Select
-                                  value={item.warehouse || defaultWarehouse}
-                                  onChange={(e) => {
-                                    const newWarehouse = e.target.value;
-                                    setCart(prevCart =>
-                                      prevCart.map(cartItem => {
-                                        if (cartItem.item_code === item.item_code) {
-                                          // Clear discount when warehouse changes - will be refetched
-                                          return { 
-                                            ...cartItem, 
-                                            warehouse: newWarehouse,
-                                            discount_rule: undefined,
-                                            discount_amount: 0,
-                                            subtotal: cartItem.rate * cartItem.qty,
-                                          };
-                                        }
-                                        return cartItem;
-                                      })
-                                    );
-                                  }}
-                                  aria-label={`Select warehouse for ${item.item_name || item.item_code}`}
-                                  sx={{
-                                    fontSize: '0.8125rem',
-                                    '&:focus-visible': {
-                                      outline: `2px solid ${theme.palette.primary.main}`,
-                                      outlineOffset: '2px',
-                                    },
-                                  }}
-                                >
-                                  {warehouses.map((wh) => (
-                                    <MenuItem key={wh.name} value={wh.name} sx={{ fontSize: '0.8125rem' }}>
-                                      {wh.warehouse_name || wh.name}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Typography variant="body2">
-                                KES {item.rate.toFixed(2)}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center">
-                              {isLoadingDiscounts ? (
-                                <CircularProgress size={16} />
-                              ) : item.discount_rule ? (
-                                <DiscountBadge discountRule={item.discount_rule} size="small" />
-                              ) : (
-                                <Typography variant="body2" color="text.secondary">-</Typography>
-                              )}
-                            </TableCell>
-                            <TableCell align="right">
-                              <Box>
-                                {item.discount_amount > 0 && (
-                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textDecoration: 'line-through' }}>
-                                    KES {(item.rate * item.qty).toFixed(2)}
-                                  </Typography>
-                                )}
-                                <Typography variant="body2" fontWeight="medium" color={item.discount_amount > 0 ? 'success.main' : 'inherit'}>
-                                KES {item.subtotal.toFixed(2)}
-                              </Typography>
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Tooltip title="Remove Item">
-                                <IconButton 
-                                  size="small" 
-                                  onClick={() => removeFromCart(item.item_code)}
-                                  color="error"
-                                  aria-label={`Remove ${item.item_name || item.item_code} from cart`}
-                                  sx={{
-                                    '&:focus-visible': {
-                                      outline: `2px solid ${theme.palette.error.main}`,
-                                      outlineOffset: '2px',
-                                    },
-                                  }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        </Fade>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : null}
-            </Box>
-
-            {/* Order Calculation Section - Show in checkout mode */}
-            {isCheckoutMode && (
-              <Card variant="outlined" sx={{ mb: 2, borderRadius: 2, flexShrink: 0 }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Stack spacing={1.5}>
-                    {/* Subtotal */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Subtotal
-                      </Typography>
-                      <Typography variant="body2" fontWeight={500}>
-                        KES {calculateItemsTotal().toFixed(2)}
-                      </Typography>
-                    </Box>
-
-                    {/* Discount */}
-                    {calculateDiscount() > 0 && (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <Typography variant="body2" color="success.main">
-                          Discount
-                        </Typography>
-                        <Typography variant="body2" fontWeight={500} color="success.main">
-                          -KES {calculateDiscount().toFixed(2)}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {/* Manual whole-sale discount */}
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                        Apply Discount (optional)
-                      </Typography>
-                      <Stack direction="row" spacing={1}>
-                        <FormControl size="small" sx={{ width: 90 }}>
-                          <Select
-                            value={manualDiscountType}
-                            onChange={(e) => {
-                              setManualDiscountType(e.target.value);
-                              setManualDiscountValue(0);
-                            }}
-                          >
-                            <MenuItem value="percentage">%</MenuItem>
-                            <MenuItem value="amount">KES</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <TextField
-                          size="small"
-                          type="number"
-                          fullWidth
-                          value={manualDiscountValue || ''}
-                          placeholder="0"
-                          onChange={(e) => setManualDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <LocalOfferIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Stack>
-                      {calculateManualDiscountAmount() > 0 && (
-                        <Typography variant="caption" color="success.main" sx={{ mt: 0.5, display: 'block' }}>
-                          -KES {calculateManualDiscountAmount().toFixed(2)} applied
-                        </Typography>
-                      )}
-                    </Box>
-
-                    {/* Taxes */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Taxes
-                      </Typography>
-                      <Typography variant="body2" fontWeight={500}>
-                        KES 0.00
-                      </Typography>
-                    </Box>
-
-                    <Divider sx={{ my: 0.5 }} />
-                    
-                    {/* Grand Total */}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <Typography variant="h6" fontWeight={600}>
-                        Grand Total
-                      </Typography>
-                      <Typography variant="h6" color="primary" fontWeight={600}>
-                        KES {calculateSubtotal().toFixed(2)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Loyalty Redemption - Show only in checkout mode for registered customers */}
-            {isCheckoutMode && customerId && (
-              <LoyaltyRedemption
-                customerId={customerId}
-                invoiceTotal={calculateSubtotal() + loyaltyDiscountAmount} // Pass subtotal before discount
-                onRedemptionChange={(points, discountAmount) => {
-                  setLoyaltyPointsToRedeem(points);
-                  setLoyaltyDiscountAmount(discountAmount);
-                }}
-                disabled={isCreatingInvoice}
-                company={userCompany}
-              />
-            )}
-
-            {/* Payment Method - Show only in checkout mode */}
-            {isCheckoutMode && (
-              <Stack spacing={1.5}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={splitPayments}
-                      onChange={(e) => setSplitPayments(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label={<Typography variant="body2">Enable split payment</Typography>}
-                  sx={{ m: 0 }}
-                />
-
-                {!splitPayments && (
-                  <Stack spacing={1.5}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel id="payment-method-label">Payment Method</InputLabel>
-                      <Select
-                        labelId="payment-method-label"
-                        id="payment-method-select"
-                        value={paymentMode}
-                        label="Payment Method"
-                        onChange={(e) => {
-                          setPaymentMode(e.target.value);
-                          // Reset credit amount when changing payment method
-                          if (e.target.value !== 'Credit') {
-                            setCreditAmount(0);
-                          } else {
-                            // Set credit amount to grand total when selecting Credit
-                            setCreditAmount(calculateSubtotal());
-                          }
-                        }}
-                        aria-label="Select payment method"
-                        sx={{ fontSize: '0.8125rem' }}
-                      >
-                        {paymentModes.map(mode => (
-                          <MenuItem key={mode} value={mode} sx={{ fontSize: '0.8125rem' }}>
-                            {mode}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    {/* Credit Amount Input - Only show for Credit payment method */}
-                    {paymentMode === 'Credit' && (
-                      <TextField
-                        fullWidth
-                        label="Credit Amount *"
-                        type="number"
-                        size="small"
-                        value={creditAmount}
-                        onChange={(e) => {
-                          const amount = Math.max(0, parseFloat(e.target.value) || 0);
-                          setCreditAmount(amount);
-                        }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <AttachMoneyIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                            </InputAdornment>
-                          ),
-                        }}
-                        inputProps={{ step: '0.01', min: 0, max: calculateSubtotal() }}
-                        helperText={<Typography variant="caption">Maximum: KES {calculateSubtotal().toFixed(2)}</Typography>}
-                        aria-label="Enter credit amount for credit sales"
-                        required
-                        sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                      />
-                    )}
-                  </Stack>
-                )}
-
-                {splitPayments && (
-                  <Stack spacing={1.5}>
-                    {payments.map((p, idx) => (
-                      <Grid container spacing={1.5} key={`payment-${idx}`} alignItems="center">
-                        <Grid item xs={12} sm={5}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel id={`payment-mode-${idx}`}>Method</InputLabel>
-                            <Select
-                              labelId={`payment-mode-${idx}`}
-                              value={p.mode}
-                              label="Method"
-                              onChange={(e) => updatePaymentField(idx, 'mode', e.target.value)}
-                              sx={{ fontSize: '0.8125rem' }}
-                            >
-                              {paymentModes.map((mode) => (
-                                <MenuItem key={mode} value={mode}>
-                                  {mode}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={5}>
-                          <TextField
-                            fullWidth
-                            type="number"
-                            label="Amount"
-                            size="small"
-                            value={p.amount}
-                            onChange={(e) => updatePaymentField(idx, 'amount', e.target.value)}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <AttachMoneyIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                                </InputAdornment>
-                              ),
-                            }}
-                            inputProps={{ step: '0.01', min: 0 }}
-                            sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {payments.length > 1 && (
-                            <IconButton
-                              color="error"
-                              size="small"
-                              onClick={() => removePaymentRow(idx)}
-                              aria-label="Remove payment method"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                        </Grid>
-                      </Grid>
-                    ))}
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<AddIcon />}
-                      onClick={addPaymentRow}
-                      sx={{ textTransform: 'none', alignSelf: 'flex-start' }}
-                    >
-                      Add Payment Method
-                    </Button>
-                    <Typography variant="caption" color="text.secondary">
-                      Split payments must sum to the grand total. Credit portion will be validated against the customer's credit limit.
-                    </Typography>
-                  </Stack>
-                )}
-
-                {/* Amount Given and Change/Balance - Show only in checkout mode for Cash payments */}
-                {paymentMode === 'Cash' && !splitPayments && (
-                  <Stack spacing={1.5}>
-                    <TextField
-                      fullWidth
-                      id="amount-given-input"
-                      label="Amount Given"
-                      type="number"
-                      size="small"
-                      value={amountGiven || ''}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 0;
-                        setAmountGiven(Math.max(0, value));
-                      }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <AttachMoneyIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      inputProps={{ step: '0.01', min: 0 }}
-                      helperText={<Typography variant="caption">Total: KES {calculateSubtotal().toFixed(2)}</Typography>}
-                      sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                    />
-                      {amountGiven > 0 && (
-                        <Box sx={{ 
-                          p: 1.5, 
-                          borderRadius: 1, 
-                          bgcolor: calculateChange() > 0 ? 'success.light' : 'error.light',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}>
-                          {calculateChange() > 0 ? (
-                            <>
-                              <Typography variant="body2" fontWeight="bold" color="success.dark">
-                                Change:
-                              </Typography>
-                              <Typography variant="h6" fontWeight="bold" color="success.dark">
-                                KES {calculateChange().toFixed(2)}
-                              </Typography>
-                            </>
-                          ) : calculateBalance() > 0 ? (
-                            <>
-                              <Typography variant="body2" fontWeight="bold" color="error.dark">
-                                Balance:
-                              </Typography>
-                              <Typography variant="h6" fontWeight="bold" color="error.dark">
-                                KES {calculateBalance().toFixed(2)}
-                              </Typography>
-                            </>
-                          ) : (
-                            <>
-                              <Typography variant="body2" fontWeight="bold" color="success.dark">
-                                Exact Amount
-                              </Typography>
-                              <Typography variant="h6" fontWeight="bold" color="success.dark">
-                                KES 0.00
-                              </Typography>
-                            </>
-                          )}
-                        </Box>
-                      )}
-                    </Stack>
-                  )}
-                </Stack>
-            )}
-            </Box>
-
-            {/* Payment Button - Conditional based on checkout mode and payment method */}
-            <Box sx={{ mt: 'auto', flexShrink: 0, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-              {!isCheckoutMode ? (
-                // Initial Checkout Button
-                <MotionButton
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  size="large"
-                  onClick={handleCheckoutClick}
-                  disabled={cart.length === 0 || !isPOSSessionOpen}
-                  whileHover={{ scale: cart.length === 0 || !isPOSSessionOpen ? 1 : 1.02 }}
-                  whileTap={{ scale: cart.length === 0 || !isPOSSessionOpen ? 1 : 0.98 }}
-                  sx={{ 
-                    py: 1.5,
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                  }}
-                  aria-label={`Checkout. ${cart.length} items in cart. Total: KES ${calculateSubtotal().toFixed(2)}`}
-                >
-                  Checkout →
-                </MotionButton>
-              ) : (
-                // Complete Sale Button (in checkout mode)
-                <Stack spacing={1.5}>
-                  {(paymentMode === 'Card' || paymentMode === 'Mobile Money') ? (
-                    // Validate Payment button for Card and Mobile Money
-                    <MotionButton
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      size="large"
-                      onClick={handleCheckout}
-                      disabled={cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen}
-                      whileHover={{ scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 1.02 }}
-                      whileTap={{ scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 0.98 }}
-                      sx={{ 
-                        py: 1.5,
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        borderRadius: 2,
-                        textTransform: 'none',
-                      }}
-                      aria-label={`Complete sale. ${cart.length} items in cart. Total: KES ${calculateSubtotal().toFixed(2)}`}
-                    >
-                      {isCreatingInvoice ? (
-                        <>
-                          <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" aria-label="Processing" />
-                          Processing...
-                        </>
-                      ) : (
-                        'Complete Sale →'
-                      )}
-                    </MotionButton>
-                  ) : (
-                    // Complete Sale button for Cash, Bank Transfer, and Credit
-                    <MotionButton
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      size="large"
-                      onClick={handleCheckout}
-                      disabled={
-                        cart.length === 0 || 
-                        isCreatingInvoice || 
-                        !isPOSSessionOpen ||
-                        (splitPayments 
-                          ? (!isSplitPaymentsValid || !isSplitPaymentsCreditValid)
-                          : (
-                            (paymentMode === 'Credit' && (!creditAmount || creditAmount <= 0 || creditAmount > calculateSubtotal())) ||
-                            (paymentMode === 'Cash' && (!amountGiven || amountGiven < calculateSubtotal()))
-                          )
-                        )
-                      }
-                      whileHover={{ 
-                        scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 1.02 
-                      }}
-                      whileTap={{ 
-                        scale: cart.length === 0 || isCreatingInvoice || !isPOSSessionOpen ? 1 : 0.98 
-                      }}
-                      sx={{ 
-                        py: 1.5,
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        borderRadius: 2,
-                        textTransform: 'none',
-                      }}
-                      aria-label={`Complete sale. ${cart.length} items in cart. Total: KES ${calculateSubtotal().toFixed(2)}`}
-                    >
-                      {isCreatingInvoice ? (
-                        <>
-                          <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" aria-label="Processing" />
-                          Processing...
-                        </>
-                      ) : (
-                        'Complete Sale →'
-                      )}
-                    </MotionButton>
-                  )}
-                  {/* Back button to return to cart view */}
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    size="medium"
-                    onClick={() => {
-                      setIsCheckoutMode(false);
-                      setAmountGiven(0);
-                    }}
-                    sx={{ 
-                      borderRadius: 2,
-                      textTransform: 'none',
-                    }}
-                  >
-                    ← Back to Cart
-                  </Button>
-                </Stack>
-              )}
-            </Box>
-          </Paper>
-        </Box>
-
-        {/* Left Column - Warehouse, Search & Product Selection */}
-        <Box sx={{ 
-          flex: isMobile ? '1 1 100%' : '1 1 60%',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          minWidth: 0,
-        }}>
-          <Paper sx={{ 
-            p: 2, 
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            borderRadius: 2,
-            boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-          }}>
-            {/* Top Section - Fixed (Warehouse, Search, Categories) */}
-            <Box sx={{ flexShrink: 0, mb: 2 }}>
-              {/* Warehouse and Search in same row */}
-              <Grid container spacing={1.5} sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                    Warehouse *
-                  </Typography>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="warehouse-select-label-left">Warehouse</InputLabel>
-                    <Select
-                      labelId="warehouse-select-label-left"
-                      id="warehouse-select-left"
-                      value={defaultWarehouse}
-                      disabled
-                      displayEmpty
-                      label="Warehouse"
-                      aria-label="Warehouse (managed globally from app bar)"
-                      sx={{
-                        borderRadius: 1.5,
-                        fontSize: '0.8125rem'
-                      }}
-                    >
-                      <MenuItem value={defaultWarehouse}>
-                        {activeWarehouse?.warehouse_name || activeWarehouse?.name || defaultWarehouse || 'Select warehouse from app bar'}
-                      </MenuItem>
-                    </Select>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      Change warehouse from the app bar above
-                    </Typography>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                    Search Products
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Search products by name, SKU, or scan barcode"
-                    variant="outlined"
-                    size="small"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    inputRef={searchInputRef}
-                    aria-label="Search products by name, SKU, or scan barcode. Press Ctrl+K to focus."
-                    aria-describedby="search-help-text"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ fontSize: 16, color: 'text.disabled' }} aria-hidden="true" />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Tooltip title="Scan Barcode">
-                            <IconButton 
-                              size="small" 
-                              onClick={handleScanBarcode}
-                              aria-label="Scan barcode"
-                            >
-                              <QrCodeScannerIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </InputAdornment>
-                      )
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 1.5
-                      },
-                      '& .MuiInputBase-input': { fontSize: '0.8125rem' }
-                    }}
-                  />
-                  <Typography id="search-help-text" variant="caption" sx={{ display: 'none' }}>
-                    Search products by name, SKU, or description. Press Ctrl+K or Cmd+K to focus search.
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              {/* Category Filter */}
-              <Box sx={{ mb: 2 }}>
-                <Box 
-                  sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}
-                  role="group"
-                  aria-label="Product category filters"
-                >
-                  {categories.map(category => (
-                    <Chip
-                      key={category.id}
-                      label={category.name}
-                      onClick={() => setSelectedCategory(category.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setSelectedCategory(category.id);
-                        }
-                      }}
-                      color={selectedCategory === category.id ? 'primary' : 'default'}
-                      variant={selectedCategory === category.id ? 'filled' : 'outlined'}
-                      size="small"
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={selectedCategory === category.id}
-                      aria-label={`Filter by ${category.name}${selectedCategory === category.id ? ', currently selected' : ''}`}
-                      sx={{ 
-                        borderRadius: 1.5, 
-                        fontSize: '0.75rem',
-                        '&:focus-visible': {
-                          outline: `2px solid ${theme.palette.primary.main}`,
-                          outlineOffset: '2px',
-                        },
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Product List */}
-            <Box sx={{ 
-              flex: '1 1 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-              overflow: 'hidden',
-            }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                mb: 1,
-                flexShrink: 0,
-              }}>
-                <Box>
-                  <Typography variant="h6" fontWeight={600} id="products-heading">
-                    Products {filteredProducts.length > 0 && `(${filteredProducts.length})`}
-                  </Typography>
-                  {customerId && 
-                   customerPriceList !== 'Standard Selling' && (
-                    <Typography variant="caption" color="info.main" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                      {isLoadingCustomerPrices ? (
-                        <>
-                          <CircularProgress size={10} />
-                          Loading {customerPriceList} prices...
-                        </>
-                      ) : (
-                        <>
-                          Showing {customerPriceList} prices
-                        </>
-                      )}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-              <Box sx={{ 
-                flex: '1 1 auto',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                backgroundColor: theme.palette.background.paper,
-              }}>
-              {isLoadingProducts ? (
-                <Box 
-                  sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200, flex: 1 }}
-                  role="status"
-                  aria-live="polite"
-                  aria-label="Loading products"
-                >
-                  <CircularProgress aria-label="Loading products" />
-                </Box>
-              ) : filteredProducts.length === 0 ? (
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    minHeight: 200,
-                    flex: 1,
-                    color: 'text.secondary'
-                  }}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <Typography variant="h6">No products found</Typography>
-                  <Typography variant="body2">Try adjusting your search or category filter</Typography>
-                </Box>
-              ) : (
-                <>
-                  <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-                    <Table stickyHeader size="small" aria-label="Products table">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 200 }}>Product Name</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>SKU</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }} align="right">Stock</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }} align="right">Price</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }} align="center">Discount</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', minWidth: 80 }} align="center">Action</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {filteredProducts
-                          .slice(productsPage * productsRowsPerPage, productsPage * productsRowsPerPage + productsRowsPerPage)
-                          .map((product) => {
-                            // Use customer-specific price if available, otherwise use standard rate
-                            let price = product.standard_rate || product.price || 0;
-                            if (customerId && 
-                                customerPriceList !== 'Standard Selling' && 
-                                customerProductPrices[product.item_code] !== undefined) {
-                              price = customerProductPrices[product.item_code];
-                            }
-                            const stockUom = product.stock_uom || 'Nos';
-                            const itemCode = product.item_code;
-                            
-                            // Get stock quantity for this product in selected warehouse
-                            const stockQty = defaultWarehouse 
-                              ? (productStocks[itemCode]?.[defaultWarehouse] ?? null)
-                              : null;
-                            const stockQtyNum = stockQty !== null ? parseFloat(stockQty) : null;
-                            
-                            // Check if item is in cart and get cart quantity
-                            const cartItem = cart.find(item => item.item_code === itemCode);
-                            const cartQty = cartItem ? cartItem.qty : 0;
-                            
-                            // Highlight if stock is less than cart quantity or if stock is low
-                            const isLowStock = stockQtyNum !== null && (stockQtyNum < cartQty || stockQtyNum < 1);
-                            
-                            return (
-                              <TableRow 
-                                key={itemCode || product.name}
-                                hover
-                                sx={{
-                                  cursor: defaultWarehouse ? 'pointer' : 'not-allowed',
-                                  opacity: defaultWarehouse ? 1 : 0.6,
-                                  backgroundColor: isLowStock ? 'warning.light' : 'inherit',
-                                  '&:hover': {
-                                    backgroundColor: defaultWarehouse 
-                                      ? (isLowStock ? 'warning.light' : 'action.hover')
-                                      : 'inherit',
-                                  },
-                                }}
-                                onClick={() => defaultWarehouse && addToCart(product)}
-                                onKeyDown={(e) => {
-                                  if (defaultWarehouse && (e.key === 'Enter' || e.key === ' ')) {
-                                    e.preventDefault();
-                                    addToCart(product);
-                                  }
-                                }}
-                                role="button"
-                                tabIndex={defaultWarehouse ? 0 : -1}
-                                aria-label={`${product.item_name || product.name || 'Product'}, Price: KES ${price.toFixed(2)} per ${stockUom}${stockQtyNum !== null ? `, Stock: ${stockQtyNum.toFixed(2)} ${stockUom}` : ''}${isLowStock ? ', Low Stock Warning' : ''}${cartQty > 0 ? `, In Cart: ${cartQty}` : ''}. Press Enter or Space to add to cart.`}
-                              >
-                                <TableCell>
-                                  <Box>
-                                    <Typography variant="body2" fontWeight="medium">
-                                      {product.item_name || product.name || 'N/A'}
-                                    </Typography>
-                                    {isLowStock && (
-                                      <Chip
-                                        label="Low Stock"
-                                        size="small"
-                                        color="error"
-                                        sx={{ mt: 0.5, height: 18, fontSize: '0.65rem' }}
-                                      />
-                                    )}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {product.item_code || product.sku || 'N/A'}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                  {defaultWarehouse && stockQtyNum !== null ? (
-                                    <Typography 
-                                      variant="body2" 
-                                      color={isLowStock ? 'error.main' : 'text.secondary'}
-                                      fontWeight={isLowStock ? 'bold' : 'normal'}
-                                    >
-                                      {stockQtyNum.toFixed(2)} {stockUom}
-                                    </Typography>
-                                  ) : (
-                                    <Typography variant="body2" color="text.secondary">-</Typography>
-                                  )}
-                                </TableCell>
-                                <TableCell align="right">
-                                  <Box>
-                                    {/* Show original price if customer-specific price is different from standard */}
-                                    {customerId && 
-                                     customerPriceList !== 'Standard Selling' && 
-                                     customerProductPrices[itemCode] !== undefined &&
-                                     (product.standard_rate || product.price || 0) !== price && (
-                                      <Typography 
-                                        variant="caption" 
-                                        color="text.secondary"
-                                        sx={{ textDecoration: 'line-through', display: 'block' }}
-                                      >
-                                        KES {(product.standard_rate || product.price || 0).toFixed(2)}
-                                      </Typography>
-                                    )}
-                                    {discountsMap[itemCode] && (
-                                      <Typography 
-                                        variant="caption" 
-                                        color="text.secondary"
-                                        sx={{ textDecoration: 'line-through', display: 'block' }}
-                                      >
-                                        KES {price.toFixed(2)}
-                                      </Typography>
-                                    )}
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-                                      <Typography 
-                                        variant="body2" 
-                                        color={discountsMap[itemCode] ? 'success.main' : 'primary'} 
-                                        fontWeight="bold"
-                                      >
-                                        KES {discountsMap[itemCode] 
-                                          ? calculateDiscountedPrice(price, discountsMap[itemCode]).toFixed(2)
-                                          : price.toFixed(2)}
-                                      </Typography>
-                                      {isLoadingCustomerPrices && customerProductPrices[itemCode] === undefined && (
-                                        <CircularProgress size={12} sx={{ ml: 0.5 }} />
-                                      )}
-                                    </Box>
-                                    <Typography variant="caption" color="text.secondary">
-                                      /{stockUom}
-                                    </Typography>
-                                    {customerId && 
-                                     customerPriceList !== 'Standard Selling' && 
-                                     customerProductPrices[itemCode] !== undefined && (
-                                      <Chip
-                                        label={customerPriceList}
-                                        size="small"
-                                        color="info"
-                                        sx={{ mt: 0.5, height: 16, fontSize: '0.6rem' }}
-                                      />
-                                    )}
-                                  </Box>
-                                </TableCell>
-                                <TableCell align="center">
-                                  {isLoadingDiscounts ? (
-                                    <CircularProgress size={16} />
-                                  ) : discountsMap[itemCode] ? (
-                                    <DiscountBadge discountRule={discountsMap[itemCode]} size="small" />
-                                  ) : (
-                                    <Typography variant="body2" color="text.secondary">-</Typography>
-                                  )}
-                                </TableCell>
-                                <TableCell align="center">
-                                  <Tooltip title={!defaultWarehouse ? "Select warehouse first" : "Add to Cart"}>
-                                    <span>
-                                      <IconButton 
-                                        size="small"
-                                        color="primary"
-                                        onClick={(e) => { 
-                                          e.stopPropagation(); 
-                                          if (defaultWarehouse) addToCart(product); 
-                                        }}
-                                        disabled={!defaultWarehouse}
-                                        sx={{ 
-                                          '&:focus-visible': {
-                                            outline: `2px solid ${theme.palette.primary.main}`,
-                                            outlineOffset: '2px',
-                                          },
-                                        }}
-                                        aria-label={!defaultWarehouse ? "Select warehouse first to add product" : `Add ${product.item_name || product.name} to cart`}
-                                      >
-                                        <AddIcon />
-                                      </IconButton>
-                                    </span>
-                                  </Tooltip>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    p: 1,
-                    borderTop: '1px solid',
-                    borderColor: 'divider',
-                    flexShrink: 0,
-                  }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      Showing {productsPage * productsRowsPerPage + 1} to {Math.min((productsPage + 1) * productsRowsPerPage, filteredProducts.length)} of {filteredProducts.length} products
-                    </Typography>
-                    <TablePagination
-                      component="div"
-                      count={filteredProducts.length}
-                      page={productsPage}
-                      onPageChange={(event, newPage) => setProductsPage(newPage)}
-                      rowsPerPage={productsRowsPerPage}
-                      onRowsPerPageChange={(event) => {
-                        setProductsRowsPerPage(parseInt(event.target.value, 10));
-                        setProductsPage(0);
-                      }}
-                      rowsPerPageOptions={[10, 25, 50, 100]}
-                      labelRowsPerPage="Rows:"
-                    />
-                  </Box>
-                </>
-              )}
-              </Box>
-            </Box>
-          </Paper>
-        </Box>
-      </Box>
-
-      {/* POS Opening Entry Dialog - Required before accessing POS */}
-      <Dialog 
-        open={posProfileDialogOpen} 
-        onClose={() => setPosProfileDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        aria-labelledby="pos-dialog-title"
-        aria-describedby="pos-dialog-description"
-        aria-modal="true"
-      >
-        <DialogTitle id="pos-dialog-title" sx={{ pb: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box>
-              <Typography variant="h6" component="h1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                Open POS Session
-              </Typography>
-              <Typography id="pos-dialog-description" variant="body2" color="text.secondary">
-                Enter opening balance amounts for payment methods
-              </Typography>
-            </Box>
-            <IconButton
-              onClick={() => setPosProfileDialogOpen(false)}
-              size="small"
-              aria-label="Close dialog"
-              sx={{ mt: -0.5 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <form onSubmit={handlePosOpeningSubmit(handleOpenPOSSession)}>
-          <DialogContent sx={{ pt: 3 }}>
-            {/* Hidden fields for company, pos_profile, and user - set programmatically */}
-            <input
-              type="hidden"
-              {...posOpeningFormControl.register('pos_profile', {
-                required: 'POS Profile is required',
-              })}
-            />
-            <input
-              type="hidden"
-              {...posOpeningFormControl.register('company')}
-            />
-            <input
-              type="hidden"
-              {...posOpeningFormControl.register('user')}
-            />
-
-            {/* Balance Details Section */}
-            <Stack spacing={1.5}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  Opening Balance Details
-                </Typography>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddBalanceDetail}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Add Payment Method
-                </Button>
-              </Box>
-              
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600, py: 1 }}>Payment Method</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600, py: 1 }}>Opening Amount</TableCell>
-                        <TableCell width={50} sx={{ py: 1 }}></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {balanceFields.map((field, index) => (
-                        <TableRow key={field.id}>
-                          <TableCell sx={{ py: 1.5 }}>
-                            <FormControl fullWidth size="small">
-                              <Controller
-                                name={`balance_details.${index}.mode_of_payment`}
-                                control={posOpeningFormControl}
-                                rules={{ required: 'Payment method is required' }}
-                                defaultValue={field.mode_of_payment || 'Cash'}
-                                render={({ field: selectField }) => (
-                                  <Select
-                                    {...selectField}
-                                    error={!!posOpeningErrors.balance_details?.[index]?.mode_of_payment}
-                                    sx={{ fontSize: '0.8125rem' }}
-                                  >
-                                    {paymentModes.map(mode => (
-                                      <MenuItem key={mode} value={mode}>
-                                        {mode}
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                )}
-                              />
-                            </FormControl>
-                          </TableCell>
-                          <TableCell sx={{ py: 1.5 }}>
-                            <Controller
-                              name={`balance_details.${index}.opening_amount`}
-                              control={posOpeningFormControl}
-                              rules={{
-                                required: 'Opening amount is required',
-                                min: { value: 0, message: 'Amount must be 0 or greater' },
-                              }}
-                              defaultValue={field.opening_amount || 0}
-                              render={({ field: inputField }) => (
-                                <TextField
-                                  {...inputField}
-                                  fullWidth
-                                  type="number"
-                                  size="small"
-                                  error={!!posOpeningErrors.balance_details?.[index]?.opening_amount}
-                                  helperText={posOpeningErrors.balance_details?.[index]?.opening_amount?.message}
-                                  InputProps={{
-                                    startAdornment: (
-                                      <InputAdornment position="start">
-                                        <AttachMoneyIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                                      </InputAdornment>
-                                    ),
-                                  }}
-                                  inputProps={{ step: '0.01', min: 0 }}
-                                  onChange={(e) => inputField.onChange(parseFloat(e.target.value) || 0)}
-                                  autoFocus={index === 0}
-                                  sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                                />
-                              )}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ py: 1.5 }}>
-                            {balanceFields.length > 1 ? (
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => removeBalance(index)}
-                                aria-label="Remove payment method"
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            ) : null}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-            <MotionButton
-              type="submit"
-              variant="contained"
-              disabled={isLoadingPOSOpening || isAnyAPILoading}
-              whileHover={{ scale: isLoadingPOSOpening || isAnyAPILoading ? 1 : 1.02 }}
-              whileTap={{ scale: isLoadingPOSOpening || isAnyAPILoading ? 1 : 0.98 }}
-              fullWidth
-              sx={{ minWidth: 120, textTransform: 'none' }}
-            >
-              {isLoadingPOSOpening ? (
-                <>
-                  <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
-                  Opening Session...
-                </>
-              ) : isAnyAPILoading ? (
-                <>
-                  <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
-                  Loading...
-                </>
-              ) : (
-                'Open POS Session'
-              )}
-            </MotionButton>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* Receipt Dialog */}
-      <Dialog 
-        open={receiptDialogOpen} 
-        onClose={handleReceiptClose}
-        maxWidth="sm"
-        fullWidth
-        disableScrollLock={true}
-        disableEnforceFocus={true}
-        aria-labelledby="receipt-dialog-title"
-        aria-describedby="receipt-dialog-description"
-        aria-modal="true"
-        sx={{
-          '& .MuiDialog-paper': {
-            '@media print': {
-              margin: 0,
-              maxWidth: '100%',
-              width: '100%',
-              height: '100%',
-            },
-          },
+      <PosConfirm
+        open={clearDialogOpen}
+        title="Clear this sale?"
+        message="Every item will be removed from the current sale. This cannot be undone."
+        confirmLabel="Clear sale"
+        cancelLabel="Keep it"
+        onClose={() => setClearDialogOpen(false)}
+        onConfirm={() => {
+          setClearDialogOpen(false);
+          resetSale();
         }}
-      >
-        <style>
-          {`
-            @media print {
-              @page {
-                size: A4;
-                margin: 10mm;
-              }
-              body * {
-                visibility: hidden;
-              }
-              .MuiDialog-root,
-              .MuiDialog-container,
-              .MuiDialog-paper,
-              .MuiDialog-paperScrollPaper,
-              .receipt-printable,
-              .receipt-printable * {
-                visibility: visible !important;
-              }
-              .MuiDialog-root {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0;
-              }
-              .MuiDialog-container {
-                display: block !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                height: 100% !important;
-              }
-              .MuiDialog-paper {
-                margin: 0 !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                height: 100% !important;
-                box-shadow: none !important;
-              }
-              .MuiBackdrop-root {
-                display: none !important;
-              }
-              .no-print {
-                display: none !important;
-              }
-              .receipt-printable {
-                position: static;
-                width: 100%;
-                padding: 20px !important;
-              }
-            }
-          `}
-        </style>
-        
-        <Box className="no-print">
-          <DialogTitle id="receipt-dialog-title" sx={{ pb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <Typography variant="h6" component="h1" sx={{ fontWeight: 600 }}>
-                Receipt
-              </Typography>
-              <IconButton 
-                onClick={handleReceiptClose} 
-                size="small"
-                aria-label="Close receipt dialog"
-                sx={{ mt: -0.5 }}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          </DialogTitle>
-        </Box>
-        
-        <DialogContent 
-          id="receipt-dialog-description" 
-          className="receipt-printable"
-          sx={{ 
-            pt: 3,
-            p: { xs: 2, sm: 3 },
-            '@media print': {
-              p: 3,
-              pt: 3,
-            },
-          }}
-        >
-          {completedInvoice && completedSaleData && (
-            <Box>
-              {/* Company Header */}
-              <Box sx={{ textAlign: 'center', mb: 3, pb: 2, borderBottom: '2px solid', borderColor: 'divider' }}>
-                <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  {userCompany || 'Company Name'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  POS Receipt
-                </Typography>
-              </Box>
+      />
 
-              {/* Invoice Details */}
-              <Box sx={{ mb: 2 }}>
-                <Grid container spacing={1}>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">Invoice #</Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {completedInvoice.name}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" color="text.secondary">Date</Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {completedSaleData.timestamp.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">Time</Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {completedSaleData.timestamp.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" color="text.secondary">Cashier</Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {user?.full_name || user?.name || user?.email || 'Cashier'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Customer Details */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>Customer</Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {completedInvoice.customer || completedSaleData.customer || 'Walk-in Customer'}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Items Table */}
-              <Box sx={{ mb: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', px: 1, py: 0.5 }}>Item</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 'bold', px: 1, py: 0.5 }}>Qty</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', px: 1, py: 0.5 }}>Price</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', px: 1, py: 0.5 }}>Total</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {completedSaleData.items.map((item) => {
-                      const itemTotal = item.subtotal || (item.rate * item.qty);
-                      return (
-                        <TableRow key={item.item_code}>
-                          <TableCell sx={{ px: 1, py: 0.5 }}>
-                            <Typography variant="body2" fontWeight="medium">
-                              {item.item_name || item.item_code}
-                            </Typography>
-                            {item.discount_amount > 0 && (
-                              <Typography variant="caption" color="success.main">
-                                Discount: KES {item.discount_amount.toFixed(2)}
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                            {item.qty} {item.uom}
-                          </TableCell>
-                          <TableCell align="right" sx={{ px: 1, py: 0.5 }}>
-                            KES {item.rate.toFixed(2)}
-                          </TableCell>
-                          <TableCell align="right" sx={{ px: 1, py: 0.5, fontWeight: 'medium' }}>
-                            KES {itemTotal.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Totals */}
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Subtotal</Typography>
-                  <Typography variant="body2" fontWeight="medium">
-                    KES {completedSaleData.items.reduce((sum, item) => sum + (item.rate * item.qty), 0).toFixed(2)}
-                  </Typography>
-                </Box>
-                {completedSaleData.items.reduce((sum, item) => sum + (item.discount_amount || 0), 0) > 0 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="success.main">Discount</Typography>
-                    <Typography variant="body2" fontWeight="medium" color="success.main">
-                      -KES {completedSaleData.items.reduce((sum, item) => sum + (item.discount_amount || 0), 0).toFixed(2)}
-                    </Typography>
-                  </Box>
-                )}
-                <Divider sx={{ my: 1 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                  <Typography variant="h6" fontWeight="bold">Grand Total</Typography>
-                  <Typography variant="h6" fontWeight="bold" color="primary">
-                    KES {(completedInvoice.grand_total || completedSaleData.grandTotal || 0).toFixed(2)}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Payment Details */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>Payment Method</Typography>
-                {completedSaleData.payments?.map((payment, idx) => (
-                  <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">{payment.mode_of_payment || payment.mode}</Typography>
-                    <Typography variant="body2" fontWeight="medium">
-                      KES {Number(payment.amount || 0).toFixed(2)}
-                    </Typography>
-                  </Box>
-                ))}
-                {completedSaleData.amountGiven > 0 && completedSaleData.paymentMode === 'Cash' && (
-                  <>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, mb: 0.5 }}>
-                      <Typography variant="body2" color="text.secondary">Amount Given</Typography>
-                      <Typography variant="body2">KES {completedSaleData.amountGiven.toFixed(2)}</Typography>
-                    </Box>
-                    {completedSaleData.amountGiven > completedSaleData.grandTotal && (
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" fontWeight="bold" color="success.main">Change</Typography>
-                        <Typography variant="body2" fontWeight="bold" color="success.main">
-                          KES {(completedSaleData.amountGiven - completedSaleData.grandTotal).toFixed(2)}
-                        </Typography>
-                      </Box>
-                    )}
-                  </>
-                )}
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Footer */}
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Thank you for your business!
-                </Typography>
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                  {completedInvoice.status || 'Paid'}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        
-        <Box className="no-print">
-          <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-            <Button 
-              onClick={handleReceiptClose} 
-              variant="outlined"
-              color="secondary"
-              aria-label="Close receipt dialog"
-              sx={{ textTransform: 'none' }}
-            >
-              Close
-            </Button>
-            {completedInvoice?.name && (
-              <>
-                <Button 
-                  onClick={handlePrintReceipt} 
-                  variant="outlined"
-                  startIcon={<PrintIcon />}
-                  aria-label="Print receipt"
-                  sx={{ textTransform: 'none' }}
-                >
-                  Print Receipt
-                </Button>
-                <MotionButton
-                  onClick={handleViewInvoice} 
-                  variant="contained" 
-                  color="primary"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  aria-label={`View invoice ${completedInvoice.name}`}
-                  sx={{ minWidth: 120, textTransform: 'none' }}
-                >
-                  View Invoice
-                </MotionButton>
-              </>
-            )}
-          </DialogActions>
-        </Box>
-      </Dialog>
-
-      {/* Snackbar for feedback */}
-      <Snackbar 
-        open={snackbarOpen} 
-        autoHideDuration={3000} 
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{ top: '6px !important', maxWidth: 'min(520px, calc(100vw - 32px))' }}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} variant="filled" sx={{ width: '100%', py: 0, alignItems: 'center', boxShadow: 6 }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
 
-      {/* Close Session Dialog */}
-      <Dialog 
-        open={closeSessionDialogOpen} 
-        onClose={() => setCloseSessionDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        aria-labelledby="close-session-dialog-title"
-        aria-describedby="close-session-dialog-description"
-        aria-modal="true"
-      >
-        <DialogTitle id="close-session-dialog-title" sx={{ pb: 2 }}>
-          <Typography variant="h6" component="h1" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Close POS Session
-          </Typography>
-          <Typography id="close-session-dialog-description" variant="body2" color="text.secondary">
-            Are you sure you want to close this POS session?
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          <Stack spacing={1.5}>
-            <Typography variant="body2" color="text.secondary">
-              This will create a POS Closing Entry that consolidates all invoices associated with this session.
-            </Typography>
-            {posOpeningEntry && (
-              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
-                <Stack spacing={1}>
-                  <Box>
-                    <Typography variant="caption" fontWeight={600} color="text.secondary" display="block">
-                      Entry
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {posOpeningEntry.name}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" fontWeight={600} color="text.secondary" display="block">
-                      POS Profile
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {posOpeningEntry.pos_profile}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" fontWeight={600} color="text.secondary" display="block">
-                      Status
-                    </Typography>
-                    <Typography variant="body2" fontWeight={500}>
-                      {posOpeningEntry.status}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-          <Button 
-            onClick={() => setCloseSessionDialogOpen(false)} 
-            disabled={isClosingPOSOpening}
-            variant="outlined"
-            sx={{ textTransform: 'none' }}
-          >
-            Cancel
-          </Button>
-          <MotionButton
-            variant="contained"
-            color="error"
-            onClick={handleCloseSessionConfirm}
-            disabled={isClosingPOSOpening}
-            whileHover={{ scale: isClosingPOSOpening ? 1 : 1.02 }}
-            whileTap={{ scale: isClosingPOSOpening ? 1 : 0.98 }}
-            sx={{ minWidth: 120, textTransform: 'none' }}
-          >
-            {isClosingPOSOpening ? (
-              <>
-                <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
-                Closing...
-              </>
-            ) : (
-              'Close Session'
-            )}
-          </MotionButton>
-        </DialogActions>
-      </Dialog>
-
-      {/* Customer Selection/Add Dialog */}
-      <Dialog
-        open={customerDialogOpen}
-        onClose={handleCloseCustomerDialog}
-        maxWidth="md"
-        fullWidth
-        aria-labelledby="customer-dialog-title"
-        aria-describedby="customer-dialog-description"
-        aria-modal="true"
-      >
-        <DialogTitle id="customer-dialog-title" sx={{ pb: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {showAddCustomerForm && (
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    setShowAddCustomerForm(false);
-                    resetCustomerForm();
-                  }}
-                  aria-label="Back to customer list"
-                  sx={{ mt: -0.5 }}
-                >
-                  <ArrowBackIcon fontSize="small" />
-                </IconButton>
-              )}
-              <Box>
-                <Typography variant="h6" component="h1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  {showAddCustomerForm ? 'Add New Customer' : 'Select Customer'}
-                </Typography>
-                {!showAddCustomerForm && (
-                  <Typography variant="body2" color="text.secondary">
-                    Choose a customer or add a new one
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-            <IconButton
-              size="small"
-              onClick={handleCloseCustomerDialog}
-              aria-label="Close customer dialog"
-              sx={{ mt: -0.5 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent id="customer-dialog-description" sx={{ pt: 3 }}>
-          {showAddCustomerForm ? (
-            // Add Customer Form
-            <form onSubmit={handleCustomerFormSubmit(handleCreateCustomer)}>
-              <Stack spacing={1.5}>
-                <Controller
-                  name="customer_name"
-                  control={customerFormControl}
-                  rules={{ required: 'Customer name is required' }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Customer Name *"
-                      fullWidth
-                      size="small"
-                      required
-                      autoFocus
-                      error={!!customerFormErrors.customer_name}
-                      helperText={customerFormErrors.customer_name?.message}
-                      aria-label="Customer name, required"
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <PersonIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                    />
-                  )}
-                />
-                <Grid container spacing={1.5}>
-                  <Grid item xs={12} sm={6}>
-                    <Controller
-                      name="customer_type"
-                      control={customerFormControl}
-                      render={({ field }) => (
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Customer Type</InputLabel>
-                          <Select {...field} label="Customer Type" aria-label="Customer type" sx={{ fontSize: '0.8125rem' }}>
-                            <MenuItem value="Individual" sx={{ fontSize: '0.8125rem' }}>Individual</MenuItem>
-                            <MenuItem value="Company" sx={{ fontSize: '0.8125rem' }}>Company</MenuItem>
-                            <MenuItem value="Partnership" sx={{ fontSize: '0.8125rem' }}>Partnership</MenuItem>
-                          </Select>
-                        </FormControl>
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Controller
-                      name="mobile_no"
-                      control={customerFormControl}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Mobile Number"
-                          fullWidth
-                          size="small"
-                          placeholder="+254712345678"
-                          aria-label="Mobile number"
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <PhoneIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Controller
-                      name="email_id"
-                      control={customerFormControl}
-                      rules={{
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: 'Invalid email address',
-                        },
-                      }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Email"
-                          type="email"
-                          fullWidth
-                          size="small"
-                          error={!!customerFormErrors.email_id}
-                          helperText={customerFormErrors.email_id?.message}
-                          aria-label="Email address"
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <EmailIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Controller
-                      name="tax_id"
-                      control={customerFormControl}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Tax ID/PIN"
-                          fullWidth
-                          size="small"
-                          aria-label="Tax ID or PIN"
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <TaxIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </Stack>
-              <DialogActions sx={{ mt: 3, px: 0, gap: 1.5 }}>
-                <Button 
-                  onClick={() => {
-                    setShowAddCustomerForm(false);
-                    resetCustomerForm();
-                  }}
-                  variant="outlined"
-                  sx={{ textTransform: 'none' }}
-                >
-                  Cancel
-                </Button>
-                <MotionButton
-                  type="submit"
-                  variant="contained"
-                  disabled={isCreatingCustomer}
-                  whileHover={{ scale: isCreatingCustomer ? 1 : 1.02 }}
-                  whileTap={{ scale: isCreatingCustomer ? 1 : 0.98 }}
-                  sx={{ minWidth: 120, textTransform: 'none' }}
-                >
-                  {isCreatingCustomer ? (
-                    <>
-                      <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Customer'
-                  )}
-                </MotionButton>
-              </DialogActions>
-            </form>
-          ) : (
-            // Customer Selection List
-            <Stack spacing={1.5}>
-              <TextField
-                fullWidth
-                placeholder="Search customers by name, mobile, or email"
-                variant="outlined"
-                size="small"
-                value={customerSearchTerm}
-                onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                aria-label="Search customers"
-                sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''} found
-                </Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<PersonAddIcon />}
-                  onClick={() => setShowAddCustomerForm(true)}
-                  size="small"
-                  aria-label="Add new customer"
-                  sx={{ textTransform: 'none' }}
-                >
-                  Add New Customer
-                </Button>
-              </Box>
-              <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-                {isLoadingCustomers ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                    <CircularProgress />
-                  </Box>
-                ) : filteredCustomers.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No customers found
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      startIcon={<PersonAddIcon />}
-                      onClick={() => setShowAddCustomerForm(true)}
-                      sx={{ mt: 2 }}
-                      aria-label="Add new customer"
-                    >
-                      Add New Customer
-                    </Button>
-                  </Box>
-                ) : (
-                  <List>
-                    {/* Walk-in Customer Option */}
-                    <ListItem
-                      button
-                      onClick={() => handleSelectCustomer({ name: 'Walk-in Customer', customer_name: 'Walk-in Customer' })}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleSelectCustomer({ name: 'Walk-in Customer', customer_name: 'Walk-in Customer' });
-                        }
-                      }}
-                      sx={{
-                        '&:focus-visible': {
-                          outline: `2px solid ${theme.palette.primary.main}`,
-                          outlineOffset: '2px',
-                        },
-                      }}
-                      aria-label="Walk-in Customer, default customer for cash sales"
-                    >
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body1" fontWeight="medium">
-                              Walk-in Customer
-                            </Typography>
-                            <Chip label="Default" size="small" color="default" />
-                          </Box>
-                        }
-                        secondary="Default customer for cash sales"
-                      />
-                    </ListItem>
-                    <Divider />
-                    {/* Customer List */}
-                    {filteredCustomers.map((customer) => (
-                      <React.Fragment key={customer.name}>
-                        <ListItem
-                          button
-                          onClick={() => handleSelectCustomer(customer)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handleSelectCustomer(customer);
-                            }
-                          }}
-                          sx={{
-                            '&:focus-visible': {
-                              outline: `2px solid ${theme.palette.primary.main}`,
-                              outlineOffset: '2px',
-                            },
-                          }}
-                          aria-label={`${customer.customer_name || customer.name}${customer.mobile_no ? `, Mobile: ${customer.mobile_no}` : ''}`}
-                        >
-                          <ListItemText
-                            primary={
-                              <Typography variant="body1" fontWeight="medium">
-                                {customer.customer_name || customer.name}
-                              </Typography>
-                            }
-                            secondary={
-                              <Box>
-                                {customer.mobile_no && (
-                                  <Typography variant="caption" display="block" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <PhoneIcon fontSize="inherit" sx={{ fontSize: '0.75rem' }} />
-                                    {customer.mobile_no}
-                                  </Typography>
-                                )}
-                                {customer.email_id && (
-                                  <Typography variant="caption" display="block" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <EmailIcon fontSize="inherit" sx={{ fontSize: '0.75rem' }} />
-                                    {customer.email_id}
-                                  </Typography>
-                                )}
-                                {customer.customer_type && (
-                                  <Chip 
-                                    label={customer.customer_type} 
-                                    size="small" 
-                                    sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
-                                  />
-                                )}
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                        <Divider />
-                      </React.Fragment>
-                    ))}
-                  </List>
-                )}
-              </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        {!showAddCustomerForm && (
-          <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-            <Button 
-              onClick={handleCloseCustomerDialog}
-              variant="outlined"
-              sx={{ textTransform: 'none' }}
-            >
-              Cancel
-            </Button>
-          </DialogActions>
-        )}
-      </Dialog>
-
-      {/* Loading Backdrop */}
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={isCreatingInvoice}
-      >
+      <Backdrop sx={{ color: '#fff', zIndex: (t) => t.zIndex.modal + 1 }} open={isCreatingInvoice}>
         <CircularProgress color="inherit" />
       </Backdrop>
     </Box>

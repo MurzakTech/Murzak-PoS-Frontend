@@ -103,7 +103,7 @@ const Layout = ({ children }) => {
   );
 
   // The point-of-sale screen is full-screen, without the app shell
-  const isPOSRoute = location.pathname === '/sales';
+  const isPOSRoute = location.pathname === '/sales' || location.pathname === '/sales/pos';
 
   const userCompany =
     user?.company ||
@@ -129,6 +129,7 @@ const Layout = ({ children }) => {
 
   // Ctrl/Cmd + K (or "/") opens quick search from anywhere
   useEffect(() => {
+    if (isPOSRoute) return undefined;
     const onKeyDown = (e) => {
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName) || e.target?.isContentEditable;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -141,7 +142,7 @@ const Layout = ({ children }) => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [isPOSRoute]);
 
   const handleWarehouseChange = (event) => {
     const picked = warehouses.find((w) => w.name === event.target.value || w.warehouse_name === event.target.value);
@@ -473,7 +474,7 @@ const Layout = ({ children }) => {
         {!isPOSRoute && <Toolbar />}
         <Box sx={{ flexGrow: 1, display: 'flex', minHeight: 0 }}>
           {!isPOSRoute && !isMobile && <PageSidebar />}
-          <Box sx={{ flexGrow: 1, p: isPOSRoute ? 0 : { xs: 2, md: 3 }, minWidth: 0, overflow: 'auto' }}>
+          <Box sx={{ flexGrow: 1, p: isPOSRoute ? 0 : { xs: 2, md: 3 }, minWidth: 0, overflow: isPOSRoute ? 'hidden' : 'auto' }}>
             {/* resetKey clears an error automatically when the person navigates elsewhere */}
             <ErrorBoundary inline resetKey={location.pathname}>
               {children}

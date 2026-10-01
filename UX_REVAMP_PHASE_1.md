@@ -36,6 +36,21 @@ Make the product easy to start, easy to use and easy to understand, with a moder
 - Sign in rewritten: simpler layout, clearer errors, "Create your free account" link, working Terms and Privacy links.
 - Landing page rewritten around benefits and three setup steps, with content that always displays (the old one hid sections until scrolled).
 
+### Point of sale (till)
+The selling screen was rebuilt for a POS machine. It is full screen (no sidebar or top bar), laid out for touch, and designed so a cashier can complete a sale in a few taps.
+
+- **Layout:** product tiles on the left, the current sale on the right. Tapping a tile adds it. Category pills, a large search field and a quantity box in the cart.
+- **Barcode scanners:** the search field is always ready. Scan (or type a code) and press Enter to add the product. If focus is elsewhere, scanning still lands in the search field.
+- **Payment step:** a dedicated screen with large method buttons, quick-cash buttons (exact, then the next common note combinations), an on-screen number pad that also works from the keyboard, and the change to give shown in large type. Credit, split payments, M-Pesa and card are supported as before.
+- **Hold and bring back a sale:** replaces the old "Save Draft" button, which did nothing.
+- **Start of shift:** the till opens on an "Open your till" screen instead of a pop-up that could be dismissed.
+- **Resumes after a refresh:** an open shift is now picked back up (see defects below).
+- **Receipt:** a clear "Sale complete" screen showing the change to give, a receipt laid out for an 80mm till roll (prints on one page), and an option to turn automatic printing on or off.
+- **Safer keys:** Escape no longer leaves the till (it used to jump to the dashboard mid-sale). F2 or Ctrl+K searches, F4 chooses a customer, F9 or Ctrl+Enter charges, Escape goes back one step.
+- **Full screen button:** in the header. For a dedicated machine, also start the browser in kiosk mode (for example Chrome with `--kiosk`).
+
+Selling rules (stock, offers, customer price lists, credit limits, loyalty points, invoice creation) were kept exactly as they were, and the invoice request sent to the server is unchanged.
+
 ## 3. Defects found and fixed
 
 | Finding | Impact | Fix |
@@ -46,6 +61,11 @@ Make the product easy to start, easy to use and easy to understand, with a moder
 | Terms and Privacy links on sign in were `#` | Dead links | Point to the real pages |
 | Debug logging printed the signed-in user's profile to the browser console | Privacy hygiene | Removed |
 | `Stack` and `Grid` margins clashed | Misaligned form rows (registration) | Stack now uses flex gap globally |
+| The till kept the open shift only in memory | After a refresh or restart the till forgot it, tried to open a second shift, and could not close the first | The till now looks for the cashier's own open shift and resumes it |
+| A page effect re-ran on every render | The POS page re-rendered about 1,275 times in 3 seconds while idle, which strains low-powered machines | Totals are calculated once per change; idle updates dropped to zero |
+| The previous customer stayed selected after a sale | The next walk-in customer could be billed to the previous customer's account | Each new sale starts as a walk-in |
+| Escape on the POS jumped to the dashboard | A mid-sale cart could be lost by accident | Escape now goes back one step inside the till |
+| The POS appeared inside the app shell (two sidebars and a top bar) | The full-screen layout was never actually full screen | The till now owns the whole screen |
 | `App.test.js` was the unmodified Create React App sample and could not pass | No working tests | Replaced with 10 real tests |
 
 ## 4. Needs a decision from the business
@@ -56,6 +76,8 @@ Make the product easy to start, easy to use and easy to understand, with a moder
 4. **Repository clutter:** the project root holds about 60 planning documents and a 5 MB archive (`pos_frontend.tar.gz`). I did not move or delete them. Consider a `docs/` folder and removing the archive.
 
 ## 5. Phase 2 (recommended next)
+
+0. Test the till on the real POS hardware (touch screen, barcode scanner, receipt printer). Confirm how product barcodes are returned by the server; the till reads a `barcode` field or a `barcodes` list.
 
 1. Move existing list pages (Products, Customers, Suppliers, Staff, Inventory) to the shared `PageHeader`, `FilterBar` and `DataTable`, and add friendly empty states to each. They already inherit the new look, but not the new patterns.
 2. Point of sale screen: review for speed on tablets (large touch targets, barcode focus, a clear way back to the dashboard).
