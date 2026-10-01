@@ -12,6 +12,8 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run build
+        env:
+          CI: false
       - uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr --delete
