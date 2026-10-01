@@ -4,7 +4,7 @@ import {
   Typography,
   Container,
   Paper,
-  Grid,
+  GridLegacy as Grid,
   TextField,
   Button,
   Alert,

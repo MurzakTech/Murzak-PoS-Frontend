@@ -14,7 +14,7 @@ import {
   Autocomplete,
   Chip,
   Divider,
-  Grid,
+  GridLegacy as Grid,
 } from '@mui/material';
 import { Star, Search } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';

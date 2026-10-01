@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Button, useTheme, Grid, Paper, alpha } from '@mui/material';
+import { Box, Container, Typography, Button, useTheme, GridLegacy as Grid, Paper, alpha } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Email as EmailIcon, LocationOn as LocationIcon } from '@mui/icons-material';
-import logoMain from '../assets/logo_main.png';
+import logoMain from '../assets/logo_mark.png';
 
 const ContactUs = () => {
   const navigate = useNavigate();

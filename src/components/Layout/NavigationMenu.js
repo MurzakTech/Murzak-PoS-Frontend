@@ -1,201 +1,107 @@
 import React, { useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { List, Box, Divider, alpha } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import {
-  Dashboard,
-  Inventory,
-  PointOfSale,
-  Warehouse,
-  People,
-  Assessment,
-  Settings,
-  History,
-  Badge,
-  Add,
-  AttachMoney,
-  Category,
-  Upload,
-  Inventory2,
-  PriceCheck,
-  Straighten,
-  Folder,
-  BrandingWatermark,
-  Verified,
-  Business,
-  ShoppingCart,
-  AssignmentReturn,
-  AccountBalance,
-  Receipt,
-  Description,
-  Warning,
-  Input,
-  Output,
-  SwapHoriz,
-  Edit,
-  Sync,
-  Book,
-  Group,
-  List as ListIcon,
-  ListAlt,
-  CreditCard,
-  LocalOffer,
-  Security,
-  CloudDownload,
-} from '@mui/icons-material';
+import { List, Box, Divider, Typography } from '@mui/material';
 import { getNavigationRoutes } from '../../routes/routes';
 import NavigationItem from './NavigationItem';
+import iconMap from './iconMap';
 import useRoleAccess from '../../hooks/useRoleAccess';
 
-// Icon mapping
-const iconMap = {
-  Dashboard,
-  Inventory,
-  PointOfSale,
-  Warehouse,
-  People,
-  Assessment,
-  Settings,
-  History,
-  Badge,
-  Add,
-  AttachMoney,
-  Category,
-  Upload,
-  Inventory2,
-  PriceCheck,
-  Straighten,
-  Folder,
-  BrandingWatermark,
-  Verified,
-  Business,
-  ShoppingCart,
-  AssignmentReturn,
-  AccountBalance,
-  Receipt,
-  Description,
-  Warning,
-  Input,
-  Output,
-  SwapHoriz,
-  Edit,
-  Sync,
-  Book,
-  Group,
-  List: ListIcon,
-  ListAlt,
-  CreditCard,
-  LocalOffer,
-  Security,
-  CloudDownload,
-};
+/**
+ * Sidebar sections. Grouping by the job a person is doing ("Sell", "Stock",
+ * "Buy") is easier to learn than one long flat list of 12 modules.
+ *
+ * Any route that is not listed here falls into "More", so adding a new
+ * module to routes.js never makes it disappear from the menu.
+ */
+const NAV_GROUPS = [
+  { title: null, paths: ['/dashboard'] },
+  { title: 'Sell', paths: ['/sales', '/customers'] },
+  { title: 'Stock', paths: ['/products', '/inventory', '/warehouses', '/stock-transfers'] },
+  { title: 'Buy', paths: ['/purchases', '/suppliers'] },
+  { title: 'Insights', paths: ['/reports'] },
+  { title: 'Team', paths: ['/staff', '/roles'] },
+];
+const BOTTOM_PATHS = ['/settings'];
 
 const NavigationMenu = React.memo(({ desktopOpen, onNavigate }) => {
-  const theme = useTheme();
   const location = useLocation();
   const { filterRoutes, hasAccess } = useRoleAccess();
   const allNavigationRoutes = useMemo(() => getNavigationRoutes(), []);
-  
-  // Filter routes based on user roles - only show top-level menu items
-  const navigationRoutes = useMemo(() => {
-    return filterRoutes(allNavigationRoutes).filter((route) => !route.hideFromMenu);
-  }, [allNavigationRoutes, filterRoutes]);
-  
-  // Separate main routes from bottom-fixed routes (like Settings)
-  const { mainRoutes, bottomRoutes } = useMemo(() => {
-    const main = navigationRoutes.filter((route) => !route.isBottomFixed);
-    const bottom = navigationRoutes.filter((route) => route.isBottomFixed);
-    return { mainRoutes: main, bottomRoutes: bottom };
-  }, [navigationRoutes]);
 
-  // Check if a route is selected (including child paths)
-  const isRouteSelected = useCallback((route) => {
-    // Exact match
-    if (location.pathname === route.path) return true;
-    // Check if current path starts with route path (for nested pages)
-    if (route.path !== '/dashboard' && location.pathname.startsWith(route.path + '/')) return true;
-    // Check pageChildren if defined
-    if (route.pageChildren) {
-      return route.pageChildren.some((child) => {
-        if (location.pathname === child.path) return true;
-        if (child.path !== route.path && location.pathname.startsWith(child.path + '/')) return true;
-        return false;
-      });
-    }
-    // Check children if defined (for backwards compatibility during transition)
-    if (route.children) {
-      return route.children.some((child) => {
-        if (child.path.includes(':')) {
-          const basePath = child.path.split(':')[0];
-          return location.pathname.startsWith(basePath);
-        }
-        return location.pathname === child.path || location.pathname.startsWith(child.path + '/');
-      });
-    }
-    return false;
-  }, [location.pathname]);
+  // Only top-level, visible routes this person is allowed to open
+  const visibleRoutes = useMemo(
+    () => filterRoutes(allNavigationRoutes).filter((r) => !r.hideFromMenu && r.path !== '*' && hasAccess(r.path)),
+    [allNavigationRoutes, filterRoutes, hasAccess]
+  );
 
-  // Helper function to filter and check route access
-  const filterRouteAccess = useCallback((route) => {
-    if (route.hideFromMenu) return false;
-    return hasAccess(route.path);
-  }, [hasAccess]);
+  const sections = useMemo(() => {
+    const byPath = new Map(visibleRoutes.map((r) => [r.path, r]));
+    const used = new Set(BOTTOM_PATHS);
+    const result = NAV_GROUPS.map((g) => {
+      const routes = g.paths.map((p) => byPath.get(p)).filter(Boolean);
+      g.paths.forEach((p) => used.add(p));
+      return { title: g.title, routes };
+    }).filter((s) => s.routes.length > 0);
 
-  // Helper function to render a route item
-  const renderRouteItem = useCallback((route) => {
-    const IconComponent = iconMap[route.icon] || iconMap.Dashboard || Inventory;
-    const isSelected = isRouteSelected(route);
+    const leftovers = visibleRoutes.filter((r) => !used.has(r.path));
+    if (leftovers.length) result.push({ title: 'More', routes: leftovers });
 
-    return (
-      <NavigationItem
-        key={route.path || route.label}
-        route={route}
-        isSelected={isSelected}
-        isExpanded={false}
-        hasChildren={false}
-        desktopOpen={desktopOpen}
-        IconComponent={IconComponent}
-        onNavigate={onNavigate}
-        onToggleExpand={() => {}}
-        isChildSelected={() => false}
-      />
-    );
-  }, [desktopOpen, isRouteSelected, onNavigate]);
+    const bottom = BOTTOM_PATHS.map((p) => byPath.get(p)).filter(Boolean);
+    return { main: result, bottom };
+  }, [visibleRoutes]);
+
+  // A route is "selected" for its own page and for any page nested inside it
+  const isRouteSelected = useCallback(
+    (route) => {
+      const path = location.pathname;
+      if (path === route.path) return true;
+      if (route.path !== '/dashboard' && path.startsWith(route.path + '/')) return true;
+      if (route.pageChildren) {
+        return route.pageChildren.some(
+          (c) => path === c.path || (c.path !== route.path && path.startsWith(c.path + '/'))
+        );
+      }
+      return false;
+    },
+    [location.pathname]
+  );
+
+  const renderItem = (route) => (
+    <NavigationItem
+      key={route.path}
+      route={route}
+      isSelected={isRouteSelected(route)}
+      desktopOpen={desktopOpen}
+      IconComponent={iconMap[route.icon] || iconMap.Dashboard}
+      onNavigate={onNavigate}
+    />
+  );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Main Navigation Routes */}
-    <List sx={{ 
-      flex: 1, 
-        px: 0.25,
-        py: 1,
-      overflowY: 'auto',
-      overflowX: 'hidden',
-      scrollBehavior: 'smooth',
-      '&::-webkit-scrollbar': {
-          width: '3px',
-        },
-        '&::-webkit-scrollbar-track': {
-        background: 'transparent',
-      },
-        '&::-webkit-scrollbar-thumb': {
-          background: alpha(theme.palette.text.secondary, 0.2),
-          borderRadius: '3px',
-        },
-        '&::-webkit-scrollbar-thumb:hover': {
-          background: alpha(theme.palette.text.secondary, 0.3),
-        },
-      }}>
-        {mainRoutes.filter(filterRouteAccess).map(renderRouteItem)}
-      </List>
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <Box component="nav" aria-label="Main" sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: 1.5, py: 0.5 }}>
+        {sections.main.map((section, i) => (
+          <Box key={section.title || 'top'} sx={{ mt: i === 0 ? 0 : 1 }}>
+            {section.title &&
+              (desktopOpen ? (
+                <Typography
+                  variant="overline"
+                  sx={{ display: 'block', px: 1.5, pb: 0.25, color: 'text.disabled', lineHeight: 1.7 }}
+                >
+                  {section.title}
+                </Typography>
+              ) : (
+                <Divider sx={{ mx: 1, mb: 1 }} />
+              ))}
+            <List disablePadding>{section.routes.map(renderItem)}</List>
+          </Box>
+        ))}
+      </Box>
 
-      {/* Bottom Fixed Routes (Settings) */}
-      {bottomRoutes.filter(filterRouteAccess).length > 0 && (
-        <Box sx={{ flexShrink: 0, pb: 5 }}>
-          <Divider sx={{ mx: 1, my: 0.5 }} />
-          <List sx={{ px: 0.25, py: 0.5 }}>
-            {bottomRoutes.filter(filterRouteAccess).map(renderRouteItem)}
-          </List>
+      {sections.bottom.length > 0 && (
+        <Box sx={{ px: 1.5, pb: 1 }}>
+          <Divider sx={{ mb: 1 }} />
+          <List disablePadding>{sections.bottom.map(renderItem)}</List>
         </Box>
       )}
     </Box>
@@ -205,4 +111,3 @@ const NavigationMenu = React.memo(({ desktopOpen, onNavigate }) => {
 NavigationMenu.displayName = 'NavigationMenu';
 
 export default NavigationMenu;
-

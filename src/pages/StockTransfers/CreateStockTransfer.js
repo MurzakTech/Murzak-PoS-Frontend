@@ -7,7 +7,7 @@ import {
   Button,
   Container,
   Paper,
-  Grid,
+  GridLegacy as Grid,
   TextField,
   FormControl,
   InputLabel,

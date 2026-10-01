@@ -4,7 +4,7 @@ import {
   Box,
   Container,
   Typography,
-  Grid,
+  GridLegacy as Grid,
   Paper,
   Card,
   CardContent,

@@ -21,7 +21,7 @@ import {
   useTheme,
   alpha,
   Checkbox,
-  Grid,
+  GridLegacy as Grid,
 } from '@mui/material';
 import {
   Download,

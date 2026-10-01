@@ -3,7 +3,7 @@ import {
   Box,
   Typography,
   Paper,
-  Grid,
+  GridLegacy as Grid,
   TextField,
   Button,
   Table,

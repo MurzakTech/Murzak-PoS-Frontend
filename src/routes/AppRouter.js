@@ -1,38 +1,13 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
 import { publicRoutes, protectedRoutes, protectedRoutesWithoutLayout, routes } from './routes';
 import Layout from '../components/Layout/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
+import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Common';
 
-// Full-screen loading fallback component (for public routes)
-const LoadingFallback = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-    }}
-  >
-    <CircularProgress />
-  </Box>
-);
-
-// Content loading fallback component (for use within Layout)
-const ContentLoadingFallback = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: 'calc(100vh - 200px)',
-      width: '100%',
-    }}
-  >
-    <CircularProgress />
-  </Box>
-);
+// Branded splash for public pages; layout-shaped skeleton inside the app shell
+const LoadingFallback = FullPageLoader;
+const ContentLoadingFallback = PageSkeleton;
 
 // Recursive function to render nested route children
 // Note: Child routes should NOT be wrapped in Layout since they're rendered via <Outlet />
@@ -84,6 +59,7 @@ const renderRouteChildren = (children, parentPath) => {
 
 const AppRouter = () => {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
           {/* Public routes (without Layout) */}
@@ -200,6 +176,7 @@ const AppRouter = () => {
             })}
         </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

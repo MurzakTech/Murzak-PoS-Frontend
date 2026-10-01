@@ -5,7 +5,7 @@ import {
   Button,
   TextField,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
   Dialog,
   DialogTitle,
   DialogContent,

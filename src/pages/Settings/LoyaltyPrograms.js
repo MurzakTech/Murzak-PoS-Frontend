@@ -12,7 +12,7 @@ import {
   DialogContent,
   DialogActions,
   Chip,
-  Grid,
+  GridLegacy as Grid,
   FormControl,
   InputLabel,
   Select,

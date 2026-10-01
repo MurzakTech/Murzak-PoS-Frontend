@@ -29,7 +29,7 @@ import {
   Menu,
   Switch,
   FormControlLabel,
-  Grid,
+  GridLegacy as Grid,
   Avatar,
   alpha,
   InputAdornment,

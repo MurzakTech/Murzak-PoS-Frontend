@@ -14,22 +14,27 @@ const NotificationProvider = ({ children }) => {
     dispatch(clearNotification());
   };
 
+  // On the till, messages sit compactly in the middle of the header so they never cover
+  // the customer button, the search box or the Charge button.
+  const onTill = typeof window !== 'undefined' && window.location.pathname.startsWith('/sales/pos');
+
   return (
     <>
       {children}
       <Snackbar
         open={open}
-        autoHideDuration={duration || 6000}
+        autoHideDuration={onTill ? Math.min(duration || 6000, 4000) : duration || 6000}
         onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={onTill ? { vertical: 'top', horizontal: 'center' } : { vertical: 'top', horizontal: 'right' }}
+        sx={onTill ? { top: '6px !important', maxWidth: 'min(520px, calc(100vw - 32px))' } : undefined}
       >
-        <Alert 
-          onClose={handleClose} 
-          severity={severity || 'info'} 
+        <Alert
+          onClose={handleClose}
+          severity={severity || 'info'}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: '100%', ...(onTill ? { py: 0, alignItems: 'center', boxShadow: 6 } : {}) }}
         >
-          {title && <AlertTitle>{title}</AlertTitle>}
+          {title && !onTill && <AlertTitle>{title}</AlertTitle>}
           {message}
         </Alert>
       </Snackbar>

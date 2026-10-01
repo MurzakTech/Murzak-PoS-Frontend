@@ -8,7 +8,7 @@ import {
   Select,
   MenuItem,
   Button,
-  Grid,
+  GridLegacy as Grid,
   IconButton,
   Typography,
 } from '@mui/material';

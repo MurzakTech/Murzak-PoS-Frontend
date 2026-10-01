@@ -7,7 +7,7 @@ import {
   Typography,
   TextField,
   Button,
-  Grid,
+  GridLegacy as Grid,
   CircularProgress,
   Alert,
   Divider,

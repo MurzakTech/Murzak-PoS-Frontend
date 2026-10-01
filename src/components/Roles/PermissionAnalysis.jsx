@@ -4,7 +4,7 @@ import {
   Typography,
   Paper,
   Chip,
-  Grid,
+  GridLegacy as Grid,
   CircularProgress,
   Divider,
   Alert,

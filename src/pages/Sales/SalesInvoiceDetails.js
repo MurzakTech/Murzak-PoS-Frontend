@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
   Paper,
-  Grid,
+  GridLegacy as Grid,
   Container,
   CircularProgress,
   Card,

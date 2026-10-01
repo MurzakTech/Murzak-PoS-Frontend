@@ -16,7 +16,7 @@ import {
   Menu,
   Switch,
   FormControlLabel,
-  Grid,
+  GridLegacy as Grid,
   InputAdornment,
   Tabs,
   Tab,

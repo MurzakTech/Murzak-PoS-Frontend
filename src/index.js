@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
+import '@fontsource-variable/inter';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -10,25 +10,28 @@ import {
   useTheme,
   useMediaQuery,
   Avatar,
-  alpha,
   Tooltip,
   Button,
-  FormControl,
   Select,
   MenuItem,
   Breadcrumbs,
   Link,
+  ButtonBase,
+  Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Menu as MenuIcon,
   ChevronLeft,
   ChevronRight,
-  Brightness4,
-  Brightness7,
+  DarkModeOutlined,
+  LightModeOutlined,
   PointOfSale,
-  Inventory2,
-  Home,
+  StorefrontOutlined,
   NavigateNext,
+  Search,
+  HelpOutline,
+  KeyboardArrowDown,
 } from '@mui/icons-material';
 import { useThemeMode } from '../../theme/ThemeProvider';
 import { getNavigationRoutes } from '../../routes/routes';
@@ -38,37 +41,77 @@ import UserMenu from './UserMenu';
 import SystemStatus from './SystemStatus';
 import NavigationMenu from './NavigationMenu';
 import PageSidebar from './PageSidebar';
-import logoIcon from '../../assets/logo_icon.png';
+import CommandPalette from './CommandPalette';
+import BrandLogo from '../Common/BrandLogo';
+import ErrorBoundary from '../Common/ErrorBoundary';
 
-const drawerWidth = 200;
-const collapsedDrawerWidth = 52;
+const SIDEBAR_KEY = 'sidebarCollapsed';
+
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === 'true';
+  } catch (e) {
+    return false;
+  }
+};
+
+// Work out the "Home > Section > Page" trail for the current URL
+const buildBreadcrumbs = (pathname, routes) => {
+  const current = routes.find((r) => {
+    if (pathname === r.path) return true;
+    if (r.pageChildren) {
+      return r.pageChildren.some((c) => pathname === c.path || pathname.startsWith(c.path + '/'));
+    }
+    return pathname.startsWith(r.path + '/');
+  });
+  if (!current) return [];
+
+  const dynamicChild = routes.find(
+    (r) => r.hideFromMenu && r.parentPath && pathname.startsWith(r.path.split(':')[0])
+  );
+  const matchedChild = current.pageChildren?.find(
+    (c) => c.path !== current.path && (pathname === c.path || pathname.startsWith(c.path + '/'))
+  );
+  const childLabel = matchedChild?.label || dynamicChild?.label || null;
+
+  return childLabel
+    ? [{ label: current.label, to: current.path }, { label: childLabel }]
+    : [{ label: current.label }];
+};
 
 const Layout = ({ children }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, toggleColorMode } = useThemeMode();
   const { user } = useAppSelector((state) => state.auth);
   const { warehouses, activeWarehouse, defaultWarehouse, isLoading } = useAppSelector((state) => state.warehouse);
 
-  const navigationRoutes = getNavigationRoutes();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // Always collapsed by default, expands on hover
-  const isExpanded = isMobile || isHovered;
-  const currentDrawerWidth = isMobile ? drawerWidth : (isExpanded ? drawerWidth : collapsedDrawerWidth);
-  
-  // Check if we're on POS route - render full screen without drawer
-  const isPOSRoute = location.pathname === '/sales';
+  const { sidebar, topbarHeight } = theme.custom;
+  const railWidth = collapsed ? sidebar.collapsedWidth : sidebar.width;
+  const navigationRoutes = useMemo(() => getNavigationRoutes(), []);
+  const breadcrumbs = useMemo(
+    () => buildBreadcrumbs(location.pathname, navigationRoutes),
+    [location.pathname, navigationRoutes]
+  );
 
-  const userCompany = user?.company || user?.custom_company || user?.company_name ||
-    user?.company_data?.name || user?.company_data?.company_name;
+  // The point-of-sale screen is full-screen, without the app shell
+  const isPOSRoute = location.pathname === '/sales' || location.pathname === '/sales/pos';
 
-  // Fetch warehouses and default warehouse on mount
+  const userCompany =
+    user?.company ||
+    user?.custom_company ||
+    user?.company_name ||
+    user?.company_data?.name ||
+    user?.company_data?.company_name;
+
   useEffect(() => {
     if (userCompany) {
       dispatch(listWarehouses({ company: userCompany, limit: 1000 }));
@@ -76,590 +119,374 @@ const Layout = ({ children }) => {
     }
   }, [dispatch, userCompany]);
 
-  // Initialize activeWarehouse if not set
+  // Pick a sensible active store the first time stores load
   useEffect(() => {
     if (warehouses.length > 0 && !activeWarehouse) {
-      // Use default warehouse if available, otherwise first warehouse
-      const warehouseToSet = defaultWarehouse || warehouses.find(w => w.is_default) || warehouses[0];
-      if (warehouseToSet) {
-        dispatch(setActiveWarehouse(warehouseToSet));
-      }
+      const pick = defaultWarehouse || warehouses.find((w) => w.is_default) || warehouses[0];
+      if (pick) dispatch(setActiveWarehouse(pick));
     }
   }, [warehouses, defaultWarehouse, activeWarehouse, dispatch]);
 
-  // Handle warehouse selection change
+  // Ctrl/Cmd + K (or "/") opens quick search from anywhere
+  useEffect(() => {
+    if (isPOSRoute) return undefined;
+    const onKeyDown = (e) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName) || e.target?.isContentEditable;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen(true);
+      } else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isPOSRoute]);
+
   const handleWarehouseChange = (event) => {
-    const selectedWarehouseName = event.target.value;
-    const selectedWarehouse = warehouses.find(
-      (w) => w.name === selectedWarehouseName || w.warehouse_name === selectedWarehouseName
-    );
-    if (selectedWarehouse) {
-      dispatch(setActiveWarehouse(selectedWarehouse));
-    }
+    const picked = warehouses.find((w) => w.name === event.target.value || w.warehouse_name === event.target.value);
+    if (picked) dispatch(setActiveWarehouse(picked));
   };
 
-  const handleDrawerToggle = useCallback(() => {
-    if (isMobile) {
-      setMobileOpen((prev) => !prev);
-    }
-  }, [isMobile]);
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(next));
+      } catch (e) {
+        // preference just won't persist
+      }
+      return next;
+    });
+  };
 
-  const handleMouseEnter = useCallback(() => {
-    if (!isMobile) {
-      setIsHovered(true);
-    }
-  }, [isMobile]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!isMobile) {
-      setIsHovered(false);
-    }
-  }, [isMobile]);
-
-  const handleNavigation = useCallback((path) => {
-    navigate(path);
-    if (isMobile) {
+  const handleNavigation = useCallback(
+    (path) => {
+      navigate(path);
       setMobileOpen(false);
-    }
-  }, [navigate, isMobile]);
+    },
+    [navigate]
+  );
 
-  const handleUserMenuOpen = (event) => {
-    setUserMenuAnchor(event.currentTarget);
-  };
-
-  const handleUserMenuClose = () => {
-    setUserMenuAnchor(null);
-  };
-
-  const handleSync = async () => {
-    // TODO: Implement sync functionality
-    console.log('Syncing data...');
-  };
-
-  // Memoize drawer content
-  const drawer = useMemo(() => (
+  const sidebarContent = (isCollapsed) => (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Logo/Header Section */}
-      <Toolbar
+      <Box
         sx={{
-          minHeight: 44,
-          px: 1.25,
+          height: topbarHeight,
+          px: isCollapsed ? 0 : 2.5,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-start',
-          borderBottom: 1,
-          borderColor: alpha(theme.palette.divider, 0.5),
+          justifyContent: isCollapsed ? 'center' : 'flex-start',
+          flexShrink: 0,
         }}
       >
-            <Box
-              component="img"
-              src={logoIcon}
-              alt="Murzak POS"
-          sx={{
-            height: isExpanded ? 24 : 22,
-            width: isExpanded ? 24 : 22,
-            transition: 'all 0.2s ease',
-          }}
-        />
-        {isExpanded && (
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{
-              fontWeight: 700,
-              fontSize: '0.8125rem',
-              ml: 1,
-              color: 'text.primary',
-              opacity: isExpanded ? 1 : 0,
-              transition: 'opacity 0.2s ease',
-            }}
-          >
-            Murzak POS
-          </Typography>
-        )}
-      </Toolbar>
-      
-      {/* Navigation Menu */}
-      <NavigationMenu 
-        desktopOpen={isExpanded}
-        onNavigate={handleNavigation}
-      />
+        <ButtonBase component={RouterLink} to="/dashboard" aria-label="Murzak POS home" sx={{ borderRadius: 2 }}>
+          <BrandLogo size={isCollapsed ? 30 : 32} showText={!isCollapsed} textVariant="h5" />
+        </ButtonBase>
+      </Box>
+
+      <NavigationMenu desktopOpen={!isCollapsed} onNavigate={handleNavigation} />
+
+      {!isMobile && (
+        <Box sx={{ px: 1.5, pb: 1.5 }}>
+          <Tooltip title={isCollapsed ? 'Expand menu' : ''} placement="right">
+            <Button
+              fullWidth
+              size="small"
+              color="inherit"
+              onClick={toggleCollapsed}
+              aria-label={isCollapsed ? 'Expand menu' : 'Collapse menu'}
+              startIcon={isCollapsed ? null : <ChevronLeft />}
+              sx={{
+                color: 'text.secondary',
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                minWidth: 0,
+                px: isCollapsed ? 0 : 1.5,
+              }}
+            >
+              {isCollapsed ? <ChevronRight /> : 'Collapse menu'}
+            </Button>
+          </Tooltip>
+        </Box>
+      )}
     </Box>
-  ), [isExpanded, isMobile, handleNavigation, theme.palette.divider]);
+  );
+
+  const userInitial = (user?.first_name?.[0] || user?.full_name?.[0] || user?.email?.[0] || 'U').toUpperCase();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* AppBar - Top Navigation - Hide for POS route */}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Skip link for keyboard users */}
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute',
+          left: -9999,
+          '&:focus': { left: 12, top: 12, zIndex: 2000, bgcolor: 'background.paper', p: 1.5, borderRadius: 2, boxShadow: 4 },
+        }}
+      >
+        Skip to content
+      </Box>
+
       {!isPOSRoute && (
         <AppBar
           position="fixed"
-          elevation={0}
           sx={{
-            width: { md: `calc(100% - ${collapsedDrawerWidth}px)` },
-            ml: { md: `${collapsedDrawerWidth}px` },
-            backgroundColor: 'background.paper',
+            width: { md: `calc(100% - ${railWidth}px)` },
+            ml: { md: `${railWidth}px` },
+            backgroundColor: (t) => alpha(t.palette.background.default, 0.85),
+            backdropFilter: 'blur(10px)',
             borderBottom: 1,
             borderColor: 'divider',
+            transition: theme.transitions.create(['width', 'margin'], { duration: 200 }),
           }}
         >
-        <Toolbar sx={{ minHeight: 44, px: { xs: 1, sm: 1.5 } }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            size="small"
-            sx={{ 
-              mr: 1.5,
-              display: { md: 'none' },
-              color: 'text.primary',
-            }}
-          >
-            <MenuIcon sx={{ fontSize: '1.125rem' }} />
-          </IconButton>
+          <Toolbar sx={{ gap: 1, px: { xs: 1.5, sm: 2.5 } }}>
+            <IconButton
+              aria-label="Open menu"
+              edge="start"
+              onClick={() => setMobileOpen(true)}
+              sx={{ display: { md: 'none' }, color: 'text.primary' }}
+            >
+              <MenuIcon />
+            </IconButton>
 
-          {/* Breadcrumbs Navigation */}
-          <Breadcrumbs
-            separator={<NavigateNext sx={{ fontSize: '1rem', color: 'text.disabled' }} />}
-            sx={{ 
-              flexGrow: 1,
-              minWidth: 0,
-              overflow: 'hidden',
-              '& .MuiBreadcrumbs-ol': {
-                flexWrap: 'nowrap',
-                alignItems: 'center',
-                overflow: 'hidden',
-              },
-              '& .MuiBreadcrumbs-li': {
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              },
-              '& .MuiBreadcrumbs-separator': {
-                mx: 0.75,
-              },
-            }}
-          >
-            <Link
-              component={RouterLink}
-              to="/dashboard"
-              underline="hover"
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                color: 'text.secondary',
-                fontSize: '0.8125rem',
-                fontWeight: 500,
-                '&:hover': { color: 'primary.main' },
-            }}
-          >
-              <Home sx={{ fontSize: '1rem', mr: { xs: 0, sm: 0.5 } }} />
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Home</Box>
-            </Link>
-
-            {(() => {
-              const currentRoute = navigationRoutes.find((r) => {
-                if (location.pathname === r.path) return true;
-                if (r.pageChildren) {
-                  return r.pageChildren.some(
-                    (child) => location.pathname === child.path || location.pathname.startsWith(child.path + '/')
-                  );
-                }
-                return location.pathname.startsWith(r.path + '/');
-              });
-
-              const childRoute = navigationRoutes.find(
-                (r) => r.hideFromMenu && r.parentPath && location.pathname.startsWith(r.path.split(':')[0])
-              );
-
-              const isOnChildPage = childRoute || (currentRoute?.pageChildren?.some(
-                (c) => c.path !== currentRoute.path && (location.pathname === c.path || location.pathname.startsWith(c.path + '/'))
-              ));
-
-              let currentChildLabel = null;
-              if (currentRoute?.pageChildren) {
-                const matchedChild = currentRoute.pageChildren.find(
-                  (c) => c.path !== currentRoute.path && (location.pathname === c.path || location.pathname.startsWith(c.path + '/'))
-                );
-                if (matchedChild) currentChildLabel = matchedChild.label;
-              }
-              if (!currentChildLabel && childRoute) {
-                currentChildLabel = childRoute.label;
-              }
-
-              const breadcrumbItems = [];
-              
-              if (currentRoute) {
-                if (isOnChildPage) {
-                  breadcrumbItems.push(
-                    <Link
-                      key="parent"
-                      component={RouterLink}
-                      to={currentRoute.path}
-                      underline="hover"
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        '&:hover': { color: 'primary.main' },
-                      }}
-                    >
-                      {currentRoute.label}
-                    </Link>
-                  );
-                } else {
-                  breadcrumbItems.push(
-                    <Typography
-                      key="current"
-                      sx={{
-                        color: 'text.primary',
-                        fontSize: '0.8125rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {currentRoute.label}
-                    </Typography>
-                  );
-                }
-              }
-
-              if (isOnChildPage && currentChildLabel) {
-                breadcrumbItems.push(
-                  <Typography
-                    key="child"
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {currentChildLabel}
+            <Breadcrumbs
+              separator={<NavigateNext sx={{ fontSize: '1rem', color: 'text.disabled' }} />}
+              sx={{ display: { xs: 'none', lg: 'block' }, minWidth: 0, mr: 1 }}
+              aria-label="Breadcrumb"
+            >
+              {breadcrumbs.length === 0 && <Typography variant="subtitle2">Murzak POS</Typography>}
+              {breadcrumbs.map((b, i) =>
+                b.to && i < breadcrumbs.length - 1 ? (
+                  <Link key={b.label} component={RouterLink} to={b.to} underline="hover" color="text.secondary" variant="subtitle2">
+                    {b.label}
+                  </Link>
+                ) : (
+                  <Typography key={b.label} variant="subtitle2" color="text.primary" noWrap>
+                    {b.label}
                   </Typography>
-                );
-              }
+                )
+              )}
+            </Breadcrumbs>
 
-              return breadcrumbItems;
-            })()}
-          </Breadcrumbs>
-          
-          {/* Warehouse Selection Dropdown */}
-          {warehouses.length > 0 && (
-            <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', mx: 1 }}>
-              <Inventory2 
-                sx={{ 
-                  mr: 0.5,
-                  fontSize: '1rem',
-                  color: 'text.secondary',
-                  display: { xs: 'none', sm: 'block' },
-                }} 
-              />
-              <FormControl 
-                size="small" 
-                sx={{ 
-                  minWidth: { xs: 120, sm: 160 },
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'background.paper',
-                    border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                    '&:hover': {
-                      borderColor: alpha(theme.palette.primary.main, 0.5),
-                    },
-                    '&.Mui-focused': {
-                      borderColor: theme.palette.primary.main,
-                    },
-                  },
+            {/* Quick search */}
+            <ButtonBase
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Search pages and actions"
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                alignItems: 'center',
+                gap: 1,
+                flex: '0 1 340px',
+                minWidth: 0,
+                height: 38,
+                px: 1.5,
+                borderRadius: 2.5,
+                border: 1,
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                color: 'text.secondary',
+                justifyContent: 'flex-start',
+                transition: 'border-color .15s ease, box-shadow .15s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.primary.main, 0.12)}`,
+                },
+              }}
+            >
+              <Search sx={{ fontSize: 18 }} />
+              <Typography variant="body2" noWrap sx={{ flex: 1, textAlign: 'left' }}>
+                Search or jump to...
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 0.75,
+                  py: 0.125,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  fontWeight: 600,
+                  display: { xs: 'none', md: 'block' },
                 }}
               >
-                <Select
-                  value={activeWarehouse?.name || activeWarehouse?.warehouse_name || ''}
-                  onChange={handleWarehouseChange}
-                  displayEmpty
-                  disabled={isLoading}
-                  sx={{
-                    fontSize: '0.75rem',
-                    '& .MuiSelect-select': {
-                      py: 0.75,
-                      px: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                    },
-                  }}
-                >
-                  {warehouses.map((warehouse) => (
-                    <MenuItem key={warehouse.name} value={warehouse.name} sx={{ py: 0.75, fontSize: '0.75rem' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, width: '100%' }}>
-                        <Inventory2 sx={{ fontSize: '0.875rem', color: 'text.secondary' }} />
-                        <Typography variant="caption" noWrap sx={{ flex: 1 }}>
-                          {warehouse.warehouse_name || warehouse.name}
-                        </Typography>
-                        {warehouse.is_default && (
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: 'primary.main',
-                              fontWeight: 600,
-                              fontSize: '0.6rem',
-                              ml: 'auto',
-                            }}
-                          >
-                            (Default)
-                          </Typography>
-                        )}
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-          )}
-          
-          {/* Quick Access POS Button */}
-          <Tooltip title="Open Point of Sale">
+                {/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}
+              </Typography>
+            </ButtonBase>
+            <IconButton
+              aria-label="Search pages and actions"
+              onClick={() => setPaletteOpen(true)}
+              sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: 'text.primary' }}
+            >
+              <Search />
+            </IconButton>
+
+            <Box sx={{ flexGrow: 1 }} />
+
+            {warehouses.length > 0 && (
+              <Select
+                value={activeWarehouse?.name || activeWarehouse?.warehouse_name || ''}
+                onChange={handleWarehouseChange}
+                displayEmpty
+                disabled={isLoading}
+                size="small"
+                IconComponent={KeyboardArrowDown}
+                inputProps={{ 'aria-label': 'Active store' }}
+                startAdornment={<StorefrontOutlined sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />}
+                sx={{
+                  display: { xs: 'none', md: 'inline-flex' },
+                  minWidth: 150,
+                  maxWidth: 220,
+                  bgcolor: 'background.paper',
+                  '& .MuiSelect-select': { py: 0.9, fontSize: '0.8125rem', fontWeight: 600 },
+                }}
+              >
+                {warehouses.map((w) => (
+                  <MenuItem key={w.name} value={w.name} sx={{ fontSize: '0.8125rem' }}>
+                    {w.warehouse_name || w.name}
+                    {w.is_default ? (
+                      <Typography component="span" variant="caption" sx={{ ml: 1, color: 'primary.main', fontWeight: 700 }}>
+                        Default
+                      </Typography>
+                    ) : null}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+
             <Button
               variant="contained"
-              size="small"
-              startIcon={<PointOfSale sx={{ fontSize: '1rem' }} />}
+              startIcon={<PointOfSale />}
               onClick={() => handleNavigation('/sales')}
               sx={{
-                ml: 1,
-                mr: 0.5,
-                display: { xs: 'none', sm: 'flex' },
-                backgroundColor: theme.palette.primary.main,
-                color: 'white',
-                fontWeight: 600,
-                textTransform: 'none',
-                px: 1.5,
-                py: 0.5,
-                fontSize: '0.75rem',
-                borderRadius: 1.5,
-                boxShadow: `0 2px 6px ${alpha(theme.palette.primary.main, 0.25)}`,
-                '&:hover': {
-                  backgroundColor: theme.palette.primary.dark,
-                  boxShadow: `0 3px 8px ${alpha(theme.palette.primary.main, 0.35)}`,
-                },
-                transition: 'all 0.2s ease-in-out',
+                display: { xs: 'none', sm: 'inline-flex' },
+                background: (t) => t.custom.gradient,
+                color: '#fff',
+                boxShadow: (t) => `0 4px 14px ${alpha(t.palette.primary.main, 0.35)}`,
+                '&:hover': { background: (t) => t.custom.gradient, filter: 'brightness(1.08)' },
               }}
             >
-              POS
+              Open POS
             </Button>
-          </Tooltip>
-
-          {/* Mobile POS Button */}
-          <Tooltip title="Open Point of Sale">
-            <IconButton
-              size="small"
-              onClick={() => handleNavigation('/sales')}
-              sx={{
-                ml: 1,
-                mr: 0.5,
-                display: { xs: 'flex', sm: 'none' },
-                color: 'white',
-                backgroundColor: theme.palette.primary.main,
-                p: 0.75,
-                '&:hover': {
-                  backgroundColor: theme.palette.primary.dark,
-                },
-                transition: 'all 0.2s ease-in-out',
-                boxShadow: `0 2px 6px ${alpha(theme.palette.primary.main, 0.25)}`,
-              }}
-            >
-              <PointOfSale sx={{ fontSize: '1.125rem' }} />
-            </IconButton>
-          </Tooltip>
-          
-          {/* System Status */}
-          <SystemStatus onSync={handleSync} />
-          
-          {/* Theme Toggle */}
-          <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-            <IconButton 
-              onClick={toggleColorMode} 
-              sx={{ 
-                ml: 1,
-                color: 'text.primary',
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-          </Tooltip>
-          
-          {/* User Menu */}
-          <Tooltip title={user?.full_name || user?.email || 'User'}>
-            <IconButton
-              onClick={handleUserMenuOpen}
-              size="small"
-              sx={{
-                ml: 0.5,
-                p: 0.25,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <Avatar
-                sx={{
-                  width: 30,
-                  height: 30,
-                  bgcolor: 'primary.main',
-                  fontSize: '0.75rem',
-                }}
+            <Tooltip title="Open point of sale">
+              <IconButton
+                aria-label="Open point of sale"
+                onClick={() => handleNavigation('/sales')}
+                sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: '#fff', background: (t) => t.custom.gradient }}
               >
-                {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-              </Avatar>
-            </IconButton>
-          </Tooltip>
-        </Toolbar>
-      </AppBar>
+                <PointOfSale />
+              </IconButton>
+            </Tooltip>
+
+            <SystemStatus />
+
+            <Tooltip title="Help and support">
+              <IconButton
+                component="a"
+                href="/contact-us"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Help and support"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' }, color: 'text.secondary' }}
+              >
+                <HelpOutline />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+              <IconButton onClick={toggleColorMode} aria-label="Toggle colour theme" sx={{ color: 'text.secondary' }}>
+                {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
+              </IconButton>
+            </Tooltip>
+
+            <Divider orientation="vertical" flexItem sx={{ my: 1.25, display: { xs: 'none', sm: 'block' } }} />
+
+            <Tooltip title={user?.full_name || user?.email || 'Account'}>
+              <IconButton onClick={(e) => setUserMenuAnchor(e.currentTarget)} aria-label="Account menu" sx={{ p: 0.5 }}>
+                <Avatar
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {userInitial}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+          </Toolbar>
+        </AppBar>
       )}
-      
-      {/* Hide drawer and navigation for POS route */}
+
       {!isPOSRoute && (
         <Box
-          component="nav"
-          sx={{ 
-            width: { md: collapsedDrawerWidth },
-            flexShrink: 0,
-          }}
+          component="aside"
+          sx={{ width: { md: railWidth }, flexShrink: 0, transition: theme.transitions.create('width', { duration: 200 }) }}
         >
-          {/* Mobile Drawer */}
+          {/* Phone / tablet: slide-over menu */}
           <Drawer
             variant="temporary"
             open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true,
-            }}
+            onClose={() => setMobileOpen(false)}
+            ModalProps={{ keepMounted: true }}
             sx={{
               display: { xs: 'block', md: 'none' },
-              '& .MuiDrawer-paper': {
-                boxSizing: 'border-box',
-                width: drawerWidth,
-                borderRight: 1,
-                borderColor: 'divider',
-                borderRadius: 0,
-              },
+              '& .MuiDrawer-paper': { width: sidebar.width, maxWidth: '85vw', bgcolor: sidebar.background },
             }}
           >
-            {drawer}
+            {sidebarContent(false)}
           </Drawer>
 
-          {/* Desktop Drawer - Always collapsed, expands on hover as overlay */}
+          {/* Desktop: permanent sidebar that never covers the page */}
           <Drawer
             variant="permanent"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            open
             sx={{
               display: { xs: 'none', md: 'block' },
               '& .MuiDrawer-paper': {
+                width: railWidth,
                 boxSizing: 'border-box',
-                width: currentDrawerWidth,
+                bgcolor: sidebar.background,
                 borderRight: 1,
                 borderColor: 'divider',
-                borderRadius: 0,
-                transition: theme.transitions.create('width', {
-                  easing: theme.transitions.easing.easeOut,
-                  duration: 200,
-                }),
                 overflowX: 'hidden',
-                zIndex: isExpanded ? theme.zIndex.drawer + 1 : theme.zIndex.drawer,
-                boxShadow: isExpanded ? '4px 0 12px rgba(0,0,0,0.1)' : 'none',
-                backgroundColor: 'background.paper',
+                transition: theme.transitions.create('width', { easing: theme.transitions.easing.easeOut, duration: 200 }),
               },
             }}
-            open
           >
-            {drawer}
-
-            {/* Toggle indicator at bottom */}
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: 12,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Box
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                  color: 'text.secondary',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.15),
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                {isExpanded ? (
-                  <ChevronLeft sx={{ fontSize: '1rem' }} />
-                ) : (
-                  <ChevronRight sx={{ fontSize: '1rem' }} />
-                )}
-              </Box>
-            </Box>
+            {sidebarContent(collapsed)}
           </Drawer>
         </Box>
       )}
-      
+
       <Box
         component="main"
-        sx={{
-          flexGrow: 1,
-          flexShrink: 1,
-          flexBasis: 0,
-          minHeight: '100vh',
-          backgroundColor: 'background.default',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+        id="main-content"
+        tabIndex={-1}
+        sx={{ flexGrow: 1, flexBasis: 0, minWidth: 0, minHeight: '100vh', display: 'flex', flexDirection: 'column', outline: 'none' }}
       >
-        {!isPOSRoute && <Toolbar sx={{ minHeight: 44 }} />}
-        <Box 
-          sx={{ 
-            flexGrow: 1, 
-            display: 'flex',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Page Sidebar for child navigation */}
+        {!isPOSRoute && <Toolbar />}
+        <Box sx={{ flexGrow: 1, display: 'flex', minHeight: 0 }}>
           {!isPOSRoute && !isMobile && <PageSidebar />}
-
-          {/* Main Content */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              p: isPOSRoute ? 0 : 2,
-              overflow: 'auto',
-            minWidth: 0,
-          }}
-        >
-          {children}
+          <Box sx={{ flexGrow: 1, p: isPOSRoute ? 0 : { xs: 2, md: 3 }, minWidth: 0, overflow: isPOSRoute ? 'hidden' : 'auto' }}>
+            {/* resetKey clears an error automatically when the person navigates elsewhere */}
+            <ErrorBoundary inline resetKey={location.pathname}>
+              {children}
+            </ErrorBoundary>
           </Box>
         </Box>
       </Box>
-      
-      {/* User Menu Component */}
-      <UserMenu
-        anchorEl={userMenuAnchor}
-        open={Boolean(userMenuAnchor)}
-        onClose={handleUserMenuClose}
-      />
+
+      <UserMenu anchorEl={userMenuAnchor} open={Boolean(userMenuAnchor)} onClose={() => setUserMenuAnchor(null)} />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={handleNavigation} />
     </Box>
   );
 };
 
 export default Layout;
-

@@ -6,7 +6,7 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
   FormControl,
   InputLabel,
   Select,

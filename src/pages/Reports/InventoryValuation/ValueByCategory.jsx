@@ -6,7 +6,7 @@ import {
   CircularProgress,
   Alert,
   Button,
-  Grid,
+  GridLegacy as Grid,
   Paper,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';

@@ -9,7 +9,7 @@ import {
   Paper,
   TextField,
   Chip,
-  Grid,
+  GridLegacy as Grid,
   Accordion,
   AccordionSummary,
   AccordionDetails,

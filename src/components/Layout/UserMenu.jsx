@@ -128,9 +128,14 @@ const UserMenu = ({ anchorEl, open, onClose }) => {
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 {user?.full_name || user?.email}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                 {user?.email}
               </Typography>
+              {(user?.company_name || user?.company) && (
+                <Typography variant="caption" color="primary" sx={{ display: 'block', fontWeight: 600 }}>
+                  {user?.company_name || user?.company}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Box>

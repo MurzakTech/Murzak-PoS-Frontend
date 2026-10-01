@@ -6,7 +6,7 @@ import {
   Button,
   Paper,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
   Container,
   Divider,
   Alert,

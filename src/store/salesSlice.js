@@ -1047,6 +1047,11 @@ const salesSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    // Adopt a shift that is already open on the server (e.g. after a refresh or a restart of the till)
+    resumePOSSession: (state, action) => {
+      state.posOpeningEntry = action.payload;
+      state.isPOSSessionOpen = true;
+    },
     setFilters: (state, action) => {
       state.filters = { ...state.filters, ...action.payload };
       // Reset to page 1 when filters change
@@ -1626,6 +1631,7 @@ const salesSlice = createSlice({
 
 // Export actions
 export const {
+  resumePOSSession,
   clearSelectedSalesInvoice,
   clearSelectedPOSInvoice,
   clearSelectedSalesReturn,

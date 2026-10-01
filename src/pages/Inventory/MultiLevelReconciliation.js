@@ -19,7 +19,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid,
+  GridLegacy as Grid,
   Container,
   Menu,
   Pagination,

@@ -7,7 +7,7 @@ import {
   Paper,
   TextField,
   CircularProgress,
-  Grid,
+  GridLegacy as Grid,
   Container,
   Table,
   TableBody,

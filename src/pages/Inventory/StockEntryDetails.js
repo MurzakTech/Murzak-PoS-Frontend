@@ -14,7 +14,7 @@ import {
   TableRow,
   Button,
   Chip,
-  Grid,
+  GridLegacy as Grid,
   Divider,
   IconButton,
   Card,

@@ -4,7 +4,7 @@ import {
   TextField,
   IconButton,
   Autocomplete,
-  Grid,
+  GridLegacy as Grid,
   Typography,
   Alert,
 } from '@mui/material';
