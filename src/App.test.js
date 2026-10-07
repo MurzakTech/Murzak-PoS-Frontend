@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from './theme/ThemeProvider';
 import EmptyState from './components/Common/EmptyState';
 import ErrorBoundary from './components/Common/ErrorBoundary';
-import { normalizeKenyanPhone, isValidKenyanMobile } from './utils/phone';
+import { normalizeKenyanPhone, isValidKenyanMobile, classifyLoginId } from './utils/phone';
 
 const wrap = (ui) => render(<ThemeProvider><MemoryRouter>{ui}</MemoryRouter></ThemeProvider>);
 
@@ -20,6 +20,13 @@ describe('phone numbers', () => {
 
   test.each(['', '12345', '0612345678', '+1 415 555 0100'])('%p is rejected', (input) => {
     expect(isValidKenyanMobile(input)).toBe(false);
+  });
+
+  test('one sign-in box tells an email from a phone number', () => {
+    expect(classifyLoginId(' jane@shop.co.ke ')).toEqual({ type: 'email', value: 'jane@shop.co.ke' });
+    expect(classifyLoginId('0712 345 678')).toEqual({ type: 'phone', value: '254712345678' });
+    expect(classifyLoginId('jane@')).toEqual({ type: null });
+    expect(classifyLoginId('12345')).toEqual({ type: null });
   });
 });
 

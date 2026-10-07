@@ -34,6 +34,8 @@ Make the product easy to start, easy to use and easy to understand, with a moder
 
 ### Sign in and landing page
 - Sign in rewritten: simpler layout, clearer errors, "Create your free account" link, working Terms and Privacy links.
+- One "Email or phone number" box instead of an Email/Phone switch. The screen works out which one was typed; a phone number in any local format (0712 345 678, +254 712 345 678) is sent as 254712345678.
+- Registration no longer asks for the password twice. The "show password" eye lets people check what they typed, which is what most modern sign-ups do.
 - Landing page rewritten around benefits and three setup steps, with content that always displays (the old one hid sections until scrolled).
 
 ### Point of sale (till)
@@ -49,7 +51,17 @@ The selling screen was rebuilt for a POS machine. It is full screen (no sidebar 
 - **Safer keys:** Escape no longer leaves the till (it used to jump to the dashboard mid-sale). F2 or Ctrl+K searches, F4 chooses a customer, F9 or Ctrl+Enter charges, Escape goes back one step.
 - **Full screen button:** in the header. For a dedicated machine, also start the browser in kiosk mode (for example Chrome with `--kiosk`).
 
+- **Products with no fixed price:** tapping a product whose selling price is zero (fresh produce, services, repairs) opens an "Enter price" keypad instead of adding it for nothing. The tile says "Enter price" rather than "0".
+- **Credit shortcut:** choosing Credit without a customer now offers a "Choose customer" button right there, instead of sending the cashier back.
+
 Selling rules (stock, offers, customer price lists, credit limits, loyalty points, invoice creation) were kept exactly as they were, and the invoice request sent to the server is unchanged.
+
+### Phones (informed by a review of the Square POS mobile app)
+- **Till on a phone:** the products fill the screen in two columns. A bar at the bottom shows the item count and a large "Charge KES ..." button, always under the thumb. "View sale" slides the current sale up from the bottom; payment then takes the whole screen.
+- **No keyboard pop-ups:** on touch screens the search box no longer grabs focus after every tap, so the on-screen keyboard stays out of the way. Barcode scanners still work because typing anywhere lands in search.
+- **Compact till header:** store name, till status, connection dot and the menu. The clock, logo and full screen button are hidden on small screens.
+- **Bottom tab bar in the app:** Home, Sales, Sell (centre), Products and More (opens the full menu), shown on phones only.
+- **Full-screen pickers:** the customer picker and the price keypad use the whole screen on phones.
 
 ## 3. Defects found and fixed
 
@@ -70,10 +82,11 @@ Selling rules (stock, offers, customer price lists, credit limits, loyalty point
 
 ## 4. Needs a decision from the business
 
-1. **Phone sign-in:** the front end now sends the phone number, but nothing in this repository confirms the server accepts it. Please have the backend team confirm. If it does not, hide the Phone option.
-2. **Password reset:** there is no self-service reset. Support by email is a stop-gap. This needs a backend endpoint and a front-end page before launch.
-3. **Marketing claims:** the old pages stated "500+ businesses", "99.9% uptime", "24/7 support", "Bank-level encryption", "Lightning fast", "Start Free Trial", and industry features such as kitchen display and appointment scheduling. I removed or softened these because they cannot be verified from the code (and the dashboard says other industries are "coming soon"). Restore any of them only with evidence you can stand behind.
-4. **Repository clutter:** the project root holds about 60 planning documents and a 5 MB archive (`pos_frontend.tar.gz`). I did not move or delete them. Consider a `docs/` folder and removing the archive.
+1. **Phone sign-in:** the front end now sends the phone number, but nothing in this repository confirms the server accepts it. Please have the backend team confirm. If it does not, the sign-in box should ask for email only.
+2. **Typed prices:** the "Enter price" keypad sends the typed price as the line rate, the same field the till already sends. If a product's POS profile does not allow rate changes, the server may refuse the sale; confirm the setting for variable-price products.
+3. **Password reset:** there is no self-service reset. Support by email is a stop-gap. This needs a backend endpoint and a front-end page before launch.
+4. **Marketing claims:** the old pages stated "500+ businesses", "99.9% uptime", "24/7 support", "Bank-level encryption", "Lightning fast", "Start Free Trial", and industry features such as kitchen display and appointment scheduling. I removed or softened these because they cannot be verified from the code (and the dashboard says other industries are "coming soon"). Restore any of them only with evidence you can stand behind.
+5. **Repository clutter:** the project root holds about 60 planning documents and a 5 MB archive (`pos_frontend.tar.gz`). I did not move or delete them. Consider a `docs/` folder and removing the archive.
 
 ## 5. Phase 2 (recommended next)
 
@@ -88,4 +101,4 @@ Selling rules (stock, offers, customer price lists, credit limits, loyalty point
 
 ## 6. How it was verified
 
-Production build passes. Ten automated tests pass. In a browser with a simulated server I exercised: sign in by email and phone, registration end to end (including the automatic step failing and recovering), the new-business and established-business dashboards in light and dark, mobile width, the quick-search palette, and sidebar collapse persistence. No console errors were observed.
+Production build passes. Fifteen automated tests pass. The till was also exercised end to end at phone size (390 by 844, touch): 22 checks covering the bottom bar, slide-up sale, typed price reaching the invoice, payment, the tab bar and single-box sign-in. In a browser with a simulated server I exercised: sign in by email and phone, registration end to end (including the automatic step failing and recovering), the new-business and established-business dashboards in light and dark, mobile width, the quick-search palette, and sidebar collapse persistence. No console errors were observed.

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Chip, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Switch, Tooltip, Typography } from '@mui/material';
+import { Badge, Box, Button, Chip, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Switch, Tooltip, Typography } from '@mui/material';
 import {
   ArrowBack,
   Fullscreen,
@@ -69,8 +69,8 @@ const PosHeader = ({
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
-        gap: 1.5,
-        px: 1.5,
+        gap: { xs: 0.75, sm: 1.5 },
+        px: { xs: 0.75, sm: 1.5 },
         bgcolor: 'background.paper',
         borderBottom: 1,
         borderColor: 'divider',
@@ -82,8 +82,15 @@ const PosHeader = ({
         </IconButton>
       </Tooltip>
 
-      <BrandLogo size={26} textVariant="subtitle1" />
-      <Divider orientation="vertical" flexItem sx={{ my: 1.5 }} />
+      <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+        <BrandLogo size={26} textVariant="subtitle1" />
+        <Divider orientation="vertical" flexItem sx={{ my: 1.5 }} />
+      </Box>
+
+      {/* Phones: just the store name, so the cashier knows which till this is */}
+      <Typography variant="subtitle1" noWrap sx={{ display: { xs: 'block', md: 'none' }, fontWeight: 700, minWidth: 0 }}>
+        {storeName || 'Point of sale'}
+      </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2.5, minWidth: 0, color: 'text.secondary' }}>
         <Tooltip title={warehouses.length > 1 && !canChangeStore ? 'Finish or hold the current sale to change store' : warehouses.length > 1 ? 'Change store' : ''}>
@@ -126,21 +133,30 @@ const PosHeader = ({
           icon={<ReceiptLong />}
           label="Till open"
           onClick={onSessionDetails}
-          sx={{ fontWeight: 700 }}
+          sx={{ fontWeight: 700, '& .MuiChip-label': { display: { xs: 'none', sm: 'block' } }, '& .MuiChip-icon': { mx: { xs: 0.75, sm: undefined } } }}
         />
       )}
 
       {heldCount > 0 && (
-        <Button size="small" variant="outlined" color="warning" startIcon={<PauseCircleOutline />} onClick={onOpenHeld}>
-          Held sales ({heldCount})
-        </Button>
+        <>
+          <Button size="small" variant="outlined" color="warning" startIcon={<PauseCircleOutline />} onClick={onOpenHeld} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+            Held sales ({heldCount})
+          </Button>
+          <IconButton color="warning" onClick={onOpenHeld} aria-label={`Held sales (${heldCount})`} sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
+            <Badge badgeContent={heldCount} color="warning">
+              <PauseCircleOutline />
+            </Badge>
+          </IconButton>
+        </>
       )}
 
       <SystemStatus />
-      <Clock />
+      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <Clock />
+      </Box>
 
       <Tooltip title={isFullscreen ? 'Leave full screen' : 'Full screen'}>
-        <IconButton onClick={toggleFullscreen} aria-label={isFullscreen ? 'Leave full screen' : 'Enter full screen'} sx={{ color: 'text.secondary' }}>
+        <IconButton onClick={toggleFullscreen} aria-label={isFullscreen ? 'Leave full screen' : 'Enter full screen'} sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'inline-flex' } }}>
           {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
         </IconButton>
       </Tooltip>

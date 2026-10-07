@@ -22,12 +22,12 @@ import {
   PhoneAndroid,
   AccountBalance,
   ReceiptLong,
-  Backspace,
   DeleteOutline,
   Add,
   CheckCircle,
 } from '@mui/icons-material';
-import { cashSuggestions, fmt, money, round2 } from './money';
+import { cashSuggestions, fmt, formatBuffer, money, nextBuffer, round2 } from './money';
+import Numpad from './Numpad';
 
 const methodIcon = (name = '') => {
   const n = name.toLowerCase();
@@ -37,37 +37,6 @@ const methodIcon = (name = '') => {
   if (n.includes('bank')) return AccountBalance;
   if (n.includes('credit')) return ReceiptLong;
   return Payments;
-};
-
-const Numpad = ({ onKey }) => {
-  const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '00', '0', '.'];
-  const keyBtn = {
-    height: 60,
-    borderRadius: 2.5,
-    border: 1,
-    borderColor: 'divider',
-    bgcolor: 'background.paper',
-    fontSize: '1.375rem',
-    fontWeight: 650,
-    fontVariantNumeric: 'tabular-nums',
-    '&:hover': { bgcolor: 'action.hover' },
-    '&:active': { transform: 'scale(.96)' },
-  };
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }} role="group" aria-label="Number pad">
-      {keys.map((k) => (
-        <ButtonBase key={k} sx={keyBtn} onClick={() => onKey(k)} aria-label={k === '.' ? 'Decimal point' : k}>
-          {k}
-        </ButtonBase>
-      ))}
-      <ButtonBase sx={{ ...keyBtn, color: 'text.secondary' }} onClick={() => onKey('back')} aria-label="Backspace">
-        <Backspace />
-      </ButtonBase>
-      <ButtonBase sx={{ ...keyBtn, gridColumn: 'span 2', fontSize: '1rem', color: 'text.secondary' }} onClick={() => onKey('clear')}>
-        Clear
-      </ButtonBase>
-    </Box>
-  );
 };
 
 const PaymentPanel = ({
@@ -97,6 +66,7 @@ const PaymentPanel = ({
   onComplete,
   isCreating,
   onBack,
+  onChooseCustomer,
 }) => {
   const [buffer, setBuffer] = useState('');
   const isCash = paymentMode === 'Cash' && !splitPayments;
@@ -114,15 +84,7 @@ const PaymentPanel = ({
     setAmountGiven(Math.max(0, parseFloat(next) || 0));
   };
 
-  const onKey = (k) => {
-    if (k === 'clear') return commit('');
-    if (k === 'back') return commit(buffer.slice(0, -1));
-    if (k === '.' && buffer.includes('.')) return undefined;
-    if (k === '.' && buffer === '') return commit('0.');
-    if (/\.\d{2}$/.test(buffer)) return undefined; // cents only
-    if (buffer.replace('.', '').length >= 9) return undefined;
-    return commit(buffer === '0' && k !== '.' ? k : buffer + k);
-  };
+  const onKey = (k) => commit(nextBuffer(buffer, k));
 
   // A physical keyboard works too: digits, Backspace, Enter to complete
   useEffect(() => {
@@ -207,7 +169,7 @@ const PaymentPanel = ({
                 aria-live="polite"
               >
                 <Typography variant="h3" sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
-                  {buffer === '' ? <Box component="span" sx={{ color: 'text.disabled' }}>0</Box> : buffer.includes('.') ? Number(buffer.split('.')[0] || 0).toLocaleString('en-KE') + '.' + buffer.split('.')[1] : fmt(parseFloat(buffer))}
+                  {buffer === '' ? <Box component="span" sx={{ color: 'text.disabled' }}>0</Box> : formatBuffer(buffer)}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
@@ -250,7 +212,12 @@ const PaymentPanel = ({
         {!splitPayments && paymentMode === 'Credit' && (
           <Stack spacing={1.5}>
             {!hasCustomer ? (
-              <Alert severity="warning">Credit sales need a registered customer. Go back and choose a customer first.</Alert>
+              <Alert
+                severity="warning"
+                action={onChooseCustomer ? <Button color="inherit" size="small" onClick={onChooseCustomer} sx={{ fontWeight: 700 }}>Choose customer</Button> : null}
+              >
+                Credit sales need a registered customer.
+              </Alert>
             ) : (
               <>
                 <TextField

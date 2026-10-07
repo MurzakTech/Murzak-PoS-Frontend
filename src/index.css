@@ -24,3 +24,16 @@ code {
     transform: translateY(0);
   }
 }
+
+/* Little bounce when the till's item count changes */
+@keyframes murzak-pop {
+  0% {
+    transform: scale(1) translate(50%, -50%);
+  }
+  50% {
+    transform: scale(1.35) translate(40%, -40%);
+  }
+  100% {
+    transform: scale(1) translate(50%, -50%);
+  }
+}

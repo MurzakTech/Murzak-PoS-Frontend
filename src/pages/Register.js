@@ -125,7 +125,6 @@ const Register = () => {
       email: '',
       phone: '',
       password: '',
-      confirmPassword: '',
       pos_industry: '',
       
       // Step 1: Company
@@ -167,7 +166,6 @@ const Register = () => {
     },
   });
 
-  const password = watch('password');
   const companyName = watch('company_name');
   const companyAbbr = watch('abbr');
   const firstName = watch('firstName');
@@ -637,7 +635,7 @@ const Register = () => {
                 )}
               />
               <Grid container spacing={1.5}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
                   <Controller
                     name="password"
                     control={control}
@@ -653,7 +651,7 @@ const Register = () => {
                         type={showPassword ? 'text' : 'password'}
                         size="small"
                         error={!!errors.password}
-                        helperText={errors.password?.message}
+                        helperText={errors.password?.message || 'At least 8 characters. Tap the eye to check what you typed.'}
                         disabled={authLoading || isAuthenticated}
                         InputProps={{
                           startAdornment: (
@@ -667,6 +665,7 @@ const Register = () => {
                                 onClick={() => setShowPassword(!showPassword)}
                                 edge="end"
                                 size="small"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
                               >
                                 {showPassword ? (
                                   <VisibilityOffIcon sx={{ fontSize: 16 }} />
@@ -674,36 +673,6 @@ const Register = () => {
                                   <VisibilityIcon sx={{ fontSize: 16 }} />
                                 )}
                               </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Controller
-                    name="confirmPassword"
-                    control={control}
-                    rules={{
-                      required: 'Please confirm your password',
-                      validate: (value) => value === password || 'Passwords do not match',
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="Confirm Password"
-                        type="password"
-                        size="small"
-                        error={!!errors.confirmPassword}
-                        helperText={errors.confirmPassword?.message}
-                        disabled={authLoading || isAuthenticated}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LockIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                             </InputAdornment>
                           ),
                         }}

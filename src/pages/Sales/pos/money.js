@@ -26,3 +26,28 @@ export const cashSuggestions = (total) => {
   const set = new Set([t, up(50), up(100), up(500), up(1000)]);
   return [...set].filter((v) => v >= t).sort((a, b) => a - b).slice(0, 5);
 };
+
+/**
+ * What the amount display shows after a number pad key press. Keeps at most two
+ * decimals and nine digits, and never shows leading zeros.
+ * ('', '5') -> '5'; ('5', '00') -> '500'; ('1.5', '00') -> '1.50'; ('', '.') -> '0.'
+ */
+export const nextBuffer = (buffer, key) => {
+  if (key === 'clear') return '';
+  if (key === 'back') return buffer.slice(0, -1);
+  if (key === '.') return buffer.includes('.') ? buffer : buffer === '' ? '0.' : `${buffer}.`;
+  let next = buffer;
+  for (const digit of key) {
+    if (/\.\d{2}$/.test(next) || next.replace('.', '').length >= 9) break;
+    next = next === '0' ? digit : next + digit;
+  }
+  return next;
+};
+
+// '1250.5' -> '1,250.5' while typing (keeps a trailing '.' or '.0' visible)
+export const formatBuffer = (buffer) => {
+  if (buffer === '') return '';
+  if (!buffer.includes('.')) return fmt(parseFloat(buffer));
+  const [whole, cents] = buffer.split('.');
+  return `${Number(whole || 0).toLocaleString('en-KE')}.${cents}`;
+};

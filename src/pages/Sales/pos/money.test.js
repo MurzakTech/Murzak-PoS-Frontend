@@ -1,4 +1,4 @@
-import { cashSuggestions, fmt, money, round2 } from './money';
+import { cashSuggestions, fmt, formatBuffer, money, nextBuffer, round2 } from './money';
 
 describe('till money helpers', () => {
   test('whole amounts drop decimals, others keep two', () => {
@@ -20,5 +20,19 @@ describe('till money helpers', () => {
     expect(cashSuggestions(500)).toEqual([500, 1000]);
     expect(cashSuggestions(0)).toEqual([]);
     cashSuggestions(37.5).forEach((v) => expect(v).toBeGreaterThanOrEqual(37.5));
+  });
+
+  test('number pad input never shows leading zeros or more than two decimals', () => {
+    expect(nextBuffer('', '5')).toBe('5');
+    expect(nextBuffer('', '00')).toBe('0');
+    expect(nextBuffer('0', '7')).toBe('7');
+    expect(nextBuffer('5', '00')).toBe('500');
+    expect(nextBuffer('', '.')).toBe('0.');
+    expect(nextBuffer('1.5', '00')).toBe('1.50');
+    expect(nextBuffer('1.50', '3')).toBe('1.50');
+    expect(nextBuffer('12', 'back')).toBe('1');
+    expect(nextBuffer('12', 'clear')).toBe('');
+    expect(formatBuffer('1250.5')).toBe('1,250.5');
+    expect(formatBuffer('1250')).toBe('1,250');
   });
 });

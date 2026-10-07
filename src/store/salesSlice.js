@@ -487,12 +487,11 @@ export const createPOSOpeningEntry = createAsyncThunk(
 
       const response = await axiosInstance.post(ENDPOINTS.createPOSOpeningEntry, requestData);
       const data = extractResponseData(response);
-      const successMessage = extractSuccessMessage(response) || 'POS opening entry created successfully';
-      
+      // Plain words for the cashier; the server's message is about records, not selling
       dispatch(showNotification({
-        message: successMessage,
+        message: 'Till open. You can start selling.',
         severity: 'success',
-        title: 'POS Session Opened',
+        title: 'Till open',
       }));
       
       return {

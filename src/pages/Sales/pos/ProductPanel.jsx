@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, Button, ButtonBase, CircularProgress, IconButton, InputBase, Skeleton, Typography } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Button, ButtonBase, CircularProgress, IconButton, InputBase, Skeleton, Typography, useMediaQuery } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Search, Close, QrCodeScanner, Inventory2Outlined, LocalOffer } from '@mui/icons-material';
 import EmptyState from '../../../components/Common/EmptyState';
@@ -15,7 +15,7 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
       focusRipple
       disabled={disabled}
       onClick={() => onAdd(product)}
-      aria-label={`${product.item_name || product.item_code}, ${fmt(price)} Kenya shillings${stockQty !== null ? `, ${stockQty} in stock` : ''}${cartQty ? `, ${cartQty} in cart` : ''}`}
+      aria-label={`${product.item_name || product.item_code}, ${price > 0 ? `${fmt(price)} Kenya shillings` : 'price entered at sale'}${stockQty !== null ? `, ${stockQty} in stock` : ''}${cartQty ? `, ${cartQty} in cart` : ''}`}
       sx={{
         position: 'relative',
         textAlign: 'left',
@@ -68,9 +68,15 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
               )}
             </Box>
           )}
-          <Typography variant="h5" sx={{ fontVariantNumeric: 'tabular-nums', color: originalPrice !== null ? 'success.main' : 'text.primary', lineHeight: 1.15 }}>
-            {fmt(price)}
-          </Typography>
+          {price > 0 || originalPrice !== null ? (
+            <Typography variant="h5" sx={{ fontVariantNumeric: 'tabular-nums', color: originalPrice !== null ? 'success.main' : 'text.primary', lineHeight: 1.15 }}>
+              {fmt(price)}
+            </Typography>
+          ) : (
+            <Typography variant="subtitle2" sx={{ color: 'primary.main', fontWeight: 700, lineHeight: 1.6 }}>
+              Enter price
+            </Typography>
+          )}
           <Typography variant="caption" color="text.secondary">
             per {uom}
           </Typography>
@@ -119,6 +125,16 @@ const ProductPanel = ({
   priceListNote,
   onAddProducts,
 }) => {
+  const compact = useMediaQuery((t) => t.breakpoints.down('sm'));
+  // Desk tills start with the cursor in search; phones and tablets do not, or the keyboard covers the products
+  const autoFocusSearch = useMemo(() => {
+    try {
+      return window.matchMedia('(pointer: fine)').matches;
+    } catch (e) {
+      return true;
+    }
+  }, []);
+
   return (
     <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       {/* Search / scan: always ready. A barcode scanner types the code and presses Enter. */}
@@ -141,7 +157,7 @@ const ProductPanel = ({
           <Search sx={{ color: 'text.secondary' }} />
           <InputBase
             fullWidth
-            autoFocus
+            autoFocus={autoFocusSearch}
             inputRef={searchInputRef}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -154,7 +170,7 @@ const ProductPanel = ({
                 setSearchTerm('');
               }
             }}
-            placeholder="Scan a barcode or search products"
+            placeholder={compact ? 'Search or scan' : 'Scan a barcode or search products'}
             inputProps={{ 'aria-label': 'Scan a barcode or search products', autoComplete: 'off', spellCheck: false }}
             sx={{ fontSize: '1.125rem' }}
           />
@@ -208,7 +224,7 @@ const ProductPanel = ({
 
       <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2, pb: 2, overscrollBehavior: 'contain' }}>
         {isLoading ? (
-          <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))' }} aria-busy="true" aria-label="Loading products">
+          <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(168px, 1fr))' } }} aria-busy="true" aria-label="Loading products">
             {Array.from({ length: 12 }).map((_, i) => (
               <Skeleton key={i} variant="rounded" height={112} />
             ))}
@@ -226,7 +242,7 @@ const ProductPanel = ({
           />
         ) : (
           <>
-            <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))' }}>
+            <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(168px, 1fr))' } }}>
               {products.slice(0, visibleCount).map((product) => {
                 const d = getTileData(product);
                 return (
