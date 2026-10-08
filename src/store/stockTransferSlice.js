@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Stock Transfer API endpoints - matching STOCK_TRANSFER_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -55,27 +56,7 @@ const extractResponseData = (response) => {
 };
 
 // Helper function to extract error message
-const extractErrorMessage = (error) => {
-  // Handle nested message structure: { message: { success: false, message: "..." } }
-  if (error.response?.data?.message) {
-    const message = error.response.data.message;
-    // If message is an object with a nested message property
-    if (typeof message === 'object' && message.message) {
-      return message.message;
-    }
-    // If message is a string, return it directly
-    if (typeof message === 'string') {
-      return message;
-    }
-  }
-  if (error.response?.data?.exc_type) {
-    return error.response.data.exc_type;
-  }
-  if (error.response?.data?.exc) {
-    return error.response.data.exc;
-  }
-  return error.message || 'An error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to extract success message
 const extractSuccessMessage = (response) => {

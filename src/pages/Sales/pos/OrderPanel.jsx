@@ -33,6 +33,7 @@ import {
   ChevronRight,
 } from '@mui/icons-material';
 import { fmt, money } from './money';
+import ProductImage from '../../../components/Common/ProductImage';
 
 const StepperButton = ({ children, ...props }) => (
   <IconButton
@@ -51,14 +52,17 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
 
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 1, alignItems: 'center', py: 1.25 }}>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="subtitle2" noWrap sx={{ fontWeight: 650 }}>
-          {item.item_name || item.item_code}
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-          {money(item.rate, currency)} each{hasOffer ? ' · offer applied' : ''}
-          {store ? ` · from ${store.warehouse_name || store.name}` : ''}
-        </Typography>
+      <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <ProductImage product={item} shape="square" rounded={2} sx={{ width: 44 }} />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 650 }}>
+            {item.item_name || item.item_code}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            {money(item.rate, currency)} each{hasOffer ? ' · offer applied' : ''}
+            {store ? ` · from ${store.warehouse_name || store.name}` : ''}
+          </Typography>
+        </Box>
       </Box>
       <Box sx={{ textAlign: 'right' }}>
         {hasOffer && (

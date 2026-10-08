@@ -12,8 +12,6 @@ import {
   Stack,
   InputAdornment,
   IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
   Divider,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -31,7 +29,7 @@ import { loginUser, clearError, fetchCurrentUser } from '../store/authSlice';
 import { checkOnboardingStatus } from '../store/onboardingSlice';
 import BrandLogo from '../components/Common/BrandLogo';
 import posIcon from '../assets/pos-icon.png';
-import { normalizeKenyanPhone, isValidKenyanMobile, PHONE_ERROR } from '../utils/phone';
+import { classifyLoginId, looksLikePhone, LOGIN_ID_ERROR } from '../utils/phone';
 
 const SUPPORT_EMAIL = 'murzaktechnologies@gmail.com';
 
@@ -51,14 +49,16 @@ const Login = () => {
   const { isLoading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-  } = useForm({ defaultValues: { email: '', phone: '', password: '' } });
+    watch,
+  } = useForm({ defaultValues: { loginId: '', password: '' } });
+
+  // One box for email or phone: the icon follows what is being typed
+  const isPhoneEntry = looksLikePhone(watch('loginId'));
 
   // Where to go after signing in (the page they were trying to open, or the dashboard)
   const from = location.state?.from?.pathname || location.state?.from || '/dashboard';
@@ -84,10 +84,8 @@ const Login = () => {
   const onSubmit = async (data) => {
     dispatch(clearError());
 
-    const loginData =
-      loginMethod === 'email'
-        ? { email: data.email.trim(), password: data.password }
-        : { phone: normalizeKenyanPhone(data.phone), password: data.password };
+    const id = classifyLoginId(data.loginId);
+    const loginData = id.type === 'email' ? { email: id.value, password: data.password } : { phone: id.value, password: data.password };
 
     const result = await dispatch(loginUser(loginData));
     if (!loginUser.fulfilled.match(result)) return;
@@ -110,13 +108,6 @@ const Login = () => {
     }
     // Signed in; even if the profile fetch failed, let them in
     navigate(redirectPath, { replace: true });
-  };
-
-  const handleSwitchMethod = (_, method) => {
-    if (!method) return;
-    setLoginMethod(method);
-    setValue(method === 'email' ? 'phone' : 'email', '');
-    dispatch(clearError());
   };
 
   return (
@@ -186,23 +177,6 @@ const Login = () => {
               Sign in to continue to your dashboard.
             </Typography>
 
-            <ToggleButtonGroup
-              exclusive
-              fullWidth
-              size="small"
-              value={loginMethod}
-              onChange={handleSwitchMethod}
-              aria-label="Sign in with"
-              sx={{ mb: 2.5 }}
-            >
-              <ToggleButton value="email" sx={{ gap: 1, py: 0.9 }}>
-                <EmailIcon fontSize="small" /> Email
-              </ToggleButton>
-              <ToggleButton value="phone" sx={{ gap: 1, py: 0.9 }}>
-                <PhoneIcon fontSize="small" /> Phone
-              </ToggleButton>
-            </ToggleButtonGroup>
-
             {error && (
               <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => dispatch(clearError())} role="alert">
                 {error}
@@ -211,52 +185,31 @@ const Login = () => {
 
             <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
               <Stack spacing={2}>
-                {loginMethod === 'email' ? (
-                  <TextField
-                    fullWidth
-                    label="Email address"
-                    type="email"
-                    autoComplete="email"
-                    autoFocus
-                    {...register('email', {
-                      required: 'Enter your email address',
-                      pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'That does not look like an email address' },
-                    })}
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                    disabled={isLoading}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                ) : (
-                  <TextField
-                    fullWidth
-                    label="Phone number"
-                    type="tel"
-                    autoComplete="tel"
-                    autoFocus
-                    placeholder="0712 345 678"
-                    {...register('phone', {
-                      required: 'Enter your phone number',
-                      validate: (v) => isValidKenyanMobile(v) || PHONE_ERROR,
-                    })}
-                    error={!!errors.phone}
-                    helperText={errors.phone?.message || 'Any format works: 0712 345 678 or +254 712 345 678'}
-                    disabled={isLoading}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
+                <TextField
+                  fullWidth
+                  label="Email or phone number"
+                  autoComplete="username"
+                  autoFocus
+                  inputProps={{ autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false }}
+                  {...register('loginId', {
+                    required: 'Enter your email address or phone number',
+                    validate: (v) => classifyLoginId(v).type !== null || LOGIN_ID_ERROR,
+                  })}
+                  error={!!errors.loginId}
+                  helperText={errors.loginId?.message || (isPhoneEntry ? 'Any format works: 0712 345 678 or +254 712 345 678' : ' ')}
+                  disabled={isLoading}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        {isPhoneEntry ? (
                           <PhoneIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                )}
+                        ) : (
+                          <EmailIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                        )}
+                      </InputAdornment>
+                    ),
+                  }}
+                />
 
                 <TextField
                   fullWidth

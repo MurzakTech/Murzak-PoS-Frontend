@@ -1,53 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as reportsApi from '../api/reportsApi';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Helper function to extract error message
-const extractErrorMessage = (error) => {
-  if (error.response?.data) {
-    const errorData = error.response.data;
-    
-    if (errorData._error_message) {
-      return errorData._error_message;
-    }
-    
-    if (errorData._server_messages) {
-      try {
-        const messages = JSON.parse(errorData._server_messages);
-        if (Array.isArray(messages) && messages.length > 0) {
-          const firstMessage = typeof messages[0] === 'string' 
-            ? JSON.parse(messages[0]) 
-            : messages[0];
-          if (firstMessage?.message) {
-            const cleanMessage = firstMessage.message.replace(/<[^>]*>/g, '');
-            return cleanMessage;
-          }
-        }
-      } catch (e) {
-        // Continue to other error sources
-      }
-    }
-    
-    if (errorData.message) {
-      if (typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-      if (typeof errorData.message === 'object' && errorData.message.message) {
-        return errorData.message.message;
-      }
-    }
-    
-    if (errorData.exc_type) {
-      return errorData.exc_type;
-    }
-    
-    if (errorData.exc) {
-      return errorData.exc;
-    }
-  }
-  
-  return error.message || 'An error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // ============================================================================
 // SALES ANALYTICS REPORTS

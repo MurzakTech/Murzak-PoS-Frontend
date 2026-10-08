@@ -42,6 +42,7 @@ import SystemStatus from './SystemStatus';
 import NavigationMenu from './NavigationMenu';
 import PageSidebar from './PageSidebar';
 import CommandPalette from './CommandPalette';
+import MobileBottomNav from './MobileBottomNav';
 import BrandLogo from '../Common/BrandLogo';
 import ErrorBoundary from '../Common/ErrorBoundary';
 
@@ -474,7 +475,16 @@ const Layout = ({ children }) => {
         {!isPOSRoute && <Toolbar />}
         <Box sx={{ flexGrow: 1, display: 'flex', minHeight: 0 }}>
           {!isPOSRoute && !isMobile && <PageSidebar />}
-          <Box sx={{ flexGrow: 1, p: isPOSRoute ? 0 : { xs: 2, md: 3 }, minWidth: 0, overflow: isPOSRoute ? 'hidden' : 'auto' }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              p: isPOSRoute ? 0 : { xs: 2, md: 3 },
+              // Phones: keep the last row of the page clear of the bottom tab bar
+              pb: isPOSRoute ? 0 : { xs: 'calc(88px + env(safe-area-inset-bottom))', md: 3 },
+              minWidth: 0,
+              overflow: isPOSRoute ? 'hidden' : 'auto',
+            }}
+          >
             {/* resetKey clears an error automatically when the person navigates elsewhere */}
             <ErrorBoundary inline resetKey={location.pathname}>
               {children}
@@ -482,6 +492,15 @@ const Layout = ({ children }) => {
           </Box>
         </Box>
       </Box>
+
+      {!isPOSRoute && isMobile && (
+        <MobileBottomNav
+          pathname={location.pathname}
+          onNavigate={handleNavigation}
+          onMore={() => setMobileOpen(true)}
+          moreOpen={mobileOpen}
+        />
+      )}
 
       <UserMenu anchorEl={userMenuAnchor} open={Boolean(userMenuAnchor)} onClose={() => setUserMenuAnchor(null)} />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={handleNavigation} />

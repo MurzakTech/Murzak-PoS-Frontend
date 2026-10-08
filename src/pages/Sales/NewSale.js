@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useDebounce } from '../../hooks/useDebounce';
-import { Alert, Backdrop, Box, CircularProgress, Snackbar, Typography } from '@mui/material';
+import { Alert, Backdrop, Box, CircularProgress, Drawer, IconButton, Snackbar, Typography, useMediaQuery } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useThemeMode } from '../../theme/ThemeProvider';
 import {
@@ -40,13 +41,16 @@ import ReceiptDialog from './pos/ReceiptDialog';
 import CloseTillDialog from './pos/CloseTillDialog';
 import HeldSalesDialog from './pos/HeldSalesDialog';
 import PosConfirm from './pos/PosConfirm';
+import PriceEntryDialog from './pos/PriceEntryDialog';
+import PhoneSaleBar from './pos/PhoneSaleBar';
 import { round2 } from './pos/money';
 
 /**
  * Point of sale (till).
  *
  * Full-screen selling screen for a POS machine: products on the left, the current
- * sale on the right, and a dedicated payment step. All selling rules (stock,
+ * sale on the right, and a dedicated payment step. On phones the products fill
+ * the screen, the sale slides up from a bottom bar, and payment takes the screen. All selling rules (stock,
  * discounts, credit limits, loyalty, invoice creation) live in this file; the
  * screens themselves are in ./pos.
  */
@@ -54,6 +58,7 @@ import { round2 } from './pos/money';
 const TILE_PAGE = 60;
 const HELD_KEY = 'pos_held_sales_v1';
 const AUTOPRINT_KEY = 'pos_auto_print';
+const PICTURES_KEY = 'pos_show_pictures';
 
 const readHeldSales = () => {
   try {
@@ -63,6 +68,25 @@ const readHeldSales = () => {
     return [];
   }
 };
+// On phones and tablets, focusing the search box pops the on-screen keyboard up over
+// the products. Only hand focus back to it where there is a mouse (a desk till);
+// a barcode scanner still works everywhere because typing anywhere lands in search.
+const shouldRefocusSearch = () => {
+  try {
+    return window.matchMedia('(pointer: fine)').matches;
+  } catch (e) {
+    return true;
+  }
+};
+
+const readShowPictures = () => {
+  try {
+    return localStorage.getItem(PICTURES_KEY) !== 'false';
+  } catch (e) {
+    return true;
+  }
+};
+
 const readAutoPrint = () => {
   try {
     return localStorage.getItem(AUTOPRINT_KEY) !== 'false';
@@ -154,6 +178,9 @@ const NewSale = () => {
   const [showAddCustomerForm, setShowAddCustomerForm] = useState(false);
   const [creditAmount, setCreditAmount] = useState(0);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const isPhone = useMediaQuery((t) => t.breakpoints.down('md'));
+  const [cartSheetOpen, setCartSheetOpen] = useState(false); // phones: the sale slides up over the products
+  const [priceEntryProduct, setPriceEntryProduct] = useState(null); // product waiting for a typed price
   const [amountGiven, setAmountGiven] = useState(0);
   const [tileLimit, setTileLimit] = useState(TILE_PAGE); // how many product tiles are drawn
   const [shiftChecked, setShiftChecked] = useState(false); // have we looked for an already-open shift?
@@ -162,6 +189,7 @@ const NewSale = () => {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
+  const [showPictures, setShowPictures] = useState(readShowPictures);
   
   // Loyalty redemption state
   const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState(0);
@@ -579,7 +607,8 @@ const NewSale = () => {
   const isLoadingDiscounts = isLoadingCartDiscounts || isLoadingProductDiscounts;
 
   // Add to cart with stock validation
-  const addToCart = async (product) => {
+  // enteredRate: the price typed on the "Enter price" keypad, for products with no fixed price
+  const addToCart = async (product, enteredRate) => {
     const itemCode = product.item_code;
     
     if (!defaultWarehouse) {
@@ -608,6 +637,14 @@ const NewSale = () => {
           customerProductPrices[itemCode] !== undefined) {
         rate = customerProductPrices[itemCode];
       }
+
+      if (enteredRate > 0) {
+        rate = enteredRate;
+      } else if (!(rate > 0)) {
+        // No fixed price: ask for one rather than selling it for nothing
+        setPriceEntryProduct(product);
+        return;
+      }
       
       // Get discount for this item
       const discountRule = discountsMap[itemCode];
@@ -623,6 +660,8 @@ const NewSale = () => {
           uom: product.stock_uom || 'Nos',
           warehouse: defaultWarehouse, // Use default warehouse
           description: product.description || '',
+          item_group: product.item_group || '', // for the cart picture only
+          image: product.image || '', // for the cart picture only
           subtotal: discountedPrice,
           discount_amount: discountAmount,
           discount_rule: discountRule,
@@ -635,7 +674,7 @@ const NewSale = () => {
       });
     }
     // Keep the scanner/search field ready for the next item
-    setTimeout(() => searchInputRef.current?.focus(), 0);
+    if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
   // Set an exact quantity (typed in the cart)
@@ -1029,7 +1068,7 @@ const NewSale = () => {
     handleSelectCustomer(null);
     setPaymentMode('Cash');
     setCreditAmount(0);
-    setTimeout(() => searchInputRef.current?.focus(), 100);
+    if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
   // Print receipt
@@ -1288,7 +1327,7 @@ const NewSale = () => {
     setLoyaltyDiscountAmount(0);
     setSearchTerm('');
     handleSelectCustomer(null);
-    setTimeout(() => searchInputRef.current?.focus(), 0);
+    if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
   const holdCurrentSale = () => {
@@ -1336,6 +1375,17 @@ const NewSale = () => {
     setPaymentMode(mode);
     // Credit starts at the full total; other methods have no credit part
     setCreditAmount(mode === 'Credit' ? grandTotal : 0);
+  };
+
+  const toggleShowPictures = () => {
+    setShowPictures((prev) => {
+      try {
+        localStorage.setItem(PICTURES_KEY, String(!prev));
+      } catch (e) {
+        // not critical
+      }
+      return !prev;
+    });
   };
 
   const toggleAutoPrint = () => {
@@ -1429,7 +1479,17 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || leaveDialogOpen || clearDialogOpen;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+
+  // The slide-up sale only exists on phones; never leave it open behind the desktop layout
+  useEffect(() => {
+    if (!isPhone) setCartSheetOpen(false);
+  }, [isPhone]);
+
+  const chargeFromPhone = () => {
+    setCartSheetOpen(false);
+    handleCheckoutClick();
+  };
 
   // ---------------------------------------------------------------- keyboard
   // F2 or Ctrl+K: search. F4: customer. F9 or Ctrl+Enter: charge / complete. Esc: back one step (never leaves the till).
@@ -1488,6 +1548,40 @@ const NewSale = () => {
   useEffect(() => setTileLimit(TILE_PAGE), [debouncedSearchTerm, selectedCategory]);
 
   const showShiftCheck = !isPOSSessionOpen && !shiftChecked;
+  const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
+
+  const orderPanel = (
+    <OrderPanel
+      cart={cart}
+      readOnly={isCheckoutMode}
+      currency={currency}
+      customer={customerView}
+      onCustomerClick={handleOpenCustomerDialog}
+      onInc={(code) => updateQuantity(code, 1)}
+      onDec={(code) => updateQuantity(code, -1)}
+      onSetQty={setQuantity}
+      onRemove={removeFromCart}
+      warehouses={warehouses}
+      defaultWarehouse={defaultWarehouse}
+      onChangeWarehouse={handleChangeLineWarehouse}
+      totals={totals}
+      manualDiscountType={manualDiscountType}
+      manualDiscountValue={manualDiscountValue}
+      onManualDiscountChange={(type, value) => {
+        setManualDiscountType(type);
+        setManualDiscountValue(value);
+      }}
+      isLoadingDiscounts={isLoadingDiscounts}
+      onCheckout={isPhone ? chargeFromPhone : handleCheckoutClick}
+      onHold={() => {
+        holdCurrentSale();
+        setCartSheetOpen(false);
+      }}
+      onClear={() => setClearDialogOpen(true)}
+      isBusy={isCreatingInvoice}
+      footerExtra={isCheckoutMode ? <Box /> : undefined}
+    />
+  );
 
   return (
     <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
@@ -1508,6 +1602,8 @@ const NewSale = () => {
         onToggleTheme={toggleColorMode}
         autoPrint={autoPrint}
         onToggleAutoPrint={toggleAutoPrint}
+        showPictures={showPictures}
+        onToggleShowPictures={toggleShowPictures}
       />
 
       {/* Screen reader announcements for cart changes */}
@@ -1580,6 +1676,7 @@ const NewSale = () => {
                 }
                 canComplete={canComplete}
                 onComplete={handleCheckout}
+                onChooseCustomer={handleOpenCustomerDialog}
                 isCreating={isCreatingInvoice}
                 onBack={() => {
                   setIsCheckoutMode(false);
@@ -1597,6 +1694,7 @@ const NewSale = () => {
                 setSelectedCategory={setSelectedCategory}
                 products={filteredProducts}
                 visibleCount={tileLimit}
+                showImages={showPictures}
                 onShowMore={() => setTileLimit((n) => n + TILE_PAGE)}
                 isLoading={isLoadingProducts}
                 getTileData={getTileData}
@@ -1612,37 +1710,40 @@ const NewSale = () => {
             )}
           </Box>
 
-          <Box sx={{ width: { xs: '100%', md: 400, lg: 440 }, flexShrink: 0, minHeight: 0, height: { xs: '48%', md: 'auto' } }}>
-            <OrderPanel
-              cart={cart}
-              readOnly={isCheckoutMode}
-              currency={currency}
-              customer={customerView}
-              onCustomerClick={handleOpenCustomerDialog}
-              onInc={(code) => updateQuantity(code, 1)}
-              onDec={(code) => updateQuantity(code, -1)}
-              onSetQty={setQuantity}
-              onRemove={removeFromCart}
-              warehouses={warehouses}
-              defaultWarehouse={defaultWarehouse}
-              onChangeWarehouse={handleChangeLineWarehouse}
-              totals={totals}
-              manualDiscountType={manualDiscountType}
-              manualDiscountValue={manualDiscountValue}
-              onManualDiscountChange={(type, value) => {
-                setManualDiscountType(type);
-                setManualDiscountValue(value);
-              }}
-              isLoadingDiscounts={isLoadingDiscounts}
-              onCheckout={handleCheckoutClick}
-              onHold={holdCurrentSale}
-              onClear={() => setClearDialogOpen(true)}
-              isBusy={isCreatingInvoice}
-              footerExtra={isCheckoutMode ? <Box /> : undefined}
-            />
-          </Box>
+          {isPhone ? (
+            !isCheckoutMode && (
+              <PhoneSaleBar
+                itemCount={cartItemCount}
+                total={grandTotal}
+                currency={currency}
+                onViewSale={() => setCartSheetOpen(true)}
+                onCharge={chargeFromPhone}
+                disabled={isCreatingInvoice}
+              />
+            )
+          ) : (
+            <Box sx={{ width: { md: 400, lg: 440 }, flexShrink: 0, minHeight: 0 }}>
+              {orderPanel}
+            </Box>
+          )}
         </Box>
       )}
+
+      {/* Phones: the current sale slides up from the bottom bar */}
+      <Drawer
+        anchor="bottom"
+        open={isPhone && cartSheetOpen && isPOSSessionOpen}
+        onClose={() => setCartSheetOpen(false)}
+        slotProps={{ paper: { sx: { height: '88dvh', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column' } } }}
+      >
+        <Box sx={{ position: 'relative', flexShrink: 0, pt: 1, pb: 0.5, display: 'flex', justifyContent: 'center', bgcolor: 'background.paper' }}>
+          <Box sx={{ width: 40, height: 5, borderRadius: 3, bgcolor: 'divider' }} />
+          <IconButton onClick={() => setCartSheetOpen(false)} aria-label="Close sale" sx={{ position: 'absolute', right: 6, top: 2 }}>
+            <Close />
+          </IconButton>
+        </Box>
+        <Box sx={{ flex: 1, minHeight: 0, '& > div': { borderLeft: 0 } }}>{orderPanel}</Box>
+      </Drawer>
 
       {/* Dialogs */}
       <CustomerDialog
@@ -1694,6 +1795,18 @@ const NewSale = () => {
         currency={currency}
       />
 
+      <PriceEntryDialog
+        open={!!priceEntryProduct}
+        product={priceEntryProduct}
+        currency={currency}
+        onCancel={() => setPriceEntryProduct(null)}
+        onConfirm={(price) => {
+          const product = priceEntryProduct;
+          setPriceEntryProduct(null);
+          addToCart(product, price);
+        }}
+      />
+
       <PosConfirm
         open={leaveDialogOpen}
         title="Leave the till?"
@@ -1716,6 +1829,7 @@ const NewSale = () => {
         onClose={() => setClearDialogOpen(false)}
         onConfirm={() => {
           setClearDialogOpen(false);
+          setCartSheetOpen(false);
           resetSale();
         }}
       />

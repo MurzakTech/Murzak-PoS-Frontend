@@ -1,4 +1,5 @@
 import axiosInstance from './axiosInstance';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 const REPORTS_API_BASE = 'techsavanna_pos.api.reports';
 
@@ -24,57 +25,7 @@ const extractResponseData = (response) => {
 };
 
 // Helper to extract error message
-const extractErrorMessage = (error) => {
-  if (error.response?.data) {
-    const errorData = error.response.data;
-    
-    // Check for _error_message first (most direct error message)
-    if (errorData._error_message) {
-      return errorData._error_message;
-    }
-    
-    // Parse _server_messages to extract detailed error messages
-    if (errorData._server_messages) {
-      try {
-        const messages = JSON.parse(errorData._server_messages);
-        if (Array.isArray(messages) && messages.length > 0) {
-          const firstMessage = typeof messages[0] === 'string' 
-            ? JSON.parse(messages[0]) 
-            : messages[0];
-          if (firstMessage?.message) {
-            // Remove HTML tags from message if present
-            const cleanMessage = firstMessage.message.replace(/<[^>]*>/g, '');
-            return cleanMessage;
-          }
-        }
-      } catch (e) {
-        // If parsing fails, continue to other error sources
-      }
-    }
-    
-    // Check for nested message structure
-    if (errorData.message) {
-      if (typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-      if (typeof errorData.message === 'object' && errorData.message.message) {
-        return errorData.message.message;
-      }
-    }
-    
-    // Check for exc_type
-    if (errorData.exc_type) {
-      return errorData.exc_type;
-    }
-    
-    // Check for exc
-    if (errorData.exc) {
-      return errorData.exc;
-    }
-  }
-  
-  return error.message || 'An error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // ============================================================================
 // SALES ANALYTICS REPORTS

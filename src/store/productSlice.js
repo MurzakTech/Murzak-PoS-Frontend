@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Product API endpoints
 const ENDPOINTS = {
@@ -64,36 +65,7 @@ const extractSuccessMessage = (response) => {
 };
 
 // Helper function to extract error message
-const extractErrorMessage = (error) => {
-  if (error.response?.data) {
-    const errorData = error.response.data;
-    if (errorData.message) {
-      if (typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-      if (typeof errorData.message === 'object' && errorData.message.message) {
-        return errorData.message.message;
-      }
-    }
-    if (errorData.exc) {
-      return errorData.exc;
-    }
-    if (errorData.exc_type) {
-      return `${errorData.exc_type}: ${errorData.message || 'An error occurred'}`;
-    }
-    if (errorData._server_messages) {
-      try {
-        const messages = JSON.parse(errorData._server_messages);
-        if (messages[0]?.message) {
-          return messages[0].message;
-        }
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-  }
-  return error.message || 'An unexpected error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to determine notification severity based on HTTP status code
 const getErrorSeverity = (error) => {

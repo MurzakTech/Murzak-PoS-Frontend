@@ -4,6 +4,7 @@ import { showNotification } from './notificationSlice';
 import { createWarehouse } from './warehouseSlice';
 import { accountProvisioningClient } from '../api/accountProvisioningClient';
 import { fetchCurrentUser } from './authSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Onboarding API endpoints
 const ENDPOINTS = {
@@ -45,28 +46,7 @@ const extractSuccessMessage = (response) => {
 };
 
 // Helper function to extract error message
-const extractErrorMessage = (error) => {
-  // API documentation shows error structure: { exc, exc_type, message }
-  if (error.response?.data) {
-    const errorData = error.response.data;
-    // Check for nested message structure
-    if (errorData.message) {
-      if (typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-      if (typeof errorData.message === 'object' && errorData.message.message) {
-        return errorData.message.message;
-      }
-    }
-    if (errorData.exc) {
-      return errorData.exc;
-    }
-    if (errorData.exc_type) {
-      return `${errorData.exc_type}: ${errorData.message || 'An error occurred'}`;
-    }
-  }
-  return error.message || 'An unexpected error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Complete onboarding (all-in-one)
 export const completeOnboarding = createAsyncThunk(
@@ -84,11 +64,7 @@ export const completeOnboarding = createAsyncThunk(
       
       return data;
     } catch (error) {
-      const errorMessage = 
-        error.response?.data?.message || 
-        error.response?.data?.exc || 
-        error.message || 
-        'Onboarding failed';
+      const errorMessage = friendlyErrorMessage(error, 'We could not finish setting up your business. Please try again.');
       return rejectWithValue(errorMessage);
     }
   }

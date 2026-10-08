@@ -49,6 +49,7 @@ import {
   getUOMs,
 } from '../../store/productSlice';
 import { showNotification } from '../../store/notificationSlice';
+import ProductPhotoField from '../../components/Products/ProductPhotoField';
 
 const NewProduct = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ const NewProduct = () => {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
+    watch,
   } = useForm({
     defaultValues: {
       item_code: '',
@@ -78,6 +80,7 @@ const NewProduct = () => {
       is_purchase_item: false,
       brand: '',
       barcode: '',
+      image: '',
     },
   });
 
@@ -171,6 +174,19 @@ const NewProduct = () => {
               </Box>
 
               <Grid container spacing={1.5}>
+                <Grid item xs={12} sx={{ mb: 1 }}>
+                  <Controller
+                    name="image"
+                    control={control}
+                    render={({ field }) => (
+                      <ProductPhotoField
+                        value={field.value}
+                        onChange={field.onChange}
+                        product={{ item_code: watch('item_code'), item_name: watch('item_name'), item_group: watch('item_group') }}
+                      />
+                    )}
+                  />
+                </Grid>
                 <Grid item xs={12} md={6}>
                   <Controller
                     name="item_code"
