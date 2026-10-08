@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Dashboard API endpoints
 const ENDPOINTS = {
@@ -90,7 +90,7 @@ export const getDashboardMetrics = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch dashboard metrics',
       }));
       return rejectWithValue(errorMessage);

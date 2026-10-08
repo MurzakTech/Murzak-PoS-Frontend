@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchGRNList, fetchGRNDetails } from '../api/reportsApi';
 import { showNotification } from './notificationSlice';
+import { errorSeverity } from '../utils/friendlyError';
 
 // Async thunks
 export const listGRNs = createAsyncThunk(
@@ -27,7 +28,7 @@ export const listGRNs = createAsyncThunk(
       const errorMessage = error.message || 'Failed to fetch GRNs';
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Error',
       }));
       return rejectWithValue(errorMessage);
@@ -57,7 +58,7 @@ export const getGRNDetails = createAsyncThunk(
       const errorMessage = error.message || 'Failed to fetch GRN details';
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Error',
       }));
       return rejectWithValue(errorMessage);

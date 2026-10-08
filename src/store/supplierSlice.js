@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Supplier API endpoints - matching PURCHASE_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -31,13 +31,7 @@ const extractResponseData = (response) => {
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to determine notification severity based on HTTP status code
-const getErrorSeverity = (error) => {
-  // 409 Conflict should be shown as warning instead of error
-  if (error.response?.status === 409) {
-    return 'warning';
-  }
-  return 'error';
-};
+const getErrorSeverity = (error) => errorSeverity(error);
 
 // Helper function to extract success message
 const extractSuccessMessage = (response) => {

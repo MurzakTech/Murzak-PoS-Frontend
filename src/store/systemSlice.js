@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 const ENDPOINTS = {
   listModules: 'techsavanna_pos.api.system_api.list_modules',
@@ -47,7 +47,7 @@ export const listModules = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch modules',
       }));
       return rejectWithValue(errorMessage);
@@ -96,7 +96,7 @@ export const listDoctypes = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch doctypes',
       }));
       return rejectWithValue(errorMessage);
@@ -119,7 +119,7 @@ export const getDoctypeDetails = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch doctype details',
       }));
       return rejectWithValue(errorMessage);

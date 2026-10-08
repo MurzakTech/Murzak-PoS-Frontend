@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 const ENDPOINTS = {
   createRole: 'techsavanna_pos.api.role_api.create_role',
@@ -99,7 +99,7 @@ export const createRole = createAsyncThunk(
       return normalizeRole(data.data || data);
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to create role' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to create role' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -123,7 +123,7 @@ export const updateRole = createAsyncThunk(
       return normalizeRole(data.data || data);
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to update role' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to update role' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -145,7 +145,7 @@ export const deleteRole = createAsyncThunk(
       return { roleName };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to delete role' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to delete role' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -168,7 +168,7 @@ export const disableRole = createAsyncThunk(
       return normalizeRole(data.data || { name: roleName, role_name: roleName, disabled: 1 });
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to disable role' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to disable role' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -191,7 +191,7 @@ export const enableRole = createAsyncThunk(
       return normalizeRole(data.data || { name: roleName, role_name: roleName, disabled: 0 });
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to enable role' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to enable role' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -224,7 +224,7 @@ export const assignPermissions = createAsyncThunk(
       return data.data || data;
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to assign permissions' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to assign permissions' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -248,7 +248,7 @@ export const getRolePermissions = createAsyncThunk(
       return data.data || data;
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to fetch role permissions' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to fetch role permissions' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -275,7 +275,7 @@ export const removePermissions = createAsyncThunk(
       return { roleName, doctype };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to remove permissions' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to remove permissions' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -316,7 +316,7 @@ export const listRoles = createAsyncThunk(
       };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to fetch roles' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to fetch roles' }));
       return rejectWithValue(errorMessage);
     }
   }
@@ -337,7 +337,7 @@ export const getRoleDetails = createAsyncThunk(
       return normalizeRole(data.data || data);
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Failed to fetch role details' }));
+      dispatch(showNotification({ message: errorMessage, severity: errorSeverity(error), title: 'Failed to fetch role details' }));
       return rejectWithValue(errorMessage);
     }
   }

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Inventory Discount API endpoints - matching INVENTORY_DISCOUNT_API.md
 const ENDPOINTS = {
@@ -71,7 +71,7 @@ export const createInventoryDiscountRule = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to create discount rule',
       }));
       return rejectWithValue(errorMessage);
@@ -101,7 +101,7 @@ export const updateInventoryDiscountRule = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to update discount rule',
       }));
       return rejectWithValue(errorMessage);
@@ -128,7 +128,7 @@ export const deleteInventoryDiscountRule = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to delete discount rule',
       }));
       return rejectWithValue(errorMessage);
@@ -152,7 +152,7 @@ export const getInventoryDiscountRule = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch discount rule',
       }));
       return rejectWithValue(errorMessage);
@@ -196,7 +196,7 @@ export const listInventoryDiscountRules = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch discount rules',
       }));
       return rejectWithValue(errorMessage);
@@ -281,7 +281,7 @@ export const bulkGetInventoryDiscounts = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch discounts',
       }));
       return rejectWithValue(errorMessage);

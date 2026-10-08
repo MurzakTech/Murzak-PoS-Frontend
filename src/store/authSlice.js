@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { jwtDecode } from 'jwt-decode';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Full endpoint paths from your API
 const ENDPOINTS = {
@@ -74,13 +74,7 @@ const extractSuccessMessage = (response) => {
 
 // Helper function to extract error message
 // Helper function to determine notification severity based on HTTP status code
-const getErrorSeverity = (error) => {
-  // 409 Conflict should be shown as warning instead of error
-  if (error.response?.status === 409) {
-    return 'warning';
-  }
-  return 'error';
-};
+const getErrorSeverity = (error) => errorSeverity(error);
 
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
 

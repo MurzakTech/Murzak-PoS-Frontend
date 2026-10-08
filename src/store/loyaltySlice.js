@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Loyalty API endpoints - matching LOYALTY_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -137,7 +137,7 @@ export const createLoyaltyProgram = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to create loyalty program',
       }));
       return rejectWithValue(errorMessage);
@@ -177,7 +177,7 @@ export const listLoyaltyPrograms = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch loyalty programs',
       }));
       return rejectWithValue(errorMessage);
@@ -219,7 +219,7 @@ export const assignLoyaltyProgram = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to assign loyalty program',
       }));
       return rejectWithValue(errorMessage);
@@ -268,7 +268,7 @@ export const earnLoyaltyPoints = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to earn loyalty points',
       }));
       return rejectWithValue(errorMessage);
@@ -311,7 +311,7 @@ export const getLoyaltyBalance = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch loyalty balance',
       }));
       return rejectWithValue(errorMessage);
@@ -364,7 +364,7 @@ export const redeemPoints = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to redeem points',
       }));
       return rejectWithValue(errorMessage);
@@ -439,7 +439,7 @@ export const getPointsHistory = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch points history',
       }));
       return rejectWithValue(errorMessage);
@@ -516,7 +516,7 @@ export const getCustomerLoyaltyDetails = createAsyncThunk(
       if (!errorMessage.includes('not enrolled') && !errorMessage.includes('loyalty program')) {
         dispatch(showNotification({
           message: errorMessage,
-          severity: 'error',
+          severity: errorSeverity(error),
           title: 'Failed to fetch customer loyalty details',
         }));
       }

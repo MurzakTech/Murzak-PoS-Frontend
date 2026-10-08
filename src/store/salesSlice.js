@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Sales API endpoints - matching SALES_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -69,13 +69,7 @@ const ensureSucceeded = (response) => {
 };
 
 // Helper function to determine notification severity based on HTTP status code
-const getErrorSeverity = (error) => {
-  // 409 Conflict should be shown as warning instead of error
-  if (error.response?.status === 409) {
-    return 'warning';
-  }
-  return 'error';
-};
+const getErrorSeverity = (error) => errorSeverity(error);
 
 // Helper function to extract success message
 const extractSuccessMessage = (response) => {
@@ -152,7 +146,7 @@ export const createSalesInvoice = createAsyncThunk(
       if (data && data.success === false) {
         dispatch(showNotification({
           message: data.message || 'Failed to create sales invoice',
-          severity: 'error',
+          severity: 'warning',
           title: 'Failed to create sales invoice',
         }));
         return rejectWithValue(data.message || 'Failed to create sales invoice');
@@ -331,7 +325,7 @@ export const createPOSInvoice = createAsyncThunk(
       if (data && data.success === false) {
         dispatch(showNotification({
           message: data.message || 'Failed to create POS invoice',
-          severity: 'error',
+          severity: 'warning',
           title: 'Failed to create POS invoice',
         }));
         return rejectWithValue(data.message || 'Failed to create POS invoice');

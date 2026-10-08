@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Purchase API endpoints - matching API_DOCUMENTATION_PURCHASE.md
 const ENDPOINTS = {
@@ -60,13 +60,7 @@ const extractResponseData = (response) => {
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to determine notification severity based on HTTP status code
-const getErrorSeverity = (error) => {
-  // 409 Conflict should be shown as warning instead of error
-  if (error.response?.status === 409) {
-    return 'warning';
-  }
-  return 'error';
-};
+const getErrorSeverity = (error) => errorSeverity(error);
 
 // Helper function to extract success message
 const extractSuccessMessage = (response) => {
@@ -287,7 +281,7 @@ export const getPurchaseInvoiceDetails = createAsyncThunk(
         if (errorCode === 'LPO_NOT_FOUND' || errorCode === 'INVALID_REQUEST') {
           dispatch(showNotification({
             message: errorMessage,
-            severity: 'error',
+            severity: 'warning',
             title: 'Purchase Invoice Not Found',
           }));
         } else if (errorCode === 'PERMISSION_DENIED') {
@@ -367,7 +361,7 @@ export const createPurchaseInvoiceFromGRN = createAsyncThunk(
         const errorMessage = responseData?.message || 'Failed to create purchase invoice from GRN';
         dispatch(showNotification({
           message: errorMessage,
-          severity: 'error',
+          severity: 'warning',
           title: 'Failed to Create Purchase Invoice',
         }));
         return rejectWithValue(errorMessage);
@@ -420,7 +414,7 @@ export const updatePurchaseInvoiceAPI = createAsyncThunk(
         const errorMessage = responseData?.message || 'Failed to update purchase invoice';
         dispatch(showNotification({
           message: errorMessage,
-          severity: 'error',
+          severity: 'warning',
           title: 'Failed to Update Purchase Invoice',
         }));
         return rejectWithValue(errorMessage);
@@ -475,7 +469,7 @@ export const payPurchaseInvoice = createAsyncThunk(
         const errorMessage = responseData?.message || 'Failed to process payment';
         dispatch(showNotification({
           message: errorMessage,
-          severity: 'error',
+          severity: 'warning',
           title: 'Payment Failed',
         }));
         return rejectWithValue(errorMessage);

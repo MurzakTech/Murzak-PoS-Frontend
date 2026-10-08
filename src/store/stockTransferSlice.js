@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Stock Transfer API endpoints - matching STOCK_TRANSFER_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -132,7 +132,7 @@ export const createStockTransfer = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to create stock transfer',
       }));
       return rejectWithValue(errorMessage);
@@ -204,7 +204,7 @@ export const listStockTransferRequests = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch stock transfer requests',
       }));
       return rejectWithValue(errorMessage);
@@ -343,7 +343,7 @@ export const getStockTransferRequest = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch stock transfer request',
       }));
       return rejectWithValue(errorMessage);
@@ -409,7 +409,7 @@ export const approveStockTransfer = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to approve stock transfer',
       }));
       return rejectWithValue(errorMessage);
@@ -477,7 +477,7 @@ export const approveStockTransferWorkflow = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to approve stock transfer',
       }));
       return rejectWithValue(errorMessage);
@@ -559,7 +559,7 @@ export const dispatchStock = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to dispatch stock',
       }));
       return rejectWithValue(errorMessage);
@@ -625,7 +625,7 @@ export const receiveStockDestination = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to receive stock',
       }));
       return rejectWithValue(errorMessage);
@@ -722,7 +722,7 @@ export const createMaterialRequest = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to create stock transfer request',
       }));
       return rejectWithValue(errorMessage);
@@ -778,7 +778,7 @@ export const submitMaterialRequest = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to submit stock transfer request',
       }));
       return rejectWithValue(errorMessage);
@@ -830,7 +830,7 @@ export const cancelStockTransferRequest = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to cancel stock transfer request',
       }));
       return rejectWithValue(errorMessage);
@@ -873,7 +873,7 @@ export const confirmReceiveTransfer = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to confirm receive transfer',
       }));
       return rejectWithValue(errorMessage);
