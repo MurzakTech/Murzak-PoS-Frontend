@@ -1,6 +1,6 @@
 import React from 'react';
 import { Controller } from 'react-hook-form';
-import { Box, Button, Card, CircularProgress, IconButton, MenuItem, Select, Stack, TextField, Typography, InputAdornment } from '@mui/material';
+import { Alert, AlertTitle, Box, Button, Card, CircularProgress, IconButton, MenuItem, Select, Stack, TextField, Typography, InputAdornment } from '@mui/material';
 import { Add, DeleteOutline, ArrowBack, LockOpen } from '@mui/icons-material';
 import BrandLogo from '../../../components/Common/BrandLogo';
 
@@ -8,7 +8,7 @@ import BrandLogo from '../../../components/Common/BrandLogo';
  * Start of shift. Shown instead of the till until a session is open, so a
  * cashier cannot reach the selling screen by accident without opening the till.
  */
-const OpenTill = ({ control, fields, errors, paymentModes, onAdd, onRemove, onSubmit, loading, apiLoading, cashierName, storeName, currency, onExit }) => (
+const OpenTill = ({ control, fields, errors, paymentModes, onAdd, onRemove, onSubmit, loading, apiLoading, cashierName, storeName, currency, onExit, openError }) => (
   <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'grid', placeItems: 'center', p: 2 }}>
     <Card sx={{ width: '100%', maxWidth: 560, p: { xs: 2.5, sm: 4 }, boxShadow: (t) => t.shadows[6] }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
@@ -78,6 +78,14 @@ const OpenTill = ({ control, fields, errors, paymentModes, onAdd, onRemove, onSu
         <Button type="button" size="small" startIcon={<Add />} onClick={onAdd} sx={{ mb: 3 }}>
           Add another payment method
         </Button>
+
+        {/* Why the last attempt failed stays on screen until the next try, so it can be read and acted on */}
+        {openError && !loading && (
+          <Alert severity="error" sx={{ mb: 2 }} role="alert">
+            <AlertTitle>The till could not be opened</AlertTitle>
+            {openError}
+          </Alert>
+        )}
 
         <Button
           type="submit"

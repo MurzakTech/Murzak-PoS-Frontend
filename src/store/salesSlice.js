@@ -56,6 +56,18 @@ const extractResponseData = (response) => {
 // Helper function to extract error message
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
+// Many sales endpoints report a refusal inside a normal reply: { message: { success: false,
+// message: "..." } }. Without this check the till treated "could not open the shift" as
+// success, let the cashier sell without a shift, and only failed later at payment.
+const ensureSucceeded = (response) => {
+  const body = response?.data;
+  const result = body?.message && typeof body.message === 'object' ? body.message : body;
+  if (result && result.success === false) {
+    throw new Error(result.message || result.error || 'The server could not complete this.');
+  }
+  return response;
+};
+
 // Helper function to determine notification severity based on HTTP status code
 const getErrorSeverity = (error) => {
   // 409 Conflict should be shown as warning instead of error
@@ -428,6 +440,7 @@ export const createPOSOpeningEntry = createAsyncThunk(
       };
 
       const response = await axiosInstance.post(ENDPOINTS.createPOSOpeningEntry, requestData);
+      ensureSucceeded(response);
       const data = extractResponseData(response);
       // Plain words for the cashier; the server's message is about records, not selling
       dispatch(showNotification({
@@ -487,6 +500,7 @@ export const listPOSOpeningEntries = createAsyncThunk(
   async (params = {}, { dispatch, rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(ENDPOINTS.listPOSOpeningEntries, { params });
+      ensureSucceeded(response);
       const data = extractResponseData(response);
       return {
         posOpeningEntries: Array.isArray(data) ? data : (data?.data || []),
@@ -512,6 +526,7 @@ export const getPOSOpeningEntry = createAsyncThunk(
       const response = await axiosInstance.get(ENDPOINTS.getPOSOpeningEntry, {
         params: { name },
       });
+      ensureSucceeded(response);
       const data = extractResponseData(response);
       return {
         posOpeningEntry: data?.data || data,
@@ -537,13 +552,12 @@ export const closePOSOpeningEntry = createAsyncThunk(
         pos_opening_entry,
         do_not_submit,
       });
+      ensureSucceeded(response);
       const data = extractResponseData(response);
-      const successMessage = extractSuccessMessage(response) || 'POS Opening Entry closed successfully';
-      
       dispatch(showNotification({
-        message: successMessage,
+        message: 'Till closed. Your shift has ended.',
         severity: 'success',
-        title: 'POS Session Closed',
+        title: 'Till closed',
       }));
       
       return {
@@ -570,6 +584,7 @@ export const cancelPOSOpeningEntry = createAsyncThunk(
   async ({ name, reason }, { dispatch, rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(ENDPOINTS.cancelPOSOpeningEntry, { name, reason });
+      ensureSucceeded(response);
       const data = extractResponseData(response);
       const successMessage = extractSuccessMessage(response) || 'POS Opening Entry cancelled successfully';
       
