@@ -144,3 +144,35 @@ test('Bank: needs a reference before the payment is recorded', () => {
   fireEvent.click(record);
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ confirmed: true, reference: 'FT2310ABC', amount: 2500 }));
 });
+
+test('M-Pesa prompt: a prompt already waiting is resumed, not sent twice', async () => {
+  api.sendMpesaPrompt.mockResolvedValue({
+    reused: true,
+    message: 'A prompt is already waiting on 254712345678.',
+    transaction: { transaction_id: 'LOG-OLD', status: 'Pending' },
+  });
+  api.checkMpesaPayment.mockResolvedValue({ transaction: { transaction_id: 'LOG-OLD', status: 'Success', mpesa_receipt_number: 'RCT5', amount: 100 } });
+  const onChange = renderMpesa();
+
+  fireEvent.click(screen.getByRole('button', { name: /send .* prompt/i }));
+  await flush();
+  expect(screen.getByText(/already waiting on 254712345678/i)).toBeInTheDocument();
+
+  await act(async () => { jest.advanceTimersByTime(3000); });
+  await flush();
+  expect(api.checkMpesaPayment).toHaveBeenCalledWith('LOG-OLD');
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ transactionId: 'LOG-OLD', reference: 'RCT5' }));
+});
+
+test('M-Pesa prompt: a payment already received is confirmed at once', async () => {
+  api.sendMpesaPrompt.mockResolvedValue({
+    reused: true,
+    transaction: { transaction_id: 'LOG-PAID', status: 'Success', mpesa_receipt_number: 'RCT6', amount: 100 },
+  });
+  const onChange = renderMpesa();
+
+  fireEvent.click(screen.getByRole('button', { name: /send .* prompt/i }));
+  await flush();
+  expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ confirmed: true, transactionId: 'LOG-PAID', reference: 'RCT6' }));
+  expect(api.checkMpesaPayment).not.toHaveBeenCalled();
+});

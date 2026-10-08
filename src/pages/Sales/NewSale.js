@@ -979,6 +979,8 @@ const NewSale = () => {
       do_not_submit: false, // Submit immediately for POS
       is_pos: 1, // Mark as POS transaction unless credit is used
       invoice_type: "POS Invoice",
+      // Same id on a retry, so a sale whose reply was lost is not recorded twice
+      client_reference: saleReference,
       // is_pos: creditUsed > 0 ? 0 : 1,
       
       // Add loyalty redemption if points are being redeemed

@@ -121,6 +121,7 @@ const MpesaPrompt = ({ amount, currency, company, saleReference, customerPhone, 
   const [phone, setPhone] = useState(customerPhone || '');
   const [state, setState] = useState('idle'); // idle | sending | waiting | failed
   const [message, setMessage] = useState('');
+  const [notice, setNotice] = useState('');
   const [txn, setTxn] = useState(null);
   const charge = mpesaChargeAmount(amount);
   const normalized = normalizeKenyanPhone(phone);
@@ -135,7 +136,15 @@ const MpesaPrompt = ({ amount, currency, company, saleReference, customerPhone, 
     setMessage('');
     try {
       const res = await sendMpesaPrompt({ company, phoneNumber: normalized, amount: charge, reference: saleReference });
-      setTxn(res.transaction);
+      const t = res.transaction;
+      // The server never sends a second prompt for the same payment: it may answer with the
+      // earlier one, still waiting or already paid
+      if (t.status === 'Success') {
+        onChange({ confirmed: true, transactionId: t.transaction_id, reference: t.mpesa_receipt_number, amount: Number(t.amount) || charge, label: 'M-Pesa' });
+        return;
+      }
+      setNotice(res.reused ? res.message : '');
+      setTxn(t);
       setState('waiting');
     } catch (e) {
       setMessage(e.message);
@@ -173,7 +182,7 @@ const MpesaPrompt = ({ amount, currency, company, saleReference, customerPhone, 
       />
       {state === 'waiting' ? (
         <Alert severity="info" icon={<CircularProgress size={20} />} action={<Button color="inherit" size="small" onClick={() => setState('idle')}>Stop waiting</Button>}>
-          Prompt sent. Ask the customer to enter their M-Pesa PIN for <b>{money(charge, currency)}</b>. This screen updates by itself.
+          {notice || <>Prompt sent. Ask the customer to enter their M-Pesa PIN for <b>{money(charge, currency)}</b>.</>} This screen updates by itself.
         </Alert>
       ) : (
         <Box>

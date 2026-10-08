@@ -117,7 +117,8 @@ const PaymentPanel = ({
   const suggestions = cashSuggestions(total);
   const singleOption = paymentOptions[paymentMode];
   const nonCashMessage = !splitPayments && paymentMode !== 'Cash' && paymentMode !== 'Credit' && !singleOption;
-  const gatewayProps = { currency, company, saleReference, customerPhone, customerName: hasCustomer ? customerName : '' };
+  // Each payment line has its own reference, so the server can tell a retry from a new payment
+  const gatewayProps = { currency, company, customerPhone, customerName: hasCustomer ? customerName : '' };
 
   return (
     <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', animation: 'murzak-fade-up .2s ease both' }}>
@@ -232,6 +233,7 @@ const PaymentPanel = ({
             amount={total}
             value={payments[0]?.gateway}
             onChange={(v) => onSetGateway(0, v)}
+            saleReference={`${saleReference}-0`}
             {...gatewayProps}
           />
         )}
@@ -308,6 +310,7 @@ const PaymentPanel = ({
                       mode={payments[collectRow].mode}
                       amount={Number(payments[collectRow].amount)}
                       value={payments[collectRow].gateway}
+                      saleReference={`${saleReference}-${collectRow}`}
                       onChange={(v) => {
                         onSetGateway(collectRow, v);
                         if (v?.confirmed) setCollectRow(null);
