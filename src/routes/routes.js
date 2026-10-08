@@ -1,7 +1,10 @@
-import { lazy } from 'react';
+import React, { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
+import { IS_TENANT_BUILD } from '../config/deployment';
 
 // Lazy load pages for code splitting
 const Landing = lazy(() => import('../pages/Landing'));
+const ToLogin = () => <Navigate to="/login" replace />;
 const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -126,7 +129,8 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 export const publicRoutes = [
   {
     path: '/',
-    element: Landing,
+    // A shop's own POS has no marketing audience — open straight on sign-in.
+    element: IS_TENANT_BUILD ? ToLogin : Landing,
     label: 'Home',
   },
   {

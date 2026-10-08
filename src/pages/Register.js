@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Box,
@@ -68,6 +68,7 @@ import logoMain from '../assets/logo_mark.png';
 import { normalizeKenyanPhone, isValidKenyanMobile, PHONE_ERROR } from '../utils/phone';
 import logoIcon from '../assets/logo_mark.png';
 import posIcon from '../assets/pos-icon.png';
+import { IS_TENANT_BUILD } from '../config/deployment';
 
 const MotionCard = motion(Card);
 const MotionButton = motion(Button);
@@ -1390,6 +1391,13 @@ const Register = () => {
   };
 
   const progress = ((activeStep + 1) / steps.length) * 100;
+
+  // A shop's own POS has exactly one way in: the owner account created when
+  // they paid. Signed-in owners still use this page for company setup (they
+  // land on step 1); anyone else goes to sign-in.
+  if (IS_TENANT_BUILD && !isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <Box
