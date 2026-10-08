@@ -15,6 +15,7 @@ import {
   PersonOutline,
   ReceiptLong,
   ExpandMore,
+  ImageOutlined,
 } from '@mui/icons-material';
 import BrandLogo from '../../../components/Common/BrandLogo';
 import SystemStatus from '../../../components/Layout/SystemStatus';
@@ -41,6 +42,8 @@ const PosHeader = ({
   onToggleTheme,
   autoPrint,
   onToggleAutoPrint,
+  showPictures,
+  onToggleShowPictures,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -172,6 +175,11 @@ const PosHeader = ({
         <MenuItem onClick={() => { setMenuAnchor(null); onToggleTheme(); }}>
           <ListItemIcon>{themeMode === 'dark' ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}</ListItemIcon>
           <ListItemText>{themeMode === 'dark' ? 'Light screen' : 'Dark screen'}</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={onToggleShowPictures}>
+          <ListItemIcon><ImageOutlined fontSize="small" /></ListItemIcon>
+          <ListItemText>Show product pictures</ListItemText>
+          <Switch edge="end" size="small" checked={!!showPictures} tabIndex={-1} />
         </MenuItem>
         <MenuItem onClick={onToggleAutoPrint}>
           <ListItemIcon><Print fontSize="small" /></ListItemIcon>

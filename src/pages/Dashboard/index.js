@@ -255,7 +255,10 @@ const Dashboard = () => {
   const data = { ...EMPTY_DATA, ...(dashboardData || {}), stats: { ...EMPTY_DATA.stats, ...(dashboardData?.stats || {}) } };
   const { stats } = data;
   const periodLabel = PERIOD_LABELS[filters.period] || '';
-  const netProfit = (stats.netSales || 0) - (stats.totalExpense || 0);
+  // Net sales minus expenses recorded in the accounts. It does not subtract what the stock
+  // cost, so it is labelled for what it is rather than as profit. The server's "profitMargin"
+  // is a fixed placeholder (it assumes stock costs 70% of sales), so it is not shown.
+  const afterExpenses = (stats.netSales || 0) - (stats.totalExpense || 0);
   const pendingItems = data.pendingShipments.reduce((acc, s) => acc + (s.items || 0), 0);
   const outstandingTotal = data.salesDue.reduce((acc, d) => acc + (d.amount || 0), 0);
 
@@ -270,7 +273,7 @@ const Dashboard = () => {
       ['Sales Returns', stats.salesReturns],
       ['Purchase Returns', stats.purchaseReturns],
       ['Operating Expenses', stats.totalExpense],
-      ['Profit Margin (%)', stats.profitMargin],
+      ['Sales after expenses (cost of stock not included)', afterExpenses],
     ];
     const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -355,11 +358,11 @@ const Dashboard = () => {
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, mb: 2 }}>
         <StatCard label="Revenue" value={money(stats.totalSales)} hint={`Net of returns: ${money(stats.netSales)}`} icon={<TrendingUp />} accent="primary" loading={metricsLoading} />
         <StatCard
-          label="Net profit"
-          value={money(netProfit)}
-          hint={`${stats.profitMargin || 0}% margin`}
+          label="Sales after expenses"
+          value={money(afterExpenses)}
+          hint="Cost of stock not yet included"
           icon={<AccountBalance />}
-          accent={netProfit < 0 ? 'error' : 'success'}
+          accent={afterExpenses < 0 ? 'error' : 'success'}
           loading={metricsLoading}
         />
         <StatCard

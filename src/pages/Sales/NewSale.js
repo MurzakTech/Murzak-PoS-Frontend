@@ -58,6 +58,7 @@ import { round2 } from './pos/money';
 const TILE_PAGE = 60;
 const HELD_KEY = 'pos_held_sales_v1';
 const AUTOPRINT_KEY = 'pos_auto_print';
+const PICTURES_KEY = 'pos_show_pictures';
 
 const readHeldSales = () => {
   try {
@@ -73,6 +74,14 @@ const readHeldSales = () => {
 const shouldRefocusSearch = () => {
   try {
     return window.matchMedia('(pointer: fine)').matches;
+  } catch (e) {
+    return true;
+  }
+};
+
+const readShowPictures = () => {
+  try {
+    return localStorage.getItem(PICTURES_KEY) !== 'false';
   } catch (e) {
     return true;
   }
@@ -180,6 +189,7 @@ const NewSale = () => {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
+  const [showPictures, setShowPictures] = useState(readShowPictures);
   
   // Loyalty redemption state
   const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState(0);
@@ -650,6 +660,8 @@ const NewSale = () => {
           uom: product.stock_uom || 'Nos',
           warehouse: defaultWarehouse, // Use default warehouse
           description: product.description || '',
+          item_group: product.item_group || '', // for the cart picture only
+          image: product.image || '', // for the cart picture only
           subtotal: discountedPrice,
           discount_amount: discountAmount,
           discount_rule: discountRule,
@@ -1365,6 +1377,17 @@ const NewSale = () => {
     setCreditAmount(mode === 'Credit' ? grandTotal : 0);
   };
 
+  const toggleShowPictures = () => {
+    setShowPictures((prev) => {
+      try {
+        localStorage.setItem(PICTURES_KEY, String(!prev));
+      } catch (e) {
+        // not critical
+      }
+      return !prev;
+    });
+  };
+
   const toggleAutoPrint = () => {
     setAutoPrint((prev) => {
       try {
@@ -1579,6 +1602,8 @@ const NewSale = () => {
         onToggleTheme={toggleColorMode}
         autoPrint={autoPrint}
         onToggleAutoPrint={toggleAutoPrint}
+        showPictures={showPictures}
+        onToggleShowPictures={toggleShowPictures}
       />
 
       {/* Screen reader announcements for cart changes */}
@@ -1669,6 +1694,7 @@ const NewSale = () => {
                 setSelectedCategory={setSelectedCategory}
                 products={filteredProducts}
                 visibleCount={tileLimit}
+                showImages={showPictures}
                 onShowMore={() => setTileLimit((n) => n + TILE_PAGE)}
                 isLoading={isLoadingProducts}
                 getTileData={getTileData}

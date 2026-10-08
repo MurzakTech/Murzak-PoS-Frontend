@@ -37,3 +37,23 @@ code {
     transform: scale(1) translate(50%, -50%);
   }
 }
+
+/* Landing page: gentle floating cards and the scrolling product strip */
+@keyframes murzak-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes murzak-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { jwtDecode } from 'jwt-decode';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Full endpoint paths from your API
 const ENDPOINTS = {
@@ -81,30 +82,7 @@ const getErrorSeverity = (error) => {
   return 'error';
 };
 
-const extractErrorMessage = (error) => {
-  // Not authenticated / session expired - show a clean message, never expose
-  // the raw traceback Frappe returns for this at the WSGI layer
-  if (error.response?.status === 401) {
-    return 'Your session has expired. Please log in again.';
-  }
-  // API documentation shows error structure: { exc, exc_type, message }
-  if (error.response?.data) {
-    const errorData = error.response.data;
-    if (errorData.message) {
-      if (typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-      if (typeof errorData.message === 'object' && errorData.message.message) {
-        return errorData.message.message;
-      }
-    }
-    if (errorData.exc_type) {
-      return `${errorData.exc_type}: ${errorData.message || 'An error occurred'}`;
-    }
-    // errorData.exc is a raw Python traceback - never surface it directly
-  }
-  return error.message || 'An unexpected error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to check if token is valid
 const isTokenValid = (token) => {
@@ -228,7 +206,7 @@ export const registerUser = createAsyncThunk(
       if (backendError && typeof backendError === "object") {
         return rejectWithValue({
           code: backendError.code || "ERROR",
-          message: typeof backendError.message === "string" ? backendError.message : errorMessage,
+          message: errorMessage,
           requirements: Array.isArray(backendError.requirements) ? backendError.requirements : null,
         });
       }
@@ -246,11 +224,11 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async ({ email, phone, password }, { rejectWithValue, dispatch }) => {
     try {
-      // Send whichever identifier the person signed in with (email or phone).
-      // Previously only the email was forwarded, so phone sign-in sent no identifier at all.
+      // The server's login_user takes a single "email" field and drops any other, so a
+      // phone number travels in that field too. The server (Frappe) then finds the user by
+      // mobile number when System Settings > "Allow Login using Mobile Number" is on.
       const response = await axiosInstance.post(ENDPOINTS.login, {
-        ...(email ? { email } : {}),
-        ...(phone ? { phone } : {}),
+        email: email || phone,
         password,
       });
       const data = extractResponseData(response);
@@ -297,7 +275,7 @@ export const loginUser = createAsyncThunk(
       if (backendError && typeof backendError === "object") {
         return rejectWithValue({
           code: backendError.code || "ERROR",
-          message: typeof backendError.message === "string" ? backendError.message : errorMessage,
+          message: errorMessage,
         });
       }
 

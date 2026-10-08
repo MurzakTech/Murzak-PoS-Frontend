@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Loyalty API endpoints - matching LOYALTY_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -32,20 +33,7 @@ const extractResponseData = (response) => {
 };
 
 // Helper function to extract error message
-const extractErrorMessage = (error) => {
-  if (error.response?.data?.message) {
-    // Handle both string and object messages
-    const message = error.response.data.message;
-    return typeof message === 'string' ? message : (message.message || JSON.stringify(message));
-  }
-  if (error.response?.data?.exc_type) {
-    return error.response.data.exc_type;
-  }
-  if (error.response?.data?.exc) {
-    return error.response.data.exc;
-  }
-  return error.message || 'An error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to extract success message
 const extractSuccessMessage = (response) => {

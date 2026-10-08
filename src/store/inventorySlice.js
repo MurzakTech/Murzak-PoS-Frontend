@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Inventory API endpoints
 const ENDPOINTS = {
@@ -60,119 +61,10 @@ const extractResponseData = (response) => {
 
 // Helper function to extract error message
 // Can handle both error objects (from catch blocks) and response objects (when success: false in response body)
-const extractErrorMessage = (error) => {
-  // Handle case where we pass a response object directly (when HTTP 200 but success: false)
-  let errorData = null;
-  
-  if (error.response?.data) {
-    // Standard error object from catch block
-    errorData = error.response.data;
-  } else if (error.data && !error.response) {
-    // Response object passed directly (from try block when success: false)
-    errorData = error.data;
-  } else if (error.message) {
-    // Fallback to error message if no data structure
-    return error.message;
-  } else {
-    return 'An error occurred';
-  }
-  
-  return extractErrorMessageFromData(errorData);
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to extract error message from response/error data
-const extractErrorMessageFromData = (errorData) => {
-  if (!errorData) {
-    return 'An error occurred';
-  }
-  
-  // Check for _error_message first (most direct error message)
-  if (errorData._error_message) {
-    return errorData._error_message;
-  }
-  
-  // Parse _server_messages to extract detailed error messages (prioritize this as it's most specific)
-  // Expected format: "[\"{\\\"message\\\": \\\"...\\\", ...}\"]" (double-encoded JSON)
-  if (errorData._server_messages) {
-    try {
-      // Parse the outer JSON array string
-      const messagesArray = JSON.parse(errorData._server_messages);
-      if (Array.isArray(messagesArray) && messagesArray.length > 0) {
-        // Each element in the array is a JSON string, so parse it again
-        const firstMessageStr = messagesArray[0];
-        
-        if (typeof firstMessageStr === 'string') {
-          try {
-            const firstMessage = JSON.parse(firstMessageStr);
-            if (firstMessage?.message) {
-              // Remove HTML tags from message if present (e.g., <strong> tags)
-              const cleanMessage = firstMessage.message.replace(/<[^>]*>/g, '').trim();
-              if (cleanMessage) {
-                return cleanMessage;
-              }
-            }
-          } catch (innerParseError) {
-            // If inner parse fails, the string itself might be the message
-            // Try to use it as-is if it looks like a message
-            if (firstMessageStr.trim().length > 0) {
-              return firstMessageStr.trim();
-            }
-          }
-        } else if (firstMessageStr && typeof firstMessageStr === 'object' && firstMessageStr.message) {
-          // If it's already an object, extract message directly
-          const cleanMessage = firstMessageStr.message.replace(/<[^>]*>/g, '').trim();
-          if (cleanMessage) {
-            return cleanMessage;
-          }
-        }
-      }
-    } catch (e) {
-      // If parsing fails, continue to other error sources
-      // Don't log in production to avoid console noise
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Failed to parse _server_messages:', e);
-      }
-    }
-  }
-  
-  // Check for nested message structure (e.g., { message: { success: false, message: "..." } })
-  if (errorData.message) {
-    if (typeof errorData.message === 'string') {
-      // If message is a string, use it directly but try to extract cleaner version from _server_messages first
-      return errorData.message;
-    }
-    if (typeof errorData.message === 'object') {
-      // Check if message object has a nested message property
-      if (errorData.message.message) {
-        // Clean up the message - remove prefixes like "Error adding stock manager stock take: "
-        const message = errorData.message.message;
-        // Extract the actual error message after the colon if present
-        const parts = message.split(': ');
-        if (parts.length > 1) {
-          return parts.slice(1).join(': ').trim();
-        }
-        return message.trim();
-      }
-      // If message is an object but doesn't have message property, try to stringify it
-      if (errorData.message.success === false) {
-        // This indicates a structured error response
-        return errorData.message.message || JSON.stringify(errorData.message);
-      }
-    }
-  }
-  
-  // Check for exc_type
-  if (errorData.exc_type) {
-    return errorData.exc_type;
-  }
-  
-  // Check for exc
-  if (errorData.exc) {
-    return errorData.exc;
-  }
-  
-  return 'An error occurred';
-};
+const extractErrorMessageFromData = (errorData) => friendlyErrorMessage({ response: { data: errorData } });
 
 // Helper function to determine notification severity based on HTTP status code
 const getErrorSeverity = (error) => {

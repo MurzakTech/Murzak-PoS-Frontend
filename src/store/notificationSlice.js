@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { humanizeMessage, humanizeTitle } from '../utils/friendlyError';
 
 const notificationSlice = createSlice({
   name: 'notification',
@@ -12,9 +13,13 @@ const notificationSlice = createSlice({
   reducers: {
     showNotification: (state, action) => {
       state.open = true;
-      state.message = action.payload.message;
       state.severity = action.payload.severity || 'info';
-      state.title = action.payload.title || null;
+      // Last line of defence: problems are always shown in plain language, whoever raised them
+      state.message =
+        state.severity === 'error' || state.severity === 'warning'
+          ? humanizeMessage(action.payload.message)
+          : action.payload.message;
+      state.title = humanizeTitle(action.payload.title);
       state.duration = action.payload.duration || 6000;
     },
     clearNotification: (state) => {

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Sales API endpoints - matching SALES_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -53,65 +54,7 @@ const extractResponseData = (response) => {
 };
 
 // Helper function to extract error message
-const extractErrorMessage = (error) => {
-  if (error.response?.data) {
-    const errorData = error.response.data;
-    
-    // First, try to extract from _server_messages (most user-friendly)
-    if (errorData._server_messages) {
-      try {
-        const messages = JSON.parse(errorData._server_messages);
-        // Find the actual validation error (not CharacterLengthExceededError)
-        // Look for errors with meaningful titles and messages
-        const validationError = messages.find(msg => {
-          try {
-            const parsed = typeof msg === 'string' ? JSON.parse(msg) : msg;
-            return parsed && 
-                   parsed.title && 
-                   parsed.title !== 'Value too big' && 
-                   parsed.title !== 'Message' &&
-                   parsed.message &&
-                   parsed.indicator === 'red'; // Only show actual errors
-          } catch (e) {
-            return false;
-          }
-        });
-        
-        if (validationError) {
-          const parsed = typeof validationError === 'string' ? JSON.parse(validationError) : validationError;
-          // Remove HTML tags and return clean message
-          const cleanMessage = parsed.message
-            .replace(/<strong>/g, '')
-            .replace(/<\/strong>/g, '')
-            .replace(/<[^>]*>/g, '')
-            .trim();
-          return cleanMessage || parsed.message;
-        }
-      } catch (e) {
-        // If parsing fails, continue to other error extraction methods
-      }
-    }
-    
-    // Fallback to other error fields
-    if (errorData.message) {
-      // If message is a string, return it directly
-      if (typeof errorData.message === 'string') {
-        return errorData.message;
-      }
-      // If message is an object, try to get the message property
-      if (typeof errorData.message === 'object' && errorData.message.message) {
-        return errorData.message.message;
-      }
-    }
-    if (errorData.exc_type) {
-      return errorData.exc_type;
-    }
-    if (errorData.exc) {
-      return errorData.exc;
-    }
-  }
-  return error.message || 'An error occurred';
-};
+const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to determine notification severity based on HTTP status code
 const getErrorSeverity = (error) => {
@@ -382,12 +325,11 @@ export const createPOSInvoice = createAsyncThunk(
         return rejectWithValue(data.message || 'Failed to create POS invoice');
       }
 
-      const successMessage = extractSuccessMessage(response) || 'POS Invoice created successfully';
-      
+      // The till shows its own "Sale complete" screen; this is just a short confirmation
       dispatch(showNotification({
-        message: successMessage,
+        message: 'Sale saved.',
         severity: 'success',
-        title: 'Success',
+        duration: 2500,
       }));
       
       return {

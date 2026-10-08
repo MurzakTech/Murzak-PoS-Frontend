@@ -95,6 +95,8 @@ import DiscountInfo from '../../components/Inventory/DiscountInfo';
 import PageHeader from '../../components/Layout/PageHeader';
 import FilterBar from '../../components/Layout/FilterBar';
 import DataTable from '../../components/Layout/DataTable';
+import ProductImage from '../../components/Common/ProductImage';
+import ProductPhotoField from '../../components/Products/ProductPhotoField';
 import StatusChip from '../../components/Layout/StatusChip';
 
 const Products = () => {
@@ -203,6 +205,7 @@ const Products = () => {
       is_sales_item: true,
       is_purchase_item: false,
       brand: '',
+      image: '',
     },
   });
 
@@ -349,6 +352,7 @@ const Products = () => {
       is_sales_item: product.is_sales_item === 1,
       is_purchase_item: product.is_purchase_item === 1,
       brand: product.brand || '',
+      image: product.image || '',
     });
     setSelectedProductItem(product);
     setEditDialogOpen(true);
@@ -666,7 +670,13 @@ const Products = () => {
     {
       field: 'item_name',
       header: 'Name',
-      width: '20%',
+      width: '24%',
+      render: (value, row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+          <ProductImage product={row} shape="square" rounded={1.5} sx={{ width: 36 }} />
+          <Typography variant="body2" noWrap>{value}</Typography>
+        </Box>
+      ),
     },
     {
       field: 'item_group',
@@ -981,6 +991,21 @@ const Products = () => {
             Basic Information
           </Typography>
           <Divider sx={{ mt: 1 }} />
+        </Grid>
+
+        <Grid item xs={12}>
+          <Controller
+            name="image"
+            control={editControl}
+            render={({ field }) => (
+              <ProductPhotoField
+                value={field.value}
+                onChange={field.onChange}
+                product={selectedProductItem || {}}
+                disabled={isSubmittingEdit}
+              />
+            )}
+          />
         </Grid>
 
         <Grid item xs={12}>

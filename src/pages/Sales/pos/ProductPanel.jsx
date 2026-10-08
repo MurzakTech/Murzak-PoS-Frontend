@@ -3,9 +3,10 @@ import { Box, Button, ButtonBase, CircularProgress, IconButton, InputBase, Skele
 import { alpha } from '@mui/material/styles';
 import { Search, Close, QrCodeScanner, Inventory2Outlined, LocalOffer } from '@mui/icons-material';
 import EmptyState from '../../../components/Common/EmptyState';
+import ProductImage from '../../../components/Common/ProductImage';
 import { fmt } from './money';
 
-const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, stockQty, cartQty, uom, disabled, onAdd }) => {
+const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, stockQty, cartQty, uom, disabled, onAdd, showImage }) => {
   const out = stockQty !== null && stockQty < 1;
   const short = stockQty !== null && !out && stockQty < cartQty + 1 && cartQty > 0;
   const low = stockQty !== null && !out && stockQty <= 5;
@@ -26,6 +27,8 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
         gap: 1,
         minHeight: 112,
         p: 1.5,
+        pt: showImage ? 0 : 1.5,
+        overflow: 'hidden',
         borderRadius: 3,
         border: 1,
         borderColor: cartQty ? 'primary.main' : 'divider',
@@ -37,6 +40,13 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
         '&:active': { transform: 'scale(0.97)' },
       }}
     >
+      {showImage && (
+        <ProductImage
+          product={product}
+          rounded={0}
+          sx={{ mx: -1.5, mb: 0.25, aspectRatio: { xs: '16 / 9', sm: '2 / 1' }, filter: out ? 'grayscale(1)' : 'none', opacity: out ? 0.55 : 1 }}
+        />
+      )}
       <Typography
         variant="subtitle2"
         sx={{
@@ -46,7 +56,7 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
-          pr: cartQty ? 3.5 : 0,
+          pr: cartQty && !showImage ? 3.5 : 0,
           minHeight: '2.5em',
         }}
       >
@@ -97,7 +107,7 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
       {cartQty > 0 && (
         <Box
           aria-hidden="true"
-          sx={{ position: 'absolute', top: 8, right: 8, minWidth: 26, height: 26, px: 0.75, borderRadius: 999, display: 'grid', placeItems: 'center', bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 800, fontSize: '0.8125rem' }}
+          sx={{ position: 'absolute', top: 8, right: 8, minWidth: 26, height: 26, px: 0.75, borderRadius: 999, display: 'grid', placeItems: 'center', bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 800, fontSize: '0.8125rem', boxShadow: '0 0 0 2px rgba(255,255,255,.9)' }}
         >
           {cartQty}
         </Box>
@@ -117,6 +127,7 @@ const ProductPanel = ({
   setSelectedCategory,
   products,
   visibleCount,
+  showImages = true,
   onShowMore,
   isLoading,
   getTileData,
@@ -226,7 +237,7 @@ const ProductPanel = ({
         {isLoading ? (
           <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(168px, 1fr))' } }} aria-busy="true" aria-label="Loading products">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} variant="rounded" height={112} />
+              <Skeleton key={i} variant="rounded" height={showImages ? 190 : 112} />
             ))}
           </Box>
         ) : products.length === 0 ? (
@@ -257,6 +268,7 @@ const ProductPanel = ({
                     uom={d.uom}
                     disabled={!hasStore}
                     onAdd={addToCart}
+                    showImage={showImages}
                   />
                 );
               })}

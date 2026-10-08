@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { friendlyErrorMessage } from '../utils/friendlyError';
 
 // Support both variable names for backward compatibility
 const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL;
@@ -133,7 +134,11 @@ axiosInstance.interceptors.response.use(
       // Something else happened
       console.error('Error:', error.message);
     }
-    
+
+    // Screens that show error.message directly get plain language too; the original stays in rawMessage
+    error.rawMessage = error.message;
+    error.message = friendlyErrorMessage(error);
+
     return Promise.reject(error);
   }
 );
