@@ -26,15 +26,17 @@ const axiosInstance = axios.create({
 // Add JWT to every request except login and register
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Endpoints that should NOT have Authorization header (guest access)
+    // Endpoints that must NOT carry an Authorization header: signing in and
+    // signing up, where a stale token from a previous session would make
+    // Frappe reject the request (an invalid Bearer token is a 401, not Guest).
+    //
+    // Everything else sends the token when there is one. Guest-callable
+    // endpoints such as seed_products still work for a signed-in user, and
+    // tenant front doors (<shop>.pos.murzaktech.tech) refuse unauthenticated
+    // calls to them, so stripping the token there would break onboarding.
     const publicEndpoints = [
       'techsavanna_pos.api.auth_api.login_user',
       'techsavanna_pos.api.auth_api.register_user',
-      'techsavanna_pos.api.industry_api.get_pos_industries',
-      'techsavanna_pos.api.product_seeding.get_pos_industries',
-      'techsavanna_pos.api.product_seeding.seed_products',
-      'techsavanna_pos.api.product_seeding.bulk_upload_products',
-      // Note: create_seed_item requires authentication, so it's not in this list
     ];
     
     // Check if this is a public endpoint
