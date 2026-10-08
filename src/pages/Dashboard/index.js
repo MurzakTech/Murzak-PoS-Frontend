@@ -255,10 +255,15 @@ const Dashboard = () => {
   const data = { ...EMPTY_DATA, ...(dashboardData || {}), stats: { ...EMPTY_DATA.stats, ...(dashboardData?.stats || {}) } };
   const { stats } = data;
   const periodLabel = PERIOD_LABELS[filters.period] || '';
-  // Net sales minus expenses recorded in the accounts. It does not subtract what the stock
-  // cost, so it is labelled for what it is rather than as profit. The server's "profitMargin"
-  // is a fixed placeholder (it assumes stock costs 70% of sales), so it is not shown.
+  // Servers with real costing send costOfGoodsSold and netProfit (sales minus what the stock
+  // cost minus expenses). Older servers only had a fixed placeholder margin, so for them the
+  // card shows sales minus expenses and says plainly that stock cost is not included.
+  const hasRealProfit = typeof stats.costOfGoodsSold === 'number' && typeof stats.netProfit === 'number';
   const afterExpenses = (stats.netSales || 0) - (stats.totalExpense || 0);
+  const profitValue = hasRealProfit ? stats.netProfit : afterExpenses;
+  const profitHint = hasRealProfit
+    ? `${stats.profitMargin || 0}% margin after stock cost and expenses${stats.costEstimatedItems > 0 ? ' (some stock costs estimated)' : ''}`
+    : 'Cost of stock not yet included';
   const pendingItems = data.pendingShipments.reduce((acc, s) => acc + (s.items || 0), 0);
   const outstandingTotal = data.salesDue.reduce((acc, d) => acc + (d.amount || 0), 0);
 
@@ -273,7 +278,14 @@ const Dashboard = () => {
       ['Sales Returns', stats.salesReturns],
       ['Purchase Returns', stats.purchaseReturns],
       ['Operating Expenses', stats.totalExpense],
-      ['Sales after expenses (cost of stock not included)', afterExpenses],
+      ...(hasRealProfit
+        ? [
+            ['Cost of Goods Sold', stats.costOfGoodsSold],
+            ['Gross Profit', stats.grossProfit],
+            ['Net Profit', stats.netProfit],
+            ['Net Profit Margin (%)', stats.profitMargin],
+          ]
+        : [['Sales after expenses (cost of stock not included)', afterExpenses]]),
     ];
     const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -358,11 +370,11 @@ const Dashboard = () => {
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, mb: 2 }}>
         <StatCard label="Revenue" value={money(stats.totalSales)} hint={`Net of returns: ${money(stats.netSales)}`} icon={<TrendingUp />} accent="primary" loading={metricsLoading} />
         <StatCard
-          label="Sales after expenses"
-          value={money(afterExpenses)}
-          hint="Cost of stock not yet included"
+          label={hasRealProfit ? 'Net profit' : 'Sales after expenses'}
+          value={money(profitValue)}
+          hint={profitHint}
           icon={<AccountBalance />}
-          accent={afterExpenses < 0 ? 'error' : 'success'}
+          accent={profitValue < 0 ? 'error' : 'success'}
           loading={metricsLoading}
         />
         <StatCard
