@@ -89,7 +89,7 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
         id: 'payments',
         title: 'Check payment methods and tax',
         description: 'Confirm cash, M-Pesa and bank options, and set up eTIMS if you issue tax invoices.',
-        cta: { label: 'Review settings', path: '/settings/payment-methods' },
+        cta: { label: 'Review settings', path: '/settings/payment-gateways' },
       },
       {
         id: 'team',

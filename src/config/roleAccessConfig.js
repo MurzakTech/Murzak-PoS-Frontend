@@ -128,6 +128,7 @@ const ROUTE_GROUPS = {
     '/settings/bank-accounts',
     '/settings/account-provisioning',
     '/settings/payment-methods',
+    '/settings/payment-gateways',
     '/settings/inventory-discounts',
     '/settings/inventory-discounts/new',
     '/settings/inventory-discounts/:id/edit',

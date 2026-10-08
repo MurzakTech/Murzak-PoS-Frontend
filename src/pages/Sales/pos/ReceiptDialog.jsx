@@ -81,7 +81,7 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
         <Divider sx={{ borderStyle: 'dashed', my: 1 }} />
 
         {(saleData.payments || []).map((p, i) => (
-          <Row key={i} label={p.mode_of_payment || p.mode} value={fmt(p.amount)} />
+          <Row key={i} label={p.reference_no ? `${p.mode_of_payment || p.mode} (${p.reference_no})` : p.mode_of_payment || p.mode} value={fmt(p.amount)} />
         ))}
         {isCash && <Row label="Cash given" value={fmt(saleData.amountGiven)} />}
         {change > 0 && <Row label="Change" value={fmt(change)} bold />}
