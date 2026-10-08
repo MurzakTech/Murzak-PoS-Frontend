@@ -44,6 +44,10 @@ import PosConfirm from './pos/PosConfirm';
 import PriceEntryDialog from './pos/PriceEntryDialog';
 import PhoneSaleBar from './pos/PhoneSaleBar';
 import { round2 } from './pos/money';
+import { getPosPaymentOptions } from '../../api/paymentGatewayApi';
+
+// Short id for one sale, sent to M-Pesa / Pesapal / PayPal so payments can be traced to it
+const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
 
 /**
  * Point of sale (till).
@@ -160,6 +164,9 @@ const NewSale = () => {
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [splitPayments, setSplitPayments] = useState(false);
   const [payments, setPayments] = useState([{ mode: 'Cash', amount: 0 }]);
+  // How each method is collected: { [mode]: { gateway: 'mpesa' | 'pesapal' | 'paypal' | 'bank', ... } }
+  const [paymentOptions, setPaymentOptions] = useState({});
+  const [saleReference, setSaleReference] = useState(newSaleReference);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -271,6 +278,23 @@ const NewSale = () => {
       }));
     }
   }, [userCompany, dispatch]);
+
+  // Which methods go through a gateway (configured per business under Settings > Payment Gateways)
+  useEffect(() => {
+    if (!userCompany) return undefined;
+    let cancelled = false;
+    getPosPaymentOptions(userCompany)
+      .then((res) => {
+        if (!cancelled) setPaymentOptions(res?.options || {});
+      })
+      .catch(() => {
+        // Without gateway details the till still works; gateway methods fall back to manual entry
+        if (!cancelled) setPaymentOptions({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userCompany]);
 
   // Fetch receivable account when credit payment is used
   useEffect(() => {
@@ -825,7 +849,16 @@ const NewSale = () => {
     // Build payments
     const paymentLines = splitPayments
       ? payments
-      : [{ mode: paymentMode, amount: paymentMode === 'Credit' ? creditAmount : grandTotal }];
+      : [{ mode: paymentMode, amount: paymentMode === 'Credit' ? creditAmount : grandTotal, gateway: payments[0]?.gateway }];
+
+    // M-Pesa, Pesapal, PayPal and bank lines must be collected first (the server checks again)
+    const uncollected = paymentLines.find((p) => paymentOptions[p.mode] && Number(p.amount) > 0 && !p.gateway?.confirmed);
+    if (uncollected) {
+      setSnackbarMessage(`Collect the ${uncollected.mode} payment before completing the sale.`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
 
     const totalPaid = paymentLines.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     if (Math.abs(totalPaid - grandTotal) > 0.01) {
@@ -886,6 +919,10 @@ const NewSale = () => {
         amount: Number(p.amount) || 0,
         base_amount: Number(p.amount) || 0, // Add base_amount field
       };
+
+      // Gateway payment this line was collected with, and its M-Pesa code / reference
+      if (p.gateway?.transactionId) basePayload.gateway_transaction = p.gateway.transactionId;
+      if (p.gateway?.reference) basePayload.reference_no = p.gateway.reference;
       
       // Handle credit payments - use receivable account flag
       if (p.mode === 'Credit') {
@@ -999,6 +1036,7 @@ const NewSale = () => {
             setManualDiscountType('percentage');
             setManualDiscountValue(0);
             setSearchTerm('');
+            setSaleReference(newSaleReference());
             return;
           }
         } else {
@@ -1039,6 +1077,7 @@ const NewSale = () => {
         setManualDiscountType('percentage');
         setManualDiscountValue(0);
         setSearchTerm('');
+        setSaleReference(newSaleReference());
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
@@ -1194,16 +1233,28 @@ const NewSale = () => {
           ? {
               ...p,
               [field]: field === 'amount' ? Math.max(0, Number(value) || 0) : value,
+              // A different method or amount needs collecting again
+              gateway: undefined,
             }
           : p
       )
     );
   };
 
-  // Keep single-payment amount in sync with total when split is disabled
+  const setPaymentGateway = (index, gateway) => {
+    setPayments((prev) => prev.map((p, i) => (i === index ? { ...p, gateway: gateway || undefined } : p)));
+  };
+
+  // Keep single-payment amount in sync with total when split is disabled. A payment already
+  // collected through a gateway is kept while it still covers the total.
   useEffect(() => {
     if (!splitPayments) {
-      setPayments([{ mode: paymentMode, amount: grandTotal }]);
+      setPayments((prev) => {
+        const kept = prev[0]?.mode === paymentMode && prev[0]?.gateway?.confirmed && Math.abs(prev[0].gateway.amount - grandTotal) <= 1
+          ? prev[0].gateway
+          : undefined;
+        return [{ mode: paymentMode, amount: grandTotal, gateway: kept }];
+      });
     }
   }, [splitPayments, paymentMode, grandTotal]);
 
@@ -1454,7 +1505,11 @@ const NewSale = () => {
     (splitPayments
       ? !isSplitPaymentsValid || !isSplitPaymentsCreditValid
       : (paymentMode === 'Credit' && (!creditAmount || creditAmount <= 0 || creditAmount > grandTotal)) ||
-        (paymentMode === 'Cash' && (!amountGiven || amountGiven < grandTotal)))
+        (paymentMode === 'Cash' && (!amountGiven || amountGiven < grandTotal))) ||
+    // Gateway methods (M-Pesa, Pesapal, PayPal, bank) must be collected first
+    (splitPayments ? payments : payments.slice(0, 1)).some(
+      (p) => paymentOptions[p.mode] && Number(p.amount) > 0 && !p.gateway?.confirmed
+    )
   );
 
   const customerView = {
@@ -1676,6 +1731,11 @@ const NewSale = () => {
                 canComplete={canComplete}
                 onComplete={handleCheckout}
                 onChooseCustomer={handleOpenCustomerDialog}
+                paymentOptions={paymentOptions}
+                onSetGateway={setPaymentGateway}
+                company={userCompany}
+                saleReference={saleReference}
+                customerPhone={selectedCustomerObj?.mobile_no || ''}
                 isCreating={isCreatingInvoice}
                 onBack={() => {
                   setIsCheckoutMode(false);

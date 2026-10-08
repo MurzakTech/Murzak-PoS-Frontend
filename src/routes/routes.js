@@ -97,6 +97,7 @@ const ETIMSSettings = lazy(() => import('../pages/Settings/ETIMSSettings'));
 const BankAccounts = lazy(() => import('../pages/Settings/BankAccounts'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
+const PaymentGateways = lazy(() => import('../pages/Settings/PaymentGateways'));
 const InventoryDiscounts = lazy(() => import('../pages/Settings/InventoryDiscounts'));
 const DiscountRuleForm = lazy(() => import('../pages/Settings/DiscountRuleForm'));
 const LoyaltyPrograms = lazy(() => import('../pages/Settings/LoyaltyPrograms'));
@@ -824,6 +825,7 @@ export const protectedRoutes = [
       { path: '/settings/bank-accounts', label: 'Bank Accounts', icon: 'AccountBalance' },
       { path: '/settings/account-provisioning', label: 'Account Provisioning', icon: 'AccountBalance' },
       { path: '/settings/payment-methods', label: 'Payment Methods', icon: 'CreditCard' },
+      { path: '/settings/payment-gateways', label: 'Payment Gateways', icon: 'CreditCard' },
       { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
       { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
     ],
@@ -862,6 +864,12 @@ export const protectedRoutes = [
         path: '/settings/payment-methods',
         element: PaymentMethods,
         label: 'Payment Methods',
+        icon: 'CreditCard',
+      },
+      {
+        path: '/settings/payment-gateways',
+        element: PaymentGateways,
+        label: 'Payment Gateways',
         icon: 'CreditCard',
       },
       {

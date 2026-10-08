@@ -4,7 +4,11 @@ import {
   Box,
   Button,
   ButtonBase,
+  Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
   MenuItem,
   Select,
@@ -28,12 +32,14 @@ import {
 } from '@mui/icons-material';
 import { cashSuggestions, fmt, formatBuffer, money, nextBuffer, round2 } from './money';
 import Numpad from './Numpad';
+import GatewayPayment from './GatewayPayment';
 
 const methodIcon = (name = '') => {
   const n = name.toLowerCase();
   if (n.includes('cash')) return Payments;
   if (n.includes('card')) return CreditCard;
-  if (n.includes('mobile') || n.includes('mpesa') || n.includes('m-pesa')) return PhoneAndroid;
+  if (n.includes('mobile') || n.includes('mpesa') || n.includes('m-pesa') || n.includes('pesapal')) return PhoneAndroid;
+  if (n.includes('paypal')) return CreditCard;
   if (n.includes('bank')) return AccountBalance;
   if (n.includes('credit')) return ReceiptLong;
   return Payments;
@@ -67,8 +73,14 @@ const PaymentPanel = ({
   isCreating,
   onBack,
   onChooseCustomer,
+  paymentOptions = {},
+  onSetGateway,
+  company,
+  saleReference,
+  customerPhone,
 }) => {
   const [buffer, setBuffer] = useState('');
+  const [collectRow, setCollectRow] = useState(null); // split payment row being collected in a dialog
   const isCash = paymentMode === 'Cash' && !splitPayments;
   const change = Math.max(0, round2(amountGiven - total));
   const short = round2(total - amountGiven);
@@ -103,7 +115,9 @@ const PaymentPanel = ({
   });
 
   const suggestions = cashSuggestions(total);
-  const nonCashMessage = !splitPayments && paymentMode !== 'Cash' && paymentMode !== 'Credit';
+  const singleOption = paymentOptions[paymentMode];
+  const nonCashMessage = !splitPayments && paymentMode !== 'Cash' && paymentMode !== 'Credit' && !singleOption;
+  const gatewayProps = { currency, company, saleReference, customerPhone, customerName: hasCustomer ? customerName : '' };
 
   return (
     <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', animation: 'murzak-fade-up .2s ease both' }}>
@@ -208,6 +222,20 @@ const PaymentPanel = ({
           </Alert>
         )}
 
+        {/* M-Pesa, Pesapal, PayPal and bank: collected through the gateway */}
+        {!splitPayments && singleOption && (
+          <GatewayPayment
+            key={paymentMode}
+            kind={singleOption.gateway}
+            option={singleOption}
+            mode={paymentMode}
+            amount={total}
+            value={payments[0]?.gateway}
+            onChange={(v) => onSetGateway(0, v)}
+            {...gatewayProps}
+          />
+        )}
+
         {/* Credit (pay later) */}
         {!splitPayments && paymentMode === 'Credit' && (
           <Stack spacing={1.5}>
@@ -256,8 +284,40 @@ const PaymentPanel = ({
                 <IconButton onClick={() => onRemovePayment(idx)} disabled={payments.length <= 1} aria-label="Remove this method" color="error">
                   <DeleteOutline />
                 </IconButton>
+                {paymentOptions[p.mode] && Number(p.amount) > 0 && (
+                  <Box sx={{ gridColumn: '1 / -1', mt: -0.5 }}>
+                    {p.gateway?.confirmed ? (
+                      <Chip color="success" icon={<CheckCircle />} label={`${p.gateway.label} received${p.gateway.reference ? ` (${p.gateway.reference})` : ''}`} onDelete={p.gateway.transactionId ? undefined : () => onSetGateway(idx, null)} />
+                    ) : (
+                      <Button size="small" variant="outlined" onClick={() => setCollectRow(idx)}>
+                        Collect {money(p.amount, currency)} by {p.mode}
+                      </Button>
+                    )}
+                  </Box>
+                )}
               </Box>
             ))}
+            <Dialog open={collectRow !== null && Boolean(payments[collectRow])} onClose={() => setCollectRow(null)} fullWidth maxWidth="sm">
+              {collectRow !== null && payments[collectRow] && (
+                <>
+                  <DialogTitle>Collect {money(payments[collectRow].amount, currency)} by {payments[collectRow].mode}</DialogTitle>
+                  <DialogContent sx={{ pb: 3 }}>
+                    <GatewayPayment
+                      kind={paymentOptions[payments[collectRow].mode]?.gateway}
+                      option={paymentOptions[payments[collectRow].mode]}
+                      mode={payments[collectRow].mode}
+                      amount={Number(payments[collectRow].amount)}
+                      value={payments[collectRow].gateway}
+                      onChange={(v) => {
+                        onSetGateway(collectRow, v);
+                        if (v?.confirmed) setCollectRow(null);
+                      }}
+                      {...gatewayProps}
+                    />
+                  </DialogContent>
+                </>
+              )}
+            </Dialog>
             <Box>
               <Button size="small" startIcon={<Add />} onClick={onAddPayment}>Add method</Button>
             </Box>
