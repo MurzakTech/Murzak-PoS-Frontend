@@ -178,6 +178,7 @@ const NewSale = () => {
   const [showAddCustomerForm, setShowAddCustomerForm] = useState(false);
   const [creditAmount, setCreditAmount] = useState(0);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
+  const [openTillError, setOpenTillError] = useState(''); // why the last "Open till" attempt failed
   const isPhone = useMediaQuery((t) => t.breakpoints.down('md'));
   const [cartSheetOpen, setCartSheetOpen] = useState(false); // phones: the sale slides up over the products
   const [priceEntryProduct, setPriceEntryProduct] = useState(null); // product waiting for a typed price
@@ -514,19 +515,16 @@ const NewSale = () => {
       }),
     };
 
+    setOpenTillError('');
     const result = await dispatch(createPOSOpeningEntry(openingData));
 
     if (createPOSOpeningEntry.fulfilled.match(result)) {
       setPosProfile(formData.pos_profile.trim());
       resetPosOpeningForm();
     } else if (createPOSOpeningEntry.rejected.match(result)) {
-      // Navigate to dashboard on error
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000); // Give user time to see the error message
+      // Stay on this screen with the reason showing; the cashier can fix it and try again
+      setOpenTillError(typeof result.payload === 'string' ? result.payload : 'Please try again.');
     }
-    // Error handling is done in the Redux slice via showNotification
-    // The extractErrorMessage function now properly parses _server_messages
   };
 
   const handleAddBalanceDetail = () => {
@@ -1631,6 +1629,7 @@ const NewSale = () => {
           storeName={storeName}
           currency={currency}
           onExit={() => navigate('/dashboard')}
+          openError={openTillError}
         />
       ) : (
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>

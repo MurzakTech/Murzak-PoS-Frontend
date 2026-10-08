@@ -117,6 +117,8 @@ export const humanizeMessage = (input, fallback = GENERIC) => {
 
   // "frappe.exceptions.ValidationError: Stock is short" -> "Stock is short"
   text = text.replace(/^([\w]+\.)*[\w]*(Error|Exception)\s*:\s*/, '').trim();
+  // Server wrappers such as "Validation error: ..." or "Error creating POS Opening Entry: ..."
+  text = text.replace(/^(validation error|error (creating|updating|closing|cancelling|submitting|fetching|getting) [^:]{1,60})\s*:\s*/i, '').trim();
   // "MandatoryError: [Item, ITEM-001]: item_group" style
   const mandatory = text.match(/^\[[^\]]*\]:\s*(.+)$/);
   if (mandatory) return sentence(`Some required information is missing: ${mandatory[1].replace(/_/g, ' ')}`);
@@ -139,8 +141,10 @@ const fromServerMessages = (raw) => {
         }
       })
       .filter((m) => m && m.message && m.title !== 'Value too big');
-    const red = items.find((m) => m.indicator === 'red');
-    return (red || items[items.length - 1])?.message || null;
+    // The message that stopped the request is queued last; earlier red ones can be
+    // leftovers from problems the server already recovered from
+    const red = items.filter((m) => m.indicator === 'red');
+    return (red[red.length - 1] || items[items.length - 1])?.message || null;
   } catch (e) {
     return null;
   }
@@ -155,11 +159,12 @@ const serverText = (data) => {
     if (typeof msg.message === 'string' && msg.message) return msg.message;
     if (typeof msg.error === 'string' && msg.error) return msg.error;
   }
+  // The exception is the error that actually stopped the request
+  if (typeof data.exception === 'string' && data.exception) return data.exception;
   const fromList = data._server_messages ? fromServerMessages(data._server_messages) : null;
   if (fromList) return fromList;
   if (typeof msg === 'string' && msg) return msg;
   if (typeof data.error === 'string' && data.error) return data.error;
-  if (typeof data.exception === 'string' && data.exception) return data.exception;
   return null; // data.exc is a traceback: never shown
 };
 

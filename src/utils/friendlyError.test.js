@@ -58,4 +58,22 @@ describe('friendly error messages', () => {
     expect(humanizeTitle('Error')).toBeNull();
     expect(humanizeTitle('Till open')).toBe('Till open');
   });
+
+  test('shows the error that stopped the request, not a leftover the server recovered from', () => {
+    const leftover = JSON.stringify({ message: 'Field <strong>invoice_type</strong> does not exist on <strong>POS Settings</strong>', indicator: 'red' });
+    const real = JSON.stringify({ message: 'Found outdated POS Opening Entries with invoices: POS-OPE-0007.', indicator: 'red', title: 'Outdated POS Opening Entries with Invoices' });
+    const withException = axiosError(417, {
+      exception: 'frappe.exceptions.ValidationError: Found outdated POS Opening Entries with invoices: POS-OPE-0007.',
+      _server_messages: JSON.stringify([leftover, real]),
+    });
+    expect(friendlyErrorMessage(withException)).toBe('Found outdated POS Opening Entries with invoices: POS-OPE-0007.');
+    const listOnly = axiosError(417, { _server_messages: JSON.stringify([leftover, real]) });
+    expect(friendlyErrorMessage(listOnly)).toBe('Found outdated POS Opening Entries with invoices: POS-OPE-0007.');
+  });
+
+  test('drops server wrappers such as "Validation error:"', () => {
+    expect(humanizeMessage('Validation error: Payment method Bitcoin does not exist.')).toBe('Payment method Bitcoin does not exist.');
+    expect(humanizeMessage('Error creating POS Opening Entry: No payment methods found.')).toBe('No payment methods found.');
+  });
 });
+
