@@ -75,5 +75,8 @@ describe('friendly error messages', () => {
     expect(humanizeMessage('Validation error: Payment method Bitcoin does not exist.')).toBe('Payment method Bitcoin does not exist.');
     expect(humanizeMessage('Error creating POS Opening Entry: No payment methods found.')).toBe('No payment methods found.');
   });
-});
 
+  test('raw database errors are never shown', () => {
+    expect(humanizeMessage('Error cancelling POS Opening Entry: (1054, "Unknown column \'is_created_using_pos\' in \'WHERE\'")')).toBe(GENERIC);
+  });
+});

@@ -49,6 +49,7 @@ const TECHNICAL = [
   /Traceback \(most recent call last\)/i,
   /File "[^"]+", line \d+/,
   /\b(pymysql|MySQLdb|mariadb|OperationalError|ProgrammingError|InternalError|IntegrityError|SQL syntax)\b/i,
+  /^\(\d{4},\s*["']|Unknown column|Table '[^']+' doesn't exist/i, // raw database errors such as (1054, "Unknown column ...")
   /\b(TypeError|KeyError|AttributeError|NameError|IndexError|ValueError|ZeroDivisionError|ImportError|ModuleNotFoundError|RecursionError)\b/,
   /missing \d+ required (positional )?argument/i,
   /unexpected keyword argument/i,
