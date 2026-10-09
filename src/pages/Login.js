@@ -30,6 +30,7 @@ import { checkOnboardingStatus } from '../store/onboardingSlice';
 import BrandLogo from '../components/Common/BrandLogo';
 import posIcon from '../assets/pos-icon.png';
 import { classifyLoginId, looksLikePhone, LOGIN_ID_ERROR } from '../utils/phone';
+import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../config/deployment';
 
 const SUPPORT_EMAIL = 'murzaktechnologies@gmail.com';
 
@@ -268,12 +269,22 @@ const Login = () => {
             </Box>
 
             <Divider sx={{ my: 3 }} />
-            <Typography variant="body2" color="text.secondary" align="center">
-              New to Murzak POS?{' '}
-              <Link component={RouterLink} to="/register" underline="hover" sx={{ fontWeight: 700 }}>
-                Create your free account
-              </Link>
-            </Typography>
+            {IS_TENANT_BUILD ? (
+              <Typography variant="body2" color="text.secondary" align="center">
+                Your owner login is in your{' '}
+                <Link href={MURZAK_PORTAL_URL} underline="hover" sx={{ fontWeight: 700 }}>
+                  Murzak portal
+                </Link>
+                . Staff accounts are added by the owner from inside the POS.
+              </Typography>
+            ) : (
+              <Typography variant="body2" color="text.secondary" align="center">
+                New to Murzak POS?{' '}
+                <Link component={RouterLink} to="/register" underline="hover" sx={{ fontWeight: 700 }}>
+                  Create your free account
+                </Link>
+              </Typography>
+            )}
           </Box>
         </Box>
 

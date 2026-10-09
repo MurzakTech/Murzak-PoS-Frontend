@@ -1,7 +1,10 @@
-import { lazy } from 'react';
+import React, { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
+import { IS_TENANT_BUILD } from '../config/deployment';
 
 // Lazy load pages for code splitting
 const Landing = lazy(() => import('../pages/Landing'));
+const ToLogin = () => <Navigate to="/login" replace />;
 const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
@@ -97,6 +100,7 @@ const ETIMSSettings = lazy(() => import('../pages/Settings/ETIMSSettings'));
 const BankAccounts = lazy(() => import('../pages/Settings/BankAccounts'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
+const PaymentGateways = lazy(() => import('../pages/Settings/PaymentGateways'));
 const InventoryDiscounts = lazy(() => import('../pages/Settings/InventoryDiscounts'));
 const DiscountRuleForm = lazy(() => import('../pages/Settings/DiscountRuleForm'));
 const LoyaltyPrograms = lazy(() => import('../pages/Settings/LoyaltyPrograms'));
@@ -125,7 +129,8 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 export const publicRoutes = [
   {
     path: '/',
-    element: Landing,
+    // A shop's own POS has no marketing audience — open straight on sign-in.
+    element: IS_TENANT_BUILD ? ToLogin : Landing,
     label: 'Home',
   },
   {
@@ -824,6 +829,7 @@ export const protectedRoutes = [
       { path: '/settings/bank-accounts', label: 'Bank Accounts', icon: 'AccountBalance' },
       { path: '/settings/account-provisioning', label: 'Account Provisioning', icon: 'AccountBalance' },
       { path: '/settings/payment-methods', label: 'Payment Methods', icon: 'CreditCard' },
+      { path: '/settings/payment-gateways', label: 'Payment Gateways', icon: 'CreditCard' },
       { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
       { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
     ],
@@ -862,6 +868,12 @@ export const protectedRoutes = [
         path: '/settings/payment-methods',
         element: PaymentMethods,
         label: 'Payment Methods',
+        icon: 'CreditCard',
+      },
+      {
+        path: '/settings/payment-gateways',
+        element: PaymentGateways,
+        label: 'Payment Gateways',
         icon: 'CreditCard',
       },
       {
