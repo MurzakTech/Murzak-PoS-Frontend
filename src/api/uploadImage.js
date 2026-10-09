@@ -76,7 +76,9 @@ export const uploadProductImage = async (file) => {
 
   // The shared client defaults to JSON, which would turn the file into text. Saying
   // multipart keeps it a file; the browser then adds the boundary itself.
-  const response = await axiosInstance.post('/api/method/upload_file', form, {
+  // Relative, like every other call: the API address already ends in /api/method,
+  // so "/api/method/upload_file" here became /api/method/api/method/upload_file
+  const response = await axiosInstance.post('upload_file', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   const fileUrl = response.data?.message?.file_url;

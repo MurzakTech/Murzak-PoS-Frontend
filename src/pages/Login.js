@@ -243,9 +243,10 @@ const Login = () => {
                 />
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -0.5 }}>
-                  {/* No self-service reset exists yet, so route to support with the request pre-written */}
                   <Link
-                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Password reset request')}`}
+                    component={RouterLink}
+                    to="/forgot-password"
+                    state={{ loginId: watch('loginId') }}
                     variant="body2"
                     underline="hover"
                     sx={{ fontWeight: 600 }}
