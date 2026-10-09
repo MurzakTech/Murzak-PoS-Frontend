@@ -1,4 +1,4 @@
-import { friendlyErrorMessage, humanizeMessage, humanizeTitle, MESSAGES, GENERIC } from './friendlyError';
+import { friendlyErrorMessage, humanizeMessage, humanizeTitle, errorSeverity, MESSAGES, GENERIC } from './friendlyError';
 
 const axiosError = (status, data) => ({ isAxiosError: true, message: `Request failed with status code ${status}`, response: { status, data } });
 
@@ -79,4 +79,14 @@ describe('friendly error messages', () => {
   test('raw database errors are never shown', () => {
     expect(humanizeMessage('Error cancelling POS Opening Entry: (1054, "Unknown column \'is_created_using_pos\' in \'WHERE\'")')).toBe(GENERIC);
   });
+
+  test('problems are graded: amber when the person can fix it, red when they cannot', () => {
+    expect(errorSeverity({ isRefusal: true, response: { status: 200 } })).toBe('warning');
+    expect(errorSeverity(axiosError(417, {}))).toBe('warning');
+    expect(errorSeverity(axiosError(409, {}))).toBe('warning');
+    expect(errorSeverity(axiosError(500, {}))).toBe('error');
+    expect(errorSeverity(axiosError(403, {}))).toBe('error');
+    expect(errorSeverity({ isAxiosError: true, message: 'Network Error', request: {} })).toBe('error');
+  });
 });
+

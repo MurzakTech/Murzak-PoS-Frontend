@@ -4,7 +4,7 @@ import { showNotification } from './notificationSlice';
 import { createWarehouse } from './warehouseSlice';
 import { accountProvisioningClient } from '../api/accountProvisioningClient';
 import { fetchCurrentUser } from './authSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Onboarding API endpoints
 const ENDPOINTS = {
@@ -153,7 +153,7 @@ export const createCompany = createAsyncThunk(
       // Show error notification
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Company Creation Failed',
       }));
       
@@ -254,7 +254,7 @@ export const createPOSProfile = createAsyncThunk(
       // Show error notification
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'POS Profile Creation Failed',
       }));
       
@@ -288,7 +288,7 @@ export const createETIMSSettings = createAsyncThunk(
       // Show error notification
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'eTIMS Settings Creation Failed',
       }));
       
@@ -348,7 +348,7 @@ export const updateCompany = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Company Update Failed',
       }));
       return rejectWithValue(errorMessage);
@@ -407,7 +407,7 @@ export const updatePOSProfile = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'POS Profile Update Failed',
       }));
       return rejectWithValue(errorMessage);
@@ -466,7 +466,7 @@ export const updateETIMSSettings = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'eTIMS Settings Update Failed',
       }));
       return rejectWithValue(errorMessage);

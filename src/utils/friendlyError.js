@@ -231,3 +231,30 @@ export const humanizeTitle = (title) => {
   if (m2) return `Could not ${m2[1].charAt(0).toLowerCase()}${m2[1].slice(1)}`;
   return t;
 };
+
+/**
+ * How serious a problem is, which decides its colour:
+ * - "warning" (amber): something the person can fix and try again, such as a missing
+ *   field, a business rule ("only 3 left"), a duplicate or a record changed by someone else.
+ * - "error" (red): something failed that they cannot fix from this screen, such as no
+ *   connection, a server crash, an ended session or missing permission.
+ * Success (green) and information (blue) are chosen by the code that reports them.
+ */
+export const errorSeverity = (error) => {
+  if (!error) return 'error';
+  if (error.isRefusal) return 'warning'; // the server said no for a business reason
+  const status = error.response?.status;
+  if (!error.response) return 'error'; // no connection, timeout, or a fault in the app
+  if (status === 401 || status === 403 || status >= 500) return 'error';
+  if ([400, 404, 409, 412, 417, 422].includes(status)) return 'warning';
+  return 'error';
+};
+
+// Shown above the message when the code that raised it gave no title, so the level is
+// clear in words as well as colour (for colour-blind users and glare on till screens)
+export const SEVERITY_TITLES = {
+  success: 'Done',
+  info: 'Good to know',
+  warning: 'Needs your attention',
+  error: 'Something went wrong',
+};

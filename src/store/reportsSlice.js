@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as reportsApi from '../api/reportsApi';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Helper function to extract error message
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
@@ -20,7 +20,7 @@ export const fetchSalesAnalytics = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch sales analytics',
       }));
       return rejectWithValue(errorMessage);
@@ -38,7 +38,7 @@ export const exportSalesAnalytics = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to export sales analytics',
       }));
       return rejectWithValue(errorMessage);
@@ -60,7 +60,7 @@ export const fetchInventoryValueByCategory = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch inventory value by category',
       }));
       return rejectWithValue(errorMessage);
@@ -78,7 +78,7 @@ export const fetchCostMethodComparison = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch cost method comparison',
       }));
       return rejectWithValue(errorMessage);
@@ -96,7 +96,7 @@ export const fetchInventoryValueTrends = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch inventory value trends',
       }));
       return rejectWithValue(errorMessage);
@@ -118,7 +118,7 @@ export const fetchInventoryTurnover = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch inventory turnover',
       }));
       return rejectWithValue(errorMessage);
@@ -136,7 +136,7 @@ export const fetchDaysOnHand = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch days on hand',
       }));
       return rejectWithValue(errorMessage);
@@ -154,7 +154,7 @@ export const fetchMovementPatterns = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch movement patterns',
       }));
       return rejectWithValue(errorMessage);
@@ -176,7 +176,7 @@ export const fetchStockAging = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch stock aging',
       }));
       return rejectWithValue(errorMessage);
@@ -194,7 +194,7 @@ export const fetchObsolescenceRisk = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch obsolescence risk',
       }));
       return rejectWithValue(errorMessage);
@@ -212,7 +212,7 @@ export const fetchAgingRecommendations = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch aging recommendations',
       }));
       return rejectWithValue(errorMessage);
@@ -234,7 +234,7 @@ export const fetchInventoryAccuracy = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch inventory accuracy',
       }));
       return rejectWithValue(errorMessage);
@@ -252,7 +252,7 @@ export const fetchInventoryVariance = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch inventory variance',
       }));
       return rejectWithValue(errorMessage);
@@ -270,7 +270,7 @@ export const fetchAdjustmentTrends = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch adjustment trends',
       }));
       return rejectWithValue(errorMessage);
@@ -288,7 +288,7 @@ export const fetchTransferEfficiency = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch transfer efficiency',
       }));
       return rejectWithValue(errorMessage);
@@ -310,7 +310,7 @@ export const fetchInventorySummary = createAsyncThunk(
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,
-        severity: 'error',
+        severity: errorSeverity(error),
         title: 'Failed to fetch inventory summary',
       }));
       return rejectWithValue(errorMessage);

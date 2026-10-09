@@ -2,6 +2,7 @@ import React from 'react';
 import { Snackbar, Alert, AlertTitle } from '@mui/material';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { clearNotification } from '../../store/notificationSlice';
+import { SEVERITY_TITLES } from '../../utils/friendlyError';
 
 const NotificationProvider = ({ children }) => {
   const dispatch = useAppDispatch();
@@ -23,7 +24,7 @@ const NotificationProvider = ({ children }) => {
       {children}
       <Snackbar
         open={open}
-        autoHideDuration={onTill ? Math.min(duration || 6000, 4000) : duration || 6000}
+        autoHideDuration={onTill && severity === 'success' ? Math.min(duration || 3500, 3500) : duration || 6000}
         onClose={handleClose}
         anchorOrigin={onTill ? { vertical: 'top', horizontal: 'center' } : { vertical: 'top', horizontal: 'right' }}
         sx={onTill ? { top: '6px !important', maxWidth: 'min(520px, calc(100vw - 32px))' } : undefined}
@@ -34,7 +35,8 @@ const NotificationProvider = ({ children }) => {
           variant="filled"
           sx={{ width: '100%', ...(onTill ? { py: 0, alignItems: 'center', boxShadow: 6 } : {}) }}
         >
-          {title && !onTill && <AlertTitle>{title}</AlertTitle>}
+          {/* The level in words as well as colour: Done, Good to know, Needs your attention, Something went wrong */}
+          {!onTill && <AlertTitle sx={{ fontWeight: 700 }}>{title || SEVERITY_TITLES[severity] || SEVERITY_TITLES.info}</AlertTitle>}
           {message}
         </Alert>
       </Snackbar>

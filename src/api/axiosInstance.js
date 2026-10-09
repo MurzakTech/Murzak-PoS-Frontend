@@ -63,8 +63,37 @@ axiosInstance.interceptors.request.use(
 );
 
 // Handle response errors according to API documentation
+// Many server functions report a refusal inside a normal reply:
+// { message: { success: false, message: "Only 3 left" } }. Screens that did not check
+// the flag treated it as success and showed the refusal in a green "success" pop-up.
+// For actions (saving, creating, closing...) such a reply now becomes a failure, shown
+// in amber. Lookups (get_, list_, check_...) are left alone: some use success: false
+// simply to mean "nothing set up yet".
+const READ_FUNCTION = /\.(get|list|check|search|fetch|bulk_get|validate|verify|count)_[\w]*$/;
+
+const refusalIn = (response) => {
+  const config = response.config || {};
+  const method = (config.method || 'get').toLowerCase();
+  if (method === 'get' || config.allowRefusal) return null;
+  if (READ_FUNCTION.test(String(config.url || '').split('?')[0])) return null;
+  const body = response.data;
+  const result = body?.message && typeof body.message === 'object' ? body.message : body;
+  return result && typeof result === 'object' && result.success === false ? result : null;
+};
+
 axiosInstance.interceptors.response.use(
   (response) => {
+    const refusal = refusalIn(response);
+    if (refusal) {
+      const error = new Error(refusal.message || refusal.error || 'The server could not complete this.');
+      error.isAxiosError = true;
+      error.isRefusal = true;
+      error.config = response.config;
+      error.response = response;
+      error.rawMessage = error.message;
+      error.message = friendlyErrorMessage(error);
+      return Promise.reject(error);
+    }
     // Log successful responses in development
     if (process.env.NODE_ENV === 'development') {
       console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
