@@ -22,7 +22,11 @@ const call = async (method, data = {}, { get = false } = {}) => {
       ? await axiosInstance.get(method, { params: data })
       : await axiosInstance.post(method, data);
   } catch (error) {
-    throw new Error(friendlyErrorMessage(error));
+    const err = new Error(friendlyErrorMessage(error));
+    // The shared client turns a { success: false } reply to an action into an error;
+    // keep the server's reply attached, as for refusals handled below
+    if (error.isRefusal) err.body = error.response?.data?.message ?? error.response?.data;
+    throw err;
   }
   const body = response.data?.message ?? response.data;
   if (body && body.success === false) {
