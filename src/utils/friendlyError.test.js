@@ -49,7 +49,8 @@ describe('friendly error messages', () => {
 
   test('tidies a plain message into a sentence', () => {
     expect(humanizeMessage('customer name is required')).toBe('Customer name is required.');
-    expect(humanizeMessage('[Item, ITEM-001]: item_group')).toBe('Some required information is missing: item group.');
+    expect(humanizeMessage('[Item, ITEM-001]: item_group')).toBe('Some required information is missing: category.');
+    expect(humanizeMessage('frappe.exceptions.MandatoryError: [Item, EM-SSD]: custom_item_classification')).toBe('Some required information is missing: KRA item classification (eTIMS).');
   });
 
   test('pop-up titles read like plain speech', () => {

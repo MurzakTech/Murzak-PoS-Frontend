@@ -88,6 +88,29 @@ export const statusMessage = (status) => {
   return null;
 };
 
+// Database field names in plain words. The KRA eTIMS ones come from the eTIMS app on the server.
+const FIELD_LABELS = {
+  custom_item_classification: 'KRA item classification (eTIMS)',
+  custom_taxation_type: 'KRA tax type (eTIMS)',
+  custom_product_type: 'KRA product type (eTIMS)',
+  custom_packaging_unit: 'KRA packaging unit (eTIMS)',
+  custom_unit_of_quantity: 'KRA unit of quantity (eTIMS)',
+  custom_etims_country_of_origin: 'country of origin (eTIMS)',
+  custom_company: 'business',
+  stock_uom: 'unit of measure',
+  item_group: 'category',
+  item_code: 'item code',
+  item_name: 'product name',
+};
+
+const fieldLabels = (list) =>
+  list
+    .split(',')
+    .map((f) => f.trim())
+    .filter(Boolean)
+    .map((f) => FIELD_LABELS[f] || f.replace(/^custom_/, '').replace(/_/g, ' '))
+    .join(', ');
+
 const sentence = (text) => {
   let t = text.charAt(0).toUpperCase() + text.slice(1);
   if (t.length > 260) {
@@ -122,7 +145,7 @@ export const humanizeMessage = (input, fallback = GENERIC) => {
   text = text.replace(/^(validation error|error (creating|updating|closing|cancelling|submitting|fetching|getting) [^:]{1,60})\s*:\s*/i, '').trim();
   // "MandatoryError: [Item, ITEM-001]: item_group" style
   const mandatory = text.match(/^\[[^\]]*\]:\s*(.+)$/);
-  if (mandatory) return sentence(`Some required information is missing: ${mandatory[1].replace(/_/g, ' ')}`);
+  if (mandatory) return sentence(`Some required information is missing: ${fieldLabels(mandatory[1])}`);
 
   if (!text || TECHNICAL.some((p) => p.test(text))) return fallback;
   return sentence(text);

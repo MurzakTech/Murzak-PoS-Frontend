@@ -69,6 +69,8 @@ import { normalizeKenyanPhone, isValidKenyanMobile, PHONE_ERROR } from '../utils
 import logoIcon from '../assets/logo_mark.png';
 import posIcon from '../assets/pos-icon.png';
 import { IS_TENANT_BUILD } from '../config/deployment';
+import { validatePassword } from '../utils/passwordRules';
+import PasswordChecklist from '../components/Auth/PasswordChecklist';
 
 const MotionCard = motion(Card);
 const MotionButton = motion(Button);
@@ -95,7 +97,7 @@ const Register = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const { isLoading: authLoading, error: authError, isAuthenticated, industries, isLoadingIndustries, user } = useAppSelector((state) => state.auth);
+  const { isLoading: authLoading, error: authError, isAuthenticated, industries, isLoadingIndustries, user, passwordRequirements } = useAppSelector((state) => state.auth);
   const { isLoading, error, company, posProfile, isCreatingWarehouse, abbreviationCheck } = useAppSelector((state) => state.onboarding);
   
   const [activeStep, setActiveStep] = useState(0);
@@ -642,9 +644,10 @@ const Register = () => {
                     control={control}
                     rules={{
                       required: 'Password is required',
-                      minLength: { value: 8, message: 'Minimum 8 characters' },
+                      validate: validatePassword,
                     }}
                     render={({ field }) => (
+                      <>
                       <TextField
                         {...field}
                         fullWidth
@@ -652,7 +655,7 @@ const Register = () => {
                         type={showPassword ? 'text' : 'password'}
                         size="small"
                         error={!!errors.password}
-                        helperText={errors.password?.message || 'At least 8 characters. Tap the eye to check what you typed.'}
+                        helperText={errors.password?.message || 'Tap the eye to check what you typed.'}
                         disabled={authLoading || isAuthenticated}
                         InputProps={{
                           startAdornment: (
@@ -679,6 +682,8 @@ const Register = () => {
                         }}
                         sx={{ '& .MuiInputBase-input': { fontSize: '0.8125rem' } }}
                       />
+                      <PasswordChecklist password={field.value || ''} />
+                      </>
                     )}
                   />
                 </Grid>
@@ -1752,6 +1757,11 @@ const Register = () => {
                   <Typography variant="body2" fontWeight="medium">
                     {authError || error}
                   </Typography>
+                  {authError && passwordRequirements?.length > 0 && (
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      Your password still needs: {passwordRequirements.join('; ')}.
+                    </Typography>
+                  )}
                 </Alert>
               </MotionBox>
             )}
