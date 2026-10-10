@@ -13,7 +13,7 @@ describe('parseCsv', () => {
   });
 
   it('copes with Windows, Mac and Unix line endings and a leading BOM', () => {
-    expect(parseCsv('﻿a,b\r\n1,2\r3,4\n5,6').rows).toEqual([['a', 'b'], ['1', '2'], ['3', '4'], ['5', '6']]);
+    expect(parseCsv('\uFEFFa,b\r\n1,2\r3,4\n5,6').rows).toEqual([['a', 'b'], ['1', '2'], ['3', '4'], ['5', '6']]);
   });
 
   it('detects semicolons and tabs, which Excel uses in some regions', () => {

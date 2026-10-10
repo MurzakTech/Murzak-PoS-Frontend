@@ -24,25 +24,16 @@ import { bulkCreateProducts } from '../../store/productSlice';
 import { showNotification } from '../../store/notificationSlice';
 import { checkProductSheet, problemRowsCsv, summarizeBulkCreate } from '../../utils/productImport';
 import { readProductFile } from '../../utils/readProductFile';
+import { saveTextFile } from '../../utils/saveTextFile';
 
 const PROBLEMS_SHOWN = 50;
 const PREVIEW_ROWS = 5;
 
 // The BOM at the start makes Excel open the file as UTF-8, so names with accents stay readable
 const TEMPLATE_CSV =
-  '﻿item_code,item_name,item_group,stock_uom,standard_rate,description,is_stock_item,is_sales_item,brand,barcode\r\n' +
+  '\uFEFFitem_code,item_name,item_group,stock_uom,standard_rate,description,is_stock_item,is_sales_item,brand,barcode\r\n' +
   'ITEM001,Tusker Lager 500ml,Beer,Nos,250,Bottled lager,1,1,Tusker,\r\n' +
   'ITEM002,"Burger, Cheese",Food,Nos,650,Put names that contain a comma in quotation marks,1,1,,\r\n';
-
-const saveTextFile = (text, filename) => {
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  window.URL.revokeObjectURL(url);
-};
 
 const BulkImport = () => {
   const navigate = useNavigate();
@@ -239,7 +230,7 @@ const BulkImport = () => {
                       <Alert
                         severity="error"
                         action={
-                          <Button color="inherit" size="small" startIcon={<Download />} onClick={() => saveTextFile('﻿' + problemRowsCsv(check), 'rows_to_fix.csv')}>
+                          <Button color="inherit" size="small" startIcon={<Download />} onClick={() => saveTextFile('\uFEFF' + problemRowsCsv(check), 'rows_to_fix.csv')}>
                             Download rows to fix
                           </Button>
                         }

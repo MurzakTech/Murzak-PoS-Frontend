@@ -33,7 +33,7 @@ const detectDelimiter = (text) => {
  * one quote mark. Handles Windows, Mac and Unix line endings and a leading BOM.
  */
 export const parseCsv = (input) => {
-  const text = String(input ?? '').replace(/^﻿/, '');
+  const text = String(input ?? '').replace(/^\uFEFF/, '');
   const delimiter = detectDelimiter(text);
   const rows = [];
   let row = [];
