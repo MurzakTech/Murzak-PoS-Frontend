@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { publicRoutes, protectedRoutes, protectedRoutesWithoutLayout, routes } from './routes';
 import Layout from '../components/Layout/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
+import IdleSignOut from '../components/IdleSignOut';
 import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Common';
 
 // Branded splash for public pages; layout-shaped skeleton inside the app shell
@@ -61,6 +62,7 @@ const AppRouter = () => {
   return (
     <ErrorBoundary>
     <BrowserRouter>
+      <IdleSignOut />
       <Routes>
           {/* Public routes (without Layout) */}
           {publicRoutes.map((route) => {

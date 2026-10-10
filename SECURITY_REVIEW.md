@@ -18,8 +18,8 @@ The app's role-based access control (RBAC: deciding which screens each staff rol
 | 7 | Server-side enforcement must be confirmed | Critical | Action needed on backend |
 | 8 | Login tokens readable by any injected script; no security headers | Medium | Recommendation |
 | 9 | A few role grants need an owner decision | Medium | Decision needed |
-| 10 | No automatic sign-out on idle shared tills | Medium | Recommendation |
-| 11 | Old build archive committed to the repository | Low | Recommendation |
+| 10 | No automatic sign-out on idle shared tills | Medium | Fixed |
+| 11 | Old build archive committed to the repository | Low | Fixed |
 
 ## Fixed in this change
 
@@ -104,8 +104,8 @@ These grants are written explicitly in the config, so they were kept, but they d
 
 ### 10. Idle sign-out on shared tills (Medium)
 
-Sessions stay open until the token expires. Add an idle timeout (for example 15 minutes on the till) and, longer term, a quick cashier switch using a PIN so every sale is tied to the right person.
+**Fixed.** After 15 minutes with no tap, click or key press, the app warns for one minute and then signs out, clearing the session. Activity in any tab counts, so a quiet tab never signs out someone busy in another. The limit is set at build time with `REACT_APP_IDLE_TIMEOUT_MINUTES` (`0` turns it off). Longer term, consider a quick cashier switch using a PIN so every sale is tied to the right person.
 
 ### 11. Repository hygiene (Low)
 
-`pos_frontend.tar.gz` (5 MB) is an old production build committed to the repository. No secrets were found in it, but it is stale and anyone with repository access can download it. Remove it and add `*.tar.gz` to `.gitignore`.
+**Fixed.** `pos_frontend.tar.gz` (5 MB), an old production build, has been removed and `*.tar.gz` added to `.gitignore`. No secrets were found in it. It remains in the repository's history, which is harmless since it holds no secrets.

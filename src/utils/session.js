@@ -11,6 +11,7 @@ const SESSION_KEYS = [
   'pos_profile',
   'activeWarehouse',
   'onboarding_completed',
+  'lastActivity',
 ];
 
 export const clearSession = () => {

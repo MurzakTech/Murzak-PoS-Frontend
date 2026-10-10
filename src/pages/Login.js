@@ -178,6 +178,12 @@ const Login = () => {
               Sign in to continue to your dashboard.
             </Typography>
 
+            {!error && new URLSearchParams(location.search).get('reason') === 'idle' && (
+              <Alert severity="info" sx={{ mb: 2.5 }}>
+                You were signed out because the screen was not used for a while. Sign in to carry on.
+              </Alert>
+            )}
+
             {error && (
               <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => dispatch(clearError())} role="alert">
                 {error}
