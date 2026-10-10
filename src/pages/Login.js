@@ -35,12 +35,12 @@ import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../config/deployment';
 const SUPPORT_EMAIL = 'murzaktechnologies@gmail.com';
 
 const FEATURES = [
-  'Secure cloud-based POS',
-  'Real-time sales tracking',
-  'Inventory management',
-  'Multi-store support',
-  'Tax compliance ready',
-  'Customer support when you need it',
+  'Your till, stock and reports in one place',
+  'Cash, M-Pesa, card and credit',
+  'Connects to KRA eTIMS',
+  'Every store on one dashboard',
+  'Each person sees only what their role allows',
+  'Real people on support when you need them',
 ];
 
 const Login = () => {
