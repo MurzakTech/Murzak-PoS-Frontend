@@ -12,6 +12,10 @@ const SESSION_KEYS = [
   'activeWarehouse',
   'onboarding_completed',
   'lastActivity',
+  // The till's offline copies of the product list and open shift (src/utils/offlineTill.js).
+  // Sales waiting to upload (pos_offline_sales) are deliberately kept: they are real sales.
+  'pos_offline_catalog',
+  'pos_offline_shift',
 ];
 
 export const clearSession = () => {
