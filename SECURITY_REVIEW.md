@@ -16,7 +16,7 @@ The app's role-based access control (RBAC: deciding which screens each staff rol
 | 5 | Edit and Return buttons shown to roles that may not use them | Low | Fixed |
 | 6 | Vulnerable browser libraries (axios, React Router) | High | Fixed (one moderate item remains) |
 | 7 | Server-side enforcement must be confirmed | Critical | Action needed on backend |
-| 8 | Login tokens readable by any injected script; no security headers | Medium | Recommendation |
+| 8 | Login tokens readable by any injected script; no security headers | Medium | Partly fixed (in-app policy live; server headers need one-time setup) |
 | 9 | A few role grants needed an owner decision | Medium | Fixed (owner decided) |
 | 10 | No automatic sign-out on idle shared tills | Medium | Fixed |
 | 11 | Old build archive committed to the repository | Low | Fixed |
@@ -82,16 +82,20 @@ A quick test: sign in as a Sales User, then call one of these API methods direct
 
 ### 8. Protect login tokens and add security headers (Medium)
 
-The login token sits in `localStorage`, where any injected script can read it. Until tokens move to secure cookies, reduce the risk with response headers on the Nginx server that serves the app:
+The login token sits in `localStorage`, where any injected script can read it. Until tokens move to secure cookies, security headers limit what such a script could do. They come in two parts.
 
-```nginx
-add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.murzaktech.tech; frame-ancestors 'none'" always;
-add_header X-Content-Type-Options "nosniff" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-```
+**In the app (done, applied on every deploy).** `scripts/add-security-policy.js` adds a Content Security Policy to the page during the deploy workflow. It lets the page run only its own scripts and send data only to itself and its API, so an injected script cannot load more code or send tokens elsewhere. Product photos may still come from any `https` address. The build now keeps every script in its own file (`INLINE_RUNTIME_CHUNK=false`) so the policy can be strict, and the script stops the deploy if that ever changes. Before release, 19 screens (landing page, sign-in, till, products, inventory, reports, settings) were opened in a browser under the policy with no blocked items, and a test request to an outside site was refused.
 
-Test the policy in report-only mode first (`Content-Security-Policy-Report-Only`), because a payment gateway or image host missing from the list will be blocked. `frame-ancestors 'none'` stops other sites from embedding the till to trick staff into clicking buttons.
+**On the server (one-time setup needed).** A few protections only work when the web server sends them, such as stopping other websites from showing the till inside a frame to trick staff into clicking. They are ready in `deploy/nginx/security-headers.conf`. Someone with administrator access to the server should:
+
+1. Copy the file to the server: `sudo cp security-headers.conf /etc/nginx/snippets/murzak-security-headers.conf`
+2. Add this line inside each `server { ... }` block for `pos.murzaktech.tech` and the shop sites (`*.pos.murzaktech.tech`):
+   `include /etc/nginx/snippets/murzak-security-headers.conf;`
+   If a `location` block in that server already has its own `add_header` lines, add the `include` line inside that `location` too, because Nginx then ignores the outer ones.
+3. Check the configuration, then reload: `sudo nginx -t && sudo systemctl reload nginx`
+4. Confirm: `curl -sI https://pos.murzaktech.tech | grep -iE "x-frame|strict-transport|x-content"` should list the new headers.
+
+`Strict-Transport-Security` makes browsers insist on HTTPS for a year. Enable it only once the main site and every shop site work over HTTPS. If a future feature needs the camera (for example scanning barcodes with a phone), loosen the `Permissions-Policy` line to `camera=(self)`.
 
 ### 9. Role grants that needed an owner decision (Medium)
 

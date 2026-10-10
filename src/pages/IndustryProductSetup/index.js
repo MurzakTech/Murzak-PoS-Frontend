@@ -14,15 +14,16 @@ import {
   Button,
   Pagination,
   IconButton,
-  Tooltip,
   Alert,
   AlertTitle,
   CircularProgress,
   Chip,
+  Select,
+  MenuItem,
+  Stack,
   useTheme,
   alpha,
   Checkbox,
-  GridLegacy as Grid,
 } from '@mui/material';
 import {
   Download,
@@ -35,9 +36,37 @@ import {
   ArrowDownward,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { bulkUploadProducts, getSeedProducts, createSeedItems, clearCreateResult } from '../../store/productSeedingSlice';
+import { getSeedProducts, createSeedItems, clearCreateResult } from '../../store/productSeedingSlice';
+import { getItemGroups } from '../../store/productSlice';
 import { summarizeSeedResult } from '../../utils/seedResult';
+import { readProductFile } from '../../utils/readProductFile';
+import { saveTextFile } from '../../utils/saveTextFile';
+import {
+  buildStarterItems,
+  checkStarterSelection,
+  buildSeedPayload,
+  starterTemplateCsv,
+  applySheetToItems,
+  jsonToSheet,
+} from '../../utils/starterProducts';
 
+const ROWS_PER_PAGE = 25;
+const NOTICE_ROWS = 8;
+
+const readJsonSheet = (file) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const sheet = jsonToSheet(JSON.parse(reader.result));
+        resolve(sheet ? { rows: sheet } : { error: 'That JSON file does not contain an "items" list.' });
+      } catch (e) {
+        resolve({ error: 'That file is not valid JSON.' });
+      }
+    };
+    reader.onerror = () => resolve({ error: 'We could not read that file.' });
+    reader.readAsText(file);
+  });
 
 const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
   const { industryCode: paramIndustryCode } = useParams();
@@ -46,395 +75,198 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const { industries } = useAppSelector((state) => state.auth);
-  const { user } = useAppSelector((state) => state.auth);
-  const { 
-    seedProducts, 
-    totalProducts, 
-    isLoadingSeedProducts, 
+  const { industries, user } = useAppSelector((state) => state.auth);
+  const { itemGroups } = useAppSelector((state) => state.product);
+  const {
+    seedProducts,
+    isLoadingSeedProducts,
     seedProductsError,
     isUploading,
     isCreating,
     createResult,
-    createError
+    createError,
   } = useAppSelector((state) => state.productSeeding);
   const { activeWarehouse } = useAppSelector((state) => state.warehouse);
-  
-  // Find the industry
-  const industry = industries.find(
-    (ind) => ind.industry_code === industryCode || ind.name === industryCode
-  ) || { industry_code: industryCode, industry_name: industryCode };
-  
+
+  // Find the industry. The full list is only loaded on the sign-up page, so fall back to the
+  // industry on the signed-in user's profile, which carries the readable name.
+  const ownIndustry = user?.pos_industry && typeof user.pos_industry === 'object' ? user.pos_industry : null;
+  const matches = (ind) => ind && (ind.industry_code === industryCode || ind.name === industryCode);
+  const industry = industries.find(matches) || (matches(ownIndustry) ? ownIndustry : null) || { industry_code: industryCode, industry_name: industryCode };
+  const industryIdentifier = industry.industry_code || industry.name || industryCode;
+
   // Get company from user profile
-  const userCompany = user?.company || 
-                      user?.custom_company || 
-                      user?.company_name || 
-                      user?.company_data?.name || 
+  const userCompany = user?.company ||
+                      user?.custom_company ||
+                      user?.company_name ||
+                      user?.company_data?.name ||
                       user?.company_data?.company_name;
-  
-  // Initialize data state
-  // Price lists are always set to defaults and not shown in UI
-  const [data, setData] = useState({
-    price_list: 'Standard Selling',
-    buying_price_list: 'Standard Buying',
-    warehouse: '',
-    items: []
-  });
+
+  const activeWarehouseName = activeWarehouse ? (activeWarehouse.name || activeWarehouse.warehouse_name || null) : null;
+
+  const [items, setItems] = useState([]);
+  const [selected, setSelected] = useState(new Set()); // item codes ticked for saving
   const [page, setPage] = useState(1);
-  const [rowsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [selectedItems, setSelectedItems] = useState(new Set()); // Track selected item codes
-  const [searchQuery, setSearchQuery] = useState(''); // Search query state
-  const [sortOrder, setSortOrder] = useState('asc'); // Sort order: 'asc', 'desc', or null
+  const [fileNotice, setFileNotice] = useState(null); // what the last uploaded file changed
+  const [readingFile, setReadingFile] = useState(false);
+  const [showChecks, setShowChecks] = useState(false); // after the first press of Create, show what is missing
+  const [bulkPrice, setBulkPrice] = useState('');
 
-  // Fetch products on mount
+  // Fetch the starter products and the business's own categories
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch products for this industry
-        const industryIdentifier = industry.industry_code || industry.name || industryCode;
-        if (industryIdentifier) {
-          await dispatch(getSeedProducts(industryIdentifier)).unwrap();
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-        setUploadError(error || 'Failed to fetch data');
-      }
-    };
-
-    fetchData();
-  }, [dispatch, industryCode]);
-
-  // Update data when seedProducts are loaded
-  useEffect(() => {
-    if (seedProducts && seedProducts.length > 0) {
-      // Transform seed products to match the expected format
-      const transformedItems = seedProducts.map((product) => ({
-        item_code: product.sku,
-        item_name: product.name,
-        item_price: 0, // Price will be set by user
-        buying_price: null, // Buying price will be set by user
-        item_group: 'All Item Groups',
-        uom: 'Nos',
-        qty: null, // Quantity will be set by user
-      }));
-      
-      setData((prev) => ({
-        price_list: 'Standard Selling',
-        buying_price_list: 'Standard Buying',
-        items: transformedItems
-      }));
+    if (industryIdentifier) {
+      // A failure is shown from the store (seedProductsError), so it is not repeated here
+      dispatch(getSeedProducts(industryIdentifier)).unwrap().catch(() => {});
     }
+    dispatch(getItemGroups());
+  }, [dispatch, industryIdentifier]);
+
+  // Turn the starter products into editable rows when they arrive
+  useEffect(() => {
+    setItems(buildStarterItems(seedProducts));
+    setSelected(new Set());
   }, [seedProducts]);
 
-  // Filter and sort items
-  const filteredAndSortedItems = useMemo(() => {
-    let filtered = data.items;
+  const categoryNames = useMemo(() => (itemGroups || []).map((g) => g.item_group_name || g.name).filter(Boolean), [itemGroups]);
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(item => 
-        item.item_name?.toLowerCase().includes(query) ||
-        item.item_code?.toLowerCase().includes(query) ||
-        item.item_group?.toLowerCase().includes(query)
+  // Search and sort across the whole list; the table shows it one page at a time
+  const filteredItems = useMemo(() => {
+    let list = items;
+    const query = searchQuery.toLowerCase().trim();
+    if (query) {
+      list = list.filter((i) =>
+        i.item_name.toLowerCase().includes(query) ||
+        i.item_code.toLowerCase().includes(query) ||
+        (i.item_group || '').toLowerCase().includes(query)
       );
     }
-
-    // Apply sort by name
     if (sortOrder) {
-      filtered = [...filtered].sort((a, b) => {
-        const nameA = (a.item_name || '').toLowerCase();
-        const nameB = (b.item_name || '').toLowerCase();
-        if (sortOrder === 'asc') {
-          return nameA.localeCompare(nameB);
-        } else {
-          return nameB.localeCompare(nameA);
-        }
+      list = [...list].sort((a, b) => {
+        const cmp = a.item_name.toLowerCase().localeCompare(b.item_name.toLowerCase());
+        return sortOrder === 'asc' ? cmp : -cmp;
       });
     }
+    return list;
+  }, [items, searchQuery, sortOrder]);
 
-    return filtered;
-  }, [data.items, searchQuery, sortOrder]);
+  const totalPages = Math.ceil(filteredItems.length / ROWS_PER_PAGE);
+  const pageItems = useMemo(() => filteredItems.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE), [filteredItems, page]);
 
-  // Pagination
-  const paginatedItems = useMemo(() => {
-    const startIndex = (page - 1) * rowsPerPage;
-    return filteredAndSortedItems.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredAndSortedItems, page, rowsPerPage]);
+  useEffect(() => { setPage(1); }, [searchQuery, sortOrder]);
+  useEffect(() => { if (page > 1 && page > totalPages) setPage(Math.max(1, totalPages)); }, [page, totalPages]);
 
-  const totalPages = Math.ceil(filteredAndSortedItems.length / rowsPerPage);
+  // What still needs fixing among the ticked products (shown once Create has been pressed)
+  const checks = useMemo(() => checkStarterSelection(items, selected, activeWarehouseName), [items, selected, activeWarehouseName]);
+  const problemByCode = useMemo(() => new Map(checks.problems.map((p) => [p.item_code, p.message])), [checks]);
+  const fieldHasProblem = (code, word) => showChecks && (problemByCode.get(code) || '').toLowerCase().includes(word);
 
-  // Reset page when search or sort changes
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, sortOrder]);
+  // ---------------------------------------------------------------- editing
 
-  // Handle field changes for items
-  const handleFieldChange = (itemCode, field, value) => {
-    setData((prev) => {
-      const newItems = prev.items.map(item => {
-        if (item.item_code === itemCode) {
-          let processedValue = value;
-          
-          // Handle different field types
-          if (field === 'qty') {
-            processedValue = value === '' || value === null ? null : parseInt(value) || 0;
-          } else if (field === 'item_price' || field === 'buying_price') {
-            processedValue = value === '' || value === null ? null : parseFloat(value) || 0;
-          }
-          
-          return {
-            ...item,
-            [field]: processedValue,
-          };
-        }
-        return item;
-      });
-      
-      return {
-        ...prev,
-        items: newItems,
-      };
-    });
-  };
-
-  // Get active warehouse name for use in payload
-  const getActiveWarehouseName = () => {
-    if (!activeWarehouse) return null;
-    return activeWarehouse.name || activeWarehouse.warehouse_name || null;
-  };
-
-  // Handle checkbox selection
-  const handleSelectItem = (itemCode) => {
-    setSelectedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemCode)) {
-        newSet.delete(itemCode);
-      } else {
-        newSet.add(itemCode);
+  const updateItem = (code, field, value) => {
+    setItems((prev) => prev.map((item) => {
+      if (item.item_code !== code) return item;
+      let v = value;
+      if (field === 'qty') {
+        v = value === '' ? null : parseInt(value, 10);
+        if (Number.isNaN(v)) v = null;
+      } else if (field === 'item_price' || field === 'buying_price') {
+        v = value === '' ? null : parseFloat(value);
+        if (Number.isNaN(v)) v = null;
       }
-      return newSet;
+      return { ...item, [field]: v };
+    }));
+  };
+
+  const applyToSelected = (field, value) => {
+    setItems((prev) => prev.map((item) => (selected.has(item.item_code) ? { ...item, [field]: value } : item)));
+  };
+
+  const toggleItem = (code) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
     });
   };
 
-  // Handle select all
-  const handleSelectAll = (checked) => {
-    if (checked) {
-      const allItemCodes = new Set(paginatedItems.map(item => item.item_code));
-      setSelectedItems(allItemCodes);
-    } else {
-      setSelectedItems(new Set());
-    }
-  };
-
-  // Handle sort toggle
-  const handleSortToggle = () => {
-    setSortOrder(prev => {
-      if (prev === 'asc') return 'desc';
-      if (prev === 'desc') return 'asc';
-      return 'asc';
+  // The tick box in the header covers every product that matches the search, not only this page
+  const allTicked = filteredItems.length > 0 && filteredItems.every((i) => selected.has(i.item_code));
+  const someTicked = filteredItems.some((i) => selected.has(i.item_code)) && !allTicked;
+  const toggleAll = (checked) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      filteredItems.forEach((i) => (checked ? next.add(i.item_code) : next.delete(i.item_code)));
+      return next;
     });
   };
 
-  // Check if all items on current page are selected
-  const isAllSelected = paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.has(item.item_code));
-  const isIndeterminate = paginatedItems.some(item => selectedItems.has(item.item_code)) && !isAllSelected;
-
-  // Handle delete selected items
   const handleDeleteSelected = () => {
-    if (selectedItems.size === 0) {
-      return;
-    }
-
-    if (window.confirm(`Are you sure you want to delete ${selectedItems.size} selected item(s)? This will remove them from the view and they will not be sent to the API.`)) {
-      setData((prev) => {
-        const newItems = prev.items.filter(item => !selectedItems.has(item.item_code));
-        // Adjust page if current page becomes empty
-        const newTotalPages = Math.ceil(newItems.length / rowsPerPage);
-        if (page > newTotalPages && newTotalPages > 0) {
-          setPage(newTotalPages);
-        } else if (newItems.length === 0) {
-          setPage(1);
-        }
-        return {
-          ...prev,
-          items: newItems
-        };
-      });
-      setSelectedItems(new Set());
+    if (selected.size === 0) return;
+    if (window.confirm(`Remove ${selected.size} selected product(s) from this list? They will not be saved to your business.`)) {
+      setItems((prev) => prev.filter((i) => !selected.has(i.item_code)));
+      setSelected(new Set());
     }
   };
 
-  // Download template
-  const handleDownloadTemplate = () => {
-    const template = {
-      price_list: 'Standard Selling',
-      buying_price_list: 'Standard Buying',
-      items: [
-        {
-          item_code: 'ITEM001',
-          item_name: 'Sample Item',
-          item_price: 9.99,
-          buying_price: 5.50,
-          item_group: 'All Item Groups',
-          uom: 'Nos',
-          qty: 10,
-        },
-      ],
-    };
+  // ---------------------------------------------------------------- spreadsheet
 
-    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'industry_products_template.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+  const handleDownloadList = () => saveTextFile(starterTemplateCsv(items), 'starter_products.csv');
 
-  // Handle file upload
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
+    event.target.value = ''; // lets the same file be chosen again after it has been fixed
     if (!file) return;
 
     setUploadError(null);
     setUploadSuccess(false);
+    setFileNotice(null);
+    setReadingFile(true);
+    const { rows, error } = /\.json$/i.test(file.name) ? await readJsonSheet(file) : await readProductFile(file);
+    setReadingFile(false);
+    if (error) {
+      setUploadError(error);
+      return;
+    }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target.result;
-        const parsed = JSON.parse(content);
-
-        // Validate structure
-        if (!parsed.price_list || !Array.isArray(parsed.items)) {
-          throw new Error('Invalid file format. Expected price_list and items array.');
-        }
-
-        // Validate items structure
-        const invalidItems = parsed.items.filter(
-          (item) => !item.item_code || !item.item_name || item.item_price === undefined
-        );
-
-        if (invalidItems.length > 0) {
-          throw new Error('Some items are missing required fields (item_code, item_name, item_price).');
-        }
-
-        setData(parsed);
-        setSelectedItems(new Set()); // Clear selections when new data is loaded
-        setUploadSuccess(true);
-        setPage(1); // Reset to first page
-      } catch (error) {
-        setUploadError(error.message || 'Failed to parse file. Please check the format.');
-      }
-    };
-
-    reader.onerror = () => {
-      setUploadError('Failed to read file.');
-    };
-
-    reader.readAsText(file);
+    const result = applySheetToItems(items, rows);
+    if (result.fileProblems.length) {
+      setUploadError(result.fileProblems.join(' '));
+      return;
+    }
+    setItems(result.items);
+    setSelected((prev) => new Set([...prev, ...result.touched])); // products the file filled in are ticked for you
+    setFileNotice({ updated: result.updated, added: result.added, problems: result.problems });
   };
 
-  // Handle save - create seed items
+  // ---------------------------------------------------------------- saving
+
   const handleSave = async () => {
     if (!user) {
       setUploadError('Please log in to create items');
       return;
     }
+    setUploadError(null);
+    setShowChecks(true);
+    if (checks.problems.length > 0) return;
 
-    // Get selected items only
-    const selectedItemsArray = data.items.filter(item => 
-      selectedItems.has(item.item_code)
-    );
-
-    // Validate selected items
-    const validItems = selectedItemsArray.filter(item => {
-      if (!item.item_code || !item.item_name || item.item_price === undefined || item.item_price === null || item.item_price < 0) {
-        return false;
-      }
-      
-      // Buying price list is always set, so no validation needed
-      
-      // If qty is provided, active warehouse must be set
-      if (item.qty !== null && item.qty !== undefined && item.qty > 0) {
-        if (!getActiveWarehouseName()) {
-          setUploadError('Please select a warehouse from the app bar before adding inventory quantities');
-          return false;
-        }
-      }
-      
-      return true;
+    const payload = buildSeedPayload({
+      items: checks.valid,
+      priceList: 'Standard Selling',
+      buyingPriceList: 'Standard Buying',
+      warehouse: activeWarehouseName,
+      company: userCompany,
+      industry: industryIdentifier,
     });
 
-    if (validItems.length === 0) {
-      setUploadError('Please select at least one valid item with item code, name, and price');
-      return;
-    }
-
     try {
-      // Prepare payload for create_seed_item
-      // Price lists are always set to defaults
-      const payload = {
-        price_list: data.price_list, // Always 'Standard Selling'
-        buying_price_list: data.buying_price_list, // Always 'Standard Buying'
-        items: validItems.map(item => {
-          const itemPayload = {
-            item_code: item.item_code,
-            item_name: item.item_name,
-            item_price: parseFloat(item.item_price) || 0,
-            item_group: item.item_group || 'All Item Groups',
-            uom: item.uom || 'Nos',
-          };
-          
-          // Add buying_price if provided
-          if (item.buying_price !== null && item.buying_price !== undefined && item.buying_price >= 0) {
-            itemPayload.buying_price = parseFloat(item.buying_price);
-          }
-          
-          if (item.qty !== null && item.qty !== undefined && item.qty > 0) {
-            itemPayload.qty = parseInt(item.qty);
-            // Always use active warehouse from appbar
-            const warehouseName = getActiveWarehouseName();
-            if (warehouseName) {
-              itemPayload.warehouse = warehouseName;
-            }
-            // If buying_price is provided, use it as basic_rate for inventory valuation
-            if (itemPayload.buying_price !== undefined) {
-              itemPayload.basic_rate = itemPayload.buying_price;
-            }
-          }
-          
-          return itemPayload;
-        }),
-      };
-
-      // Add optional top-level fields
-      const warehouseName = getActiveWarehouseName();
-      if (warehouseName) {
-        payload.warehouse = warehouseName;
-      }
-      
-      if (userCompany) {
-        payload.company = userCompany;
-      }
-
-      // Add industry if available
-      const industryIdentifier = industry.industry_code || industry.name || industryCode;
-      if (industryIdentifier) {
-        payload.industry = industryIdentifier;
-      }
-
-      // Call create_seed_item API
       const result = await dispatch(createSeedItems(payload)).unwrap();
-      
       // The slice only lets through runs where something was saved; the details
       // (including any products that could not be saved, and why) show below
-      setUploadError(null);
       if (!summarizeSeedResult(result).problems) {
         setUploadSuccess(true);
         setTimeout(() => navigate('/dashboard'), 2000);
@@ -445,13 +277,16 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
     }
   };
 
+  const busy = isCreating || isUploading || readingFile;
+  const showTable = !isLoadingSeedProducts && !isUploading;
+
   return (
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={() => navigate('/dashboard')} sx={{ color: theme.palette.text.primary }}>
+            <IconButton onClick={() => navigate('/dashboard')} sx={{ color: theme.palette.text.primary }} aria-label="Back to dashboard">
               <ArrowBack />
             </IconButton>
             <Box>
@@ -459,48 +294,25 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
                 {industry.industry_name || industry.name || 'Industry'} Product Setup
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Configure products and pricing for your industry
+                Tick the products you sell, enter your selling price for each, then press Create Items.
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Download />}
-              onClick={handleDownloadTemplate}
-            >
-              Download Template
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            <Button variant="outlined" startIcon={<Download />} onClick={handleDownloadList} disabled={items.length === 0}>
+              Download list
             </Button>
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<Upload />}
-            >
-              Upload
-              <input
-                type="file"
-                hidden
-                accept=".json"
-                onChange={handleFileUpload}
-              />
+            <Button variant="outlined" component="label" startIcon={readingFile ? <CircularProgress size={18} /> : <Upload />} disabled={busy || items.length === 0}>
+              {readingFile ? 'Reading file...' : 'Upload prices'}
+              <input type="file" hidden accept=".csv,.tsv,.txt,.xlsx,.json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={handleFileUpload} />
             </Button>
-            {selectedItems.size > 0 && (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Delete />}
-                onClick={handleDeleteSelected}
-              >
-                Delete Selected ({selectedItems.size})
-              </Button>
-            )}
             <Button
               variant="contained"
-              startIcon={isCreating || isUploading ? <CircularProgress size={20} /> : <Save />}
+              startIcon={isCreating ? <CircularProgress size={20} color="inherit" /> : <Save />}
               onClick={handleSave}
-              disabled={isCreating || isUploading || selectedItems.size === 0}
+              disabled={busy || selected.size === 0}
             >
-              {isCreating ? 'Creating...' : `Create Items (${selectedItems.size})`}
+              {isCreating ? 'Creating...' : `Create Items (${selected.size})`}
             </Button>
           </Box>
         </Box>
@@ -512,8 +324,47 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
           </Alert>
         )}
         {seedProductsError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => {}}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {seedProductsError}
+          </Alert>
+        )}
+        {fileNotice && (
+          <Alert severity={fileNotice.problems.length ? 'warning' : 'success'} sx={{ mb: 2 }} onClose={() => setFileNotice(null)}>
+            <AlertTitle>File applied</AlertTitle>
+            {fileNotice.updated + fileNotice.added === 0
+              ? 'Nothing in the file changed the list.'
+              : `${fileNotice.updated} product${fileNotice.updated === 1 ? '' : 's'} updated${fileNotice.added ? `, ${fileNotice.added} added` : ''}. They are ticked for you.`}
+            {fileNotice.problems.length > 0 && (
+              <>
+                {` ${fileNotice.problems.length} row${fileNotice.problems.length === 1 ? ' was' : 's were'} skipped:`}
+                <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                  {fileNotice.problems.slice(0, NOTICE_ROWS).map((p, i) => (
+                    <Typography component="li" variant="body2" key={i}>
+                      Row {p.rowNumber}{p.itemCode ? ` (${p.itemCode})` : ''}: {p.message}
+                    </Typography>
+                  ))}
+                  {fileNotice.problems.length > NOTICE_ROWS && (
+                    <Typography component="li" variant="body2">and {fileNotice.problems.length - NOTICE_ROWS} more</Typography>
+                  )}
+                </Box>
+              </>
+            )}
+          </Alert>
+        )}
+        {showChecks && checks.problems.length > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <AlertTitle>{checks.problems.length} ticked product{checks.problems.length === 1 ? ' needs' : 's need'} attention before saving</AlertTitle>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {checks.problems.slice(0, NOTICE_ROWS).map((p) => (
+                <Typography component="li" variant="body2" key={p.item_code}>{p.item_name}: {p.message}</Typography>
+              ))}
+              {checks.problems.length > NOTICE_ROWS && (
+                <Typography component="li" variant="body2">and {checks.problems.length - NOTICE_ROWS} more</Typography>
+              )}
+            </Box>
+            <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+              Fix them in the table, or untick the products you do not want to save yet.
+            </Typography>
           </Alert>
         )}
         {createError && (
@@ -583,65 +434,40 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
           </Alert>
         )}
 
-        {/* Configuration Section */}
+        {/* Summary */}
         <Box sx={{ mb: 3, p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.1), borderRadius: 1 }}>
-          <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Configuration
-          </Typography>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <Box>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Price Lists:
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Chip label="Standard Selling" size="small" color="primary" />
-                  <Chip label="Standard Buying" size="small" color="secondary" />
-                </Box>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Active Warehouse:
-                </Typography>
-                {activeWarehouse ? (
-                  <Chip 
-                    label={activeWarehouse.warehouse_name || activeWarehouse.name || 'Unknown'} 
-                    size="small" 
-                    color="success"
-                  />
-                ) : (
-                  <Chip 
-                    label="No warehouse selected" 
-                    size="small" 
-                    color="warning"
-                  />
-                )}
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                  {activeWarehouse 
-                    ? 'Items with quantity will be added to this warehouse'
-                    : 'Please select a warehouse from the app bar to add inventory'}
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'flex-start' }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>Store for opening stock:</Typography>
+              {activeWarehouse ? (
+                <Chip label={activeWarehouse.warehouse_name || activeWarehouse.name || 'Unknown'} size="small" color="success" />
+              ) : (
+                <Chip label="No store selected" size="small" color="warning" />
+              )}
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                {activeWarehouse ? 'Products with a quantity are added to this store' : 'Choose a store in the top bar to record opening stock'}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>Price lists:</Typography>
+              <Stack direction="row" spacing={1}>
+                <Chip label="Standard Selling" size="small" color="primary" />
+                <Chip label="Standard Buying" size="small" color="secondary" />
+              </Stack>
+            </Box>
+          </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              {searchQuery 
-                ? `Showing ${filteredAndSortedItems.length} of ${totalProducts > 0 ? totalProducts : data.items.length} items`
-                : `Total Items: ${totalProducts > 0 ? totalProducts : data.items.length}`}
+              {searchQuery
+                ? `Showing ${filteredItems.length} of ${items.length} products`
+                : `Total products: ${items.length}`}
               {isLoadingSeedProducts && ' (Loading...)'}
             </Typography>
-            {selectedItems.size > 0 && (
-              <Chip 
-                label={`${selectedItems.size} selected`} 
-                size="small" 
-                color="primary"
-                variant="outlined"
-              />
-            )}
+            <Chip label={`${selected.size} ticked`} size="small" color="primary" variant={selected.size ? 'filled' : 'outlined'} />
           </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Many products? Press Download list, type your prices in Excel, then Upload prices. Products the file fills in are ticked for you.
+          </Typography>
         </Box>
 
         {/* Loading State */}
@@ -654,122 +480,160 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
           </Box>
         )}
 
-        {/* Search and Sort Controls */}
-        {!isLoadingSeedProducts && !isUploading && data.items.length > 0 && (
+        {/* Search */}
+        {showTable && items.length > 0 && (
           <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
-              placeholder="Search products by name, code, or group..."
+              placeholder="Search products by name, code, or category..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               size="small"
               fullWidth
-              InputProps={{
-                startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
+              InputProps={{ startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} /> }}
               sx={{ maxWidth: 400 }}
             />
-            {searchQuery && (
-              <Typography variant="body2" color="text.secondary">
-                {filteredAndSortedItems.length} of {data.items.length} products
-              </Typography>
-            )}
           </Box>
         )}
 
+        {/* Actions for the ticked products */}
+        {selected.size > 0 && (
+          <Paper variant="outlined" sx={{ p: 1.5, mb: 2, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+            <Typography variant="body2" fontWeight={600}>{selected.size} ticked:</Typography>
+            <Select
+              size="small"
+              displayEmpty
+              value=""
+              onChange={(e) => applyToSelected('item_group', e.target.value)}
+              sx={{ minWidth: 200 }}
+              SelectDisplayProps={{ 'aria-label': 'Set category for ticked products' }}
+              renderValue={() => 'Set category...'}
+            >
+              {categoryNames.map((name) => (
+                <MenuItem key={name} value={name}>{name}</MenuItem>
+              ))}
+              {categoryNames.length === 0 && <MenuItem disabled value="">No categories yet</MenuItem>}
+            </Select>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                size="small"
+                type="number"
+                placeholder="Selling price"
+                value={bulkPrice}
+                onChange={(e) => setBulkPrice(e.target.value)}
+                inputProps={{ min: 0, step: 0.01, 'aria-label': 'Selling price for ticked products' }}
+                sx={{ width: 150 }}
+              />
+              <Button
+                variant="outlined"
+                disabled={!(parseFloat(bulkPrice) > 0)}
+                onClick={() => { applyToSelected('item_price', parseFloat(bulkPrice)); setBulkPrice(''); }}
+              >
+                Set price
+              </Button>
+            </Box>
+            <Button color="error" startIcon={<Delete />} onClick={handleDeleteSelected} sx={{ ml: 'auto' }}>
+              Remove from list
+            </Button>
+          </Paper>
+        )}
+
         {/* Table */}
-        {!isLoadingSeedProducts && !isUploading && (
+        {showTable && (
           <TableContainer component={Paper} variant="outlined">
-            <Table>
+            <Table size="small">
               <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      indeterminate={isIndeterminate}
-                      checked={isAllSelected}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      indeterminate={someTicked}
+                      checked={allTicked}
+                      onChange={(e) => toggleAll(e.target.checked)}
                       color="primary"
+                      inputProps={{ 'aria-label': `Tick all ${filteredItems.length} products` }}
                     />
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Item Code</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer' }} onClick={handleSortToggle}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer' }} onClick={() => setSortOrder((s) => (s === 'asc' ? 'desc' : 'asc'))}>
                       Item Name
                       {sortOrder === 'asc' && <ArrowUpward sx={{ fontSize: 16 }} />}
                       {sortOrder === 'desc' && <ArrowDownward sx={{ fontSize: 16 }} />}
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Item Category</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>Selling Price</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>Buying Price</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedItems.length > 0 ? (
-                  paginatedItems.map((item) => {
-                    const isSelected = selectedItems.has(item.item_code);
+                {pageItems.length > 0 ? (
+                  pageItems.map((item) => {
+                    const isSelected = selected.has(item.item_code);
+                    const options = item.item_group && !categoryNames.includes(item.item_group) ? [item.item_group, ...categoryNames] : categoryNames;
                     return (
-                      <TableRow 
-                        key={item.item_code} 
-                        hover
-                        selected={isSelected}
-                        sx={{
-                          '&.Mui-selected': {
-                            backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                          },
-                          '&.Mui-selected:hover': {
-                            backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                          },
-                        }}
-                      >
+                      <TableRow key={item.item_code} hover selected={isSelected}>
                         <TableCell padding="checkbox">
                           <Checkbox
                             checked={isSelected}
-                            onChange={() => handleSelectItem(item.item_code)}
+                            onChange={() => toggleItem(item.item_code)}
                             color="primary"
+                            inputProps={{ 'aria-label': `Tick ${item.item_name}` }}
                           />
                         </TableCell>
                         <TableCell>{item.item_code}</TableCell>
                         <TableCell>{item.item_name}</TableCell>
                         <TableCell>
-                          <Chip label={item.item_group} size="small" variant="outlined" />
+                          <Select
+                            size="small"
+                            displayEmpty
+                            value={item.item_group || ''}
+                            onChange={(e) => updateItem(item.item_code, 'item_group', e.target.value)}
+                            sx={{ minWidth: 150 }}
+                            SelectDisplayProps={{ 'aria-label': `Category for ${item.item_name}` }}
+                            renderValue={(v) => v || <Typography component="span" variant="body2" color="text.secondary">Uncategorised</Typography>}
+                          >
+                            <MenuItem value="">Uncategorised</MenuItem>
+                            {options.map((name) => (
+                              <MenuItem key={name} value={name}>{name}</MenuItem>
+                            ))}
+                          </Select>
                         </TableCell>
                         <TableCell align="right">
                           <TextField
                             type="number"
-                            value={item.item_price || ''}
-                            onChange={(e) => handleFieldChange(item.item_code, 'item_price', e.target.value)}
+                            value={item.item_price ?? ''}
+                            onChange={(e) => updateItem(item.item_code, 'item_price', e.target.value)}
                             size="small"
-                            sx={{ width: 120 }}
-                            inputProps={{ min: 0, step: 0.01 }}
-                            required
-                            InputProps={{
-                              startAdornment: <Typography variant="body2" sx={{ mr: 0.5 }}>KES</Typography>,
-                            }}
+                            sx={{ width: 160 }}
+                            inputProps={{ min: 0, step: 0.01, 'aria-label': `Selling price for ${item.item_name}` }}
+                            error={isSelected && fieldHasProblem(item.item_code, 'selling price')}
+                            placeholder="Required"
+                            InputProps={{ startAdornment: <Typography variant="body2" sx={{ mr: 0.5 }}>KES</Typography> }}
                           />
                         </TableCell>
                         <TableCell align="right">
                           <TextField
                             type="number"
-                            value={item.buying_price !== null && item.buying_price !== undefined ? item.buying_price : ''}
-                            onChange={(e) => handleFieldChange(item.item_code, 'buying_price', e.target.value)}
+                            value={item.buying_price ?? ''}
+                            onChange={(e) => updateItem(item.item_code, 'buying_price', e.target.value)}
                             size="small"
-                            sx={{ width: 120 }}
-                            inputProps={{ min: 0, step: 0.01 }}
+                            sx={{ width: 160 }}
+                            inputProps={{ min: 0, step: 0.01, 'aria-label': `Buying price for ${item.item_name}` }}
+                            error={isSelected && fieldHasProblem(item.item_code, 'buying price')}
                             placeholder="Optional"
-                            InputProps={{
-                              startAdornment: <Typography variant="body2" sx={{ mr: 0.5 }}>KES</Typography>,
-                            }}
+                            InputProps={{ startAdornment: <Typography variant="body2" sx={{ mr: 0.5 }}>KES</Typography> }}
                           />
                         </TableCell>
                         <TableCell align="right">
                           <TextField
                             type="number"
-                            value={item.qty !== null && item.qty !== undefined ? item.qty : ''}
-                            onChange={(e) => handleFieldChange(item.item_code, 'qty', e.target.value)}
+                            value={item.qty ?? ''}
+                            onChange={(e) => updateItem(item.item_code, 'qty', e.target.value)}
                             size="small"
                             sx={{ width: 100 }}
-                            inputProps={{ min: 0, step: 1 }}
+                            inputProps={{ min: 0, step: 1, 'aria-label': `Quantity for ${item.item_name}` }}
+                            error={isSelected && (fieldHasProblem(item.item_code, 'quantity') || fieldHasProblem(item.item_code, 'store'))}
                             placeholder="Optional"
                           />
                         </TableCell>
@@ -780,7 +644,7 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
                   <TableRow>
                     <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                       <Typography variant="body2" color="text.secondary">
-                        {searchQuery 
+                        {searchQuery
                           ? `No products found matching "${searchQuery}". Try a different search term.`
                           : 'No products found for this industry. Please check back later or contact support.'}
                       </Typography>
@@ -793,7 +657,7 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
         )}
 
         {/* Pagination */}
-        {!isLoadingSeedProducts && !isUploading && totalPages > 1 && (
+        {showTable && totalPages > 1 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Pagination
               count={totalPages}
@@ -807,26 +671,18 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
         )}
 
         {/* Empty State */}
-        {!isLoadingSeedProducts && !isUploading && data.items.length === 0 && (
+        {showTable && items.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 6 }}>
             <Typography variant="h6" color="text.secondary" gutterBottom>
               No products found
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {seedProductsError 
+              {seedProductsError
                 ? 'Failed to load products. Please try refreshing the page.'
                 : 'No products are available for this industry yet. Please check back later or contact support.'}
             </Typography>
             {seedProductsError && (
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  const industryIdentifier = industry.industry_code || industry.name || industryCode;
-                  if (industryIdentifier) {
-                    dispatch(getSeedProducts(industryIdentifier));
-                  }
-                }}
-              >
+              <Button variant="outlined" onClick={() => industryIdentifier && dispatch(getSeedProducts(industryIdentifier))}>
                 Retry
               </Button>
             )}
@@ -838,4 +694,3 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
 };
 
 export default IndustryProductSetup;
-

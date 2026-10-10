@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   ButtonBase,
+  Chip,
   Divider,
   IconButton,
   InputBase,
@@ -31,6 +32,8 @@ import {
   Check,
   LocalOfferOutlined,
   ChevronRight,
+  EditNoteOutlined,
+  RestaurantOutlined,
 } from '@mui/icons-material';
 import { fmt, money } from './money';
 import ProductImage from '../../../components/Common/ProductImage';
@@ -44,7 +47,7 @@ const StepperButton = ({ children, ...props }) => (
   </IconButton>
 );
 
-const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWarehouse, onInc, onDec, onSetQty, onRemove, onChangeWarehouse }) => {
+const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWarehouse, onInc, onDec, onSetQty, onRemove, onChangeWarehouse, kitchenEnabled, onEditNote }) => {
   const [anchor, setAnchor] = useState(null);
   const lineBase = item.rate * item.qty;
   const hasOffer = item.discount_amount > 0;
@@ -62,6 +65,12 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
             {money(item.rate, currency)} each{hasOffer ? ' · offer applied' : ''}
             {store ? ` · from ${store.warehouse_name || store.name}` : ''}
           </Typography>
+          {kitchenEnabled && (item.note || item.sentQty > 0) && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.25 }}>
+              {item.sentQty > 0 && <Chip size="small" color="success" variant="outlined" label={`${item.sentQty} sent`} sx={{ height: 18, fontSize: '0.6875rem' }} />}
+              {item.note && <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'warning.main', fontWeight: 600 }}>{item.note}</Typography>}
+            </Box>
+          )}
         </Box>
       </Box>
       <Box sx={{ textAlign: 'right' }}>
@@ -94,6 +103,11 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
             {item.uom}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+          {kitchenEnabled && (
+            <IconButton size="small" aria-label={item.note ? `Change note for ${item.item_name}` : `Add a note for ${item.item_name}`} onClick={() => onEditNote(item.item_code)} sx={{ color: item.note ? 'warning.main' : 'text.secondary' }}>
+              <EditNoteOutlined fontSize="small" />
+            </IconButton>
+          )}
           {warehouses.length > 1 && (
             <>
               <IconButton size="small" aria-label={`More options for ${item.item_name}`} onClick={(e) => setAnchor(e.currentTarget)} sx={{ color: 'text.secondary' }}>
@@ -155,6 +169,10 @@ const OrderPanel = ({
   onClear,
   isBusy,
   footerExtra,
+  kitchenEnabled,
+  kitchenPending = 0,
+  onSendKitchen,
+  onEditNote,
 }) => {
   const [discountAnchor, setDiscountAnchor] = useState(null);
   const [draftType, setDraftType] = useState('percentage');
@@ -228,6 +246,8 @@ const OrderPanel = ({
                 onSetQty={onSetQty}
                 onRemove={onRemove}
                 onChangeWarehouse={onChangeWarehouse}
+                kitchenEnabled={kitchenEnabled}
+                onEditNote={onEditNote}
               />
             </React.Fragment>
           ))
@@ -273,6 +293,19 @@ const OrderPanel = ({
 
         {footerExtra || (
           <>
+            {kitchenEnabled && !readOnly && (
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                startIcon={<RestaurantOutlined />}
+                disabled={empty || isBusy}
+                onClick={onSendKitchen}
+                sx={{ mb: 1, height: 48, borderRadius: 3, fontWeight: 700 }}
+              >
+                {kitchenPending > 0 ? `Send to kitchen (${kitchenPending})` : 'Send to kitchen'}
+              </Button>
+            )}
             <Button
               fullWidth
               variant="contained"
