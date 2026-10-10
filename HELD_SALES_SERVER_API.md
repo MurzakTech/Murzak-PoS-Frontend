@@ -8,9 +8,9 @@ This file is the contract for those three calls, and a reference implementation 
 
 ## Why separate calls and not draft invoices
 
-The server can already save a sale as a draft invoice, but that is a poor fit for an open bill:
+The server can already save a sale as a draft invoice, but that is a poor fit for an open bill. This was checked against the server code (`techsavanna_pos/api/sales_api.py` in `Murzak-PoS-Backend`):
 
-- There is no way to delete a draft. A discarded tab would stay behind as a draft forever.
+- **A draft invoice cannot be removed.** `cancel_pos_invoice` refuses anything that is not submitted ("Only submitted POS Invoices (docstatus 1) can be cancelled"), and there is no call that deletes a draft invoice. A discarded tab would stay behind as a draft forever.
 - There is nowhere to put the table or tab name.
 - A draft can be checked against stock when saved, which would block holding an item that is running low.
 - Drafts risk appearing in sales history, shift totals and reports as if they were sales.
@@ -95,82 +95,128 @@ Reply `data`: `{ "id": "h_lq3k2x9a", "deleted": true }`
 6. **Old bills.** Suggested: a daily job removes bills held more than 30 days ago. The till already warns after 12 hours.
 7. **Missing calls.** A server without these calls (HTTP 404, or Frappe's "no attribute" error) makes the till fall back to the device. No other failure does: a timeout or a 5xx makes the till keep the bill on the device and send it later.
 
-## Reference implementation (an untested sketch)
+## Reference implementation (an untested sketch, matched to your server code)
 
-This has not been run. It shows the shape; have a Frappe developer review it, in particular the company access check and the atomic delete.
+This has not been run. It is written to fit `Murzak-PoS-Backend`: it uses the server's own company check (`resolve_company` in `api/payment_gateway_common.py`, which refuses companies the user does not belong to and rejects guests), and it follows the folder layout used by the other tables. A Frappe developer should review it, in particular the atomic delete.
 
-**DocType `POS Held Sale`** (not submittable, no naming series): fields `held_id` (Data, required, unique per company), `company` (Link, required), `warehouse` (Link), `label` (Data, 40), `customer_name` (Data), `item_count` (Int), `total` (Currency), `held_at` (Datetime), `payload` (Long Text). The record's `owner` is who held it. Index `company` and `held_id`.
+**1. The table.** Create the folder `techsavanna_pos/techsavanna_pos/doctype/pos_held_sale/` with an empty `__init__.py`, a `pos_held_sale.py` containing `class POSHeldSale(Document): pass`, and a `pos_held_sale.json` that defines the DocType (module "Techsavanna POS", not submittable, naming by field `held_id`) with these fields:
 
-**`techsavanna_pos/api/held_sales_api.py`:**
+| Field | Type | Notes |
+|---|---|---|
+| `held_id` | Data | required; the till's id; unique together with `company` |
+| `company` | Link to Company | required; indexed |
+| `warehouse` | Link to Warehouse | optional |
+| `label` | Data (40) | table or tab name |
+| `customer_name` | Data | |
+| `item_count` | Int | |
+| `total` | Currency | |
+| `held_at` | Datetime | |
+| `payload` | Long Text | the sale as JSON, stored and returned unchanged |
+
+The record's `owner` is who held it. Merging to `main` runs `bench migrate` on the server (see `.github/workflows/deploy.yml`), which creates the table by itself.
+
+**2. The calls**, in `techsavanna_pos/api/held_sales_api.py`:
 ```python
+"""
+Held sales: bills put on hold at a till (a table, a tab) and shared by every till of a business.
+Held bills are not invoices: saving or deleting one never touches stock, accounts or reports.
+"""
+
+from __future__ import annotations
+
 import json
+
 import frappe
+from frappe import _
+
+from techsavanna_pos.api.payment_gateway_common import get_user_companies, resolve_company
 
 MAX_LINES = 300
 MAX_PAYLOAD = 256 * 1024
+KEEP_DAYS = 30
 
 
-def _check_company(company):
-    # Use the same check as your other endpoints (the user's company link).
-    if not company:
-        frappe.throw("Company is required.")
-    # e.g. ensure_company_access(company)
+def _person(user):
+    return frappe.db.get_value("User", user, "full_name") or user
 
 
 def _row(d):
-    owner = d.owner
     return {
-        "id": d.held_id, "label": d.label, "customer": d.customer_name,
-        "item_count": d.item_count, "total": d.total, "warehouse": d.warehouse,
-        "held_at": d.held_at, "held_by": owner,
-        "held_by_name": frappe.db.get_value("User", owner, "full_name") or owner,
-        "modified": str(d.modified), "payload": json.loads(d.payload or "{}"),
+        "id": d.held_id,
+        "label": d.label or "",
+        "customer": d.customer_name or "",
+        "item_count": d.item_count or 0,
+        "total": d.total or 0,
+        "warehouse": d.warehouse,
+        "held_at": d.held_at,
+        "held_by": d.owner,
+        "held_by_name": _person(d.owner),
+        "modified": str(d.modified),
+        "payload": json.loads(d.payload or "{}"),
     }
 
 
 @frappe.whitelist(methods=["POST"])
-def list_held_sales(company, warehouse=None):
-    _check_company(company)
-    filters = {"company": company}
-    rows = frappe.get_all("POS Held Sale", filters=filters, order_by="held_at asc",
-                          fields=["*"])
-    if warehouse:
+def list_held_sales(company=None, warehouse=None):
+    company = resolve_company(company)
+    rows = frappe.get_all(
+        "POS Held Sale",
+        filters={"company": company},
+        fields=["held_id", "label", "customer_name", "item_count", "total", "warehouse",
+                "held_at", "owner", "modified", "payload"],
+        order_by="held_at asc",
+    )
+    if warehouse:  # bills for this store, and bills held with no store
         rows = [r for r in rows if not r.warehouse or r.warehouse == warehouse]
     return {"success": True, "data": {"held_sales": [_row(frappe._dict(r)) for r in rows]}}
 
 
 @frappe.whitelist(methods=["POST"])
-def save_held_sale(company, id, payload, label="", warehouse=None, held_at=None,
+def save_held_sale(id, payload, company=None, label="", warehouse=None, held_at=None,
                    customer="", item_count=0, total=0):
-    _check_company(company)
+    company = resolve_company(company)
     if isinstance(payload, str):
         payload = json.loads(payload)
     text = json.dumps(payload)
     if len(text) > MAX_PAYLOAD or len(payload.get("cart") or []) > MAX_LINES:
-        return {"success": False, "message": "This bill is too large to hold."}
-    name = frappe.db.get_value("POS Held Sale", {"company": company, "held_id": id})
+        return {"success": False, "message": _("This bill is too large to hold.")}
+
+    name = frappe.db.get_value("POS Held Sale", {"company": company, "held_id": str(id)})
     doc = frappe.get_doc("POS Held Sale", name) if name else frappe.new_doc("POS Held Sale")
     doc.update({
         "held_id": str(id), "company": company, "warehouse": warehouse or None,
-        "label": (label or "")[:40], "customer_name": customer, "item_count": item_count,
-        "total": total, "held_at": held_at, "payload": text,
+        "label": (label or "")[:40], "customer_name": customer or "",
+        "item_count": item_count, "total": total, "held_at": held_at, "payload": text,
     })
-    doc.save(ignore_permissions=True)
+    doc.save(ignore_permissions=True)  # access was checked by resolve_company above
     return {"success": True, "data": {
-        "id": doc.held_id, "held_by": doc.owner,
-        "held_by_name": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
+        "id": doc.held_id, "held_by": doc.owner, "held_by_name": _person(doc.owner),
         "modified": str(doc.modified)}}
 
 
 @frappe.whitelist(methods=["POST"])
-def delete_held_sale(company, id):
-    _check_company(company)
-    # One statement, so that of two tills deleting at the same moment only one deletes a row
-    frappe.db.sql("DELETE FROM `tabPOS Held Sale` WHERE company=%s AND held_id=%s",
-                  (company, str(id)))
+def delete_held_sale(id, company=None):
+    company = resolve_company(company)
+    # A single statement, so that of two tills deleting at the same moment only one removes the row
+    frappe.db.sql("DELETE FROM `tabPOS Held Sale` WHERE company=%s AND held_id=%s", (company, str(id)))
     deleted = frappe.db.sql("SELECT ROW_COUNT()")[0][0] > 0
     return {"success": True, "data": {"id": str(id), "deleted": bool(deleted)}}
+
+
+def purge_old_held_sales():
+    """Daily job: remove bills held more than KEEP_DAYS days ago, so abandoned tabs do not pile up."""
+    cutoff = frappe.utils.add_days(frappe.utils.now_datetime(), -KEEP_DAYS)
+    frappe.db.sql("DELETE FROM `tabPOS Held Sale` WHERE held_at < %s", (cutoff,))
 ```
+
+**3. The daily clean-up.** In `techsavanna_pos/hooks.py` the `scheduler_events` block is currently commented out. Enable it with:
+```python
+scheduler_events = {
+    "daily": ["techsavanna_pos.api.held_sales_api.purge_old_held_sales"],
+}
+```
+
+**4. Tests**, in the style of `api/test_pos_shift_close.py` (plain `unittest` with `patch`, no database): a guest is refused; a user from another business is refused; a bill over 300 lines is refused; a missing `deleted` row reports `deleted: false`.
 
 ## How to check it works
 
