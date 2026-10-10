@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { jwtDecode } from 'jwt-decode';
+import { clearSession } from '../utils/session';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { LAST_ACTIVITY_KEY } from '../hooks/useIdleLogout';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Full endpoint paths from your API
@@ -111,7 +111,10 @@ const getInitialState = () => {
   const refreshToken = localStorage.getItem('refresh_token');
   const userStr = localStorage.getItem('user');
   const apiKey = localStorage.getItem('api_key');
-  const apiSecret = localStorage.getItem('api_secret');
+  // The API secret is a password that never expires. Older versions saved it in the
+  // browser, where any injected script could read it; remove any copy left behind.
+  localStorage.removeItem('api_secret');
+  const apiSecret = null;
 
   let user = null;
   if (userStr) {
@@ -164,7 +167,7 @@ export const registerUser = createAsyncThunk(
       if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
       if (user) localStorage.setItem('user', JSON.stringify(user));
       if (api_key) localStorage.setItem('api_key', api_key);
-      if (api_secret) localStorage.setItem('api_secret', api_secret);
+      // api_secret is kept in memory only (see getInitialState)
 
       // Show success notification
       if (successMessage) {
@@ -238,8 +241,6 @@ export const loginUser = createAsyncThunk(
       if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
       if (user) localStorage.setItem('user', JSON.stringify(user));
       if (api_key) localStorage.setItem('api_key', api_key);
-      // Start the idle sign-out clock from now, not from an old session's last activity
-      if (access_token) localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
 
       // Show success notification
       if (successMessage) {
@@ -562,13 +563,7 @@ const authSlice = createSlice({
       state.error = null;
       state.passwordRequirements = null;
       
-      // Clear localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('api_key');
-      localStorage.removeItem('api_secret');
-      localStorage.removeItem(LAST_ACTIVITY_KEY);
+      clearSession();
     },
     clearError: (state) => {
       state.error = null;
@@ -692,9 +687,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.token = null;
         state.user = null;
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        clearSession();
       });
 
     // Update profile

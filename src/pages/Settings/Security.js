@@ -9,7 +9,9 @@ import {
   confirmTwoFactorSetup,
   disableTwoFactor,
 } from '../../api/twoFactorApi';
-import { IDLE_MINUTES } from '../../hooks/useIdleLogout';
+import { IDLE_TIMEOUT_MS } from '../../hooks/useIdleSignOut';
+
+const IDLE_MINUTES = Math.round(IDLE_TIMEOUT_MS / 60000);
 
 // Show the setup key in groups of four so it is easy to type into a phone.
 export const groupKey = (secret) => (secret || '').replace(/(.{4})/g, '$1 ').trim();
@@ -162,11 +164,12 @@ const Security = () => {
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
           <Timer color="primary" />
           <Typography variant="h6" sx={{ fontSize: '1.05rem' }}>Automatic sign-out</Typography>
-          <Chip size="small" label="Always on" color="success" />
+          <Chip size="small" label={IDLE_MINUTES ? 'On' : 'Off'} color={IDLE_MINUTES ? 'success' : 'default'} />
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 680 }}>
-          A device left untouched for {IDLE_MINUTES} minutes signs out on its own, after a one-minute
-          warning, so nobody can use an unattended till under someone else's name.
+          {IDLE_MINUTES
+            ? `A device left untouched for ${IDLE_MINUTES} minutes signs out on its own, after a one-minute warning, so nobody can use an unattended till under someone else's name.`
+            : 'Automatic sign-out is turned off for this installation.'}
         </Typography>
       </Paper>
     </Box>
