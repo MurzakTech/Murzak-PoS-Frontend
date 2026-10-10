@@ -13,6 +13,7 @@ const SETTINGS_PAGES = [
   '/settings/payment-gateways',
   '/settings/inventory-discounts',
   '/settings/loyalty-programs',
+  '/settings/audit-trail',
 ];
 
 const Settings = () => {

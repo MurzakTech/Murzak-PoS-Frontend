@@ -53,6 +53,7 @@ const ROUTE_GROUPS = {
     '/inventory',
     '/inventory/stock-summary',
     '/inventory/low-stock',
+    '/inventory/expiry-alerts',
     '/inventory/stock-ledger',
     '/inventory/item-details',
     '/inventory/stock-entries',
@@ -148,6 +149,7 @@ const ROUTE_GROUPS = {
     '/settings/inventory-discounts/new',
     '/settings/inventory-discounts/:id/edit',
     '/settings/loyalty-programs',
+    '/settings/audit-trail',
   ],
   INDUSTRY: [
     '/industry/:industryCode/products',
@@ -304,6 +306,7 @@ export const ROLE_ACCESS_CONFIG = {
     '/products', // View products
     '/inventory/stock-summary',
     '/inventory/low-stock',
+    '/inventory/expiry-alerts',
     '/inventory/stock-ledger',
     '/inventory/item-details',
   ],
@@ -329,6 +332,7 @@ export const ROLE_ACCESS_CONFIG = {
     '/settings/payment-methods',
     '/settings/account-provisioning',
     '/settings/loyalty-programs',
+    '/settings/audit-trail',
   ],
 
   'Accounts User': [
@@ -343,6 +347,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD', 'PRODUCTS', 'INVENTORY', 'REPORTS'),
     '/inventory/stock-summary',
     '/inventory/low-stock',
+    '/inventory/expiry-alerts',
   ],
 
   // Desk User - POS operations
@@ -421,6 +426,7 @@ export const ROLE_ACCESS_CONFIG = {
     '/dashboard',
     '/customers',
     ...combineRoutes('SALES_VIEW', 'PURCHASES_VIEW', 'SUPPLIERS_VIEW', 'REPORTS'),
+    '/settings/audit-trail',
   ],
 
   // Expense Approver - Access to financial approvals
@@ -522,6 +528,22 @@ export const getAllowedRoutes = (roles) => {
 };
 
 /**
+ * Sensitive pages open only to the roles named here (plus Administrator and System Manager).
+ * Frappe gives every signed-in user the "All" role, and a parent route such as '/sales'
+ * covers every page under it, so these pages cannot rely on the route lists above.
+ */
+export const RESTRICTED_ROUTES = {
+  '/sales/returns': ['Sales Manager', 'Accounts Manager'],
+  '/settings/audit-trail': ['Accounts Manager', 'Auditor'],
+};
+
+const restrictedRolesFor = (routePath) => {
+  const path = (routePath || '').replace(/\/$/, '');
+  const key = Object.keys(RESTRICTED_ROUTES).find((r) => path === r || path.startsWith(`${r}/`));
+  return key ? RESTRICTED_ROUTES[key] : null;
+};
+
+/**
  * Check if user with given roles can access a specific route
  */
 export const canAccessRoute = (routePath, roles) => {
@@ -533,6 +555,11 @@ export const canAccessRoute = (routePath, roles) => {
   // Note: "All" role is treated as a normal role and only grants access to explicitly configured routes
   if (roles.some(role => ['Administrator', 'System Manager'].includes(role))) {
     return true;
+  }
+
+  const restrictedTo = restrictedRolesFor(routePath);
+  if (restrictedTo) {
+    return roles.some((role) => restrictedTo.includes(role));
   }
 
   const allowedRoutes = getAllowedRoutes(roles);
