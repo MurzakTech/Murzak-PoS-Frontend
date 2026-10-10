@@ -27,6 +27,7 @@ const SalesInvoiceDetails = lazy(() => import('../pages/Sales/SalesInvoiceDetail
 const NewSalesInvoice = lazy(() => import('../pages/Sales/NewSalesInvoice'));
 const POSOpeningEntries = lazy(() => import('../pages/Sales/POSOpeningEntries'));
 const POSOpeningEntryDetails = lazy(() => import('../pages/Sales/POSOpeningEntryDetails'));
+const SalesReturns = lazy(() => import('../pages/Sales/SalesReturns'));
 const Inventory = lazy(() => import('../pages/Inventory'));
 const Warehouses = lazy(() => import('../pages/Warehouses'));
 const WarehouseDetails = lazy(() => import('../pages/Inventory/WarehouseDetails'));
@@ -297,6 +298,7 @@ export const protectedRoutes = [
       { path: '/sales/history', label: 'Sales History', icon: 'History' },
       { path: '/sales/invoice/new', label: 'New Invoice', icon: 'Add' },
       { path: '/sales/pos-opening-entries', label: 'Opening Entries', icon: 'History' },
+      { path: '/sales/returns', label: 'Returns', icon: 'AssignmentReturn' },
     ],
     children: [
       {
@@ -323,6 +325,12 @@ export const protectedRoutes = [
         element: POSOpeningEntries,
         label: 'POS Opening Entries',
         icon: 'History',
+      },
+      {
+        path: '/sales/returns',
+        element: SalesReturns,
+        label: 'Sales Returns',
+        icon: 'AssignmentReturn',
       },
       // Dynamic routes (not in sidebar, accessed via links)
       {

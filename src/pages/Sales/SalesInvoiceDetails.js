@@ -502,14 +502,18 @@ const SalesInvoiceDetails = () => {
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
                   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<AssignmentReturn />}
-                      onClick={() => navigate(`/sales/returns?invoice=${invoice.name}`)}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      Create Return
-                    </Button>
+                    {/* Returns are credit notes against a Sales Invoice; a POS Invoice is only
+                        returnable once the shift closes and it is consolidated into one. */}
+                    {!isPOS && !invoice.is_return && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<AssignmentReturn />}
+                        onClick={() => navigate(`/sales/returns?invoice=${encodeURIComponent(invoice.name)}`)}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Create Return
+                      </Button>
+                    )}
                     <Button
                       variant="outlined"
                       startIcon={<Print />}
