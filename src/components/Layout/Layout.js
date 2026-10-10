@@ -103,8 +103,8 @@ const Layout = ({ children }) => {
     [location.pathname, navigationRoutes]
   );
 
-  // The point-of-sale screen is full-screen, without the app shell
-  const isPOSRoute = location.pathname === '/sales' || location.pathname === '/sales/pos';
+  // The point-of-sale screen and the kitchen station screen are full-screen, without the app shell
+  const isPOSRoute = location.pathname === '/sales' || location.pathname === '/sales/pos' || location.pathname === '/kitchen';
 
   const userCompany =
     user?.company ||

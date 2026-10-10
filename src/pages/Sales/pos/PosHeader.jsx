@@ -17,6 +17,7 @@ import {
   ExpandMore,
   ImageOutlined,
   RestaurantOutlined,
+  RoomService,
 } from '@mui/icons-material';
 import BrandLogo from '../../../components/Common/BrandLogo';
 import SystemStatus from '../../../components/Layout/SystemStatus';
@@ -43,6 +44,8 @@ const PosHeader = ({
   onToggleTheme,
   autoPrint,
   kitchenEnabled,
+  readyCount = 0,
+  onOpenReady,
   onOpenKitchenSettings,
   onToggleAutoPrint,
   showPictures,
@@ -151,6 +154,19 @@ const PosHeader = ({
           <IconButton color="warning" onClick={onOpenHeld} aria-label={`Held sales (${heldCount})`} sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
             <Badge badgeContent={heldCount} color="warning">
               <PauseCircleOutline />
+            </Badge>
+          </IconButton>
+        </>
+      )}
+
+      {readyCount > 0 && (
+        <>
+          <Button size="small" variant="contained" color="success" startIcon={<RoomService />} onClick={onOpenReady} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+            Ready ({readyCount})
+          </Button>
+          <IconButton color="success" onClick={onOpenReady} aria-label={`Ready to serve (${readyCount})`} sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
+            <Badge badgeContent={readyCount} color="success">
+              <RoomService />
             </Badge>
           </IconButton>
         </>

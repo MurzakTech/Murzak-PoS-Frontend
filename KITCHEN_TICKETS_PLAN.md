@@ -2,7 +2,7 @@
 
 ## Status
 
-**K1 (notes and printed tickets) is built and tested.** K2 and K3 are not started. The rest of this document is the scope as agreed; the section below says how K1 works in practice.
+**K1 (notes and printed tickets) and K2 (tickets on the server, station screens, ready tray) are built and tested on the front end.** K2 needs the server calls described in `KITCHEN_TICKETS_SERVER_API.md` before station screens can be switched on; until then the till prints exactly as in K1. K3 is not started. The rest of this document is the scope as agreed; the sections below say how K1 and K2 work in practice.
 
 ### K1: how to set it up and use it
 
@@ -27,14 +27,43 @@
 8. The tickets can be printed again from the "Sent to the kitchen" window by pressing **Print again**. Once you press **Done**, that window is gone.
 9. Held bills (tabs) keep their kitchen history. A tab brought back from the held list still knows what was already sent, and the held list marks it **Sent to kitchen**.
 
+### K2: station screens (needs the server calls)
+
+**Decisions taken** (your answers to the nine questions): table service and counter service both work; two stations, with more allowed; each client chooses its own printers (printing stays through the browser, per device); station screens are a **switch**, so a place without a tablet loses nothing; waiters can use phones and tills; the customer's name is never on a ticket; anyone may remove a sent item but a cancellation always goes to the station and is recorded; the quick notes are editable; tickets are in English, with free-text notes so Swahili works.
+
+**Switching it on (manager, once):**
+
+1. Three dots menu, **Kitchen tickets**, switch on **Also show tickets on station screens**, **Save**. This is shared by every till of the business, because it is kept on the server. If the server has no kitchen calls yet, the switch is greyed out and explains why.
+2. On the kitchen's tablet, sign in and open **Open the station screen on this device** (or go to `/kitchen`). Choose the station (Kitchen or Bar). The tablet remembers its station; the small arrows icon changes it.
+3. Do the same on the bar's tablet.
+
+**Waiters:**
+
+1. **Send to kitchen** now asks **Table service** or **Counter order**. A table order carries the table name. A counter order is called out by its ticket number, which prints large; a name is optional, and customer names are not wanted on tickets.
+2. The ticket gets its number from the server, so tills and phones never clash. The bill is marked as sent only once the server has the tickets. If it could not be reached, the till says so and offers **Try again** (never doubles the order), **Print only** (the screens will not show it, so hand the paper over) or **Cancel** (nothing is marked as sent).
+3. When the kitchen or bar presses **Ready**, the till shows a green **Ready (n)** button and a message. Open it and press **Served** when the order has gone to the table or the number has been called.
+4. Clearing a bill the kitchen already has, with **Clear and print cancellation**, sends the cancellation first and clears the bill once the stations have it.
+
+**Cooks and bartenders:** each card shows the table or counter number, the time, the waiter, the items and notes, and how long it has waited (green, then amber after 8 minutes, red after 15). **Start**, **Ready**, **Served**. Cancelled items appear on the card in a box marked CANCELLED, DO NOT MAKE, and the **Cancellations** tab keeps a record of the last 24 hours. The bell turns on a sound for new orders; full screen suits a wall-mounted tablet.
+
+### What K2 does not do (yet)
+
+- **Removing a sent item and then charging anyway.** The cancellation rides on the next send, and the till asks before charging a bill with unsent changes, but "Charge anyway" lets a cancellation go unsent. Making it mandatory is a small change if you want it.
+- **The waiter's "Ready" message goes to every till**, not only the till of the waiter who sent the order. The tray lists every ready order of the store.
+- **It asks the server regularly** (every 5 to 10 seconds) instead of receiving live pushes, so a ticket can take a few seconds to appear.
+- **Station tablets must stay signed in**, and need internet. A tablet that loses its connection shows the last tickets with a warning.
+- **Auto-printing at the station** is K3.
+
 ### What K1 does not do (yet)
+
+Items below marked "(K2)" are solved when station screens are switched on.
 
 - **It prints to the printer the till's browser uses.** The browser's print window may open each time. For a till that always prints to one printer, the browser can be set to print without asking (in Chrome, start it with the `--kiosk-printing` option). Code cannot choose a different printer, which is why separate kitchen and bar printers need K2 or K3.
 - **Two stations on one printer print as two pages**, to be torn apart.
 - **One note per product line.** Two burgers, one with no onions and one without, share a single note on the line, for example "1 no onions". Separate lines per note is a later improvement.
-- **Settings and ticket numbers are kept on that device.** A second till must be set up the same way, and each till numbers its own tickets from 1 each day.
-- **The kitchen cannot say "ready"**, and a ticket sent from a phone does not reach a screen. Those are K2.
-- **Nothing reaches the server.** Notes and what was sent travel with held bills, but no ticket is stored.
+- **Settings and ticket numbers are kept on that device.** A second till must be set up the same way, and each till numbers its own tickets from 1 each day. (K2: stations and notes are shared through the server, and the server numbers the tickets.)
+- **The kitchen cannot say "ready"**, and a ticket sent from a phone does not reach a screen. (K2)
+- **Nothing reaches the server.** Notes and what was sent travel with held bills, but no ticket is stored. (K2)
 
 ## In plain words
 
@@ -101,7 +130,7 @@ Round 2
 | Phase | What it delivers | What it needs | Size |
 |---|---|---|---|
 | **K1: notes and printed tickets** (done) | Notes on items, send-only-what-is-new, stations set up on the device, a ticket printed per station through the browser | Front end only | Medium |
-| **K2: tickets on the server, station screens** | Tickets stored on the server, a kitchen and a bar screen with live tickets and "Ready", "Ready" shown on the waiter's till, stations stored on the server so all tills agree | A new table and a few calls on the server (same pattern as held bills), a station page on the front end | Large |
+| **K2: tickets on the server, station screens** (front end done; waiting for the server calls) | Tickets stored on the server, a kitchen and a bar screen with live tickets and "Ready", "Ready" shown on the waiter's till, stations stored on the server so all tills agree | A new table and a few calls on the server (same pattern as held bills), a station page on the front end | Large |
 | **K3: auto-print and hardware** | Tickets print by themselves at the station | K2, and decisions about devices and printers | Depends on hardware |
 
 **Recommendation:** do K1 first. It works on day one with any single printer, needs nothing from the server, and makes the notes and the "what was sent" memory that K2 also needs. Start K2 once you know whether the kitchens have screens. Leave K3 until the printers are known.

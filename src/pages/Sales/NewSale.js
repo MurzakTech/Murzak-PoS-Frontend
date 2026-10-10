@@ -44,8 +44,8 @@ import HoldSaleDialog from './pos/HoldSaleDialog';
 import { makeHeldSale, heldTitle, labelInUse, cleanLabel } from '../../utils/heldSales';
 import {
   EMPTY_KITCHEN,
-  readSettings as readKitchenSettings,
-  writeSettings as writeKitchenSettings,
+  orderTypeOf,
+  ticketTitle,
   planSend,
   planCancelAll,
   markSent,
@@ -58,8 +58,11 @@ import {
 import ItemNoteDialog from './pos/ItemNoteDialog';
 import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
 import KitchenTicketDialog from './pos/KitchenTicketDialog';
+import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
+import useKitchenSettings from '../../hooks/useKitchenSettings';
+import useKitchenTickets from '../../hooks/useKitchenTickets';
 import PosConfirm from './pos/PosConfirm';
 import PriceEntryDialog from './pos/PriceEntryDialog';
 import PhoneSaleBar from './pos/PhoneSaleBar';
@@ -219,13 +222,21 @@ const NewSale = () => {
 
   // Kitchen tickets: switched on per business on this device (see utils/kitchenTickets). Off until someone sets it up.
   const [kitchen, setKitchen] = useState(EMPTY_KITCHEN); // rounds sent for this bill, and sent items since cancelled
-  const [kitchenSettings, setKitchenSettings] = useState(() => readKitchenSettings(localStorage, userCompany));
-  useEffect(() => {
-    setKitchenSettings(readKitchenSettings(localStorage, userCompany));
-  }, [userCompany]);
+  // Stations, notes and the station screens switch are shared by the business through the server when it supports it
+  const {
+    settings: kitchenSettings,
+    status: kitchenSettingsStatus,
+    save: saveKitchenShared,
+    saveDevice: saveKitchenDevice,
+  } = useKitchenSettings({ company: userCompany });
+  const kitchenWarehouse = activeWarehouse?.name || activeWarehouse?.warehouse_name || '';
+  const screensWanted = kitchenSettings.enabled && kitchenSettings.screens && kitchenSettingsStatus !== 'unavailable';
+  const kitchenTickets = useKitchenTickets({ company: userCompany, warehouse: kitchenWarehouse, enabled: screensWanted });
+  const [readyOpen, setReadyOpen] = useState(false);
+  const pendingSendRef = useRef(null); // the order being sent, kept so Try again sends the very same tickets
   const [kitchenSettingsOpen, setKitchenSettingsOpen] = useState(false);
   const [noteCode, setNoteCode] = useState(null); // item being given a note
-  const [ticketDialog, setTicketDialog] = useState({ open: false, mode: 'review', plan: null, tickets: [] });
+  const [ticketDialog, setTicketDialog] = useState({ open: false, mode: 'review', plan: null, tickets: [], error: '', toScreens: false });
   const [unsentOpen, setUnsentOpen] = useState(false);
   const [clearSentOpen, setClearSentOpen] = useState(false);
   const chargeAnywayRef = useRef(null);
@@ -1503,13 +1514,16 @@ const NewSale = () => {
     [itemGroups, products]
   );
 
-  const saveKitchenSettings = (next) => {
-    if (!writeKitchenSettings(localStorage, userCompany, next)) {
+  const saveKitchenSettings = async (next) => {
+    const result = await saveKitchenShared(next);
+    if (!result.ok) {
       showHeldMessage('The kitchen settings could not be saved: the browser would not keep them.', 'error');
       return;
     }
-    setKitchenSettings(next);
     setKitchenSettingsOpen(false);
+    if (result.localOnly && kitchenSettingsStatus !== 'unavailable') {
+      showHeldMessage(`Saved on this device only. ${result.message || 'The server could not keep them just now, so other tills will not see the change.'}`, 'warning');
+    }
   };
 
   const saveNote = (note) => {
@@ -1527,21 +1541,70 @@ const NewSale = () => {
       }
       return;
     }
-    setTicketDialog({ open: true, mode: 'review', plan: kitchenPlan, tickets: [] });
+    setTicketDialog({ open: true, mode: 'review', plan: kitchenPlan, tickets: [], error: '', toScreens: false });
   };
 
-  // Sending marks what was sent first; the tickets can always be printed again from the dialog
-  const confirmSend = (label) => {
+  // ---- delivering tickets
+  // With station screens on, the server numbers the tickets and the stations see them; nothing is marked as
+  // sent until the server has them. Without screens (or a server that cannot), they print with this device's numbers.
+  const sendToStationScreens = () => screensWanted && kitchenTickets.status !== 'unavailable';
+
+  const finishSend = (pending, tickets, toScreens) => {
+    const { plan, label, orderType, cancelAll } = pending;
+    if (cancelAll) {
+      setCartSheetOpen(false);
+      resetSale();
+    } else {
+      setCart((prev) => markSent(prev, plan));
+      setKitchen({ ...afterSend(pending.kitchen, plan, kitchenSettings), orderType });
+      setActiveHeldLabel(cleanLabel(label)); // holding this bill keeps the table name
+    }
+    if (orderType !== kitchenSettings.lastOrderType) saveKitchenDevice({ lastOrderType: orderType });
+    setTicketDialog({ open: true, mode: 'sent', plan, tickets, error: '', toScreens });
+  };
+
+  // Print only: numbers come from this device's own counter, which starts again each day
+  const printLocally = (pending) => {
+    const { number, settings: next } = takeTicketNumber(kitchenSettings, new Date());
+    saveKitchenDevice({ ticketDate: next.ticketDate, nextTicket: next.nextTicket });
+    finishSend(pending, pending.tickets.map((t) => ({ ...t, number })), false);
+  };
+
+  const deliver = async (pending) => {
+    pendingSendRef.current = pending;
+    if (!pending.toServer) {
+      printLocally(pending);
+      return;
+    }
+    setTicketDialog((d) => ({ ...d, open: true, mode: 'sending', plan: pending.plan, error: '' }));
+    const result = await kitchenTickets.send(pending.tickets);
+    if (result.ok) {
+      const saved = new Map(result.tickets.map((t) => [t.clientId, t]));
+      finishSend(pending, pending.tickets.map((t) => {
+        const found = saved.get(t.clientId);
+        return found ? { ...t, number: found.number, waiter: t.waiter || found.waiter } : t;
+      }), true);
+    } else if (result.kind === 'unavailable') {
+      printLocally(pending); // this server has no station screen calls: print as before
+    } else {
+      setTicketDialog((d) => ({ ...d, mode: 'failed', error: result.message || '' }));
+    }
+  };
+
+  const confirmSend = (label, orderType) => {
     if (!kitchenPlan || kitchenPlan.count === 0) return;
     const plan = kitchenPlan;
-    const { number, settings: next } = takeTicketNumber(kitchenSettings, new Date());
-    const tickets = buildTickets(plan, { label, waiter: cashierName, number, round: (kitchen.round || 0) + 1 });
-    setCart((prev) => markSent(prev, plan));
-    setKitchen(afterSend(kitchen, plan, kitchenSettings));
-    writeKitchenSettings(localStorage, userCompany, next);
-    setKitchenSettings(next);
-    setActiveHeldLabel(cleanLabel(label)); // holding this bill keeps the table name
-    setTicketDialog({ open: true, mode: 'sent', plan, tickets });
+    const type = orderTypeOf(orderType, label);
+    const tickets = buildTickets(plan, { label, waiter: cashierName, number: null, round: (kitchen.round || 0) + 1, orderType: type });
+    deliver({ plan, label, orderType: type, tickets, kitchen, cancelAll: false, toServer: sendToStationScreens() });
+  };
+
+  const retrySend = () => {
+    if (pendingSendRef.current) deliver(pendingSendRef.current);
+  };
+
+  const printOnly = () => {
+    if (pendingSendRef.current) printLocally(pendingSendRef.current);
   };
 
   const requestClear = () => {
@@ -1549,18 +1612,32 @@ const NewSale = () => {
     else setClearDialogOpen(true);
   };
 
+  // Clearing a bill the kitchen already has: the cancellation goes out first, and the bill is cleared once it has
   const clearAndPrintCancellation = () => {
     const plan = planCancelAll(cart, kitchen, kitchenSettings);
     setClearSentOpen(false);
-    setCartSheetOpen(false);
-    if (plan.count > 0) {
-      const { number, settings: next } = takeTicketNumber(kitchenSettings, new Date());
-      const tickets = buildTickets(plan, { label: activeHeldLabel, waiter: cashierName, number, round: kitchen.round || 1 });
-      writeKitchenSettings(localStorage, userCompany, next);
-      setKitchenSettings(next);
-      setTicketDialog({ open: true, mode: 'sent', plan, tickets });
+    if (plan.count === 0) {
+      setCartSheetOpen(false);
+      resetSale();
+      return;
     }
-    resetSale();
+    const type = orderTypeOf(kitchen.orderType, activeHeldLabel);
+    const tickets = buildTickets(plan, { label: activeHeldLabel, waiter: cashierName, number: null, round: kitchen.round || 1, orderType: type });
+    deliver({ plan, label: activeHeldLabel, orderType: type, tickets, kitchen, cancelAll: true, toServer: sendToStationScreens() });
+  };
+
+  // Tell the waiter when a station marks something Ready
+  const { newlyReady, clearNewlyReady } = kitchenTickets;
+  useEffect(() => {
+    if (newlyReady.length === 0) return;
+    showHeldMessage(`Ready: ${newlyReady.map((t) => `${ticketTitle(t)} (${t.station})`).join(', ')}`, 'success');
+    clearNewlyReady();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newlyReady]);
+
+  const serveTicket = async (id) => {
+    const result = await kitchenTickets.markServed(id);
+    if (!result.ok) showHeldMessage(result.message || 'Could not mark it as served.', 'error');
   };
 
   const requestExit = () => {
@@ -1680,7 +1757,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -1807,6 +1884,8 @@ const NewSale = () => {
         showPictures={showPictures}
         onToggleShowPictures={toggleShowPictures}
         kitchenEnabled={kitchenEnabled}
+        readyCount={screensWanted ? kitchenTickets.ready.length : 0}
+        onOpenReady={() => setReadyOpen(true)}
         onOpenKitchenSettings={() => setKitchenSettingsOpen(true)}
       />
 
@@ -2019,6 +2098,8 @@ const NewSale = () => {
         open={kitchenSettingsOpen}
         settings={kitchenSettings}
         groupNames={categoryNames}
+        screensStatus={kitchenSettingsStatus}
+        onOpenStation={() => navigate('/kitchen')}
         onSave={saveKitchenSettings}
         onClose={() => setKitchenSettingsOpen(false)}
       />
@@ -2029,10 +2110,17 @@ const NewSale = () => {
         plan={ticketDialog.plan || { stations: [], unrouted: [] }}
         tickets={ticketDialog.tickets}
         initialLabel={activeHeldLabel}
+        initialOrderType={kitchen.orderType || kitchenSettings.lastOrderType}
         printNow={kitchenSettings.printNow}
+        toScreens={ticketDialog.toScreens}
+        error={ticketDialog.error}
         onSend={confirmSend}
+        onRetry={retrySend}
+        onPrintOnly={printOnly}
         onClose={() => setTicketDialog((d) => ({ ...d, open: false }))}
       />
+
+      <ReadyTicketsDialog open={readyOpen} tickets={kitchenTickets.ready} onServe={serveTicket} onClose={() => setReadyOpen(false)} />
 
       <UnsentItemsDialog
         open={unsentOpen}

@@ -16,6 +16,10 @@ import {
   hasSentItems,
   takeTicketNumber,
   buildTickets,
+  ticketTitle,
+  orderTypeOf,
+  sharedPart,
+  SHARED_KEYS,
   MAX_NOTE,
 } from './kitchenTickets';
 
@@ -187,9 +191,32 @@ describe('tickets', () => {
     expect(tickets[1].adds[0]).toMatchObject({ item_name: 'Tusker', qty: 2 });
   });
 
-  it('says "Counter order" when the bill has no table name', () => {
+  it('treats a bill with no name as a counter order, and a named one as a table', () => {
     const plan = planSend([line('P', 'Pilau', 'Food', 1)], EMPTY_KITCHEN, settingsWith());
-    expect(buildTickets(plan, { label: '', waiter: 'A', number: 1, round: 1, now })[0].label).toBe('Counter order');
+    const unnamed = buildTickets(plan, { label: '', waiter: 'A', number: 1, round: 1, now })[0];
+    expect(unnamed).toMatchObject({ label: '', orderType: 'counter' });
+    expect(ticketTitle(unnamed)).toBe('Counter order');
+    const named = buildTickets(plan, { label: 'Table 4', waiter: 'A', number: 1, round: 1, now })[0];
+    expect(named.orderType).toBe('table');
+    expect(ticketTitle(named)).toBe('Table 4');
+  });
+
+  it('lets the waiter say counter or table, whatever the name', () => {
+    const plan = planSend([line('P', 'Pilau', 'Food', 1)], EMPTY_KITCHEN, settingsWith());
+    const counter = buildTickets(plan, { label: 'John', waiter: 'A', number: 7, round: 1, orderType: 'counter', now })[0];
+    expect(ticketTitle(counter)).toBe('Counter: John');
+    const table = buildTickets(plan, { label: '', waiter: 'A', number: 7, round: 1, orderType: 'table', now })[0];
+    expect(ticketTitle(table)).toBe('Table (no name)');
+  });
+
+  it('gives every ticket an id of its own, shared prefix per send, so a repeat can be recognised', () => {
+    const plan = planSend([line('P', 'Pilau', 'Food', 1), line('T', 'Tusker', 'Beer', 1)], EMPTY_KITCHEN, settingsWith());
+    const a = buildTickets(plan, { label: 'T4', waiter: 'A', number: 1, round: 1, now });
+    const b = buildTickets(plan, { label: 'T4', waiter: 'A', number: 1, round: 1, now });
+    expect(a[0].clientId).not.toBe(a[1].clientId);
+    expect(a[0].clientId.slice(0, -2)).toBe(a[1].clientId.slice(0, -2));
+    expect(a[0].clientId).not.toBe(b[0].clientId); // a new send is a new set of ids
+    expect(a[0].createdAt).toBe(now.toISOString());
   });
 
   it('numbers tickets from 1 each day', () => {
@@ -239,5 +266,39 @@ describe('saved settings', () => {
     expect(odd.stations).toEqual([{ id: 'station-1', name: 'Grill', groups: ['Meat', '5'] }]);
     expect(odd.defaultStation).toBe('');
     expect(odd.nextTicket).toBe(1);
+  });
+});
+
+describe('order type', () => {
+  it('works out table or counter, and ignores anything else', () => {
+    expect(orderTypeOf('counter', 'Table 4')).toBe('counter');
+    expect(orderTypeOf('table', '')).toBe('table');
+    expect(orderTypeOf('nonsense', 'Table 4')).toBe('table');
+    expect(orderTypeOf(undefined, '  ')).toBe('counter');
+  });
+});
+
+describe('station screens setting', () => {
+  it('starts off, and is remembered', () => {
+    expect(defaultSettings().screens).toBe(false);
+    const st = fakeStorage();
+    writeSettings(st, 'A', { ...settingsWith(), screens: true, lastOrderType: 'counter' });
+    const back = readSettings(st, 'A');
+    expect(back.screens).toBe(true);
+    expect(back.lastOrderType).toBe('counter');
+  });
+
+  it('only counts an actual true, and ignores an unknown last order type', () => {
+    const odd = readSettings(fakeStorage({ [kitchenKey('A')]: JSON.stringify({ screens: 'yes', lastOrderType: 'drive-through' }) }), 'A');
+    expect(odd.screens).toBe(false);
+    expect(odd.lastOrderType).toBe('table');
+  });
+
+  it('shares the business-wide settings and keeps device settings (printing, ticket numbers) out', () => {
+    const shared = sharedPart({ ...settingsWith(), screens: true, printNow: false, nextTicket: 9, ticketDate: '2026-10-10' });
+    expect(Object.keys(shared).sort()).toEqual([...SHARED_KEYS].sort());
+    expect(shared).not.toHaveProperty('printNow');
+    expect(shared).not.toHaveProperty('nextTicket');
+    expect(shared.screens).toBe(true);
   });
 });

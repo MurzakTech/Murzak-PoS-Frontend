@@ -22,6 +22,7 @@ const Brands = lazy(() => import('../pages/Products/Brands'));
 const Warranties = lazy(() => import('../pages/Products/Warranties'));
 const Sales = lazy(() => import('../pages/Sales'));
 const NewSale = lazy(() => import('../pages/Sales/NewSale'));
+const KitchenStation = lazy(() => import('../pages/Kitchen'));
 const SalesHistory = lazy(() => import('../pages/Sales/SalesHistory'));
 const SalesInvoiceDetails = lazy(() => import('../pages/Sales/SalesInvoiceDetails'));
 const NewSalesInvoice = lazy(() => import('../pages/Sales/NewSalesInvoice'));
@@ -177,6 +178,13 @@ export const protectedRoutes = [
     element: Dashboard,
     label: 'Dashboard',
     icon: 'Dashboard',
+  },
+  {
+    path: '/kitchen',
+    element: KitchenStation,
+    label: 'Station screen',
+    icon: 'PointOfSale',
+    hideFromMenu: true,
   },
   {
     path: '/industry/:industryCode/products',

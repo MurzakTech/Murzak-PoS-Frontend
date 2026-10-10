@@ -137,6 +137,8 @@ const ROUTE_GROUPS = {
   INDUSTRY: [
     '/industry/:industryCode/products',
   ],
+  // Kitchen and bar station screen (anyone who can use the till can have one on a tablet)
+  KITCHEN: ['/kitchen'],
 };
 
 // Helper function to combine route groups
@@ -166,7 +168,8 @@ export const ROLE_ACCESS_CONFIG = {
       'ROLES',
       'REPORTS',
       'SETTINGS',
-      'INDUSTRY'
+      'INDUSTRY',
+      'KITCHEN'
     ),
   ],
 
@@ -186,7 +189,8 @@ export const ROLE_ACCESS_CONFIG = {
       'ROLES',
       'REPORTS',
       'SETTINGS',
-      'INDUSTRY'
+      'INDUSTRY',
+      'KITCHEN'
     ),
   ],
 
@@ -206,19 +210,21 @@ export const ROLE_ACCESS_CONFIG = {
       'ROLES',
       'REPORTS',
       'SETTINGS',
-      'INDUSTRY'
+      'INDUSTRY',
+      'KITCHEN'
     ),
   ],
 
   // Sales roles
   'Sales Manager': [
-    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS'),
+    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'KITCHEN'),
     '/inventory/stock-summary', // View stock for sales
   ],
 
   'Sales User': [
     '/dashboard',
     '/sales',
+    '/kitchen',
     '/sales/history',
     '/customers',
     '/products', // View products for sales
@@ -314,6 +320,7 @@ export const ROLE_ACCESS_CONFIG = {
   'Desk User': [
     '/dashboard',
     '/sales',
+    '/kitchen',
     '/sales/history',
     '/products', // View products for POS
     '/customers', // View customers
@@ -331,6 +338,7 @@ export const ROLE_ACCESS_CONFIG = {
   Employee: [
     '/dashboard',
     '/sales',
+    '/kitchen',
     '/sales/history',
     '/products',
     '/customers',
@@ -365,6 +373,7 @@ export const ROLE_ACCESS_CONFIG = {
   Agent: [
     '/dashboard',
     '/sales',
+    '/kitchen',
     '/sales/history',
     '/customers',
     '/products',

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
@@ -18,16 +19,19 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { AddCircleOutline, AutoFixHigh, DeleteOutline } from '@mui/icons-material';
+import { AddCircleOutline, AutoFixHigh, DeleteOutline, DesktopWindowsOutlined } from '@mui/icons-material';
 import { cleanNote, suggestStations } from '../../../utils/kitchenTickets';
 
 const parseNotes = (text) => [...new Set(text.split(',').map(cleanNote).filter(Boolean))].slice(0, 12);
 
 /**
- * Set up kitchen tickets on this till: switch them on, name the stations (Kitchen, Bar...) and say
- * which categories go to which. These settings are kept on this device.
+ * Set up kitchen tickets: switch them on, name the stations (Kitchen, Bar...) and say which categories
+ * go to which, and whether the stations also have a screen. The stations, notes and screens setting are
+ * shared by every till when the server can keep them; printing is chosen per device.
+ *
+ * screensStatus is 'unavailable' when the server has no station screen calls yet.
  */
-const KitchenSettingsDialog = ({ open, settings, groupNames = [], onSave, onClose }) => {
+const KitchenSettingsDialog = ({ open, settings, groupNames = [], screensStatus = 'checking', onOpenStation, onSave, onClose }) => {
   const [draft, setDraft] = useState(settings);
   const [quick, setQuick] = useState('');
 
@@ -74,7 +78,7 @@ const KitchenSettingsDialog = ({ open, settings, groupNames = [], onSave, onClos
           label="Send orders to the kitchen and bar from this till"
         />
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Adds a "Send to kitchen" button and notes on items. Each item goes to the station its category is set to, and the ticket prints with the table name. These settings are kept on this device.
+          Adds a "Send to kitchen" button and notes on items. Each item goes to the station its category is set to, and the ticket prints with the table name. The stations and notes are shared by every till of the business when the server supports it.
         </Typography>
 
         {draft.enabled && (
@@ -134,8 +138,24 @@ const KitchenSettingsDialog = ({ open, settings, groupNames = [], onSave, onClos
             />
             <FormControlLabel
               control={<Switch checked={draft.printNow} onChange={(e) => patch({ printNow: e.target.checked })} />}
-              label="Print the tickets straight away"
+              label="Print the tickets straight away (this device)"
             />
+
+            <Box sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
+              <FormControlLabel
+                control={<Switch checked={draft.screens && screensStatus !== 'unavailable'} disabled={screensStatus === 'unavailable'} onChange={(e) => patch({ screens: e.target.checked })} />}
+                label="Also show tickets on station screens"
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                For a kitchen or bar with a tablet or screen. Tickets appear there as they are sent, and the station marks them Ready so the waiter is told. Printing keeps working as chosen above.
+              </Typography>
+              {screensStatus === 'unavailable' && (
+                <Alert severity="info" sx={{ mb: 1 }}>This server cannot show tickets on station screens yet, so tickets print only.</Alert>
+              )}
+              {draft.screens && screensStatus !== 'unavailable' && onOpenStation && (
+                <Button size="small" variant="outlined" startIcon={<DesktopWindowsOutlined />} onClick={onOpenStation}>Open the station screen on this device</Button>
+              )}
+            </Box>
           </>
         )}
       </DialogContent>

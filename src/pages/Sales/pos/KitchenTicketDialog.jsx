@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, TextField, Typography } from '@mui/material';
-import { CheckCircle, Print } from '@mui/icons-material';
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { CheckCircle, Print, WarningAmber } from '@mui/icons-material';
+import { orderTypeOf, ticketTitle } from '../../../utils/kitchenTickets';
 
 // Prints only the tickets (on any printer; laid out for an 80mm roll), one page per station
 const PRINT_CSS = `
@@ -18,13 +19,16 @@ const PRINT_CSS = `
 const mono = { fontFamily: 'ui-monospace, Menlo, Consolas, "Liberation Mono", monospace' };
 
 /** One ticket, as it prints and as it is previewed */
-export const TicketSheet = ({ ticket }) => (
+export const TicketSheet = ({ ticket }) => {
+  const counter = orderTypeOf(ticket.orderType, ticket.label) === 'counter';
+  return (
   <Box className="ticket-page" data-testid={`ticket-${ticket.station}`} sx={{ ...mono, p: 1.5, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: '#fff', color: '#000' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
       <Typography sx={{ ...mono, fontSize: 22, fontWeight: 900, textTransform: 'uppercase', color: 'inherit' }}>{ticket.station}</Typography>
-      <Typography sx={{ ...mono, fontSize: 18, fontWeight: 800, color: 'inherit' }}>#{ticket.number}</Typography>
+      {/* A counter order is called out by its number, so it is printed large */}
+      <Typography sx={{ ...mono, fontSize: counter ? 34 : 18, fontWeight: 900, color: 'inherit', lineHeight: 1 }}>#{ticket.number}</Typography>
     </Box>
-    <Typography sx={{ ...mono, fontSize: 20, fontWeight: 800, color: 'inherit', lineHeight: 1.2 }}>{ticket.label}</Typography>
+    <Typography sx={{ ...mono, fontSize: 20, fontWeight: 800, color: 'inherit', lineHeight: 1.2 }}>{ticketTitle(ticket)}</Typography>
     <Typography sx={{ ...mono, fontSize: 12, color: 'inherit', mb: 0.5 }}>
       {ticket.time}{ticket.waiter ? `  ${ticket.waiter}` : ''}  Round {ticket.round}
     </Typography>
@@ -60,7 +64,8 @@ export const TicketSheet = ({ ticket }) => (
       </Box>
     )}
   </Box>
-);
+  );
+};
 
 const Section = ({ group }) => (
   <Box sx={{ mb: 2 }}>
@@ -87,17 +92,37 @@ const Section = ({ group }) => (
 );
 
 /**
- * Two steps in one dialog. First the waiter sees what will go to each station and names the
- * table. After sending, the tickets are shown as they print, and printed straight away if the
- * till is set to (they can always be printed again from here).
+ * The waiter's steps for sending an order, in one dialog:
+ *   review   see what will go to each station, say whether it is a table or a counter order, name it
+ *   sending  waiting for the station screens to receive it
+ *   failed   the screens did not receive it: try again, or print only (the screens will not show it)
+ *   sent     the tickets as they print, printed straight away if the till is set to
  */
-const KitchenTicketDialog = ({ open, mode, plan, tickets, initialLabel = '', printNow, onSend, onClose }) => {
+const KitchenTicketDialog = ({
+  open,
+  mode,
+  plan,
+  tickets,
+  initialLabel = '',
+  initialOrderType = 'table',
+  printNow,
+  toScreens = false,
+  error = '',
+  onSend,
+  onRetry,
+  onPrintOnly,
+  onClose,
+}) => {
   const [label, setLabel] = useState(initialLabel);
+  const [orderType, setOrderType] = useState(initialOrderType);
   const printedFor = useRef(null);
 
   useEffect(() => {
-    if (open && mode === 'review') setLabel(initialLabel);
-  }, [open, mode, initialLabel]);
+    if (open && mode === 'review') {
+      setLabel(initialLabel);
+      setOrderType(initialOrderType);
+    }
+  }, [open, mode, initialLabel, initialOrderType]);
 
   // Print by itself once per set of tickets, when the till is set to
   useEffect(() => {
@@ -110,26 +135,41 @@ const KitchenTicketDialog = ({ open, mode, plan, tickets, initialLabel = '', pri
   }, [open, mode, printNow, tickets]);
 
   const review = mode === 'review';
+  const counter = orderType === 'counter';
+  const busy = mode === 'sending';
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" disableEnforceFocus aria-labelledby="ticket-title"
-      slotProps={review ? { paper: { component: 'form', onSubmit: (e) => { e.preventDefault(); onSend(label); } } } : undefined}>
+    <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="xs" disableEnforceFocus aria-labelledby="ticket-title"
+      slotProps={review ? { paper: { component: 'form', onSubmit: (e) => { e.preventDefault(); onSend(label, orderType); } } } : undefined}>
       <style>{PRINT_CSS}</style>
 
-      {review ? (
+      {review && (
         <>
           <DialogTitle id="ticket-title">Send to kitchen</DialogTitle>
           <DialogContent>
+            <ToggleButtonGroup
+              exclusive
+              fullWidth
+              size="small"
+              color="primary"
+              value={orderType}
+              onChange={(_, value) => value && setOrderType(value)}
+              aria-label="Order type"
+              sx={{ mb: 2 }}
+            >
+              <ToggleButton value="table">Table service</ToggleButton>
+              <ToggleButton value="counter">Counter order</ToggleButton>
+            </ToggleButtonGroup>
             <TextField
               autoFocus
               fullWidth
               size="small"
-              label="Table or tab name"
-              placeholder="For example Table 4"
+              label={counter ? 'Name for this order (optional)' : 'Table or tab name'}
+              placeholder={counter ? 'Not needed: the ticket number is called out' : 'For example Table 4'}
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               inputProps={{ maxLength: 40 }}
-              helperText="Printed on the ticket, and kept as the name if you hold this bill."
+              helperText={counter ? 'The ticket number is what the kitchen calls out. Do not put customer names here.' : 'Printed on the ticket, and kept as the name if you hold this bill.'}
               sx={{ mb: 2 }}
             />
             {plan.stations.map((g) => <Section key={g.station.id} group={g} />)}
@@ -146,11 +186,42 @@ const KitchenTicketDialog = ({ open, mode, plan, tickets, initialLabel = '', pri
             </Button>
           </DialogActions>
         </>
-      ) : (
+      )}
+
+      {busy && (
+        <>
+          <DialogTitle id="ticket-title">Sending to the stations</DialogTitle>
+          <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+            <CircularProgress aria-label="Sending" />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Please wait a moment.</Typography>
+          </DialogContent>
+        </>
+      )}
+
+      {mode === 'failed' && (
+        <>
+          <DialogTitle id="ticket-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningAmber color="warning" /> The stations did not get it
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 1.5 }}>{error || 'The server could not be reached.'}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Nothing has been marked as sent. You can try again, or print the tickets only; if you print only, the station screens will not show this order, so hand the paper over.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, gap: 1, flexWrap: 'wrap' }}>
+            <Button color="inherit" onClick={onClose}>Cancel</Button>
+            <Button variant="outlined" startIcon={<Print />} onClick={onPrintOnly}>Print only</Button>
+            <Button variant="contained" onClick={onRetry} autoFocus>Try again</Button>
+          </DialogActions>
+        </>
+      )}
+
+      {mode === 'sent' && (
         <>
           <Box className="no-print" sx={{ textAlign: 'center', pt: 3, px: 3 }}>
             <CheckCircle sx={{ fontSize: 44, color: 'success.main' }} />
-            <Typography id="ticket-title" variant="h5" sx={{ mt: 0.5 }}>Sent to the kitchen</Typography>
+            <Typography id="ticket-title" variant="h5" sx={{ mt: 0.5 }}>{toScreens ? 'Sent to the station screens' : 'Sent to the kitchen'}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
               {tickets.length === 0 ? 'Nothing to print.' : printNow ? 'Printing now. If nothing came out, press Print again.' : 'Press Print to print the tickets.'}
             </Typography>

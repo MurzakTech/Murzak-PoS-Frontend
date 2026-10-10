@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import ItemNoteDialog from './ItemNoteDialog';
 import KitchenSettingsDialog from './KitchenSettingsDialog';
 import KitchenTicketDialog, { TicketSheet } from './KitchenTicketDialog';
+import ReadyTicketsDialog from './ReadyTicketsDialog';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './KitchenPrompts';
 import { defaultSettings, planSend, buildTickets, EMPTY_KITCHEN } from '../../../utils/kitchenTickets';
 
@@ -122,6 +123,28 @@ describe('KitchenSettingsDialog', () => {
     expect(screen.getByRole('button', { name: 'Remove Kitchen' })).toBeEnabled();
   });
 
+  it('has a station screens switch, and the button to open the screen appears once it is on', () => {
+    const onOpenStation = jest.fn();
+    open({ settings: settings(), onOpenStation, screensStatus: 'online' });
+    expect(screen.queryByRole('button', { name: /Open the station screen/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('switch', { name: /Also show tickets on station screens/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Open the station screen/ }));
+    expect(onOpenStation).toHaveBeenCalled();
+  });
+
+  it('saves the station screens choice with the other settings', () => {
+    const { onSave } = open({ settings: settings(), screensStatus: 'online' });
+    fireEvent.click(screen.getByRole('switch', { name: /Also show tickets on station screens/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSave.mock.calls[0][0].screens).toBe(true);
+  });
+
+  it('explains, and does not allow the switch, when the server cannot do station screens yet', () => {
+    open({ settings: settings({ screens: true }), screensStatus: 'unavailable' });
+    expect(screen.getByRole('switch', { name: /Also show tickets on station screens/ })).toBeDisabled();
+    expect(screen.getByText(/cannot show tickets on station screens yet/)).toBeInTheDocument();
+  });
+
   it('offers a default station for categories that have none, naming the stations', () => {
     open({ settings: settings() });
     fireEvent.mouseDown(screen.getByRole('combobox', { name: /Items whose category has no station/ }));
@@ -165,7 +188,43 @@ describe('KitchenTicketDialog', () => {
     expect(box).toHaveValue('Table 4');
     fireEvent.change(box, { target: { value: 'Patio 2' } });
     fireEvent.submit(box.closest('form'));
-    expect(onSend).toHaveBeenCalledWith('Patio 2');
+    expect(onSend).toHaveBeenCalledWith('Patio 2', 'table');
+  });
+
+  it('lets the waiter say it is a counter order, and then the ticket number is what counts', () => {
+    const { onSend } = review({ initialLabel: '' });
+    expect(screen.getByRole('button', { name: 'Table service' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Counter order' }));
+    expect(screen.getByLabelText('Name for this order (optional)')).toBeInTheDocument();
+    expect(screen.getByText(/Do not put customer names here/)).toBeInTheDocument();
+    fireEvent.submit(screen.getByLabelText('Name for this order (optional)').closest('form'));
+    expect(onSend).toHaveBeenCalledWith('', 'counter');
+  });
+
+  it('starts from the order type the bill already has', () => {
+    review({ initialOrderType: 'counter' });
+    expect(screen.getByRole('button', { name: 'Counter order' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows a waiting message while the stations receive the order, and cannot be closed by accident', () => {
+    const onClose = jest.fn();
+    render(<KitchenTicketDialog open mode="sending" plan={plan} tickets={[]} onSend={jest.fn()} onClose={onClose} />);
+    expect(screen.getByText('Sending to the stations')).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('when the stations did not get it, says nothing was marked as sent and offers three ways on', () => {
+    const onRetry = jest.fn();
+    const onPrintOnly = jest.fn();
+    const onClose = jest.fn();
+    render(<KitchenTicketDialog open mode="failed" plan={plan} tickets={[]} error="No internet connection." onSend={jest.fn()} onRetry={onRetry} onPrintOnly={onPrintOnly} onClose={onClose} />);
+    expect(screen.getByText('No internet connection.')).toBeInTheDocument();
+    expect(screen.getByText(/Nothing has been marked as sent/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Print only' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect([onRetry, onPrintOnly, onClose].map((f) => f.mock.calls.length)).toEqual([1, 1, 1]);
   });
 
   describe('after sending', () => {
@@ -191,6 +250,11 @@ describe('KitchenTicketDialog', () => {
       expect(kitchen.getByText('2 x Pilau')).toBeInTheDocument();
       expect(kitchen.getByText('- no pilipili')).toBeInTheDocument();
       expect(within(screen.getByTestId('ticket-Bar')).getByText('3 x Tusker')).toBeInTheDocument();
+    });
+
+    it('says the order went to the station screens when it did', () => {
+      sent({ toScreens: true });
+      expect(screen.getByText('Sent to the station screens')).toBeInTheDocument();
     });
 
     it('prints by itself, once, when the till is set to', () => {
@@ -232,6 +296,43 @@ describe('TicketSheet', () => {
     render(<TicketSheet ticket={{ ...base, voids: [{ item_code: 'P', item_name: 'Pilau', qty: 2, note: 'no pilipili' }] }} />);
     expect(screen.getByText('CANCELLED, DO NOT MAKE')).toBeInTheDocument();
     expect(screen.getByText('2 x Pilau (no pilipili)')).toBeInTheDocument();
+  });
+});
+
+describe('TicketSheet order types', () => {
+  const base = { station: 'Bar', number: 7, round: 1, waiter: 'Amina', time: '19:42', adds: [{ item_code: 'T', item_name: 'Tusker', qty: 1, note: '' }], changes: [], voids: [] };
+
+  it('names a counter order by its number, without a customer name', () => {
+    render(<TicketSheet ticket={{ ...base, label: '', orderType: 'counter' }} />);
+    expect(screen.getByText('Counter order')).toBeInTheDocument();
+    expect(screen.getByText('#7')).toBeInTheDocument();
+  });
+
+  it('shows the name given to a counter order', () => {
+    render(<TicketSheet ticket={{ ...base, label: 'Window', orderType: 'counter' }} />);
+    expect(screen.getByText('Counter: Window')).toBeInTheDocument();
+  });
+});
+
+describe('ReadyTicketsDialog', () => {
+  const ready = [
+    { id: '11', station: 'Kitchen', number: 5, label: 'Table 4', orderType: 'table', statusAt: new Date().toISOString(), createdAt: new Date().toISOString() },
+    { id: '12', station: 'Bar', number: 6, label: '', orderType: 'counter', statusAt: '', createdAt: new Date(Date.now() - 5 * 60000).toISOString() },
+  ];
+
+  it('lists what is ready, and marks one served', () => {
+    const onServe = jest.fn();
+    render(<ReadyTicketsDialog open tickets={ready} onServe={onServe} onClose={jest.fn()} />);
+    expect(screen.getByText('Table 4')).toBeInTheDocument();
+    expect(screen.getByText('Counter order')).toBeInTheDocument();
+    expect(screen.getByText('Ready 5 minutes ago')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Served Counter order Bar' }));
+    expect(onServe).toHaveBeenCalledWith('12');
+  });
+
+  it('says so when nothing is waiting', () => {
+    render(<ReadyTicketsDialog open tickets={[]} onServe={jest.fn()} onClose={jest.fn()} />);
+    expect(screen.getByText(/Nothing is waiting/)).toBeInTheDocument();
   });
 });
 

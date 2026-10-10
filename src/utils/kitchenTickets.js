@@ -15,8 +15,10 @@
 export const MAX_NOTE = 80;
 export const DEFAULT_QUICK_NOTES = ['No onions', 'Well done', 'Extra', 'Takeaway'];
 
-/** What the till remembers about the bill's kitchen history: rounds sent, and sent items since cancelled */
-export const EMPTY_KITCHEN = { round: 0, voids: [] };
+/** What the till remembers about the bill's kitchen history: rounds sent, sent items since cancelled, and table or counter */
+export const EMPTY_KITCHEN = { round: 0, voids: [], orderType: '' };
+
+export const ORDER_TYPES = ['table', 'counter'];
 
 export const kitchenKey = (company) => `pos_kitchen_v1:${company || 'no-company'}`;
 
@@ -29,9 +31,15 @@ export const defaultSettings = () => ({
   defaultStation: '', // station for items whose category has none; empty means "do not send them"
   quickNotes: [...DEFAULT_QUICK_NOTES],
   printNow: true,
+  screens: false, // also show tickets on station screens (a tablet or screen at the kitchen and bar); needs the server
+  lastOrderType: 'table',
   ticketDate: '',
   nextTicket: 1,
 });
+
+// What every till of a business shares (kept on the server when it can). The rest belongs to one device.
+export const SHARED_KEYS = ['enabled', 'stations', 'defaultStation', 'quickNotes', 'screens'];
+export const sharedPart = (settings) => Object.fromEntries(SHARED_KEYS.map((k) => [k, settings[k]]));
 
 const text = (v) => String(v ?? '').replace(/\s+/g, ' ').trim();
 export const cleanNote = (v) => text(v).slice(0, MAX_NOTE);
@@ -39,28 +47,34 @@ const same = (a, b) => text(a).toLowerCase() === text(b).toLowerCase();
 
 // ---------------------------------------------------------------- settings
 
-/** Settings from storage, always complete and well-formed, whatever was saved */
-export const readSettings = (storage, company) => {
+/** Settings from anywhere (storage, the server), always complete and well-formed, whatever they contain */
+export const normalizeSettings = (raw) => {
   const base = defaultSettings();
+  if (!raw || typeof raw !== 'object') return base;
+  const stations = Array.isArray(raw.stations)
+    ? raw.stations
+        .filter((s) => s && text(s.name))
+        .map((s, i) => ({ id: String(s.id || `station-${i + 1}`), name: text(s.name), groups: Array.isArray(s.groups) ? s.groups.map(text).filter(Boolean) : [] }))
+    : base.stations;
+  return {
+    enabled: raw.enabled === true,
+    stations: stations.length ? stations : base.stations,
+    defaultStation: stations.some((s) => s.id === raw.defaultStation) ? raw.defaultStation : '',
+    quickNotes: Array.isArray(raw.quickNotes) ? raw.quickNotes.map(cleanNote).filter(Boolean).slice(0, 12) : base.quickNotes,
+    printNow: raw.printNow !== false,
+    screens: raw.screens === true,
+    lastOrderType: ORDER_TYPES.includes(raw.lastOrderType) ? raw.lastOrderType : 'table',
+    ticketDate: typeof raw.ticketDate === 'string' ? raw.ticketDate : '',
+    nextTicket: Number.isInteger(raw.nextTicket) && raw.nextTicket > 0 ? raw.nextTicket : 1,
+  };
+};
+
+/** Settings from storage */
+export const readSettings = (storage, company) => {
   try {
-    const raw = JSON.parse(storage.getItem(kitchenKey(company)) || 'null');
-    if (!raw || typeof raw !== 'object') return base;
-    const stations = Array.isArray(raw.stations)
-      ? raw.stations
-          .filter((s) => s && text(s.name))
-          .map((s, i) => ({ id: String(s.id || `station-${i + 1}`), name: text(s.name), groups: Array.isArray(s.groups) ? s.groups.map(text).filter(Boolean) : [] }))
-      : base.stations;
-    return {
-      enabled: raw.enabled === true,
-      stations: stations.length ? stations : base.stations,
-      defaultStation: stations.some((s) => s.id === raw.defaultStation) ? raw.defaultStation : '',
-      quickNotes: Array.isArray(raw.quickNotes) ? raw.quickNotes.map(cleanNote).filter(Boolean).slice(0, 12) : base.quickNotes,
-      printNow: raw.printNow !== false,
-      ticketDate: typeof raw.ticketDate === 'string' ? raw.ticketDate : '',
-      nextTicket: Number.isInteger(raw.nextTicket) && raw.nextTicket > 0 ? raw.nextTicket : 1,
-    };
+    return normalizeSettings(JSON.parse(storage.getItem(kitchenKey(company)) || 'null'));
   } catch (e) {
-    return base;
+    return defaultSettings();
   }
 };
 
@@ -202,16 +216,38 @@ export const takeTicketNumber = (settings, now = new Date()) => {
   return { number, settings: { ...settings, ticketDate: today, nextTicket: number + 1 } };
 };
 
-/** One ticket per station that has something to say */
-export const buildTickets = (plan, { label, waiter, number, round, now = new Date() }) =>
-  plan.stations.map((g) => ({
+const newId = () => `k_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+/** A table order or a counter order; with nothing said, a named bill is a table and an unnamed one is a counter order */
+export const orderTypeOf = (orderType, label) => (ORDER_TYPES.includes(orderType) ? orderType : text(label) ? 'table' : 'counter');
+
+/** What a ticket calls the order: "Table 4", "Counter: John" or "Counter order" */
+export const ticketTitle = (ticket) => {
+  const name = text(ticket.label);
+  const type = orderTypeOf(ticket.orderType, name);
+  if (type === 'counter') return name ? `Counter: ${name}` : 'Counter order';
+  return name || 'Table (no name)';
+};
+
+/**
+ * One ticket per station that has something to say. Each has an id of its own, chosen here, so that
+ * sending it again after a dropped connection is recognised by the server and never doubled.
+ */
+export const buildTickets = (plan, { label, waiter, number, round, orderType, now = new Date() }) => {
+  const base = newId();
+  const name = text(label);
+  return plan.stations.map((g, i) => ({
+    clientId: `${base}-${i + 1}`,
     station: g.station.name,
     number,
     round,
-    label: text(label) || 'Counter order',
+    label: name,
+    orderType: orderTypeOf(orderType, name),
     waiter: text(waiter),
     time: `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+    createdAt: now.toISOString(),
     adds: g.adds,
     changes: g.changes,
     voids: g.voids,
   }));
+};
