@@ -29,6 +29,7 @@ const ROUTE_GROUPS = {
     '/sales/pos-opening-entries/:name',
     '/sales/pos-invoice/:id',
     '/sales/invoice/:id/edit',
+    '/sales/returns',
   ],
   WAREHOUSES: [
     '/warehouses',
@@ -284,6 +285,7 @@ export const ROLE_ACCESS_CONFIG = {
   'Accounts Manager': [
     ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SETTINGS'),
     '/sales/history',
+    '/sales/returns',
     '/purchases',
     '/purchases/receipts',
     '/settings/bank-accounts',
