@@ -135,6 +135,7 @@ const ROUTE_GROUPS = {
     '/settings/inventory-discounts/new',
     '/settings/inventory-discounts/:id/edit',
     '/settings/loyalty-programs',
+    '/settings/security',
   ],
   INDUSTRY: [
     '/industry/:industryCode/products',

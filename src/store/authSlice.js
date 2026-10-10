@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { jwtDecode } from 'jwt-decode';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
+import { LAST_ACTIVITY_KEY } from '../hooks/useIdleLogout';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Full endpoint paths from your API
@@ -216,7 +217,7 @@ export const registerUser = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   'auth/login',
-  async ({ email, phone, password }, { rejectWithValue, dispatch }) => {
+  async ({ email, phone, password, otp }, { rejectWithValue, dispatch }) => {
     try {
       // The server's login_user takes a single "email" field and drops any other, so a
       // phone number travels in that field too. The server (Frappe) then finds the user by
@@ -224,6 +225,7 @@ export const loginUser = createAsyncThunk(
       const response = await axiosInstance.post(ENDPOINTS.login, {
         email: email || phone,
         password,
+        ...(otp ? { otp } : {}),
       });
       const data = extractResponseData(response);
       const successMessage = extractSuccessMessage(response);
@@ -236,6 +238,8 @@ export const loginUser = createAsyncThunk(
       if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
       if (user) localStorage.setItem('user', JSON.stringify(user));
       if (api_key) localStorage.setItem('api_key', api_key);
+      // Start the idle sign-out clock from now, not from an old session's last activity
+      if (access_token) localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
 
       // Show success notification
       if (successMessage) {
@@ -256,6 +260,17 @@ export const loginUser = createAsyncThunk(
         apiKey: api_key,
       };
     } catch (error) {
+      // Accounts with two-step sign-in get { two_factor_required } instead of a token.
+      // Asking for the code is a normal step, not a failure, so no error pop-up.
+      const reply = error.response?.data?.message;
+      if (reply && typeof reply === 'object' && reply.two_factor_required) {
+        return rejectWithValue({
+          code: 'TWO_FACTOR_REQUIRED',
+          message: reply.message,
+          wrongCode: Boolean(otp),
+        });
+      }
+
       const errorMessage = extractErrorMessage(error);
       
       // Show error notification
@@ -553,6 +568,7 @@ const authSlice = createSlice({
       localStorage.removeItem('user');
       localStorage.removeItem('api_key');
       localStorage.removeItem('api_secret');
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
     },
     clearError: (state) => {
       state.error = null;
@@ -627,6 +643,12 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         const payload = action.payload;
+        if (payload?.code === 'TWO_FACTOR_REQUIRED') {
+          // The first request only asks for the code; show an error only for a wrong code
+          state.error = payload.wrongCode ? payload.message : null;
+          state.isAuthenticated = false;
+          return;
+        }
         state.error = typeof payload === "string" ? payload : (payload?.message || "Login failed");
         state.isAuthenticated = false;
       });

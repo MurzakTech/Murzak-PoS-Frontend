@@ -9,6 +9,8 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import NotificationProvider from './components/Notification/NotificationProvider';
 import { store } from './store/store';
 import { checkAuth, fetchCurrentUser } from './store/authSlice';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+import { UPDATE_READY_EVENT } from './components/Common/UpdateReadyNotice';
 
 // Component to initialize auth and onboarding state on app load
 const AuthInitializer = ({ children }) => {
@@ -53,6 +55,12 @@ root.render(
     </Provider>
   </React.StrictMode>
 );
+
+// Keep the app on the device so it opens without internet (see src/service-worker.js).
+// A version that arrives mid-shift is announced, never forced, so a sale is not lost.
+serviceWorkerRegistration.register({
+  onUpdate: (apply) => window.dispatchEvent(new CustomEvent(UPDATE_READY_EVENT, { detail: { apply } })),
+});
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

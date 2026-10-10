@@ -102,6 +102,7 @@ const BusinessSettings = lazy(() => import('../pages/Settings/BusinessSettings')
 const ETIMSSettings = lazy(() => import('../pages/Settings/ETIMSSettings'));
 const BankAccounts = lazy(() => import('../pages/Settings/BankAccounts'));
 const AuditTrail = lazy(() => import('../pages/Settings/AuditTrail'));
+const Security = lazy(() => import('../pages/Settings/Security'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
 const PaymentGateways = lazy(() => import('../pages/Settings/PaymentGateways'));
@@ -856,6 +857,7 @@ export const protectedRoutes = [
       { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
       { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
       { path: '/settings/audit-trail', label: 'Audit Trail', icon: 'History' },
+      { path: '/settings/security', label: 'Security', icon: 'Security' },
     ],
     children: [
       {
@@ -917,6 +919,12 @@ export const protectedRoutes = [
         element: AuditTrail,
         label: 'Audit Trail',
         icon: 'History',
+      },
+      {
+        path: '/settings/security',
+        element: Security,
+        label: 'Security',
+        icon: 'Security',
       },
       // Dynamic routes (not in sidebar, accessed via links)
       {

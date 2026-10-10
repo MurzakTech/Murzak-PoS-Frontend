@@ -23,6 +23,7 @@ import {
   VisibilityOff as VisibilityOffIcon,
   ArrowForward as ArrowForwardIcon,
   CheckCircle as CheckCircleIcon,
+  PhonelinkLock as PhonelinkLockIcon,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, fetchCurrentUser } from '../store/authSlice';
@@ -50,6 +51,10 @@ const Login = () => {
   const { isLoading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   const [showPassword, setShowPassword] = useState(false);
+  // Set after the password is accepted for an account with two-step sign-in;
+  // kept only in memory until the code is entered.
+  const [pendingSignIn, setPendingSignIn] = useState(null);
+  const [code, setCode] = useState('');
 
   const {
     register,
@@ -88,8 +93,32 @@ const Login = () => {
     const id = classifyLoginId(data.loginId);
     const loginData = id.type === 'email' ? { email: id.value, password: data.password } : { phone: id.value, password: data.password };
 
+    await signIn(loginData);
+  };
+
+  const onSubmitCode = async (event) => {
+    event.preventDefault();
+    if (!pendingSignIn || code.replace(/\D/g, '').length !== 6) return;
+    await signIn({ ...pendingSignIn, otp: code.replace(/\D/g, '') });
+  };
+
+  const backToPassword = () => {
+    setPendingSignIn(null);
+    setCode('');
+    dispatch(clearError());
+  };
+
+  const signIn = async (loginData) => {
     const result = await dispatch(loginUser(loginData));
-    if (!loginUser.fulfilled.match(result)) return;
+    if (!loginUser.fulfilled.match(result)) {
+      if (result.payload?.code === 'TWO_FACTOR_REQUIRED') {
+        const { otp, ...credentials } = loginData;
+        setPendingSignIn(credentials);
+        setCode('');
+      }
+      return;
+    }
+    setPendingSignIn(null);
 
     // Load the full profile (company, roles, permissions) before deciding where to go
     const fetchResult = await dispatch(fetchCurrentUser());
@@ -184,90 +213,128 @@ const Login = () => {
               </Alert>
             )}
 
-            <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-              <Stack spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Email or phone number"
-                  autoComplete="username"
-                  autoFocus
-                  inputProps={{ autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false }}
-                  {...register('loginId', {
-                    required: 'Enter your email address or phone number',
-                    validate: (v) => classifyLoginId(v).type !== null || LOGIN_ID_ERROR,
-                  })}
-                  error={!!errors.loginId}
-                  helperText={errors.loginId?.message || (isPhoneEntry ? 'Any format works: 0712 345 678 or +254 712 345 678' : ' ')}
-                  disabled={isLoading}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        {isPhoneEntry ? (
-                          <PhoneIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                        ) : (
-                          <EmailIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                        )}
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  {...register('password', { required: 'Enter your password' })}
-                  error={!!errors.password}
-                  helperText={errors.password?.message}
-                  disabled={isLoading}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword((s) => !s)}
-                          edge="end"
-                          size="small"
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        >
-                          {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -0.5 }}>
-                  <Link
-                    component={RouterLink}
-                    to="/forgot-password"
-                    state={{ loginId: watch('loginId') }}
-                    variant="body2"
-                    underline="hover"
-                    sx={{ fontWeight: 600 }}
+            {pendingSignIn ? (
+              <Box component="form" onSubmit={onSubmitCode} noValidate>
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                    <PhonelinkLockIcon color="primary" sx={{ mt: 0.25 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Two-step sign-in is on for this account. Open your authenticator app and enter the
+                      6-digit code shown for Murzak POS.
+                    </Typography>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    autoFocus
+                    label="6-digit code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/[^\d ]/g, '').slice(0, 7))}
+                    inputProps={{ inputMode: 'numeric', autoComplete: 'one-time-code', 'aria-label': 'Authenticator code' }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={isLoading || code.replace(/\D/g, '').length !== 6}
+                    endIcon={!isLoading && <ArrowForwardIcon />}
                   >
-                    Forgot password?
-                  </Link>
-                </Box>
+                    {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Verify and sign in'}
+                  </Button>
+                  <Button onClick={backToPassword} disabled={isLoading}>
+                    Use a different account
+                  </Button>
+                  <Typography variant="caption" color="text.secondary">
+                    Lost your phone? Ask the business owner to turn off two-step sign-in for you.
+                  </Typography>
+                </Stack>
+              </Box>
+            ) : (
+              <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="Email or phone number"
+                    autoComplete="username"
+                    autoFocus
+                    inputProps={{ autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false }}
+                    {...register('loginId', {
+                      required: 'Enter your email address or phone number',
+                      validate: (v) => classifyLoginId(v).type !== null || LOGIN_ID_ERROR,
+                    })}
+                    error={!!errors.loginId}
+                    helperText={errors.loginId?.message || (isPhoneEntry ? 'Any format works: 0712 345 678 or +254 712 345 678' : ' ')}
+                    disabled={isLoading}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {isPhoneEntry ? (
+                            <PhoneIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                          ) : (
+                            <EmailIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                          )}
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  fullWidth
-                  disabled={isLoading}
-                  endIcon={!isLoading && <ArrowForwardIcon />}
-                  sx={{ boxShadow: (t) => `0 6px 18px ${alpha(t.palette.primary.main, 0.3)}` }}
-                >
-                  {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Sign in'}
-                </Button>
-              </Stack>
-            </Box>
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    {...register('password', { required: 'Enter your password' })}
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
+                    disabled={isLoading}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword((s) => !s)}
+                            edge="end"
+                            size="small"
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -0.5 }}>
+                    <Link
+                      component={RouterLink}
+                      to="/forgot-password"
+                      state={{ loginId: watch('loginId') }}
+                      variant="body2"
+                      underline="hover"
+                      sx={{ fontWeight: 600 }}
+                    >
+                      Forgot password?
+                    </Link>
+                  </Box>
+
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={isLoading}
+                    endIcon={!isLoading && <ArrowForwardIcon />}
+                    sx={{ boxShadow: (t) => `0 6px 18px ${alpha(t.palette.primary.main, 0.3)}` }}
+                  >
+                    {isLoading ? <CircularProgress size={22} color="inherit" /> : 'Sign in'}
+                  </Button>
+                </Stack>
+              </Box>
+            )}
 
             <Divider sx={{ my: 3 }} />
             {IS_TENANT_BUILD ? (
