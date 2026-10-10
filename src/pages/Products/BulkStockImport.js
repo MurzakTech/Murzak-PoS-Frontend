@@ -10,61 +10,51 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
   CircularProgress,
   GridLegacy as Grid,
   Container,
   Divider,
   Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
+  AlertTitle,
+  Stack,
 } from '@mui/material';
-import { ArrowBack, Upload, Download, CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
-import { useForm, Controller } from 'react-hook-form';
+import { ArrowBack, Upload, Download } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-  bulkImportOpeningStock,
-} from '../../store/productSlice';
+import { bulkImportOpeningStock } from '../../store/productSlice';
 import { showNotification } from '../../store/notificationSlice';
 import { listWarehouses } from '../../store/warehouseSlice';
+import { problemRowsCsv, summarizeBulkCreate } from '../../utils/productImport';
+import { checkStockSheet, STOCK_TEMPLATE_CSV, STOCK_WORDING, localDateString } from '../../utils/stockImport';
+import { readProductFile } from '../../utils/readProductFile';
+import { saveTextFile } from '../../utils/saveTextFile';
+import ImportCheckPanel from '../../components/Products/ImportCheckPanel';
 
 const BulkStockImport = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, bulkImportResults } = useAppSelector((state) => state.product);
   const { warehouses, isLoading: isLoadingWarehouses, activeWarehouse } = useAppSelector((state) => state.warehouse);
   const { user } = useAppSelector((state) => state.auth);
 
   // Get company from user profile
   const userCompany = user?.company || user?.custom_company || user?.company_name || user?.company_data?.name || user?.company_data?.company_name;
 
+  const [warehouse, setWarehouse] = useState('');
+  const [postingDate, setPostingDate] = useState(localDateString());
   const [file, setFile] = useState(null);
-  const [previewData, setPreviewData] = useState([]);
+  const [check, setCheck] = useState(null); // result of checking the file, see checkStockSheet
   const [fileError, setFileError] = useState('');
+  const [reading, setReading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [report, setReport] = useState(null); // what the server said after an import
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-  } = useForm({
-    defaultValues: {
-      warehouse: activeWarehouse?.name || activeWarehouse?.warehouse_name || '',
-      posting_date: new Date().toISOString().split('T')[0],
-    },
-  });
-
-  // Update form when active warehouse changes
+  // Start with the store chosen in the top bar, unless a different one has been picked here
   useEffect(() => {
     if (activeWarehouse) {
-      const warehouseName = activeWarehouse.name || activeWarehouse.warehouse_name;
-      setValue('warehouse', warehouseName);
+      setWarehouse((current) => current || activeWarehouse.name || activeWarehouse.warehouse_name || '');
     }
-  }, [activeWarehouse, setValue]);
+  }, [activeWarehouse]);
 
   // Fetch warehouses on mount
   useEffect(() => {
@@ -73,64 +63,41 @@ const BulkStockImport = () => {
     }
   }, [dispatch, userCompany]);
 
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
+  const reset = () => {
+    setFile(null);
+    setCheck(null);
     setFileError('');
-    setPreviewData([]);
-
-    if (!selectedFile) {
-      return;
-    }
-
-    // Validate file type
-    const validTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    if (!validTypes.includes(selectedFile.type) && !selectedFile.name.endsWith('.csv')) {
-      setFileError('Please upload a CSV or Excel file');
-      return;
-    }
-
-    setFile(selectedFile);
-
-    // Read and preview CSV file
-    if (selectedFile.type === 'text/csv' || selectedFile.name.endsWith('.csv')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target.result;
-        const lines = text.split('\n').filter((line) => line.trim());
-        const headers = lines[0].split(',').map((h) => h.trim());
-        
-        if (headers.length < 2 || !headers.includes('item_code') || !headers.includes('qty')) {
-          setFileError('CSV must have "item_code" and "qty" columns');
-          return;
-        }
-
-        const data = lines.slice(1, Math.min(6, lines.length)).map((line) => {
-          const values = line.split(',').map((v) => v.trim());
-          const row = {};
-          headers.forEach((header, index) => {
-            row[header] = values[index] || '';
-          });
-          return row;
-        });
-
-        setPreviewData(data);
-      };
-      reader.readAsText(selectedFile);
-    }
+    setImportError('');
+    setReport(null);
   };
 
-  const downloadTemplate = () => {
-    const csvContent = 'item_code,qty\nITEM001,100\nITEM002,50';
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'opening_stock_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleFileChange = async (event) => {
+    const selected = event.target.files[0];
+    event.target.value = ''; // lets the same file be chosen again after it has been fixed
+    if (!selected) return;
+
+    reset();
+    setReading(true);
+    const { rows, error } = await readProductFile(selected);
+    setReading(false);
+
+    if (error) {
+      setFileError(error);
+      return;
+    }
+    setFile(selected);
+    setCheck(checkStockSheet(rows));
   };
 
-  const onSubmit = async (data) => {
+  const ready = check?.valid.length || 0;
+  const zeroRows = check?.zeroRows.length || 0;
+  const storeName = (warehouses.find((w) => w.name === warehouse) || {}).warehouse_name || warehouse;
+  const inFuture = postingDate > localDateString();
+  const canImport = ready > 0 && Boolean(warehouse) && Boolean(postingDate) && !importing && !reading;
+
+  const handleImport = async () => {
+    if (!canImport) return;
+
     if (!userCompany) {
       dispatch(showNotification({
         message: 'Company information not found. Please complete your profile setup.',
@@ -140,50 +107,31 @@ const BulkStockImport = () => {
       return;
     }
 
-    if (!file) {
-      dispatch(showNotification({
-        message: 'Please select a file to upload',
-        severity: 'error',
-        title: 'File Required',
-      }));
-      return;
+    setImporting(true);
+    setImportError('');
+    const stock = check.valid.map((v) => v.stock);
+    const result = await dispatch(bulkImportOpeningStock({
+      company: userCompany,
+      warehouse,
+      posting_date: postingDate,
+      stock_data: stock,
+    }));
+    setImporting(false);
+
+    if (bulkImportOpeningStock.fulfilled.match(result)) {
+      setReport({
+        summary: summarizeBulkCreate(result.payload, stock.length, STOCK_WORDING),
+        leftOut: check.invalid.length,
+        zeroRows,
+        storeName,
+      });
+      // The file is cleared so the same stock cannot be sent a second time by accident
+      setFile(null);
+      setCheck(null);
+    } else {
+      // The reason is already shown in a pop-up; keep the file so the person can try again
+      setImportError(result.payload || 'The opening stock could not be recorded. Please try again.');
     }
-
-    // Read file content
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target.result;
-      const lines = text.split('\n').filter((line) => line.trim());
-      const headers = lines[0].split(',').map((h) => h.trim());
-      
-      const stockData = lines.slice(1).map((line) => {
-        const values = line.split(',').map((v) => v.trim());
-        const row = {};
-        headers.forEach((header, index) => {
-          row[header] = values[index] || '';
-        });
-        return {
-          item_code: row.item_code,
-          qty: parseFloat(row.qty) || 0,
-        };
-      }).filter((row) => row.item_code && row.qty > 0);
-
-      const importData = {
-        company: userCompany,
-        warehouse: data.warehouse,
-        posting_date: data.posting_date,
-        stock_data: stockData,
-      };
-
-      const result = await dispatch(bulkImportOpeningStock(importData));
-
-      if (result.type === 'product/bulkImportOpeningStock/fulfilled') {
-        setFile(null);
-        setPreviewData([]);
-      }
-    };
-
-    reader.readAsText(file);
   };
 
   return (
@@ -191,11 +139,7 @@ const BulkStockImport = () => {
       <Box sx={{ py: 4 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/products')}
-            sx={{ mr: 2 }}
-          >
+          <Button startIcon={<ArrowBack />} onClick={() => navigate('/products')} sx={{ mr: 2 }}>
             Back
           </Button>
           <Typography variant="h4" component="h1">
@@ -203,177 +147,186 @@ const BulkStockImport = () => {
           </Typography>
         </Box>
 
-        {/* Import Results */}
-        {bulkImportResults && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              Import completed! {bulkImportResults.success_count || 0} items imported successfully.
-              {bulkImportResults.failed_count > 0 && ` ${bulkImportResults.failed_count} items failed.`}
-            </Typography>
+        {/* Result of the last import */}
+        {report && (
+          <Alert severity={report.summary.problems ? 'warning' : 'success'} sx={{ mb: 3 }}>
+            <AlertTitle>{report.summary.problems ? 'Some items need attention' : 'Opening stock recorded'}</AlertTitle>
+            {report.summary.text}
+            {report.summary.created !== null && report.summary.created > 0 && report.storeName ? ` Stock was recorded in ${report.storeName}.` : ''}
+            {report.summary.reference ? ` Stock entry: ${report.summary.reference}.` : ''}
+            {report.leftOut > 0 && ` ${report.leftOut} row${report.leftOut === 1 ? ' was' : 's were'} left out because of problems in your file.`}
+            {report.zeroRows > 0 && ` ${report.zeroRows} row${report.zeroRows === 1 ? ' had' : 's had'} a quantity of 0 and ${report.zeroRows === 1 ? 'was' : 'were'} skipped.`}
+            {report.summary.failures.length > 0 && (
+              <Box component="ul" sx={{ m: 0, mt: 1, pl: 2.5 }}>
+                {report.summary.failures.slice(0, 10).map((f, i) => (
+                  <Typography component="li" variant="body2" key={i}>{f}</Typography>
+                ))}
+                {report.summary.failures.length > 10 && (
+                  <Typography component="li" variant="body2">and {report.summary.failures.length - 10} more</Typography>
+                )}
+              </Box>
+            )}
+            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+              <Button size="small" variant="contained" onClick={() => navigate('/inventory/stock-summary')}>View stock</Button>
+              <Button size="small" variant="outlined" onClick={reset}>Import another file</Button>
+            </Stack>
           </Alert>
         )}
 
-        {/* Form */}
-        <Paper elevation={2} sx={{ p: 4 }}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  name="warehouse"
-                  control={control}
-                  rules={{ required: 'Stock Location is required' }}
-                  render={({ field }) => (
-                    <FormControl fullWidth error={!!errors.warehouse}>
-                      <InputLabel>Stock Location *</InputLabel>
-                      <Select
-                        {...field}
-                        label="Stock Location *"
-                        disabled={isLoadingWarehouses}
-                      >
-                        <MenuItem value="">Select Warehouse</MenuItem>
-                        {warehouses.map((wh) => (
-                          <MenuItem key={wh.name} value={wh.name}>
-                            {wh.warehouse_name || wh.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors.warehouse && (
-                        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                          {errors.warehouse.message}
-                        </Typography>
-                      )}
-                    </FormControl>
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <Controller
-                  name="posting_date"
-                  control={control}
-                  rules={{ required: 'Posting date is required' }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Posting Date"
-                      type="date"
-                      fullWidth
-                      required
-                      InputLabelProps={{ shrink: true }}
-                      error={!!errors.posting_date}
-                      helperText={errors.posting_date?.message}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">Upload File</Typography>
-                  <Button
-                    startIcon={<Download />}
-                    onClick={downloadTemplate}
-                    variant="outlined"
-                    size="small"
-                  >
-                    Download Template
-                  </Button>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    border: '2px dashed',
-                    borderColor: fileError ? 'error.main' : 'primary.main',
-                    borderRadius: 2,
-                    p: 3,
-                    textAlign: 'center',
-                    bgcolor: fileError ? 'error.light' : 'action.hover',
-                  }}
+        <Paper elevation={2} sx={{ p: { xs: 2, md: 4 } }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required error={!warehouse}>
+                <InputLabel id="stock-location-label">Stock Location</InputLabel>
+                <Select
+                  labelId="stock-location-label"
+                  label="Stock Location"
+                  value={warehouse}
+                  onChange={(e) => setWarehouse(e.target.value)}
+                  disabled={isLoadingWarehouses || importing}
                 >
-                  <input
-                    accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    style={{ display: 'none' }}
-                    id="file-upload"
-                    type="file"
-                    onChange={handleFileChange}
-                  />
-                  <label htmlFor="file-upload">
-                    <Button
-                      component="span"
-                      variant="outlined"
-                      startIcon={<Upload />}
-                      sx={{ mb: 2 }}
-                    >
-                      {file ? 'Change File' : 'Select CSV File'}
-                    </Button>
-                  </label>
-                  {file && (
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      Selected: {file.name}
-                    </Typography>
-                  )}
-                  {fileError && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      {fileError}
-                    </Alert>
-                  )}
-                </Box>
-              </Grid>
-
-              {/* Preview */}
-              {previewData.length > 0 && (
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    Preview (First 5 rows)
-                  </Typography>
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          {Object.keys(previewData[0] || {}).map((key) => (
-                            <TableCell key={key}>{key}</TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {previewData.map((row, index) => (
-                          <TableRow key={index}>
-                            {Object.values(row).map((value, idx) => (
-                              <TableCell key={idx}>{value}</TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-              )}
-
-              {/* Form Actions */}
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate('/products')}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={isLoading ? <CircularProgress size={20} /> : <Upload />}
-                    disabled={isLoading || !file}
-                  >
-                    {isLoading ? 'Importing...' : 'Import Stock'}
-                  </Button>
-                </Box>
-              </Grid>
+                  {warehouses.map((wh) => (
+                    <MenuItem key={wh.name} value={wh.name}>
+                      {wh.warehouse_name || wh.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{warehouse ? 'The stock in your file is recorded here.' : 'Choose where this stock is kept.'}</FormHelperText>
+              </FormControl>
             </Grid>
-          </form>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Posting Date"
+                type="date"
+                fullWidth
+                required
+                value={postingDate}
+                onChange={(e) => setPostingDate(e.target.value)}
+                disabled={importing}
+                InputLabelProps={{ shrink: true }}
+                error={!postingDate}
+                helperText={!postingDate ? 'Choose the date the stock counts from.' : inFuture ? 'This date is in the future.' : 'The date the stock counts from.'}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                <Box>
+                  <Typography variant="h6">Upload File</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Excel (.xlsx) or CSV with two columns: item_code and qty. The item codes must already exist as products.
+                  </Typography>
+                </Box>
+                <Button startIcon={<Download />} onClick={() => saveTextFile(STOCK_TEMPLATE_CSV, 'opening_stock_template.csv')} variant="outlined" size="small">
+                  Download Template
+                </Button>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  border: '2px dashed',
+                  borderColor: fileError ? 'error.main' : 'primary.main',
+                  borderRadius: 2,
+                  p: 3,
+                  textAlign: 'center',
+                  bgcolor: 'action.hover',
+                }}
+              >
+                <input
+                  accept=".csv,.tsv,.txt,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  style={{ display: 'none' }}
+                  id="file-upload"
+                  type="file"
+                  onChange={handleFileChange}
+                  disabled={reading || importing}
+                />
+                <label htmlFor="file-upload">
+                  <Button
+                    component="span"
+                    variant="outlined"
+                    startIcon={reading ? <CircularProgress size={18} /> : <Upload />}
+                    disabled={reading || importing}
+                  >
+                    {reading ? 'Reading file...' : file ? 'Choose a different file' : 'Select CSV or Excel file'}
+                  </Button>
+                </label>
+                {file && <Typography variant="body2" sx={{ mt: 1.5 }}>Selected: {file.name}</Typography>}
+                {fileError && <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>{fileError}</Alert>}
+              </Box>
+            </Grid>
+
+            {importError && (
+              <Grid item xs={12}>
+                <Alert severity="error" onClose={() => setImportError('')}>
+                  <AlertTitle>Nothing was recorded</AlertTitle>
+                  {importError}
+                </Alert>
+              </Grid>
+            )}
+
+            {/* What we found in the file */}
+            {check && (
+              <Grid item xs={12}>
+                <ImportCheckPanel
+                  fileProblems={check.fileProblems}
+                  ready={ready}
+                  invalid={check.invalid}
+                  notices={[
+                    ...(check.unknownColumns.length > 0
+                      ? [{ severity: 'info', text: `These columns are not used and will be ignored: ${check.unknownColumns.join(', ')}.` }]
+                      : []),
+                    ...(zeroRows > 0
+                      ? [{ severity: 'info', text: `${zeroRows} row${zeroRows === 1 ? ' has' : 's have'} a quantity of 0 and will be skipped, because there is no stock to record.` }]
+                      : []),
+                  ]}
+                  onDownloadProblems={() => saveTextFile('\uFEFF' + problemRowsCsv(check), 'stock_rows_to_fix.csv')}
+                  preview={{
+                    columns: [
+                      { key: 'code', label: 'Item code' },
+                      ...(check.valid.some((v) => v.itemName) ? [{ key: 'name', label: 'Item name' }] : []),
+                      { key: 'qty', label: 'Quantity', align: 'right' },
+                    ],
+                    rows: check.valid.slice(0, 5).map(({ rowNumber, itemName, stock }) => ({
+                      rowNumber,
+                      values: { code: stock.item_code, name: itemName || '-', qty: stock.qty.toLocaleString(undefined, { maximumFractionDigits: 4 }) },
+                    })),
+                  }}
+                />
+              </Grid>
+            )}
+
+            {/* Say exactly what pressing the button will do */}
+            {ready > 0 && (
+              <Grid item xs={12}>
+                <Alert severity={warehouse && postingDate ? 'info' : 'warning'}>
+                  {warehouse && postingDate
+                    ? `${ready} item${ready === 1 ? '' : 's'} will be recorded in ${storeName}, dated ${postingDate}. Do not import the same file twice: the stock may be recorded twice.`
+                    : 'Choose a stock location and a posting date to continue.'}
+                </Alert>
+              </Grid>
+            )}
+
+            {/* Form Actions */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button variant="outlined" onClick={() => navigate('/products')} disabled={importing}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={importing ? <CircularProgress size={20} color="inherit" /> : <Upload />}
+                  onClick={handleImport}
+                  disabled={!canImport}
+                >
+                  {importing ? 'Recording...' : ready > 0 ? `Record stock for ${ready} item${ready === 1 ? '' : 's'}` : 'Import Stock'}
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
         </Paper>
       </Box>
     </Container>

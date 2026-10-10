@@ -9,14 +9,7 @@ import {
   Container,
   Alert,
   AlertTitle,
-  Chip,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from '@mui/material';
 import { ArrowBack, Upload, Download } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -25,9 +18,7 @@ import { showNotification } from '../../store/notificationSlice';
 import { checkProductSheet, problemRowsCsv, summarizeBulkCreate } from '../../utils/productImport';
 import { readProductFile } from '../../utils/readProductFile';
 import { saveTextFile } from '../../utils/saveTextFile';
-
-const PROBLEMS_SHOWN = 50;
-const PREVIEW_ROWS = 5;
+import ImportCheckPanel from '../../components/Products/ImportCheckPanel';
 
 // The BOM at the start makes Excel open the file as UTF-8, so names with accents stay readable
 const TEMPLATE_CSV =
@@ -106,7 +97,6 @@ const BulkImport = () => {
   };
 
   const ready = check?.valid.length || 0;
-  const problems = check?.invalid.length || 0;
   const noPrice = check?.warnings.length || 0;
 
   return (
@@ -200,113 +190,40 @@ const BulkImport = () => {
 
           {/* What we found in the file */}
           {check && (
-            <Box sx={{ mt: 3 }}>
-              {check.fileProblems.map((p, i) => (
-                <Alert severity="error" key={i} sx={{ mb: 2 }}>{p}</Alert>
-              ))}
-
-              {check.fileProblems.length === 0 && (
-                <>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
-                    <Chip color="success" label={`${ready} ready to import`} />
-                    {problems > 0 && <Chip color="error" label={`${problems} with problems`} />}
-                    {noPrice > 0 && <Chip color="warning" variant="outlined" label={`${noPrice} without a price`} />}
-                  </Stack>
-
-                  {check.unknownColumns.length > 0 && (
-                    <Alert severity="info" sx={{ mb: 2 }}>
-                      These columns are not used and will be ignored: {check.unknownColumns.join(', ')}.
-                    </Alert>
-                  )}
-
-                  {noPrice > 0 && (
-                    <Alert severity="warning" sx={{ mb: 2 }}>
-                      {noPrice} product{noPrice === 1 ? ' has' : 's have'} no price and will be saved with a price of 0. Set the price before selling{noPrice === 1 ? ' it' : ' them'}.
-                    </Alert>
-                  )}
-
-                  {problems > 0 && (
-                    <Box sx={{ mb: 3 }}>
-                      <Alert
-                        severity="error"
-                        action={
-                          <Button color="inherit" size="small" startIcon={<Download />} onClick={() => saveTextFile('\uFEFF' + problemRowsCsv(check), 'rows_to_fix.csv')}>
-                            Download rows to fix
-                          </Button>
-                        }
-                        sx={{ mb: 1 }}
-                      >
-                        <AlertTitle>{problems} row{problems === 1 ? '' : 's'} will be left out</AlertTitle>
-                        {ready > 0
-                          ? 'The other rows can still be imported now. Download the rows to fix, correct them, and import that file afterwards.'
-                          : 'Fix these in your file and upload it again.'}
-                      </Alert>
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Row</TableCell>
-                              <TableCell>Item code</TableCell>
-                              <TableCell>Item name</TableCell>
-                              <TableCell>Problem</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {check.invalid.slice(0, PROBLEMS_SHOWN).map((r) => (
-                              <TableRow key={r.rowNumber}>
-                                <TableCell>{r.rowNumber}</TableCell>
-                                <TableCell>{r.itemCode || '(empty)'}</TableCell>
-                                <TableCell>{r.itemName || '(empty)'}</TableCell>
-                                <TableCell>{r.problems.join(' ')}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                      {problems > PROBLEMS_SHOWN && (
-                        <Typography variant="caption" color="text.secondary">
-                          Showing the first {PROBLEMS_SHOWN} of {problems}. Download the rows to fix to see them all.
-                        </Typography>
-                      )}
-                    </Box>
-                  )}
-
-                  {ready > 0 && (
-                    <Box>
-                      <Typography variant="h6" gutterBottom>
-                        Preview{ready > PREVIEW_ROWS ? ` (first ${PREVIEW_ROWS} of ${ready})` : ''}
-                      </Typography>
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Row</TableCell>
-                              <TableCell>Item code</TableCell>
-                              <TableCell>Item name</TableCell>
-                              <TableCell>Category</TableCell>
-                              <TableCell>Unit</TableCell>
-                              <TableCell align="right">Price</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {check.valid.slice(0, PREVIEW_ROWS).map(({ rowNumber, product }) => (
-                              <TableRow key={rowNumber}>
-                                <TableCell>{rowNumber}</TableCell>
-                                <TableCell>{product.item_code}</TableCell>
-                                <TableCell>{product.item_name}</TableCell>
-                                <TableCell>{product.item_group || '-'}</TableCell>
-                                <TableCell>{product.stock_uom}</TableCell>
-                                <TableCell align="right">{product.standard_rate.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Box>
-                  )}
-                </>
-              )}
-            </Box>
+            <ImportCheckPanel
+              fileProblems={check.fileProblems}
+              ready={ready}
+              invalid={check.invalid}
+              chips={noPrice > 0 ? [{ label: `${noPrice} without a price`, color: 'warning', variant: 'outlined' }] : []}
+              notices={[
+                ...(check.unknownColumns.length > 0
+                  ? [{ severity: 'info', text: `These columns are not used and will be ignored: ${check.unknownColumns.join(', ')}.` }]
+                  : []),
+                ...(noPrice > 0
+                  ? [{ severity: 'warning', text: `${noPrice} product${noPrice === 1 ? ' has' : 's have'} no price and will be saved with a price of 0. Set the price before selling${noPrice === 1 ? ' it' : ' them'}.` }]
+                  : []),
+              ]}
+              onDownloadProblems={() => saveTextFile('\uFEFF' + problemRowsCsv(check), 'rows_to_fix.csv')}
+              preview={{
+                columns: [
+                  { key: 'code', label: 'Item code' },
+                  { key: 'name', label: 'Item name' },
+                  { key: 'group', label: 'Category' },
+                  { key: 'unit', label: 'Unit' },
+                  { key: 'price', label: 'Price', align: 'right' },
+                ],
+                rows: check.valid.slice(0, 5).map(({ rowNumber, product }) => ({
+                  rowNumber,
+                  values: {
+                    code: product.item_code,
+                    name: product.item_name,
+                    group: product.item_group || '-',
+                    unit: product.stock_uom,
+                    price: product.standard_rate.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
+                  },
+                })),
+              }}
+            />
           )}
 
           {/* Actions */}

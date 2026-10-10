@@ -327,10 +327,11 @@ const describeFailure = (f) => {
  * usual names and says only what it can actually see. It never claims more
  * products were saved than the server reported.
  *
- * Returns { created, skipped, failed, failures[], serverMessage, problems, text }
+ * Returns { created, skipped, failed, failures[], serverMessage, reference, problems, text }
  * where created/skipped/failed are numbers, or null when the server did not say.
  */
-export const summarizeBulkCreate = (data, sent) => {
+export const summarizeBulkCreate = (data, sent, wording = {}) => {
+  const { noun = 'product', verb = 'saved', where = 'the product list', skippedText } = wording;
   const reply = data && typeof data === 'object' ? data : {};
   const created = count(firstDefined(reply.created, reply.created_count, reply.success_count, reply.items_created));
   const skipped = count(firstDefined(reply.skipped, reply.skipped_count, reply.items_skipped, reply.existing));
@@ -338,13 +339,16 @@ export const summarizeBulkCreate = (data, sent) => {
   const failed = failureList.length || count(firstDefined(reply.failed, reply.failed_count, reply.error_count)) || 0;
   const serverMessage = typeof reply.message === 'string' ? reply.message : typeof data === 'string' ? data : '';
   const failures = failureList.map(describeFailure);
+  // Some servers also name the document they created (a stock entry, for example)
+  const reference = [reply.stock_entry_name, reply.stock_entry, reply.reference].find((v) => typeof v === 'string' && v) || reply.stock_entry?.name || '';
+  const plural = (n) => `${noun}${n === 1 ? '' : 's'}`;
 
   const parts = [];
-  if (created !== null) parts.push(`${created} product${created === 1 ? '' : 's'} saved.`);
-  if (skipped) parts.push(`${skipped} already existed, so ${skipped === 1 ? 'it was' : 'they were'} left as is.`);
-  if (failed) parts.push(`${failed} could not be saved.`);
-  if (parts.length === 0) parts.push(serverMessage || `${sent} product${sent === 1 ? '' : 's'} sent. The server did not say how many were saved, so check the product list.`);
+  if (created !== null) parts.push(`${created} ${plural(created)} ${verb}.`);
+  if (skipped) parts.push(skippedText ? skippedText(skipped) : `${skipped} already existed, so ${skipped === 1 ? 'it was' : 'they were'} left as is.`);
+  if (failed) parts.push(`${failed} could not be ${verb}.`);
+  if (parts.length === 0) parts.push(serverMessage || `${sent} ${plural(sent)} sent. The server did not say how many were ${verb}, so check ${where}.`);
 
   const problems = !!failed || (created !== null && created === 0 && !skipped);
-  return { created, skipped, failed, failures, serverMessage, problems, text: parts.join(' ') };
+  return { created, skipped, failed, failures, serverMessage, reference, problems, text: parts.join(' ') };
 };

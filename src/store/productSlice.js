@@ -3,6 +3,7 @@ import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity, humanizeMessage } from '../utils/friendlyError';
 import { summarizeBulkCreate } from '../utils/productImport';
+import { STOCK_WORDING } from '../utils/stockImport';
 
 // Product API endpoints
 const ENDPOINTS = {
@@ -566,20 +567,28 @@ export const getProductVariants = createAsyncThunk(
 );
 
 // Bulk Import Opening Stock
+// importData: { company, warehouse, posting_date, stock_data: [{ item_code, qty }] }
 export const bulkImportOpeningStock = createAsyncThunk(
   'product/bulkImportOpeningStock',
   async (importData, { dispatch, rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(ENDPOINTS.bulkImportOpeningStock, importData);
       const data = extractResponseData(response);
-      const successMessage = extractSuccessMessage(response) || 'Opening stock imported successfully';
-      
+
+      // Some replies refuse the whole request with a normal 200 status
+      if (data && typeof data === 'object' && (data.status === 'error' || data.success === false)) {
+        const errorMessage = humanizeMessage(data.message, 'The opening stock could not be recorded.');
+        dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Opening stock not recorded' }));
+        return rejectWithValue(errorMessage);
+      }
+
+      const summary = summarizeBulkCreate(data, importData?.stock_data?.length || 0, STOCK_WORDING);
       dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
+        message: summary.text,
+        severity: summary.problems ? 'warning' : 'success',
+        title: summary.problems ? 'Some items need attention' : 'Opening stock recorded',
       }));
-      
+
       return data;
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
@@ -1410,6 +1419,9 @@ const productSlice = createSlice({
         }
       })
       // Bulk import opening stock
+      .addCase(bulkImportOpeningStock.pending, (state) => {
+        state.bulkImportResults = null; // never show the result of an earlier import
+      })
       .addCase(bulkImportOpeningStock.fulfilled, (state, action) => {
         state.bulkImportResults = action.payload;
       })
