@@ -40,6 +40,8 @@ import CustomerDialog from './pos/CustomerDialog';
 import ReceiptDialog from './pos/ReceiptDialog';
 import CloseTillDialog from './pos/CloseTillDialog';
 import HeldSalesDialog from './pos/HeldSalesDialog';
+import HoldSaleDialog from './pos/HoldSaleDialog';
+import { readHeld, writeHeld, makeHeldSale, heldTitle, labelInUse, renameHeld } from '../../utils/heldSales';
 import PosConfirm from './pos/PosConfirm';
 import PriceEntryDialog from './pos/PriceEntryDialog';
 import PhoneSaleBar from './pos/PhoneSaleBar';
@@ -60,18 +62,9 @@ const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
  */
 
 const TILE_PAGE = 60;
-const HELD_KEY = 'pos_held_sales_v1';
 const AUTOPRINT_KEY = 'pos_auto_print';
 const PICTURES_KEY = 'pos_show_pictures';
 
-const readHeldSales = () => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(HELD_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
-};
 // On phones and tablets, focusing the search box pops the on-screen keyboard up over
 // the products. Only hand focus back to it where there is a mouse (a desk till);
 // a barcode scanner still works everywhere because typing anywhere lands in search.
@@ -192,8 +185,14 @@ const NewSale = () => {
   const [amountGiven, setAmountGiven] = useState(0);
   const [tileLimit, setTileLimit] = useState(TILE_PAGE); // how many product tiles are drawn
   const [shiftChecked, setShiftChecked] = useState(false); // have we looked for an already-open shift?
-  const [heldSales, setHeldSales] = useState(readHeldSales);
+  // Held sales are kept per business on this device (see utils/heldSales)
+  const [heldSales, setHeldSales] = useState(() => readHeld(localStorage, userCompany));
   const [heldDialogOpen, setHeldDialogOpen] = useState(false);
+  const [holdDialogOpen, setHoldDialogOpen] = useState(false);
+  const [activeHeldLabel, setActiveHeldLabel] = useState(''); // name of the held sale that was brought back, so holding it again keeps its name
+  useEffect(() => {
+    setHeldSales(readHeld(localStorage, userCompany));
+  }, [userCompany]);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -1359,13 +1358,12 @@ const NewSale = () => {
 
 
   // ---------------------------------------------------------------- hold, recall, clear
-  const persistHeld = (next) => {
-    setHeldSales(next);
-    try {
-      localStorage.setItem(HELD_KEY, JSON.stringify(next));
-    } catch (e) {
-      // not critical
-    }
+  // Saves the held list on this device and returns whether the browser accepted it. With onlyIfSaved, the list
+  // on screen changes only when the save worked, so a bill that could not be kept is never shown as held.
+  const commitHeld = (next, { onlyIfSaved = false } = {}) => {
+    const saved = writeHeld(localStorage, userCompany, next);
+    if (saved || !onlyIfSaved) setHeldSales(next);
+    return saved;
   };
 
   const resetSale = () => {
@@ -1377,28 +1375,27 @@ const NewSale = () => {
     setLoyaltyPointsToRedeem(0);
     setLoyaltyDiscountAmount(0);
     setSearchTerm('');
+    setActiveHeldLabel('');
     handleSelectCustomer(null);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
-  const holdCurrentSale = () => {
+  const holdCurrentSale = (label) => {
     if (cart.length === 0) return;
-    persistHeld([
-      ...heldSales,
-      {
-        id: Date.now(),
-        heldAt: new Date().toISOString(),
-        cart,
-        customer,
-        customerId,
-        selectedCustomerObj,
-        customerPriceList,
-        manualDiscountType,
-        manualDiscountValue,
-      },
-    ]);
+    const held = makeHeldSale(
+      { cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue },
+      label
+    );
+    const saved = commitHeld([...heldSales, held], { onlyIfSaved: true });
+    if (!saved) {
+      // The sale stays on screen: clearing it now would lose it
+      setSnackbarMessage('This sale could not be kept on hold: the browser would not save it. It is still on screen, so finish it or write it down first.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
     resetSale();
-    setSnackbarMessage('Sale put on hold. Find it under Held sales at the top.');
+    setSnackbarMessage(`"${heldTitle(held)}" is on hold. Find it under Held sales at the top.`);
     setSnackbarSeverity('success');
     setSnackbarOpen(true);
   };
@@ -1413,7 +1410,8 @@ const NewSale = () => {
     setCustomerPriceList(held.customerPriceList || 'Standard Selling');
     setManualDiscountType(held.manualDiscountType || 'percentage');
     setManualDiscountValue(held.manualDiscountValue || 0);
-    persistHeld(heldSales.filter((h) => h.id !== id));
+    setActiveHeldLabel(held.label || '');
+    commitHeld(heldSales.filter((h) => h.id !== id));
     setHeldDialogOpen(false);
   };
 
@@ -1534,7 +1532,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -1628,10 +1626,7 @@ const NewSale = () => {
       }}
       isLoadingDiscounts={isLoadingDiscounts}
       onCheckout={isPhone ? chargeFromPhone : handleCheckoutClick}
-      onHold={() => {
-        holdCurrentSale();
-        setCartSheetOpen(false);
-      }}
+      onHold={() => setHoldDialogOpen(true)}
       onClear={() => setClearDialogOpen(true)}
       isBusy={isCreatingInvoice}
       footerExtra={isCheckoutMode ? <Box /> : undefined}
@@ -1851,9 +1846,22 @@ const NewSale = () => {
         onClose={() => setHeldDialogOpen(false)}
         held={heldSales}
         onRecall={recallHeldSale}
-        onDelete={(id) => persistHeld(heldSales.filter((h) => h.id !== id))}
+        onDelete={(id) => commitHeld(heldSales.filter((h) => h.id !== id))}
+        onRename={(id, label) => commitHeld(renameHeld(heldSales, id, label))}
         canRecall={cart.length === 0}
         currency={currency}
+      />
+
+      <HoldSaleDialog
+        open={holdDialogOpen}
+        initialLabel={activeHeldLabel}
+        nameInUse={(label) => labelInUse(heldSales, label)}
+        onClose={() => setHoldDialogOpen(false)}
+        onConfirm={(label) => {
+          setHoldDialogOpen(false);
+          setCartSheetOpen(false);
+          holdCurrentSale(label);
+        }}
       />
 
       <PriceEntryDialog
