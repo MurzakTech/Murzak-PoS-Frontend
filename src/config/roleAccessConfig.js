@@ -43,6 +43,7 @@ const ROUTE_GROUPS = {
     '/inventory',
     '/inventory/stock-summary',
     '/inventory/low-stock',
+    '/inventory/expiry-alerts',
     '/inventory/stock-ledger',
     '/inventory/item-details',
     '/inventory/stock-entries',
@@ -266,6 +267,7 @@ export const ROLE_ACCESS_CONFIG = {
     '/products', // View products
     '/inventory/stock-summary',
     '/inventory/low-stock',
+    '/inventory/expiry-alerts',
     '/inventory/stock-ledger',
     '/inventory/item-details',
   ],
@@ -311,6 +313,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD', 'PRODUCTS', 'INVENTORY', 'REPORTS'),
     '/inventory/stock-summary',
     '/inventory/low-stock',
+    '/inventory/expiry-alerts',
   ],
 
   // Desk User - POS operations

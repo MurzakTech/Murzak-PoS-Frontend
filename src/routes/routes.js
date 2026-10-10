@@ -41,6 +41,7 @@ const StockEntry = lazy(() => import('../pages/Inventory/StockEntry'));
 const StockReconciliation = lazy(() => import('../pages/Inventory/StockReconciliation'));
 const StockSummary = lazy(() => import('../pages/Inventory/StockSummary'));
 const LowStockAlert = lazy(() => import('../pages/Inventory/LowStockAlert'));
+const ExpiryAlerts = lazy(() => import('../pages/Inventory/ExpiryAlerts'));
 const StockLedger = lazy(() => import('../pages/Inventory/StockLedger'));
 const InventoryItemDetails = lazy(() => import('../pages/Inventory/InventoryItemDetails'));
 const StockEntryList = lazy(() => import('../pages/Inventory/StockEntryList'));
@@ -421,6 +422,7 @@ export const protectedRoutes = [
       { path: '/inventory', label: 'Overview', icon: 'Dashboard' },
       { path: '/inventory/stock-summary', label: 'Stock List', icon: 'Assessment' },
       { path: '/inventory/low-stock', label: 'Low Stock', icon: 'Warning' },
+      { path: '/inventory/expiry-alerts', label: 'Expiry Alerts', icon: 'CalendarToday' },
       { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: 'Book' },
       { path: '/inventory/stock-entries', label: 'Entries', icon: 'ListAlt' },
       { path: '/inventory/material-receipts', label: 'Material Receipts', icon: 'Input' },
@@ -445,6 +447,12 @@ export const protectedRoutes = [
         element: LowStockAlert,
         label: 'Low Stock Alert',
         icon: 'Warning',
+      },
+      {
+        path: '/inventory/expiry-alerts',
+        element: ExpiryAlerts,
+        label: 'Expiry Alerts',
+        icon: 'CalendarToday',
       },
       {
         path: '/inventory/stock-ledger',
