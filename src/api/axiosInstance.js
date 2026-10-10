@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { friendlyErrorMessage } from '../utils/friendlyError';
+import { clearSession } from '../utils/session';
 
 // Support both variable names for backward compatibility
 const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL;
@@ -108,10 +109,7 @@ axiosInstance.interceptors.response.use(
       
       // 401 Unauthorized - Not authenticated
       if (status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('api_key');
-        localStorage.removeItem('api_secret');
+        clearSession();
         // Only redirect if not on public pages or onboarding page
         const currentPath = window.location.pathname;
         const isPublicPage = currentPath.includes('/login') || 

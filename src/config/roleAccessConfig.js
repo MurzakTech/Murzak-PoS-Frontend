@@ -1,7 +1,16 @@
 /**
  * Role-Based Access Control Configuration
  * Maps roles to allowed routes/views in the POS application
+ *
+ * Each entry grants exactly that screen. '/sales' means the Sales screen only,
+ * not everything under it, and '/warehouses/:id' means a store's page, not
+ * '/warehouses/new'. List every screen a role needs.
+ *
+ * This only decides what the app shows. The server must still check every
+ * request, because anything in the browser can be changed by the person using it.
  */
+
+import { matchRoutes } from 'react-router-dom';
 
 // Define route groups for easier management
 const ROUTE_GROUPS = {
@@ -22,6 +31,7 @@ const ROUTE_GROUPS = {
   ],
   SALES: [
     '/sales',
+    '/sales/pos',
     '/sales/history',
     '/sales/invoice/new',
     '/sales/pos-opening-entries',
@@ -80,6 +90,10 @@ const ROUTE_GROUPS = {
     '/purchases/receipts/new',
     '/purchases/:id',
     '/purchases/receipts/:id',
+    '/purchases/grns',
+    '/purchases/grns/:id',
+    '/purchases/invoices',
+    '/purchases/invoices/:invoiceNo',
   ],
   STOCK_TRANSFERS: [
     '/stock-transfers',
@@ -140,9 +154,36 @@ const ROUTE_GROUPS = {
   ],
 };
 
+// Smaller bundles for roles that should not get a whole area
+const ROUTE_BUNDLES = {
+  // Ring up sales at the till and look back at them; no returns, edits or price changes
+  SALES_TILL: ['/sales', '/sales/pos', '/sales/history', '/sales/invoice/:id', '/sales/pos-invoice/:id'],
+  // Look at past sales only
+  SALES_VIEW: ['/sales/history', '/sales/invoice/:id', '/sales/pos-invoice/:id'],
+  // Look at purchases, receipts, goods received and supplier invoices only
+  PURCHASES_VIEW: [
+    '/purchases',
+    '/purchases/:id',
+    '/purchases/receipts',
+    '/purchases/receipts/:id',
+    '/purchases/grns',
+    '/purchases/grns/:id',
+    '/purchases/invoices',
+    '/purchases/invoices/:invoiceNo',
+  ],
+  SUPPLIERS_VIEW: ['/suppliers', '/suppliers/:id'],
+  INVENTORY_VIEW: ['/inventory', '/inventory/stock-summary', '/inventory/low-stock', '/inventory/stock-ledger', '/inventory/item-details'],
+  // Take part in a multi-level stock count when it reaches this role
+  RECONCILIATION_STEP: [
+    '/inventory/multi-level-reconciliation',
+    '/inventory/multi-level-reconciliation/:id',
+    '/inventory/multi-level-reconciliation/:id/stock-take',
+  ],
+};
+
 // Helper function to combine route groups
 const combineRoutes = (...groups) => {
-  return groups.flatMap(group => ROUTE_GROUPS[group] || []);
+  return groups.flatMap(group => ROUTE_GROUPS[group] || ROUTE_BUNDLES[group] || []);
 };
 
 /**
@@ -219,18 +260,14 @@ export const ROLE_ACCESS_CONFIG = {
 
   'Sales User': [
     '/dashboard',
-    '/sales',
-    '/sales/history',
+    ...combineRoutes('SALES_TILL', 'RECONCILIATION_STEP'),
+    '/sales/invoice/new',
     '/customers',
     '/products', // View products for sales
     '/inventory', // Access to inventory section
     '/inventory/stock-summary', // Check stock availability
     // Stock reconciliation access
     '/inventory/stock-reconciliation',
-    // Multi-level reconciliation access (can add stock take when status is "Pending Sales User")
-    '/inventory/multi-level-reconciliation',
-    '/inventory/multi-level-reconciliation/:id',
-    '/inventory/multi-level-reconciliation/:id/stock-take',
   ],
 
   // Purchase roles
@@ -244,10 +281,11 @@ export const ROLE_ACCESS_CONFIG = {
 
   'Purchase User': [
     '/dashboard',
-    '/purchases',
-    '/purchases/receipts',
+    ...combineRoutes('PURCHASES_VIEW', 'SUPPLIERS_VIEW'),
+    '/purchases/new',
+    '/purchases/create-order',
+    '/purchases/submit-order',
     '/purchases/receipts/new',
-    '/suppliers',
     '/inventory/stock-summary',
     '/products', // View products
   ],
@@ -255,8 +293,7 @@ export const ROLE_ACCESS_CONFIG = {
   // Stock/Inventory roles
   'Stock Manager': [
     ...combineRoutes('DASHBOARD', 'INVENTORY', 'WAREHOUSES', 'PRODUCTS', 'REPORTS', 'STOCK_TRANSFERS'),
-    '/purchases', // View purchases for stock management
-    '/purchases/receipts',
+    ...combineRoutes('PURCHASES_VIEW'), // View purchases for stock management
     '/inventory/multi-level-reconciliation/new',
   ],
 
@@ -283,11 +320,8 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Accounts roles
   'Accounts Manager': [
-    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SETTINGS'),
-    '/sales/history',
+    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SETTINGS', 'SALES_VIEW', 'PURCHASES_VIEW'),
     '/sales/returns',
-    '/purchases',
-    '/purchases/receipts',
     '/settings/bank-accounts',
     '/settings/payment-methods',
     '/settings/account-provisioning',
@@ -298,11 +332,7 @@ export const ROLE_ACCESS_CONFIG = {
     '/dashboard',
     '/customers',
     '/customers/credit',
-    '/suppliers',
-    '/sales/history',
-    '/purchases',
-    '/purchases/receipts',
-    ...combineRoutes('REPORTS'),
+    ...combineRoutes('SUPPLIERS_VIEW', 'SALES_VIEW', 'PURCHASES_VIEW', 'REPORTS'),
   ],
 
   // Item/Product roles
@@ -315,8 +345,7 @@ export const ROLE_ACCESS_CONFIG = {
   // Desk User - POS operations
   'Desk User': [
     '/dashboard',
-    '/sales',
-    '/sales/history',
+    ...combineRoutes('SALES_TILL'),
     '/products', // View products for POS
     '/customers', // View customers
     '/inventory/stock-summary', // Check stock
@@ -332,8 +361,7 @@ export const ROLE_ACCESS_CONFIG = {
   // Employee - Basic access
   Employee: [
     '/dashboard',
-    '/sales',
-    '/sales/history',
+    ...combineRoutes('SALES_TILL'),
     '/products',
     '/customers',
     '/inventory/stock-summary',
@@ -354,7 +382,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   'Delivery User': [
     '/dashboard',
-    '/sales/history',
+    ...combineRoutes('SALES_VIEW'),
     '/customers',
   ],
 
@@ -366,8 +394,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   Agent: [
     '/dashboard',
-    '/sales',
-    '/sales/history',
+    ...combineRoutes('SALES_TILL'),
     '/customers',
     '/products',
   ],
@@ -382,28 +409,22 @@ export const ROLE_ACCESS_CONFIG = {
   // Analytics - Read-only access to reports and data
   Analytics: [
     '/dashboard',
-    ...combineRoutes('REPORTS', 'SALES', 'PURCHASES', 'INVENTORY'),
-    '/sales/history',
-    '/purchases',
-    '/inventory/stock-summary',
+    ...combineRoutes('REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW', 'INVENTORY_VIEW'),
     '/products',
   ],
 
   // Auditor - Read-only access to financial and transaction data
   Auditor: [
     '/dashboard',
-    '/sales/history',
-    '/purchases',
-    '/purchases/receipts',
-    ...combineRoutes('CUSTOMERS', 'SUPPLIERS', 'REPORTS'),
+    '/customers',
+    ...combineRoutes('SALES_VIEW', 'PURCHASES_VIEW', 'SUPPLIERS_VIEW', 'REPORTS'),
     '/settings/bank-accounts',
   ],
 
   // Expense Approver - Access to financial approvals
   'Expense Approver': [
     '/dashboard',
-    '/purchases',
-    '/purchases/receipts',
+    ...combineRoutes('PURCHASES_VIEW'),
     '/reports',
     '/settings/payment-methods',
   ],
@@ -411,9 +432,7 @@ export const ROLE_ACCESS_CONFIG = {
   // Dashboard Manager - Access to dashboard and reports
   'Dashboard Manager': [
     '/dashboard',
-    ...combineRoutes('REPORTS'),
-    '/sales/history',
-    '/purchases',
+    ...combineRoutes('REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW'),
     '/inventory/stock-summary',
   ],
 
@@ -426,15 +445,14 @@ export const ROLE_ACCESS_CONFIG = {
     '/dashboard',
     '/products',
     '/inventory/stock-summary',
-    '/purchases',
+    ...combineRoutes('PURCHASES_VIEW'),
   ],
 
   // Academics roles (if applicable)
   'Academics User': [
     '/dashboard',
     '/products',
-    '/sales',
-    '/sales/history',
+    ...combineRoutes('SALES_TILL'),
   ],
 
   // Blogger - Limited content access
@@ -444,69 +462,34 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 };
 
+// Every screen the app knows, so a web address can be traced to the one screen it opens
+const KNOWN_ROUTES = Array.from(new Set(Object.values(ROUTE_GROUPS).flat())).map((path) => ({ path }));
+
 /**
- * Check if a route path matches any allowed route pattern
- * Supports exact matches and prefix matches for dynamic routes
+ * Work out which screen a web address opens, the same way the router does:
+ * '/warehouses/new' is the New Store screen, not a store called "new".
+ * Returns the screen's pattern (e.g. '/sales/invoice/:id'), or null.
+ */
+export const resolveRoutePattern = (routePath) => {
+  if (!routePath || typeof routePath !== 'string') {
+    return null;
+  }
+  const normalizedPath = routePath.length > 1 ? routePath.replace(/\/+$/, '') : routePath;
+  const matches = matchRoutes(KNOWN_ROUTES, normalizedPath);
+  return matches ? matches[matches.length - 1].route.path : null;
+};
+
+/**
+ * Check if a route path is one of the allowed screens.
+ * A screen must be listed itself: allowing '/sales' does not allow '/sales/returns'.
+ * Accepts a real address ('/sales/invoice/ACC-001') or a pattern ('/sales/invoice/:id').
  */
 export const isRouteAllowed = (routePath, allowedRoutes) => {
-  // Return false if routePath is not a valid string
-  if (!routePath || typeof routePath !== 'string') {
-    return false;
-  }
-
   if (!allowedRoutes || allowedRoutes.length === 0) {
     return false;
   }
-
-  // Normalize route path (remove trailing slash)
-  const normalizedPath = routePath.replace(/\/$/, '');
-
-  // Check for exact match
-  if (allowedRoutes.includes(normalizedPath)) {
-    return true;
-  }
-
-  // Check for prefix match (for dynamic routes like /sales/invoice/:id)
-  return allowedRoutes.some((allowedRoute) => {
-    // Ensure allowedRoute is also a valid string
-    if (!allowedRoute || typeof allowedRoute !== 'string') {
-      return false;
-    }
-
-    // Normalize allowed route
-    const normalizedAllowed = allowedRoute.replace(/\/$/, '');
-
-    // Exact match (already checked above, but keep for consistency)
-    if (normalizedPath === normalizedAllowed) {
-      return true;
-    }
-
-    // If allowed route is a prefix of the current route
-    // e.g., '/sales' matches '/sales/history'
-    if (normalizedPath.startsWith(normalizedAllowed + '/')) {
-      return true;
-    }
-
-    // Handle dynamic routes - if allowed route contains :, check base path
-    // e.g., '/sales/invoice/:id' matches '/sales/invoice/123'
-    // or '/inventory/multi-level-reconciliation/:id' matches '/inventory/multi-level-reconciliation/123/stock-take'
-    if (normalizedAllowed.includes(':')) {
-      // Split on ':' to get the base path before the first parameter
-      const basePath = normalizedAllowed.split(':')[0];
-      // Remove trailing slash from base path for comparison
-      const normalizedBase = basePath.replace(/\/$/, '');
-      
-      // Check if the route path starts with the base path
-      // This handles cases like:
-      // - '/inventory/multi-level-reconciliation/:id' matching '/inventory/multi-level-reconciliation/123'
-      // - '/inventory/multi-level-reconciliation/:id/stock-take' matching '/inventory/multi-level-reconciliation/123/stock-take'
-      if (normalizedPath.startsWith(normalizedBase + '/') || normalizedPath === normalizedBase) {
-        return true;
-      }
-    }
-
-    return false;
-  });
+  const pattern = resolveRoutePattern(routePath);
+  return pattern !== null && allowedRoutes.includes(pattern);
 };
 
 /**
