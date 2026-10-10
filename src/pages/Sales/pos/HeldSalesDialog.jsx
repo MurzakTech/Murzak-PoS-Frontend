@@ -39,6 +39,7 @@ const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, ca
                           Held {age.text}
                           {age.stale && <Chip label="Open a long time" size="small" color="warning" variant="outlined" sx={{ ml: 1, height: 18, fontSize: '0.6875rem' }} />}
                           {shared && h.where === 'device' && <Chip label="This device only" size="small" color="info" variant="outlined" sx={{ ml: 1, height: 18, fontSize: '0.6875rem' }} />}
+                          {h.cart.some((i) => i.sentQty > 0) && <Chip label="Sent to kitchen" size="small" color="success" variant="outlined" sx={{ ml: 1, height: 18, fontSize: '0.6875rem' }} />}
                         </Typography>
                       </Box>
                       <Button size="small" variant="outlined" disabled={!canRecall} onClick={() => onRecall(h.id)}>Bring back</Button>
@@ -62,7 +63,9 @@ const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, ca
       <PosConfirm
         open={Boolean(discarding)}
         title="Discard this held sale?"
-        message={discarding ? `"${heldTitle(discarding)}" (${money(heldTotal(discarding), currency)}) will be thrown away and cannot be brought back.` : ''}
+        message={discarding
+          ? `"${heldTitle(discarding)}" (${money(heldTotal(discarding), currency)}) will be thrown away and cannot be brought back.${discarding.cart.some((i) => i.sentQty > 0) ? ' Some of it was already sent to the kitchen, which this does not tell.' : ''}`
+          : ''}
         confirmLabel="Discard"
         onClose={() => setDiscarding(null)}
         onConfirm={() => {

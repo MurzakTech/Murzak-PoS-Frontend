@@ -16,6 +16,7 @@ import {
   ReceiptLong,
   ExpandMore,
   ImageOutlined,
+  RestaurantOutlined,
 } from '@mui/icons-material';
 import BrandLogo from '../../../components/Common/BrandLogo';
 import SystemStatus from '../../../components/Layout/SystemStatus';
@@ -41,6 +42,8 @@ const PosHeader = ({
   themeMode,
   onToggleTheme,
   autoPrint,
+  kitchenEnabled,
+  onOpenKitchenSettings,
   onToggleAutoPrint,
   showPictures,
   onToggleShowPictures,
@@ -185,6 +188,11 @@ const PosHeader = ({
           <ListItemIcon><Print fontSize="small" /></ListItemIcon>
           <ListItemText>Print receipt automatically</ListItemText>
           <Switch edge="end" size="small" checked={autoPrint} tabIndex={-1} />
+        </MenuItem>
+        <MenuItem onClick={() => { setMenuAnchor(null); onOpenKitchenSettings(); }}>
+          <ListItemIcon><RestaurantOutlined fontSize="small" /></ListItemIcon>
+          <ListItemText>Kitchen tickets</ListItemText>
+          <Switch edge="end" size="small" checked={!!kitchenEnabled} tabIndex={-1} />
         </MenuItem>
         {sessionOpen && <Divider />}
         {sessionOpen && (

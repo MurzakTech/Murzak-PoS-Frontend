@@ -41,7 +41,24 @@ import ReceiptDialog from './pos/ReceiptDialog';
 import CloseTillDialog from './pos/CloseTillDialog';
 import HeldSalesDialog from './pos/HeldSalesDialog';
 import HoldSaleDialog from './pos/HoldSaleDialog';
-import { makeHeldSale, heldTitle, labelInUse } from '../../utils/heldSales';
+import { makeHeldSale, heldTitle, labelInUse, cleanLabel } from '../../utils/heldSales';
+import {
+  EMPTY_KITCHEN,
+  readSettings as readKitchenSettings,
+  writeSettings as writeKitchenSettings,
+  planSend,
+  planCancelAll,
+  markSent,
+  afterSend,
+  voidFor,
+  hasSentItems,
+  takeTicketNumber,
+  buildTickets,
+} from '../../utils/kitchenTickets';
+import ItemNoteDialog from './pos/ItemNoteDialog';
+import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
+import KitchenTicketDialog from './pos/KitchenTicketDialog';
+import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
 import PosConfirm from './pos/PosConfirm';
 import PriceEntryDialog from './pos/PriceEntryDialog';
@@ -123,7 +140,7 @@ const NewSale = () => {
   const { mode: themeMode, toggleColorMode } = useThemeMode();
 
   // Redux selectors
-  const { products, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
+  const { products, itemGroups, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
   const { 
     isLoading: isCreatingInvoice, 
     paymentMethods,
@@ -199,6 +216,20 @@ const NewSale = () => {
   const [holdDialogOpen, setHoldDialogOpen] = useState(false);
   const [activeHeldLabel, setActiveHeldLabel] = useState(''); // name of the held sale that was brought back, so holding it again keeps its name
   const heldBusyRef = useRef(false); // true while a hold or bring-back waits for the server: the cart must not change meanwhile
+
+  // Kitchen tickets: switched on per business on this device (see utils/kitchenTickets). Off until someone sets it up.
+  const [kitchen, setKitchen] = useState(EMPTY_KITCHEN); // rounds sent for this bill, and sent items since cancelled
+  const [kitchenSettings, setKitchenSettings] = useState(() => readKitchenSettings(localStorage, userCompany));
+  useEffect(() => {
+    setKitchenSettings(readKitchenSettings(localStorage, userCompany));
+  }, [userCompany]);
+  const [kitchenSettingsOpen, setKitchenSettingsOpen] = useState(false);
+  const [noteCode, setNoteCode] = useState(null); // item being given a note
+  const [ticketDialog, setTicketDialog] = useState({ open: false, mode: 'review', plan: null, tickets: [] });
+  const [unsentOpen, setUnsentOpen] = useState(false);
+  const [clearSentOpen, setClearSentOpen] = useState(false);
+  const chargeAnywayRef = useRef(null);
+  const chargeCheckedRef = useRef(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -731,6 +762,10 @@ const NewSale = () => {
 
   // Update quantity
   const updateQuantity = (itemCode, delta) => {
+    // Reducing something already sent to the kitchen is remembered, so the next ticket cancels it
+    const before = cart.find((i) => i.item_code === itemCode);
+    const cancelled = before ? voidFor(before, before.qty + delta) : null;
+    if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.item_code === itemCode) {
@@ -741,6 +776,7 @@ const NewSale = () => {
           const discountedSubtotal = discountRule ? calculateDiscountedPrice(item.rate, discountRule) * newQuantity : baseSubtotal;
           return { 
             ...item, 
+            sentQty: item.sentQty > newQuantity ? newQuantity : item.sentQty,
             qty: newQuantity, 
             subtotal: discountedSubtotal,
             discount_amount: discountAmount,
@@ -754,6 +790,9 @@ const NewSale = () => {
 
   // Remove from cart
   const removeFromCart = (itemCode) => {
+    const before = cart.find((i) => i.item_code === itemCode);
+    const cancelled = before ? voidFor(before, 0) : null;
+    if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart => {
       const newCart = prevCart.filter(item => item.item_code !== itemCode);
       // Announce to screen readers
@@ -783,6 +822,15 @@ const NewSale = () => {
   // Handle checkout button click - Enter checkout mode
   const handleCheckoutClick = () => {
     if (cart.length === 0) return;
+    // Items the kitchen was never told about: ask before charging (every way of charging comes through here)
+    if (kitchenSettings.enabled && !chargeCheckedRef.current) {
+      const plan = planSend(cart, kitchen, kitchenSettings);
+      if (plan.count > 0) {
+        chargeAnywayRef.current = handleCheckoutClick;
+        setUnsentOpen(true);
+        return;
+      }
+    }
     setIsCheckoutMode(true);
     // Auto-focus amount given field for cash payments
     if (paymentMode === 'Cash') {
@@ -1375,6 +1423,7 @@ const NewSale = () => {
     setLoyaltyDiscountAmount(0);
     setSearchTerm('');
     setActiveHeldLabel('');
+    setKitchen(EMPTY_KITCHEN);
     handleSelectCustomer(null);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
@@ -1390,7 +1439,7 @@ const NewSale = () => {
     heldBusyRef.current = true;
     try {
       const held = makeHeldSale(
-        { cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue },
+        { cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue, kitchen },
         label
       );
       const result = await holdSale(held);
@@ -1428,6 +1477,7 @@ const NewSale = () => {
       setManualDiscountType(held.manualDiscountType || 'percentage');
       setManualDiscountValue(held.manualDiscountValue || 0);
       setActiveHeldLabel(held.label || '');
+      setKitchen(held.kitchen || EMPTY_KITCHEN);
       setHeldDialogOpen(false);
     } finally {
       heldBusyRef.current = false;
@@ -1442,6 +1492,75 @@ const NewSale = () => {
   const renameHeldSaleWithMessage = async (id, label) => {
     const result = await renameHeldSale(id, label);
     if (!result.ok && result.reason === 'offline') showHeldMessage('The server could not be reached, so the name was not changed. Try again in a moment.', 'error');
+  };
+
+  // ---------------------------------------------------------------- kitchen tickets
+  const kitchenEnabled = kitchenSettings.enabled;
+  const kitchenPlan = useMemo(() => (kitchenEnabled ? planSend(cart, kitchen, kitchenSettings) : null), [kitchenEnabled, cart, kitchen, kitchenSettings]);
+  const kitchenPending = kitchenPlan ? kitchenPlan.count : 0;
+  const categoryNames = useMemo(
+    () => [...new Set([...(itemGroups || []).map((g) => g.item_group_name || g.name), ...products.map((p) => p.item_group)].filter(Boolean))].sort(),
+    [itemGroups, products]
+  );
+
+  const saveKitchenSettings = (next) => {
+    if (!writeKitchenSettings(localStorage, userCompany, next)) {
+      showHeldMessage('The kitchen settings could not be saved: the browser would not keep them.', 'error');
+      return;
+    }
+    setKitchenSettings(next);
+    setKitchenSettingsOpen(false);
+  };
+
+  const saveNote = (note) => {
+    setCart((prev) => prev.map((l) => (l.item_code === noteCode ? { ...l, note } : l)));
+    setNoteCode(null);
+  };
+
+  const startSend = () => {
+    if (!kitchenPlan) return;
+    if (kitchenPlan.count === 0) {
+      if (kitchenPlan.unrouted.length > 0) {
+        showHeldMessage(`No station is set for ${kitchenPlan.unrouted.map((u) => u.item_name).join(', ')}. Choose one in Kitchen tickets, under the three dots menu.`, 'warning');
+      } else {
+        showHeldMessage('Everything on this bill was already sent to the kitchen.', 'info');
+      }
+      return;
+    }
+    setTicketDialog({ open: true, mode: 'review', plan: kitchenPlan, tickets: [] });
+  };
+
+  // Sending marks what was sent first; the tickets can always be printed again from the dialog
+  const confirmSend = (label) => {
+    if (!kitchenPlan || kitchenPlan.count === 0) return;
+    const plan = kitchenPlan;
+    const { number, settings: next } = takeTicketNumber(kitchenSettings, new Date());
+    const tickets = buildTickets(plan, { label, waiter: cashierName, number, round: (kitchen.round || 0) + 1 });
+    setCart((prev) => markSent(prev, plan));
+    setKitchen(afterSend(kitchen, plan, kitchenSettings));
+    writeKitchenSettings(localStorage, userCompany, next);
+    setKitchenSettings(next);
+    setActiveHeldLabel(cleanLabel(label)); // holding this bill keeps the table name
+    setTicketDialog({ open: true, mode: 'sent', plan, tickets });
+  };
+
+  const requestClear = () => {
+    if (kitchenEnabled && hasSentItems(cart, kitchen)) setClearSentOpen(true);
+    else setClearDialogOpen(true);
+  };
+
+  const clearAndPrintCancellation = () => {
+    const plan = planCancelAll(cart, kitchen, kitchenSettings);
+    setClearSentOpen(false);
+    setCartSheetOpen(false);
+    if (plan.count > 0) {
+      const { number, settings: next } = takeTicketNumber(kitchenSettings, new Date());
+      const tickets = buildTickets(plan, { label: activeHeldLabel, waiter: cashierName, number, round: kitchen.round || 1 });
+      writeKitchenSettings(localStorage, userCompany, next);
+      setKitchenSettings(next);
+      setTicketDialog({ open: true, mode: 'sent', plan, tickets });
+    }
+    resetSale();
   };
 
   const requestExit = () => {
@@ -1561,7 +1680,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -1656,9 +1775,13 @@ const NewSale = () => {
       isLoadingDiscounts={isLoadingDiscounts}
       onCheckout={isPhone ? chargeFromPhone : handleCheckoutClick}
       onHold={() => setHoldDialogOpen(true)}
-      onClear={() => setClearDialogOpen(true)}
+      onClear={requestClear}
       isBusy={isCreatingInvoice}
       footerExtra={isCheckoutMode ? <Box /> : undefined}
+      kitchenEnabled={kitchenEnabled}
+      kitchenPending={kitchenPending}
+      onSendKitchen={startSend}
+      onEditNote={setNoteCode}
     />
   );
 
@@ -1683,6 +1806,8 @@ const NewSale = () => {
         onToggleAutoPrint={toggleAutoPrint}
         showPictures={showPictures}
         onToggleShowPictures={toggleShowPictures}
+        kitchenEnabled={kitchenEnabled}
+        onOpenKitchenSettings={() => setKitchenSettingsOpen(true)}
       />
 
       {/* Screen reader announcements for cart changes */}
@@ -1880,6 +2005,64 @@ const NewSale = () => {
         status={heldStatus}
         canRecall={cart.length === 0}
         currency={currency}
+      />
+
+      <ItemNoteDialog
+        open={noteCode !== null}
+        item={cart.find((i) => i.item_code === noteCode)}
+        quickNotes={kitchenSettings.quickNotes}
+        onSave={saveNote}
+        onClose={() => setNoteCode(null)}
+      />
+
+      <KitchenSettingsDialog
+        open={kitchenSettingsOpen}
+        settings={kitchenSettings}
+        groupNames={categoryNames}
+        onSave={saveKitchenSettings}
+        onClose={() => setKitchenSettingsOpen(false)}
+      />
+
+      <KitchenTicketDialog
+        open={ticketDialog.open}
+        mode={ticketDialog.mode}
+        plan={ticketDialog.plan || { stations: [], unrouted: [] }}
+        tickets={ticketDialog.tickets}
+        initialLabel={activeHeldLabel}
+        printNow={kitchenSettings.printNow}
+        onSend={confirmSend}
+        onClose={() => setTicketDialog((d) => ({ ...d, open: false }))}
+      />
+
+      <UnsentItemsDialog
+        open={unsentOpen}
+        plan={kitchenPlan}
+        onClose={() => setUnsentOpen(false)}
+        onSendNow={() => {
+          setUnsentOpen(false);
+          startSend();
+        }}
+        onChargeAnyway={() => {
+          setUnsentOpen(false);
+          chargeCheckedRef.current = true;
+          try {
+            if (chargeAnywayRef.current) chargeAnywayRef.current();
+          } finally {
+            chargeCheckedRef.current = false;
+          }
+        }}
+      />
+
+      <ClearSentSaleDialog
+        open={clearSentOpen}
+        canPrintCancellation={kitchenEnabled && planCancelAll(cart, kitchen, kitchenSettings).count > 0}
+        onClose={() => setClearSentOpen(false)}
+        onClear={() => {
+          setClearSentOpen(false);
+          setCartSheetOpen(false);
+          resetSale();
+        }}
+        onClearAndPrint={clearAndPrintCancellation}
       />
 
       <HoldSaleDialog

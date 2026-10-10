@@ -79,6 +79,7 @@ export const toServer = (held, { company, warehouse }) => ({
     customerPriceList: held.customerPriceList,
     manualDiscountType: held.manualDiscountType,
     manualDiscountValue: held.manualDiscountValue,
+    kitchen: held.kitchen ?? null, // rounds sent to the kitchen and items cancelled since
   },
 });
 

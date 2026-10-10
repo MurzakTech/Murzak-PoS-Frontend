@@ -123,6 +123,28 @@ describe('HeldSalesDialog with the server holding the bills', () => {
   });
 });
 
+describe('HeldSalesDialog and the kitchen', () => {
+  const sentBill = [{ id: 's1', heldAt: minutesAgo(10), label: 'Table 9', customer: 'Walk-in Customer', cart: [{ subtotal: 300, qty: 2, sentQty: 2 }] }];
+
+  it('marks a bill that was already sent to the kitchen, and only that one', () => {
+    renderDialog({ held: [...sentBill, held[0]] });
+    expect(screen.getAllByText('Sent to kitchen')).toHaveLength(1);
+  });
+
+  it('warns that throwing away a sent bill does not tell the kitchen', async () => {
+    renderDialog({ held: sentBill });
+    fireEvent.click(screen.getByRole('button', { name: 'Discard Table 9' }));
+    expect(await screen.findByText(/already sent to the kitchen, which this does not tell/)).toBeInTheDocument();
+  });
+
+  it('does not say that for a bill that was never sent', async () => {
+    renderDialog({ held: [held[0]] });
+    fireEvent.click(screen.getByRole('button', { name: 'Discard Table 4' }));
+    await screen.findByText('Discard this held sale?');
+    expect(screen.queryByText(/does not tell/)).not.toBeInTheDocument();
+  });
+});
+
 describe('HoldSaleDialog', () => {
   const open = (props = {}) => {
     const onConfirm = jest.fn();

@@ -30,6 +30,14 @@ describe('what is sent to the server', () => {
     expect(body.payload.customerPriceList).toBe('Standard Selling');
   });
 
+  it('carries the kitchen history of the bill, and brings it back', () => {
+    const kitchen = { round: 2, voids: [{ item_code: 'A', qty: 1 }] };
+    const body = toServer(held({ kitchen }), { company: 'Shop A' });
+    expect(body.payload.kitchen).toEqual(kitchen);
+    expect(fromServer({ id: 'x', payload: body.payload }).kitchen).toEqual(kitchen);
+    expect(toServer(held(), { company: 'Shop A' }).payload.kitchen).toBeNull();
+  });
+
   it('leaves the store out when none is chosen', () => {
     expect(toServer(held(), { company: 'Shop A' })).not.toHaveProperty('warehouse');
   });
