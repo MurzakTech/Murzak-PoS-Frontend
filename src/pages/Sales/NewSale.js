@@ -40,6 +40,29 @@ import CustomerDialog from './pos/CustomerDialog';
 import ReceiptDialog from './pos/ReceiptDialog';
 import CloseTillDialog from './pos/CloseTillDialog';
 import HeldSalesDialog from './pos/HeldSalesDialog';
+import HoldSaleDialog from './pos/HoldSaleDialog';
+import { makeHeldSale, heldTitle, labelInUse, cleanLabel } from '../../utils/heldSales';
+import {
+  EMPTY_KITCHEN,
+  orderTypeOf,
+  ticketTitle,
+  planSend,
+  planCancelAll,
+  markSent,
+  afterSend,
+  voidFor,
+  hasSentItems,
+  takeTicketNumber,
+  buildTickets,
+} from '../../utils/kitchenTickets';
+import ItemNoteDialog from './pos/ItemNoteDialog';
+import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
+import KitchenTicketDialog from './pos/KitchenTicketDialog';
+import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
+import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
+import useHeldSales from '../../hooks/useHeldSales';
+import useKitchenSettings from '../../hooks/useKitchenSettings';
+import useKitchenTickets from '../../hooks/useKitchenTickets';
 import PosConfirm from './pos/PosConfirm';
 import PriceEntryDialog from './pos/PriceEntryDialog';
 import PhoneSaleBar from './pos/PhoneSaleBar';
@@ -60,18 +83,9 @@ const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
  */
 
 const TILE_PAGE = 60;
-const HELD_KEY = 'pos_held_sales_v1';
 const AUTOPRINT_KEY = 'pos_auto_print';
 const PICTURES_KEY = 'pos_show_pictures';
 
-const readHeldSales = () => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(HELD_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
-};
 // On phones and tablets, focusing the search box pops the on-screen keyboard up over
 // the products. Only hand focus back to it where there is a mouse (a desk till);
 // a barcode scanner still works everywhere because typing anywhere lands in search.
@@ -129,7 +143,7 @@ const NewSale = () => {
   const { mode: themeMode, toggleColorMode } = useThemeMode();
 
   // Redux selectors
-  const { products, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
+  const { products, itemGroups, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
   const { 
     isLoading: isCreatingInvoice, 
     paymentMethods,
@@ -192,8 +206,41 @@ const NewSale = () => {
   const [amountGiven, setAmountGiven] = useState(0);
   const [tileLimit, setTileLimit] = useState(TILE_PAGE); // how many product tiles are drawn
   const [shiftChecked, setShiftChecked] = useState(false); // have we looked for an already-open shift?
-  const [heldSales, setHeldSales] = useState(readHeldSales);
+  // Held sales: on the server when it supports them (shared by every till), otherwise on this device (see hooks/useHeldSales)
+  const {
+    held: heldSales,
+    status: heldStatus,
+    hold: holdSale,
+    claim: claimHeld,
+    discard: discardHeld,
+    rename: renameHeldSale,
+  } = useHeldSales({ company: userCompany, warehouse: activeWarehouse?.name || activeWarehouse?.warehouse_name || '' });
   const [heldDialogOpen, setHeldDialogOpen] = useState(false);
+  const [holdDialogOpen, setHoldDialogOpen] = useState(false);
+  const [activeHeldLabel, setActiveHeldLabel] = useState(''); // name of the held sale that was brought back, so holding it again keeps its name
+  const heldBusyRef = useRef(false); // true while a hold or bring-back waits for the server: the cart must not change meanwhile
+
+  // Kitchen tickets: switched on per business on this device (see utils/kitchenTickets). Off until someone sets it up.
+  const [kitchen, setKitchen] = useState(EMPTY_KITCHEN); // rounds sent for this bill, and sent items since cancelled
+  // Stations, notes and the station screens switch are shared by the business through the server when it supports it
+  const {
+    settings: kitchenSettings,
+    status: kitchenSettingsStatus,
+    save: saveKitchenShared,
+    saveDevice: saveKitchenDevice,
+  } = useKitchenSettings({ company: userCompany });
+  const kitchenWarehouse = activeWarehouse?.name || activeWarehouse?.warehouse_name || '';
+  const screensWanted = kitchenSettings.enabled && kitchenSettings.screens && kitchenSettingsStatus !== 'unavailable';
+  const kitchenTickets = useKitchenTickets({ company: userCompany, warehouse: kitchenWarehouse, enabled: screensWanted });
+  const [readyOpen, setReadyOpen] = useState(false);
+  const pendingSendRef = useRef(null); // the order being sent, kept so Try again sends the very same tickets
+  const [kitchenSettingsOpen, setKitchenSettingsOpen] = useState(false);
+  const [noteCode, setNoteCode] = useState(null); // item being given a note
+  const [ticketDialog, setTicketDialog] = useState({ open: false, mode: 'review', plan: null, tickets: [], error: '', toScreens: false });
+  const [unsentOpen, setUnsentOpen] = useState(false);
+  const [clearSentOpen, setClearSentOpen] = useState(false);
+  const chargeAnywayRef = useRef(null);
+  const chargeCheckedRef = useRef(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -631,6 +678,7 @@ const NewSale = () => {
   // Add to cart with stock validation
   // enteredRate: the price typed on the "Enter price" keypad, for products with no fixed price
   const addToCart = async (product, enteredRate) => {
+    if (heldBusyRef.current) return; // a hold or bring-back is waiting for the server
     const itemCode = product.item_code;
     
     if (!defaultWarehouse) {
@@ -725,6 +773,10 @@ const NewSale = () => {
 
   // Update quantity
   const updateQuantity = (itemCode, delta) => {
+    // Reducing something already sent to the kitchen is remembered, so the next ticket cancels it
+    const before = cart.find((i) => i.item_code === itemCode);
+    const cancelled = before ? voidFor(before, before.qty + delta) : null;
+    if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.item_code === itemCode) {
@@ -735,6 +787,7 @@ const NewSale = () => {
           const discountedSubtotal = discountRule ? calculateDiscountedPrice(item.rate, discountRule) * newQuantity : baseSubtotal;
           return { 
             ...item, 
+            sentQty: item.sentQty > newQuantity ? newQuantity : item.sentQty,
             qty: newQuantity, 
             subtotal: discountedSubtotal,
             discount_amount: discountAmount,
@@ -748,6 +801,9 @@ const NewSale = () => {
 
   // Remove from cart
   const removeFromCart = (itemCode) => {
+    const before = cart.find((i) => i.item_code === itemCode);
+    const cancelled = before ? voidFor(before, 0) : null;
+    if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart => {
       const newCart = prevCart.filter(item => item.item_code !== itemCode);
       // Announce to screen readers
@@ -777,6 +833,15 @@ const NewSale = () => {
   // Handle checkout button click - Enter checkout mode
   const handleCheckoutClick = () => {
     if (cart.length === 0) return;
+    // Items the kitchen was never told about: ask before charging (every way of charging comes through here)
+    if (kitchenSettings.enabled && !chargeCheckedRef.current) {
+      const plan = planSend(cart, kitchen, kitchenSettings);
+      if (plan.count > 0) {
+        chargeAnywayRef.current = handleCheckoutClick;
+        setUnsentOpen(true);
+        return;
+      }
+    }
     setIsCheckoutMode(true);
     // Auto-focus amount given field for cash payments
     if (paymentMode === 'Cash') {
@@ -1359,15 +1424,6 @@ const NewSale = () => {
 
 
   // ---------------------------------------------------------------- hold, recall, clear
-  const persistHeld = (next) => {
-    setHeldSales(next);
-    try {
-      localStorage.setItem(HELD_KEY, JSON.stringify(next));
-    } catch (e) {
-      // not critical
-    }
-  };
-
   const resetSale = () => {
     setCart([]);
     setIsCheckoutMode(false);
@@ -1377,44 +1433,211 @@ const NewSale = () => {
     setLoyaltyPointsToRedeem(0);
     setLoyaltyDiscountAmount(0);
     setSearchTerm('');
+    setActiveHeldLabel('');
+    setKitchen(EMPTY_KITCHEN);
     handleSelectCustomer(null);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
-  const holdCurrentSale = () => {
-    if (cart.length === 0) return;
-    persistHeld([
-      ...heldSales,
-      {
-        id: Date.now(),
-        heldAt: new Date().toISOString(),
-        cart,
-        customer,
-        customerId,
-        selectedCustomerObj,
-        customerPriceList,
-        manualDiscountType,
-        manualDiscountValue,
-      },
-    ]);
-    resetSale();
-    setSnackbarMessage('Sale put on hold. Find it under Held sales at the top.');
-    setSnackbarSeverity('success');
+  const showHeldMessage = (message, severity) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
     setSnackbarOpen(true);
   };
 
-  const recallHeldSale = (id) => {
-    const held = heldSales.find((h) => h.id === id);
-    if (!held || cart.length > 0) return;
-    setCart(held.cart);
-    setCustomer(held.customer || 'Walk-in Customer');
-    setCustomerId(held.customerId || null);
-    setSelectedCustomerObj(held.selectedCustomerObj || null);
-    setCustomerPriceList(held.customerPriceList || 'Standard Selling');
-    setManualDiscountType(held.manualDiscountType || 'percentage');
-    setManualDiscountValue(held.manualDiscountValue || 0);
-    persistHeld(heldSales.filter((h) => h.id !== id));
-    setHeldDialogOpen(false);
+  const holdCurrentSale = async (label) => {
+    if (cart.length === 0 || heldBusyRef.current) return;
+    heldBusyRef.current = true;
+    try {
+      const held = makeHeldSale(
+        { cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue, kitchen },
+        label
+      );
+      const result = await holdSale(held);
+      if (!result.ok) {
+        // The sale stays on screen: clearing it now would lose it
+        showHeldMessage('This sale could not be put on hold: neither the server nor this device would keep it. It is still on screen, so finish it or write it down first.', 'error');
+        return;
+      }
+      resetSale();
+      const name = heldTitle(held);
+      if (result.where === 'server') showHeldMessage(`"${name}" is on hold and shared with the other tills. Find it under Held sales at the top.`, 'success');
+      else if (result.fellBack) showHeldMessage(`"${name}" is on hold on this device only, because the server could not be reached. It will be shared when the connection returns.`, 'warning');
+      else showHeldMessage(`"${name}" is on hold. Find it under Held sales at the top.`, 'success');
+    } finally {
+      heldBusyRef.current = false;
+    }
+  };
+
+  const recallHeldSale = async (id) => {
+    if (cart.length > 0 || heldBusyRef.current) return;
+    heldBusyRef.current = true;
+    try {
+      const result = await claimHeld(id);
+      if (!result.ok) {
+        if (result.reason === 'taken') showHeldMessage('This sale was already brought back on another till.', 'warning');
+        else if (result.reason === 'offline') showHeldMessage('The server could not be reached, so this sale was not brought back. Try again in a moment.', 'error');
+        return;
+      }
+      const held = result.entry;
+      setCart(held.cart);
+      setCustomer(held.customer || 'Walk-in Customer');
+      setCustomerId(held.customerId || null);
+      setSelectedCustomerObj(held.selectedCustomerObj || null);
+      setCustomerPriceList(held.customerPriceList || 'Standard Selling');
+      setManualDiscountType(held.manualDiscountType || 'percentage');
+      setManualDiscountValue(held.manualDiscountValue || 0);
+      setActiveHeldLabel(held.label || '');
+      setKitchen(held.kitchen || EMPTY_KITCHEN);
+      setHeldDialogOpen(false);
+    } finally {
+      heldBusyRef.current = false;
+    }
+  };
+
+  const discardHeldSale = async (id) => {
+    const result = await discardHeld(id);
+    if (!result.ok && result.reason === 'offline') showHeldMessage('The server could not be reached, so that held sale was not discarded. Try again in a moment.', 'error');
+  };
+
+  const renameHeldSaleWithMessage = async (id, label) => {
+    const result = await renameHeldSale(id, label);
+    if (!result.ok && result.reason === 'offline') showHeldMessage('The server could not be reached, so the name was not changed. Try again in a moment.', 'error');
+  };
+
+  // ---------------------------------------------------------------- kitchen tickets
+  const kitchenEnabled = kitchenSettings.enabled;
+  const kitchenPlan = useMemo(() => (kitchenEnabled ? planSend(cart, kitchen, kitchenSettings) : null), [kitchenEnabled, cart, kitchen, kitchenSettings]);
+  const kitchenPending = kitchenPlan ? kitchenPlan.count : 0;
+  const categoryNames = useMemo(
+    () => [...new Set([...(itemGroups || []).map((g) => g.item_group_name || g.name), ...products.map((p) => p.item_group)].filter(Boolean))].sort(),
+    [itemGroups, products]
+  );
+
+  const saveKitchenSettings = async (next) => {
+    const result = await saveKitchenShared(next);
+    if (!result.ok) {
+      showHeldMessage('The kitchen settings could not be saved: the browser would not keep them.', 'error');
+      return;
+    }
+    setKitchenSettingsOpen(false);
+    if (result.localOnly && kitchenSettingsStatus !== 'unavailable') {
+      showHeldMessage(`Saved on this device only. ${result.message || 'The server could not keep them just now, so other tills will not see the change.'}`, 'warning');
+    }
+  };
+
+  const saveNote = (note) => {
+    setCart((prev) => prev.map((l) => (l.item_code === noteCode ? { ...l, note } : l)));
+    setNoteCode(null);
+  };
+
+  const startSend = () => {
+    if (!kitchenPlan) return;
+    if (kitchenPlan.count === 0) {
+      if (kitchenPlan.unrouted.length > 0) {
+        showHeldMessage(`No station is set for ${kitchenPlan.unrouted.map((u) => u.item_name).join(', ')}. Choose one in Kitchen tickets, under the three dots menu.`, 'warning');
+      } else {
+        showHeldMessage('Everything on this bill was already sent to the kitchen.', 'info');
+      }
+      return;
+    }
+    setTicketDialog({ open: true, mode: 'review', plan: kitchenPlan, tickets: [], error: '', toScreens: false });
+  };
+
+  // ---- delivering tickets
+  // With station screens on, the server numbers the tickets and the stations see them; nothing is marked as
+  // sent until the server has them. Without screens (or a server that cannot), they print with this device's numbers.
+  const sendToStationScreens = () => screensWanted && kitchenTickets.status !== 'unavailable';
+
+  const finishSend = (pending, tickets, toScreens) => {
+    const { plan, label, orderType, cancelAll } = pending;
+    if (cancelAll) {
+      setCartSheetOpen(false);
+      resetSale();
+    } else {
+      setCart((prev) => markSent(prev, plan));
+      setKitchen({ ...afterSend(pending.kitchen, plan, kitchenSettings), orderType });
+      setActiveHeldLabel(cleanLabel(label)); // holding this bill keeps the table name
+    }
+    if (orderType !== kitchenSettings.lastOrderType) saveKitchenDevice({ lastOrderType: orderType });
+    setTicketDialog({ open: true, mode: 'sent', plan, tickets, error: '', toScreens });
+  };
+
+  // Print only: numbers come from this device's own counter, which starts again each day
+  const printLocally = (pending) => {
+    const { number, settings: next } = takeTicketNumber(kitchenSettings, new Date());
+    saveKitchenDevice({ ticketDate: next.ticketDate, nextTicket: next.nextTicket });
+    finishSend(pending, pending.tickets.map((t) => ({ ...t, number })), false);
+  };
+
+  const deliver = async (pending) => {
+    pendingSendRef.current = pending;
+    if (!pending.toServer) {
+      printLocally(pending);
+      return;
+    }
+    setTicketDialog((d) => ({ ...d, open: true, mode: 'sending', plan: pending.plan, error: '' }));
+    const result = await kitchenTickets.send(pending.tickets);
+    if (result.ok) {
+      const saved = new Map(result.tickets.map((t) => [t.clientId, t]));
+      finishSend(pending, pending.tickets.map((t) => {
+        const found = saved.get(t.clientId);
+        return found ? { ...t, number: found.number, waiter: t.waiter || found.waiter } : t;
+      }), true);
+    } else if (result.kind === 'unavailable') {
+      printLocally(pending); // this server has no station screen calls: print as before
+    } else {
+      setTicketDialog((d) => ({ ...d, mode: 'failed', error: result.message || '' }));
+    }
+  };
+
+  const confirmSend = (label, orderType) => {
+    if (!kitchenPlan || kitchenPlan.count === 0) return;
+    const plan = kitchenPlan;
+    const type = orderTypeOf(orderType, label);
+    const tickets = buildTickets(plan, { label, waiter: cashierName, number: null, round: (kitchen.round || 0) + 1, orderType: type });
+    deliver({ plan, label, orderType: type, tickets, kitchen, cancelAll: false, toServer: sendToStationScreens() });
+  };
+
+  const retrySend = () => {
+    if (pendingSendRef.current) deliver(pendingSendRef.current);
+  };
+
+  const printOnly = () => {
+    if (pendingSendRef.current) printLocally(pendingSendRef.current);
+  };
+
+  const requestClear = () => {
+    if (kitchenEnabled && hasSentItems(cart, kitchen)) setClearSentOpen(true);
+    else setClearDialogOpen(true);
+  };
+
+  // Clearing a bill the kitchen already has: the cancellation goes out first, and the bill is cleared once it has
+  const clearAndPrintCancellation = () => {
+    const plan = planCancelAll(cart, kitchen, kitchenSettings);
+    setClearSentOpen(false);
+    if (plan.count === 0) {
+      setCartSheetOpen(false);
+      resetSale();
+      return;
+    }
+    const type = orderTypeOf(kitchen.orderType, activeHeldLabel);
+    const tickets = buildTickets(plan, { label: activeHeldLabel, waiter: cashierName, number: null, round: kitchen.round || 1, orderType: type });
+    deliver({ plan, label: activeHeldLabel, orderType: type, tickets, kitchen, cancelAll: true, toServer: sendToStationScreens() });
+  };
+
+  // Tell the waiter when a station marks something Ready
+  const { newlyReady, clearNewlyReady } = kitchenTickets;
+  useEffect(() => {
+    if (newlyReady.length === 0) return;
+    showHeldMessage(`Ready: ${newlyReady.map((t) => `${ticketTitle(t)} (${t.station})`).join(', ')}`, 'success');
+    clearNewlyReady();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newlyReady]);
+
+  const serveTicket = async (id) => {
+    const result = await kitchenTickets.markServed(id);
+    if (!result.ok) showHeldMessage(result.message || 'Could not mark it as served.', 'error');
   };
 
   const requestExit = () => {
@@ -1534,7 +1757,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -1628,13 +1851,14 @@ const NewSale = () => {
       }}
       isLoadingDiscounts={isLoadingDiscounts}
       onCheckout={isPhone ? chargeFromPhone : handleCheckoutClick}
-      onHold={() => {
-        holdCurrentSale();
-        setCartSheetOpen(false);
-      }}
-      onClear={() => setClearDialogOpen(true)}
+      onHold={() => setHoldDialogOpen(true)}
+      onClear={requestClear}
       isBusy={isCreatingInvoice}
       footerExtra={isCheckoutMode ? <Box /> : undefined}
+      kitchenEnabled={kitchenEnabled}
+      kitchenPending={kitchenPending}
+      onSendKitchen={startSend}
+      onEditNote={setNoteCode}
     />
   );
 
@@ -1659,6 +1883,10 @@ const NewSale = () => {
         onToggleAutoPrint={toggleAutoPrint}
         showPictures={showPictures}
         onToggleShowPictures={toggleShowPictures}
+        kitchenEnabled={kitchenEnabled}
+        readyCount={screensWanted ? kitchenTickets.ready.length : 0}
+        onOpenReady={() => setReadyOpen(true)}
+        onOpenKitchenSettings={() => setKitchenSettingsOpen(true)}
       />
 
       {/* Screen reader announcements for cart changes */}
@@ -1851,9 +2079,90 @@ const NewSale = () => {
         onClose={() => setHeldDialogOpen(false)}
         held={heldSales}
         onRecall={recallHeldSale}
-        onDelete={(id) => persistHeld(heldSales.filter((h) => h.id !== id))}
+        onDelete={discardHeldSale}
+        onRename={renameHeldSaleWithMessage}
+        status={heldStatus}
         canRecall={cart.length === 0}
         currency={currency}
+      />
+
+      <ItemNoteDialog
+        open={noteCode !== null}
+        item={cart.find((i) => i.item_code === noteCode)}
+        quickNotes={kitchenSettings.quickNotes}
+        onSave={saveNote}
+        onClose={() => setNoteCode(null)}
+      />
+
+      <KitchenSettingsDialog
+        open={kitchenSettingsOpen}
+        settings={kitchenSettings}
+        groupNames={categoryNames}
+        screensStatus={kitchenSettingsStatus}
+        onOpenStation={() => navigate('/kitchen')}
+        onSave={saveKitchenSettings}
+        onClose={() => setKitchenSettingsOpen(false)}
+      />
+
+      <KitchenTicketDialog
+        open={ticketDialog.open}
+        mode={ticketDialog.mode}
+        plan={ticketDialog.plan || { stations: [], unrouted: [] }}
+        tickets={ticketDialog.tickets}
+        initialLabel={activeHeldLabel}
+        initialOrderType={kitchen.orderType || kitchenSettings.lastOrderType}
+        printNow={kitchenSettings.printNow}
+        toScreens={ticketDialog.toScreens}
+        error={ticketDialog.error}
+        onSend={confirmSend}
+        onRetry={retrySend}
+        onPrintOnly={printOnly}
+        onClose={() => setTicketDialog((d) => ({ ...d, open: false }))}
+      />
+
+      <ReadyTicketsDialog open={readyOpen} tickets={kitchenTickets.ready} onServe={serveTicket} onClose={() => setReadyOpen(false)} />
+
+      <UnsentItemsDialog
+        open={unsentOpen}
+        plan={kitchenPlan}
+        onClose={() => setUnsentOpen(false)}
+        onSendNow={() => {
+          setUnsentOpen(false);
+          startSend();
+        }}
+        onChargeAnyway={() => {
+          setUnsentOpen(false);
+          chargeCheckedRef.current = true;
+          try {
+            if (chargeAnywayRef.current) chargeAnywayRef.current();
+          } finally {
+            chargeCheckedRef.current = false;
+          }
+        }}
+      />
+
+      <ClearSentSaleDialog
+        open={clearSentOpen}
+        canPrintCancellation={kitchenEnabled && planCancelAll(cart, kitchen, kitchenSettings).count > 0}
+        onClose={() => setClearSentOpen(false)}
+        onClear={() => {
+          setClearSentOpen(false);
+          setCartSheetOpen(false);
+          resetSale();
+        }}
+        onClearAndPrint={clearAndPrintCancellation}
+      />
+
+      <HoldSaleDialog
+        open={holdDialogOpen}
+        initialLabel={activeHeldLabel}
+        nameInUse={(label) => labelInUse(heldSales, label)}
+        onClose={() => setHoldDialogOpen(false)}
+        onConfirm={(label) => {
+          setHoldDialogOpen(false);
+          setCartSheetOpen(false);
+          holdCurrentSale(label);
+        }}
       />
 
       <PriceEntryDialog

@@ -16,6 +16,8 @@ import {
   ReceiptLong,
   ExpandMore,
   ImageOutlined,
+  RestaurantOutlined,
+  RoomService,
 } from '@mui/icons-material';
 import BrandLogo from '../../../components/Common/BrandLogo';
 import SystemStatus from '../../../components/Layout/SystemStatus';
@@ -41,6 +43,10 @@ const PosHeader = ({
   themeMode,
   onToggleTheme,
   autoPrint,
+  kitchenEnabled,
+  readyCount = 0,
+  onOpenReady,
+  onOpenKitchenSettings,
   onToggleAutoPrint,
   showPictures,
   onToggleShowPictures,
@@ -153,6 +159,19 @@ const PosHeader = ({
         </>
       )}
 
+      {readyCount > 0 && (
+        <>
+          <Button size="small" variant="contained" color="success" startIcon={<RoomService />} onClick={onOpenReady} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+            Ready ({readyCount})
+          </Button>
+          <IconButton color="success" onClick={onOpenReady} aria-label={`Ready to serve (${readyCount})`} sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>
+            <Badge badgeContent={readyCount} color="success">
+              <RoomService />
+            </Badge>
+          </IconButton>
+        </>
+      )}
+
       <SystemStatus />
       <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
         <Clock />
@@ -185,6 +204,11 @@ const PosHeader = ({
           <ListItemIcon><Print fontSize="small" /></ListItemIcon>
           <ListItemText>Print receipt automatically</ListItemText>
           <Switch edge="end" size="small" checked={autoPrint} tabIndex={-1} />
+        </MenuItem>
+        <MenuItem onClick={() => { setMenuAnchor(null); onOpenKitchenSettings(); }}>
+          <ListItemIcon><RestaurantOutlined fontSize="small" /></ListItemIcon>
+          <ListItemText>Kitchen tickets</ListItemText>
+          <Switch edge="end" size="small" checked={!!kitchenEnabled} tabIndex={-1} />
         </MenuItem>
         {sessionOpen && <Divider />}
         {sessionOpen && (

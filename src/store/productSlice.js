@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
-import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
+import { friendlyErrorMessage, errorSeverity, humanizeMessage } from '../utils/friendlyError';
+import { summarizeBulkCreate } from '../utils/productImport';
+import { STOCK_WORDING } from '../utils/stockImport';
 
 // Product API endpoints
 const ENDPOINTS = {
@@ -394,22 +396,29 @@ export const getStockQuantity = createAsyncThunk(
   }
 );
 
+// payload: { company, products: [...] }. Sent as is: wrapping it again would bury the list
+// one level too deep for the server. Resolves with the server's reply and the summary of it.
 export const bulkCreateProducts = createAsyncThunk(
   'product/bulkCreateProducts',
-  async (products, { dispatch, rejectWithValue }) => {
+  async (payload, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(ENDPOINTS.bulkCreateProducts, {
-        products,
-      });
+      const response = await axiosInstance.post(ENDPOINTS.bulkCreateProducts, payload);
       const data = extractResponseData(response);
-      const successMessage = extractSuccessMessage(response) || 'Bulk creation completed';
-      
+
+      // Some replies refuse the whole request with a normal 200 status
+      if (data && typeof data === 'object' && (data.status === 'error' || data.success === false)) {
+        const errorMessage = humanizeMessage(data.message, 'The products could not be imported.');
+        dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Import failed' }));
+        return rejectWithValue(errorMessage);
+      }
+
+      const summary = summarizeBulkCreate(data, payload?.products?.length || 0);
       dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
+        message: summary.text,
+        severity: summary.problems ? 'warning' : 'success',
+        title: summary.problems ? 'Some products need attention' : 'Products imported',
       }));
-      
+
       return data;
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
@@ -558,20 +567,28 @@ export const getProductVariants = createAsyncThunk(
 );
 
 // Bulk Import Opening Stock
+// importData: { company, warehouse, posting_date, stock_data: [{ item_code, qty }] }
 export const bulkImportOpeningStock = createAsyncThunk(
   'product/bulkImportOpeningStock',
   async (importData, { dispatch, rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(ENDPOINTS.bulkImportOpeningStock, importData);
       const data = extractResponseData(response);
-      const successMessage = extractSuccessMessage(response) || 'Opening stock imported successfully';
-      
+
+      // Some replies refuse the whole request with a normal 200 status
+      if (data && typeof data === 'object' && (data.status === 'error' || data.success === false)) {
+        const errorMessage = humanizeMessage(data.message, 'The opening stock could not be recorded.');
+        dispatch(showNotification({ message: errorMessage, severity: 'error', title: 'Opening stock not recorded' }));
+        return rejectWithValue(errorMessage);
+      }
+
+      const summary = summarizeBulkCreate(data, importData?.stock_data?.length || 0, STOCK_WORDING);
       dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
+        message: summary.text,
+        severity: summary.problems ? 'warning' : 'success',
+        title: summary.problems ? 'Some items need attention' : 'Opening stock recorded',
       }));
-      
+
       return data;
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
@@ -1402,6 +1419,9 @@ const productSlice = createSlice({
         }
       })
       // Bulk import opening stock
+      .addCase(bulkImportOpeningStock.pending, (state) => {
+        state.bulkImportResults = null; // never show the result of an earlier import
+      })
       .addCase(bulkImportOpeningStock.fulfilled, (state, action) => {
         state.bulkImportResults = action.payload;
       })

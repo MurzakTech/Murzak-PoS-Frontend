@@ -155,6 +155,8 @@ const ROUTE_GROUPS = {
   INDUSTRY: [
     '/industry/:industryCode/products',
   ],
+  // Kitchen and bar station screen (anyone who can use the till can have one on a tablet)
+  KITCHEN: ['/kitchen'],
 };
 
 // Smaller bundles for roles that should not get a whole area
@@ -211,7 +213,8 @@ export const ROLE_ACCESS_CONFIG = {
       'ROLES',
       'REPORTS',
       'SETTINGS',
-      'INDUSTRY'
+      'INDUSTRY',
+      'KITCHEN'
     ),
   ],
 
@@ -231,7 +234,8 @@ export const ROLE_ACCESS_CONFIG = {
       'ROLES',
       'REPORTS',
       'SETTINGS',
-      'INDUSTRY'
+      'INDUSTRY',
+      'KITCHEN'
     ),
   ],
 
@@ -251,13 +255,14 @@ export const ROLE_ACCESS_CONFIG = {
       'ROLES',
       'REPORTS',
       'SETTINGS',
-      'INDUSTRY'
+      'INDUSTRY',
+      'KITCHEN'
     ),
   ],
 
   // Sales roles
   'Sales Manager': [
-    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS'),
+    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'KITCHEN'),
     '/inventory/stock-summary', // View stock for sales
   ],
 
@@ -265,6 +270,7 @@ export const ROLE_ACCESS_CONFIG = {
     '/dashboard',
     ...combineRoutes('SALES_TILL', 'RECONCILIATION_STEP'),
     '/sales/invoice/new',
+    '/kitchen', // station screen on a tablet
     '/customers',
     '/products', // View products for sales
     '/inventory', // Access to inventory section
@@ -355,6 +361,7 @@ export const ROLE_ACCESS_CONFIG = {
   'Desk User': [
     '/dashboard',
     ...combineRoutes('SALES_TILL'),
+    '/kitchen', // station screen on a tablet
     '/products', // View products for POS
     '/customers', // View customers
     '/inventory/stock-summary', // Check stock
@@ -371,6 +378,7 @@ export const ROLE_ACCESS_CONFIG = {
   Employee: [
     '/dashboard',
     ...combineRoutes('SALES_TILL'),
+    '/kitchen', // station screen on a tablet
     '/products',
     '/customers',
     '/inventory/stock-summary',
@@ -404,6 +412,7 @@ export const ROLE_ACCESS_CONFIG = {
   Agent: [
     '/dashboard',
     ...combineRoutes('SALES_TILL'),
+    '/kitchen', // station screen on a tablet
     '/customers',
     '/products',
   ],
