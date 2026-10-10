@@ -35,12 +35,12 @@ import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../config/deployment';
 const SUPPORT_EMAIL = 'murzaktechnologies@gmail.com';
 
 const FEATURES = [
-  'Secure cloud-based POS',
-  'Real-time sales tracking',
-  'Inventory management',
-  'Multi-store support',
-  'Tax compliance ready',
-  'Customer support when you need it',
+  'Your till, stock and reports in one place',
+  'Cash, M-Pesa, card and credit',
+  'Connects to KRA eTIMS',
+  'Every store on one dashboard',
+  'Each person sees only what their role allows',
+  'Real people on support when you need them',
 ];
 
 const Login = () => {
@@ -177,6 +177,12 @@ const Login = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3.5 }}>
               Sign in to continue to your dashboard.
             </Typography>
+
+            {!error && new URLSearchParams(location.search).get('reason') === 'idle' && (
+              <Alert severity="info" sx={{ mb: 2.5 }}>
+                You were signed out because the screen was not used for a while. Sign in to carry on.
+              </Alert>
+            )}
 
             {error && (
               <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => dispatch(clearError())} role="alert">
