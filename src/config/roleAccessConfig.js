@@ -266,8 +266,6 @@ export const ROLE_ACCESS_CONFIG = {
     '/products', // View products for sales
     '/inventory', // Access to inventory section
     '/inventory/stock-summary', // Check stock availability
-    // Stock reconciliation access
-    '/inventory/stock-reconciliation',
   ],
 
   // Purchase roles
@@ -297,9 +295,12 @@ export const ROLE_ACCESS_CONFIG = {
     '/inventory/multi-level-reconciliation/new',
   ],
 
+  // Everyday stock work; creating stores and starting stock-count rounds stays with Stock Managers
   'Stock User': [
     '/dashboard',
-    ...combineRoutes('INVENTORY', 'WAREHOUSES', 'STOCK_TRANSFERS'),
+    ...combineRoutes('INVENTORY', 'WAREHOUSES', 'STOCK_TRANSFERS').filter(
+      (route) => !['/warehouses/new', '/inventory/multi-level-reconciliation/new'].includes(route)
+    ),
     '/products', // View products
     '/inventory/stock-summary',
     '/inventory/low-stock',
@@ -320,8 +321,10 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Accounts roles
   'Accounts Manager': [
-    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SETTINGS', 'SALES_VIEW', 'PURCHASES_VIEW'),
+    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW'),
     '/sales/returns',
+    // Finance settings only; payment gateways, eTIMS and business settings stay with admins
+    '/settings',
     '/settings/bank-accounts',
     '/settings/payment-methods',
     '/settings/account-provisioning',
@@ -418,7 +421,6 @@ export const ROLE_ACCESS_CONFIG = {
     '/dashboard',
     '/customers',
     ...combineRoutes('SALES_VIEW', 'PURCHASES_VIEW', 'SUPPLIERS_VIEW', 'REPORTS'),
-    '/settings/bank-accounts',
   ],
 
   // Expense Approver - Access to financial approvals

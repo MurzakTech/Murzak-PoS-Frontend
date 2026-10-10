@@ -17,7 +17,7 @@ The app's role-based access control (RBAC: deciding which screens each staff rol
 | 6 | Vulnerable browser libraries (axios, React Router) | High | Fixed (one moderate item remains) |
 | 7 | Server-side enforcement must be confirmed | Critical | Action needed on backend |
 | 8 | Login tokens readable by any injected script; no security headers | Medium | Recommendation |
-| 9 | A few role grants need an owner decision | Medium | Decision needed |
+| 9 | A few role grants needed an owner decision | Medium | Fixed (owner decided) |
 | 10 | No automatic sign-out on idle shared tills | Medium | Fixed |
 | 11 | Old build archive committed to the repository | Low | Fixed |
 
@@ -93,14 +93,14 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 
 Test the policy in report-only mode first (`Content-Security-Policy-Report-Only`), because a payment gateway or image host missing from the list will be blocked. `frame-ancestors 'none'` stops other sites from embedding the till to trick staff into clicking buttons.
 
-### 9. Role grants that need an owner decision (Medium)
+### 9. Role grants that needed an owner decision (Medium)
 
-These grants are written explicitly in the config, so they were kept, but they deserve a business decision:
+These grants were written explicitly in the config, so they were only changed after the owner decided. All four were removed:
 
-- **Sales User** can open **Stock Reconciliation**, which adjusts stock quantities. Cashiers adjusting their own stock is a loss risk.
-- **Accounts Manager** receives every Settings screen, including payment gateways and eTIMS.
-- **Stock User** can create stores and start multi-level reconciliations.
-- **Auditor** was given Bank Accounts settings, which is an edit screen.
+- **Sales User** can no longer open **Stock Reconciliation**, which adjusts stock quantities.
+- **Accounts Manager** now gets finance settings only (bank accounts, payment methods, account provisioning, loyalty programs). Payment gateways, eTIMS, business and POS profile settings stay with administrators.
+- **Stock User** can no longer create stores or start multi-level stock counts. Stock Managers still can.
+- **Auditor** no longer gets the Bank Accounts settings screen, which allows editing.
 
 ### 10. Idle sign-out on shared tills (Medium)
 

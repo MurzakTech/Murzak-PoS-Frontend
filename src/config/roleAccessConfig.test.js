@@ -76,6 +76,31 @@ describe('roles keep the access they are meant to have', () => {
   });
 });
 
+describe('owner decisions on sensitive screens', () => {
+  test('cashiers cannot adjust stock', () => {
+    expect(can('Sales User', '/inventory/stock-reconciliation')).toBe(false);
+  });
+
+  test('accounts managers get finance settings only', () => {
+    expect(can('Accounts Manager', '/settings/bank-accounts')).toBe(true);
+    expect(can('Accounts Manager', '/settings/payment-methods')).toBe(true);
+    expect(can('Accounts Manager', '/settings/payment-gateways')).toBe(false);
+    expect(can('Accounts Manager', '/settings/etims')).toBe(false);
+    expect(can('Accounts Manager', '/settings/business')).toBe(false);
+  });
+
+  test('stock users cannot create stores or start stock-count rounds', () => {
+    expect(can('Stock User', '/inventory/stock-entry')).toBe(true);
+    expect(can('Stock User', '/warehouses/new')).toBe(false);
+    expect(can('Stock User', '/inventory/multi-level-reconciliation/new')).toBe(false);
+    expect(can('Stock Manager', '/warehouses/new')).toBe(true);
+  });
+
+  test('auditors cannot edit bank accounts', () => {
+    expect(can('Auditor', '/settings/bank-accounts')).toBe(false);
+  });
+});
+
 describe('isRouteAllowed', () => {
   test('ignores a trailing slash and refuses unknown or empty input', () => {
     expect(isRouteAllowed('/dashboard/', ['/dashboard'])).toBe(true);
