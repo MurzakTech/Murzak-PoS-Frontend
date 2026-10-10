@@ -226,6 +226,8 @@ export const friendlyErrorMessage = (error, fallback = GENERIC) => {
   if (status === 401) {
     // A wrong password also comes back as 401; that is not an ended session
     const said = serverText(data) || data?.exc_type || '';
+    // The account lockout explains itself (how long to wait); keep its wording
+    if (/Too many failed sign-in attempts/i.test(said)) return humanizeMessage(said, MESSAGES.login);
     return /password|credential|login|disabled or missing|AuthenticationError/i.test(said) ? MESSAGES.login : MESSAGES.session;
   }
 

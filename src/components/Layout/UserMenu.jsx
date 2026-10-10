@@ -92,6 +92,9 @@ const UserMenu = ({ anchorEl, open, onClose }) => {
   const handleLogout = () => {
     dispatch(logout());
     onClose();
+    // A full reload drops every screen's data from memory, so the next person
+    // on a shared till starts clean
+    window.location.assign('/login');
   };
 
   const handleProfileClick = () => {

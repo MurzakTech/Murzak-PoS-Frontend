@@ -33,6 +33,7 @@ import {
   AssignmentReturn,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import useRoleAccess from '../../hooks/useRoleAccess';
 import {
   getSalesInvoice,
   getPOSInvoice,
@@ -48,6 +49,7 @@ const SalesInvoiceDetails = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { hasAccess } = useRoleAccess();
   const dispatch = useAppDispatch();
   
   // Determine if this is a POS invoice based on the pathname
@@ -187,7 +189,7 @@ const SalesInvoiceDetails = () => {
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            {invoice.docstatus === 0 && (
+            {invoice.docstatus === 0 && hasAccess('/sales/invoice/:id/edit') && (
               <Button
                 variant="outlined"
                 startIcon={<Edit />}
@@ -502,14 +504,18 @@ const SalesInvoiceDetails = () => {
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
                   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<AssignmentReturn />}
-                      onClick={() => navigate(`/sales/returns?invoice=${invoice.name}`)}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      Create Return
-                    </Button>
+                    {/* Returns are credit notes against a Sales Invoice; a POS Invoice is only
+                        returnable once the shift closes and it is consolidated into one. */}
+                    {!isPOS && !invoice.is_return && hasAccess('/sales/returns') && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<AssignmentReturn />}
+                        onClick={() => navigate(`/sales/returns?invoice=${encodeURIComponent(invoice.name)}`)}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Create Return
+                      </Button>
+                    )}
                     <Button
                       variant="outlined"
                       startIcon={<Print />}

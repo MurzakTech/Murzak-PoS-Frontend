@@ -35,7 +35,6 @@ const MultiLevelReconciliationDetails = () => {
   const { getReconciliation, reconciliation, loading, error, refetchReconciliation } = useStockReconciliation();
   const { canAddStockTake, userRole, roleLabel } = useStockReconciliationByRole();
 
-  console.log(userRole)
 
   useEffect(() => {
     if (id) {

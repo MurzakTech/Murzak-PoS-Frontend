@@ -40,18 +40,18 @@ import dashboardShot from '../assets/landing/dashboard.jpg';
 const STEPS = [
   { icon: PersonAddAltOutlined, title: 'Create your account', text: 'Tell us about your business. It takes a few minutes and we apply sensible defaults for you.' },
   { icon: CategoryOutlined, title: 'Add your products', text: 'Load a starter catalogue for your industry, import a spreadsheet, or add items one at a time.' },
-  { icon: ReceiptLongOutlined, title: 'Start selling', text: 'Open the till, ring up your first sale and watch your stock and reports update automatically.' },
+  { icon: ReceiptLongOutlined, title: 'Start selling', text: 'Open the till and ring up your first sale. Stock, takings and reports update as you go.' },
 ];
 
 const FEATURES = [
-  { icon: PointOfSaleOutlined, title: 'Fast point of sale', text: 'A till built for busy counters, with discounts, multiple payment methods and receipts.' },
-  { icon: Inventory2Outlined, title: 'Stock you can trust', text: 'Track quantities across stores, get low-stock alerts, and count and reconcile stock.' },
+  { icon: PointOfSaleOutlined, title: 'A till for busy counters', text: 'Scan or tap to add items, apply offers automatically, and take cash, M-Pesa, card or a mix.' },
+  { icon: Inventory2Outlined, title: 'Stop stock going missing', text: 'Track every store, get warned before you run out, and run stock counts with sign-off at each step.' },
   { icon: LocalShippingOutlined, title: 'Buying and suppliers', text: 'Raise purchase orders, receive goods and keep supplier invoices and payments in one place.' },
-  { icon: PeopleAltOutlined, title: 'Customers and loyalty', text: 'Keep customer records, offer credit within limits, and reward repeat buyers.' },
-  { icon: InsightsOutlined, title: 'Clear reports', text: 'See sales, money owed to you, stock value and slow-moving items without building spreadsheets.' },
-  { icon: VerifiedUserOutlined, title: 'Tax compliance', text: 'Connect eTIMS so your sales can be submitted for tax compliance.' },
-  { icon: AdminPanelSettingsOutlined, title: 'Staff and permissions', text: 'Give each person their own login and only the access their job needs.' },
-  { icon: DevicesOutlined, title: 'Works on your devices', text: 'Use it from a computer, tablet or phone with an internet connection.' },
+  { icon: PeopleAltOutlined, title: 'Customers and loyalty', text: 'Sell on credit up to a limit you set, see who owes you, and reward regulars with points.' },
+  { icon: InsightsOutlined, title: 'Reports you will read', text: 'Sales, money owed, stock value and slow movers, ready to view or export. No spreadsheets to build.' },
+  { icon: VerifiedUserOutlined, title: 'KRA eTIMS built in', text: 'Add your eTIMS details once and your sales can be sent to KRA, so compliance is not a month-end scramble.' },
+  { icon: AdminPanelSettingsOutlined, title: 'Staff you can trust', text: 'Every person has their own login. Cashiers sell; price changes, refunds and stock adjustments stay with managers.' },
+  { icon: DevicesOutlined, title: 'Works on your devices', text: 'Use the computer, tablet or phone you already have. All you need is an internet connection.' },
 ];
 
 // The automatic product pictures, shown off in a slowly moving strip
@@ -258,13 +258,13 @@ const Landing = () => {
           <Box sx={{ display: 'grid', gap: { xs: 6, md: 6 }, gridTemplateColumns: { xs: '1fr', md: '0.9fr 1.1fr' }, alignItems: 'center' }}>
             <Box sx={{ animation: 'murzak-fade-up .5s ease both' }}>
               <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>
-                Point of sale for growing businesses
+                Point of sale built for Kenyan businesses
               </Typography>
               <Typography variant="h1" sx={{ mt: 1, mb: 2.5, fontSize: { xs: '2.25rem', md: '3.25rem' } }}>
-                Sell faster. Know your stock. <Box component="span" sx={{ background: (t) => t.custom.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>See your numbers.</Box>
+                Sell faster. Stay compliant. <Box component="span" sx={{ background: (t) => t.custom.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>See every shilling.</Box>
               </Typography>
               <Typography variant="h6" component="p" color="text.secondary" sx={{ fontWeight: 400, lineHeight: 1.6, maxWidth: 520, mb: 4 }}>
-                Murzak POS brings your till, inventory, purchasing and reports together, so you spend less time on admin and more time with customers.
+                Murzak POS puts your till, stock, buying and reports in one place. Take cash and M-Pesa at the counter, send sales to KRA eTIMS, and know what is selling in every store, from any phone, tablet or computer.
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/register')}>
@@ -278,6 +278,7 @@ const Landing = () => {
                 {[
                   [DevicesOutlined, 'Computer, tablet or phone'],
                   [PhoneAndroidOutlined, 'Cash, M-Pesa, card and credit'],
+                  [VerifiedUserOutlined, 'Connects to KRA eTIMS'],
                 ].map(([Icon, label]) => (
                   <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                     <Icon sx={{ fontSize: 18, color: 'primary.main' }} />
@@ -341,7 +342,7 @@ const Landing = () => {
           <Spotlight
             eyebrow="Behind the counter"
             title="Know how your shop is doing"
-            text="Your sales, money owed to you, purchases and stock alerts on one page, for one store or all of them."
+            text="Your sales, money owed to you, purchases and stock alerts on one page, for one store or all of them. Check it from home, not just from behind the counter."
             points={['Sales trend for any period', 'See who owes you and how much', 'Low-stock alerts before you run out', 'Export a summary to a spreadsheet']}
             visual={
               <BrowserFrame>
@@ -428,10 +429,10 @@ const Landing = () => {
           <Box aria-hidden="true" sx={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', top: -120, right: -60, bgcolor: 'rgba(255,255,255,.12)' }} />
           <Box aria-hidden="true" sx={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', bottom: -90, left: -40, bgcolor: 'rgba(255,255,255,.1)' }} />
           <Typography variant="h2" sx={{ position: 'relative', color: '#fff', mb: 1.5 }}>
-            Ready to run your business with less stress?
+            Your shop, under control by this evening
           </Typography>
           <Typography variant="body1" sx={{ position: 'relative', opacity: 0.9, mb: 3.5, maxWidth: 520, mx: 'auto' }}>
-            Create your account and add your first products today.
+            Create your account, load a starter catalogue for your industry and ring up your first sale today.
           </Typography>
           <Button size="large" variant="contained" endIcon={<ArrowForward />} onClick={() => navigate('/register')} sx={{ position: 'relative', bgcolor: '#fff', color: 'primary.dark', '&:hover': { bgcolor: '#f1f1ff' } }}>
             Create your account
@@ -443,7 +444,7 @@ const Landing = () => {
         <Container maxWidth="lg">
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={1.5}>
             <Typography variant="body2" color="text.secondary">
-              &copy; {new Date().getFullYear()} Murzak POS. All rights reserved.
+              &copy; {new Date().getFullYear()} Murzak Technologies. All rights reserved.
             </Typography>
             <Stack direction="row" spacing={3}>
               {[

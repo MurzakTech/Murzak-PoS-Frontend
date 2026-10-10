@@ -62,6 +62,7 @@ import {
   Timeline,
 } from '@mui/icons-material';
 import { getNavigationRoutes } from '../../routes/routes';
+import useRoleAccess from '../../hooks/useRoleAccess';
 
 // Icon mapping
 const iconMap = {
@@ -121,6 +122,7 @@ const PageSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const routes = useMemo(() => getNavigationRoutes(), []);
+  const { hasAccess } = useRoleAccess();
 
   // Find the current parent route that has pageChildren
   const currentParentRoute = useMemo(() => {
@@ -179,7 +181,8 @@ const PageSidebar = () => {
     >
       {/* Navigation Items */}
       <List sx={{ flex: 1, px: 0.75, py: 1.5, overflowY: 'auto' }}>
-        {currentParentRoute.pageChildren.map((child) => {
+        {/* Only list pages this user may open; the others would bounce them to the dashboard. */}
+        {currentParentRoute.pageChildren.filter((child) => hasAccess(child.path)).map((child) => {
           const IconComponent = iconMap[child.icon] || Dashboard;
           const isSelected = isChildSelected(child.path);
 

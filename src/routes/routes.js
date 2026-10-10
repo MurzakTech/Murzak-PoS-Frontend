@@ -28,6 +28,7 @@ const SalesInvoiceDetails = lazy(() => import('../pages/Sales/SalesInvoiceDetail
 const NewSalesInvoice = lazy(() => import('../pages/Sales/NewSalesInvoice'));
 const POSOpeningEntries = lazy(() => import('../pages/Sales/POSOpeningEntries'));
 const POSOpeningEntryDetails = lazy(() => import('../pages/Sales/POSOpeningEntryDetails'));
+const SalesReturns = lazy(() => import('../pages/Sales/SalesReturns'));
 const Inventory = lazy(() => import('../pages/Inventory'));
 const Warehouses = lazy(() => import('../pages/Warehouses'));
 const WarehouseDetails = lazy(() => import('../pages/Inventory/WarehouseDetails'));
@@ -41,6 +42,7 @@ const StockEntry = lazy(() => import('../pages/Inventory/StockEntry'));
 const StockReconciliation = lazy(() => import('../pages/Inventory/StockReconciliation'));
 const StockSummary = lazy(() => import('../pages/Inventory/StockSummary'));
 const LowStockAlert = lazy(() => import('../pages/Inventory/LowStockAlert'));
+const ExpiryAlerts = lazy(() => import('../pages/Inventory/ExpiryAlerts'));
 const StockLedger = lazy(() => import('../pages/Inventory/StockLedger'));
 const InventoryItemDetails = lazy(() => import('../pages/Inventory/InventoryItemDetails'));
 const StockEntryList = lazy(() => import('../pages/Inventory/StockEntryList'));
@@ -100,6 +102,8 @@ const POSProfileSettings = lazy(() => import('../pages/Settings/POSProfileSettin
 const BusinessSettings = lazy(() => import('../pages/Settings/BusinessSettings'));
 const ETIMSSettings = lazy(() => import('../pages/Settings/ETIMSSettings'));
 const BankAccounts = lazy(() => import('../pages/Settings/BankAccounts'));
+const AuditTrail = lazy(() => import('../pages/Settings/AuditTrail'));
+const Security = lazy(() => import('../pages/Settings/Security'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
 const PaymentGateways = lazy(() => import('../pages/Settings/PaymentGateways'));
@@ -305,6 +309,7 @@ export const protectedRoutes = [
       { path: '/sales/history', label: 'Sales History', icon: 'History' },
       { path: '/sales/invoice/new', label: 'New Invoice', icon: 'Add' },
       { path: '/sales/pos-opening-entries', label: 'Opening Entries', icon: 'History' },
+      { path: '/sales/returns', label: 'Returns', icon: 'AssignmentReturn' },
     ],
     children: [
       {
@@ -331,6 +336,12 @@ export const protectedRoutes = [
         element: POSOpeningEntries,
         label: 'POS Opening Entries',
         icon: 'History',
+      },
+      {
+        path: '/sales/returns',
+        element: SalesReturns,
+        label: 'Sales Returns',
+        icon: 'AssignmentReturn',
       },
       // Dynamic routes (not in sidebar, accessed via links)
       {
@@ -420,6 +431,7 @@ export const protectedRoutes = [
       { path: '/inventory', label: 'Overview', icon: 'Dashboard' },
       { path: '/inventory/stock-summary', label: 'Stock List', icon: 'Assessment' },
       { path: '/inventory/low-stock', label: 'Low Stock', icon: 'Warning' },
+      { path: '/inventory/expiry-alerts', label: 'Expiry Alerts', icon: 'CalendarToday' },
       { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: 'Book' },
       { path: '/inventory/stock-entries', label: 'Entries', icon: 'ListAlt' },
       { path: '/inventory/material-receipts', label: 'Material Receipts', icon: 'Input' },
@@ -444,6 +456,12 @@ export const protectedRoutes = [
         element: LowStockAlert,
         label: 'Low Stock Alert',
         icon: 'Warning',
+      },
+      {
+        path: '/inventory/expiry-alerts',
+        element: ExpiryAlerts,
+        label: 'Expiry Alerts',
+        icon: 'CalendarToday',
       },
       {
         path: '/inventory/stock-ledger',
@@ -846,6 +864,8 @@ export const protectedRoutes = [
       { path: '/settings/payment-gateways', label: 'Payment Gateways', icon: 'CreditCard' },
       { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
       { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
+      { path: '/settings/audit-trail', label: 'Audit Trail', icon: 'History' },
+      { path: '/settings/security', label: 'Security', icon: 'Security' },
     ],
     children: [
       {
@@ -901,6 +921,18 @@ export const protectedRoutes = [
         element: LoyaltyPrograms,
         label: 'Loyalty Programs',
         icon: 'Star',
+      },
+      {
+        path: '/settings/audit-trail',
+        element: AuditTrail,
+        label: 'Audit Trail',
+        icon: 'History',
+      },
+      {
+        path: '/settings/security',
+        element: Security,
+        label: 'Security',
+        icon: 'Security',
       },
       // Dynamic routes (not in sidebar, accessed via links)
       {

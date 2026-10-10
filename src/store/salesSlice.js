@@ -613,7 +613,7 @@ export const listSalesReturns = createAsyncThunk(
   'sales/listSalesReturns',
   async (params = {}, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(ENDPOINTS.listSalesReturns, { params });
+      const response = ensureSucceeded(await axiosInstance.get(ENDPOINTS.listSalesReturns, { params }));
       const data = extractResponseData(response);
       return {
         salesReturns: Array.isArray(data) ? data : (data?.data || []),
@@ -636,9 +636,9 @@ export const getSalesReturn = createAsyncThunk(
   'sales/getSalesReturn',
   async ({ name }, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(ENDPOINTS.getSalesReturn, {
+      const response = ensureSucceeded(await axiosInstance.get(ENDPOINTS.getSalesReturn, {
         params: { name },
-      });
+      }));
       const data = extractResponseData(response);
       return {
         salesReturn: data?.data || data,
@@ -660,7 +660,7 @@ export const createSalesReturn = createAsyncThunk(
   'sales/createSalesReturn',
   async (returnData, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(ENDPOINTS.createSalesReturn, returnData);
+      const response = ensureSucceeded(await axiosInstance.post(ENDPOINTS.createSalesReturn, returnData));
       const data = extractResponseData(response);
       const successMessage = extractSuccessMessage(response) || 'Sales Return created successfully';
       
@@ -690,7 +690,7 @@ export const cancelSalesReturn = createAsyncThunk(
   'sales/cancelSalesReturn',
   async ({ name, reason }, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(ENDPOINTS.cancelSalesReturn, { name, reason });
+      const response = ensureSucceeded(await axiosInstance.post(ENDPOINTS.cancelSalesReturn, { name, reason }));
       const successMessage = extractSuccessMessage(response) || 'Sales Return cancelled successfully';
       
       dispatch(showNotification({

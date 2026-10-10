@@ -14,6 +14,12 @@ jobs:
       - run: npm run build
         env:
           CI: false
+          # Keep every script in its own file so the security policy can allow only those
+          INLINE_RUNTIME_CHUNK: false
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+      # Lets the page run only its own code and talk only to its own API (see SECURITY_REVIEW.md)
+      - run: node scripts/add-security-policy.js build
+        env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
       - uses: burnett01/rsync-deployments@7.0.1
         with:
@@ -33,8 +39,12 @@ jobs:
         env:
           CI: false
           BUILD_PATH: build-tenant
+          INLINE_RUNTIME_CHUNK: false
           REACT_APP_API_URL: /api/method
           REACT_APP_TENANT_MODE: "true"
+      - run: node scripts/add-security-policy.js build-tenant
+        env:
+          REACT_APP_API_URL: /api/method
       - uses: burnett01/rsync-deployments@7.0.1
         with:
           switches: -avzr --delete
