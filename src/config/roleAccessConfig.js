@@ -150,6 +150,7 @@ const ROUTE_GROUPS = {
     '/settings/inventory-discounts/:id/edit',
     '/settings/loyalty-programs',
     '/settings/audit-trail',
+    '/settings/security',
   ],
   INDUSTRY: [
     '/industry/:industryCode/products',
