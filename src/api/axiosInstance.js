@@ -37,6 +37,7 @@ axiosInstance.interceptors.request.use(
     const publicEndpoints = [
       'techsavanna_pos.api.auth_api.login_user',
       'techsavanna_pos.api.auth_api.register_user',
+      'techsavanna_pos.api.password_reset.',
     ];
     
     // Check if this is a public endpoint

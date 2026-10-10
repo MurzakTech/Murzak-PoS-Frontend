@@ -16,6 +16,7 @@ import {
   IconButton,
   Tooltip,
   Alert,
+  AlertTitle,
   CircularProgress,
   Chip,
   useTheme,
@@ -34,7 +35,8 @@ import {
   ArrowDownward,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { bulkUploadProducts, getSeedProducts, createSeedItems } from '../../store/productSeedingSlice';
+import { bulkUploadProducts, getSeedProducts, createSeedItems, clearCreateResult } from '../../store/productSeedingSlice';
+import { summarizeSeedResult } from '../../utils/seedResult';
 
 
 const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
@@ -430,31 +432,15 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
       // Call create_seed_item API
       const result = await dispatch(createSeedItems(payload)).unwrap();
       
-      if (result.status === 'success' || result.status === 'partial_success') {
+      // The slice only lets through runs where something was saved; the details
+      // (including any products that could not be saved, and why) show below
+      setUploadError(null);
+      if (!summarizeSeedResult(result).problems) {
         setUploadSuccess(true);
-        setUploadError(null);
-        
-        // Check if there are any failed items
-        const itemsFailedCount = result.items_failed?.length || 0;
-        if (itemsFailedCount > 0) {
-          setUploadError(`Some items failed to create. ${itemsFailedCount} item(s) failed.`);
-        }
-        
-        setTimeout(() => setUploadSuccess(false), 5000);
-        
-        // Optionally refresh products or navigate back
-        const itemsCreatedCount = result.items_created?.length || 0;
-        if (itemsCreatedCount > 0) {
-          // Refresh the page or navigate to products list
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
-        }
-      } else {
-        setUploadError('Failed to create some items. Please check the errors.');
+        setTimeout(() => navigate('/dashboard'), 2000);
       }
     } catch (error) {
-      setUploadError(error || 'Failed to save. Please try again.');
+      // The reason is already shown from the store (createError) and in a pop-up
       setUploadSuccess(false);
     }
   };
@@ -531,19 +517,20 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
           </Alert>
         )}
         {createError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => {}}>
+          <Alert severity="warning" sx={{ mb: 2 }} onClose={() => dispatch(clearCreateResult())}>
+            <AlertTitle>Products not saved</AlertTitle>
             {createError}
           </Alert>
         )}
         {uploadSuccess && (
           <Alert severity="success" sx={{ mb: 2 }} onClose={() => setUploadSuccess(false)}>
-            Items created successfully! Redirecting to dashboard...
+            Products saved. Taking you to the dashboard...
           </Alert>
         )}
-        {createResult && createResult.status === 'success' && (
-          <Alert severity="success" sx={{ mb: 2 }}>
+        {createResult && (createResult.status === 'success' || createResult.status === 'partial_success') && (
+          <Alert severity={summarizeSeedResult(createResult).problems ? 'warning' : 'success'} sx={{ mb: 2 }} onClose={() => dispatch(clearCreateResult())}>
             <Typography variant="body2" fontWeight="bold" gutterBottom>
-              Items processed successfully!
+              {summarizeSeedResult(createResult).problems ? 'Some products need attention' : 'Products saved'}
             </Typography>
             <Box component="div" sx={{ mt: 1 }}>
               <Typography variant="body2" component="div">
@@ -555,14 +542,24 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
                 </Typography>
               )}
               {createResult.items_skipped?.length > 0 && (
-                <Typography variant="body2" component="div" sx={{ mt: 0.5, color: 'warning.main' }}>
-                  <strong>Skipped ({createResult.items_skipped.length}):</strong> {createResult.items_skipped.join(', ')}
+                <Typography variant="body2" component="div" sx={{ mt: 0.5 }}>
+                  <strong>Already existed ({createResult.items_skipped.length}):</strong>{' '}
+                  {createResult.items_skipped.map((s) => (typeof s === 'string' ? s : s.prefixed_item_code || s.item_code)).join(', ')}
                 </Typography>
               )}
               {createResult.items_failed?.length > 0 && (
-                <Typography variant="body2" component="div" sx={{ mt: 0.5, color: 'error.main' }}>
-                  <strong>Failed ({createResult.items_failed.length}):</strong> {createResult.items_failed.join(', ')}
-                </Typography>
+                <Box component="div" sx={{ mt: 0.5 }}>
+                  <Typography variant="body2" component="div">
+                    <strong>Could not be saved ({createResult.items_failed.length}):</strong>
+                  </Typography>
+                  <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                    {createResult.items_failed.map((f, i) => (
+                      <Typography component="li" variant="body2" key={i}>
+                        {typeof f === 'string' ? f : `${f.item_name || f.item_code || f.prefixed_item_code}: ${f.error_message || 'no reason given'}`}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Box>
               )}
             </Box>
             {createResult.stock_entry && (
@@ -572,8 +569,8 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
                     <strong>Stock Entry:</strong> {createResult.stock_entry.name}
                   </Typography>
                 ) : createResult.stock_entry.error ? (
-                  <Typography variant="body2" color="error.main">
-                    <strong>Stock Entry Error:</strong> {createResult.stock_entry.error}
+                  <Typography variant="body2">
+                    <strong>Opening stock not recorded:</strong> {createResult.stock_entry.error}
                   </Typography>
                 ) : null}
               </Box>

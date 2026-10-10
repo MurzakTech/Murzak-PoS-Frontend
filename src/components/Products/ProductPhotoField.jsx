@@ -30,7 +30,14 @@ const ProductPhotoField = ({ value, onChange, product, disabled }) => {
       const url = await uploadProductImage(file);
       onChange(url);
     } catch (err) {
-      setError(err.response ? friendlyErrorMessage(err) : err.message);
+      // Kept for support: the server's exact reply, which the friendly message hides
+      console.error('Product photo upload failed', err.response?.status, err.response?.data || err);
+      if (!err.response) {
+        setError(err.message);
+      } else {
+        const fallback = `The photo could not be uploaded (server code ${err.response.status}).`;
+        setError(`${friendlyErrorMessage(err, fallback)} You can still save the product and add a photo later.`);
+      }
     } finally {
       setBusy(false);
     }

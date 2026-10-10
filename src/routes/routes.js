@@ -6,6 +6,7 @@ import { IS_TENANT_BUILD } from '../config/deployment';
 const Landing = lazy(() => import('../pages/Landing'));
 const ToLogin = () => <Navigate to="/login" replace />;
 const Login = lazy(() => import('../pages/Login'));
+const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
 const Register = lazy(() => import('../pages/Register'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const Products = lazy(() => import('../pages/Products'));
@@ -137,6 +138,11 @@ export const publicRoutes = [
     path: '/login',
     element: Login,
     label: 'Login',
+  },
+  {
+    path: '/forgot-password',
+    element: ForgotPassword,
+    label: 'Forgot Password',
   },
   {
     path: '/register',

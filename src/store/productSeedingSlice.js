@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
+import { summarizeSeedResult } from '../utils/seedResult';
 
 // Product Seeding API endpoints
 const ENDPOINTS = {
@@ -92,45 +93,25 @@ export const createSeedItems = createAsyncThunk(
       const response = await axiosInstance.post(ENDPOINTS.createSeedItem, payload);
       const data = extractResponseData(response);
 
-      // New response structure: { status, company, company_abbr, industry, items_created[], items_skipped[], items_failed[], total_received, stock_entry: {created, name, error}, note }
-      if (data.status === 'failed' || data.status !== 'success') {
-        const errorMessage = data.message || data.note || 'Failed to create items';
+      // Response: { status: success | partial_success | failed | error, items_created[], items_skipped[],
+      // items_failed[{item_code, item_name, error_message}], total_received, stock_entry: {created, name, error}, note }
+      // "note" only explains the item code prefix; it is never the reason something failed.
+      const summary = summarizeSeedResult(data);
+
+      if (data.status === 'error' || data.status === 'failed' || (!summary.created && !summary.skipped)) {
+        const errorMessage = data.message || (summary.failed ? summary.text : null) || 'None of the products could be saved. Please try again.';
         dispatch(showNotification({
           message: errorMessage,
-          severity: 'error',
-          title: 'Creation Failed',
+          severity: data.status === 'error' ? 'error' : 'warning',
+          title: 'Products not saved',
         }));
         return rejectWithValue(errorMessage);
       }
 
-      // Build success message
-      const itemsCreatedCount = data.items_created?.length || 0;
-      const itemsSkippedCount = data.items_skipped?.length || 0;
-      const itemsFailedCount = data.items_failed?.length || 0;
-      const totalReceived = data.total_received || 0;
-      
-      let message = `Successfully processed ${totalReceived} item(s): ${itemsCreatedCount} created`;
-      if (itemsSkippedCount > 0) {
-        message += `, ${itemsSkippedCount} skipped`;
-      }
-      if (itemsFailedCount > 0) {
-        message += `, ${itemsFailedCount} failed`;
-      }
-      
-      // Add stock entry info if available
-      if (data.stock_entry?.created && data.stock_entry?.name) {
-        message += `. Stock entry created: ${data.stock_entry.name}`;
-      }
-      
-      // Add note if available
-      if (data.note) {
-        message += `. ${data.note}`;
-      }
-
       dispatch(showNotification({
-        message,
-        severity: 'success',
-        title: 'Items Created',
+        message: summary.text,
+        severity: summary.problems ? 'warning' : 'success',
+        title: summary.problems ? 'Some products need attention' : 'Products saved',
       }));
 
       return data;
@@ -139,7 +120,7 @@ export const createSeedItems = createAsyncThunk(
       dispatch(showNotification({
         message: errorMessage,
         severity: errorSeverity(error),
-        title: 'Creation Failed',
+        title: 'Products not saved',
       }));
       return rejectWithValue(errorMessage);
     }
