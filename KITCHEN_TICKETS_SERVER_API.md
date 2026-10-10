@@ -141,7 +141,9 @@ Request: `{ "company": "Shop A Ltd", "id": "a1b2c3", "status": "Ready" }`
 
 ## Reference implementation (an untested sketch, matched to your server code)
 
-This has not been run. It follows the pattern of `HELD_SALES_SERVER_API.md`: the company check is `resolve_company` from `api/payment_gateway_common.py`, and tables are created by `bench migrate` when this is merged to `main`. A Frappe developer should review it, in particular the numbering.
+**The real implementation is in the backend repository: [Murzak-PoS-Backend PR #17](https://github.com/MurzakTech/Murzak-PoS-Backend/pull/17)** (`techsavanna_pos/api/kitchen_api.py`, with tests). It differs from the sketch below in one important way: it serialises numbering with a database lock (`GET_LOCK`) and commits before releasing it, which is sturdier than the `FOR UPDATE` idea in the sketch. Where the two differ, the backend code is the one to trust. The sketch is kept for reading.
+
+The sketch has not been run. It follows the pattern of `HELD_SALES_SERVER_API.md`: the company check is `resolve_company` from `api/payment_gateway_common.py`, and tables are created by `bench migrate` when this is merged to `main`. A Frappe developer should review it, in particular the numbering.
 
 **1. Two tables.** Create two DocType folders under `techsavanna_pos/techsavanna_pos/doctype/`, each with an empty `__init__.py`, a `.py` file holding an empty `Document` class, and a `.json` definition (module "Techsavanna POS", not submittable).
 
