@@ -92,6 +92,37 @@ describe('HeldSalesDialog', () => {
   });
 });
 
+describe('HeldSalesDialog with the server holding the bills', () => {
+  const shared = [
+    { id: 'a1', heldAt: minutesAgo(10), label: 'Table 4', customer: 'Walk-in Customer', cart: [{ subtotal: 400 }], heldBy: 'Amina', where: 'server' },
+    { id: 'b2', heldAt: minutesAgo(3), label: 'Patio', customer: 'Walk-in Customer', cart: [{ subtotal: 90 }], where: 'device' },
+  ];
+
+  it('says the bills are shared, and shows who held each one', () => {
+    renderDialog({ held: shared, status: 'online' });
+    expect(screen.getByText('Held sales are shared with every till and phone in this store.')).toBeInTheDocument();
+    expect(screen.getByText(/1 item · .*400 · by Amina/)).toBeInTheDocument();
+    expect(screen.queryByText(/kept on this device only/)).not.toBeInTheDocument();
+  });
+
+  it('marks only the bills that have not reached the server yet', () => {
+    renderDialog({ held: shared, status: 'online' });
+    expect(screen.getAllByText('This device only')).toHaveLength(1);
+  });
+
+  it('explains that bills held while the server cannot be reached stay on this device for now', () => {
+    renderDialog({ held: shared, status: 'offline' });
+    expect(screen.getByText(/server cannot be reached right now/)).toBeInTheDocument();
+    expect(screen.getAllByText('This device only')).toHaveLength(1);
+  });
+
+  it('does not mark anything as device-only when the server does not store held sales', () => {
+    renderDialog({ held: shared, status: 'unavailable' });
+    expect(screen.queryByText('This device only')).not.toBeInTheDocument();
+    expect(screen.getByText(/kept on this device only/)).toBeInTheDocument();
+  });
+});
+
 describe('HoldSaleDialog', () => {
   const open = (props = {}) => {
     const onConfirm = jest.fn();

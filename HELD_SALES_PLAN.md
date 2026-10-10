@@ -19,44 +19,33 @@ This document records what was changed, what is still limited, and what is neede
 
 Where the logic lives: `src/utils/heldSales.js` (tested in `heldSales.test.js`), `src/pages/Sales/pos/HoldSaleDialog.jsx`, `HeldSalesDialog.jsx`, and the hold and recall functions in `src/pages/Sales/NewSale.js`.
 
-## What is still limited
+## Phase 2: held bills stored on the server (front end done, server needed)
 
-Held bills live in the browser on one device:
+### Status
 
-- Another till or a waiter's phone cannot see them.
-- Clearing the browser's data, or changing browser or device, loses them.
-- Two browser tabs on the same till do not update each other.
+The front end is finished and tested. It checks whether the server has the held-sales calls, and:
+
+- **Server has them:** held bills are stored there. Every till and phone in the store sees the same bills, with who held each one. A bill is brought back by deleting it from the server first, so two tills can never take the same tab. If the connection drops, a bill is kept on the device and sent to the server by itself when the connection returns, and the list is marked "This device only" until then.
+- **Server does not have them (today):** the till behaves exactly as in Phase 1, with bills kept in the browser on that device.
+
+The server calls and a reference implementation are in `HELD_SALES_SERVER_API.md`. Nothing changes for users until someone adds those three calls to the server.
+
+### Why not draft invoices
+
+Earlier this plan suggested using the server's draft invoices. Looking at the code, that was set aside:
+
+- There is no call to delete a draft: the history screen offers Edit and Submit for drafts, and Cancel only for completed sales. A discarded tab would stay behind.
+- The invoice calls have no field for a table or tab name.
+- A draft can be checked against stock at the moment it is saved, and drafts risk showing up in history and reports.
+
+So held bills get their own three small calls instead.
+
+### What is still limited
+
+- Until the server calls exist, held bills live in one browser (see Phase 1).
 - A held bill keeps the prices it had when it was held.
-
-For a single counter this is acceptable. For a bar with two tills, or waiters taking orders on phones, it is not. That needs Phase 2.
-
-## Phase 2: held bills stored on the server
-
-### The idea
-
-The server already supports saving a sale as a draft instead of completing it. In `REACT_POS_SALE_FLOW.md`, `create_pos_invoice` accepts `do_not_submit: true`, and the front end already has calls to update a POS invoice (`update_pos_invoice`), list POS invoices (`list_pos_invoices`) and submit a draft (`submit_invoice`). A held bill would become a draft POS invoice: it is visible on every device, survives clearing the browser, and is turned into a real sale when paid.
-
-### What must be confirmed with whoever manages the server
-
-I could not verify these from this repository, and each one decides whether the idea is safe:
-
-1. **Can `list_pos_invoices` return drafts?** Is there a filter for draft status (docstatus 0), and does the list include who created them and the store?
-2. **Can a draft be deleted?** The only existing call is `cancel_pos_invoice`, which normally applies to completed sales. If a discarded draft cannot be deleted, abandoned tabs will pile up as drafts. A small "delete draft" endpoint may be needed.
-3. **Where can the table or tab name be stored?** For example the invoice's remarks field, or a new custom field. I will not invent a field the server may reject.
-4. **Does saving a draft check stock or reserve it?** A draft should not change stock until paid, but some setups check availability at save time, which would block holding an item that is running low.
-5. **Do drafts appear in sales history, reports and the shift's totals?** They must not be counted as sales.
-6. **Can the draft be updated when items are added to a tab?** (`update_pos_invoice` appears to exist; its fields need confirming.)
-
-### Suggested approach once those are answered
-
-1. Add a "kept on the server" mode for held bills, used when the server can do items 1 to 3. Keep the browser copy as a fallback when the connection drops.
-2. Show held bills from the server in the same list, so every till and phone sees the same tabs.
-3. Re-price a held bill when it is brought back, and warn if a price changed.
-4. Add a live refresh so two tills do not edit the same tab at once.
-
-### If the server cannot do it
-
-The alternative is a small purpose-built endpoint pair on the server (save a held bill, list held bills for a store, delete one). This is simple but needs server work and is less standard than using drafts.
+- A bill that is brought back and not held again or paid is lost if the browser is closed; this is the same as any sale in progress.
+- Two tills are kept up to date by asking the server about every 20 seconds, and when the till window is clicked. A bill held on one till can take up to 20 seconds to appear on another.
 
 ## The rest of a restaurant and bar
 

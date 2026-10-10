@@ -6,7 +6,8 @@ import PosConfirm from './PosConfirm';
 import HoldSaleDialog from './HoldSaleDialog';
 import { heldTitle, heldTotal, heldAge, labelInUse } from '../../../utils/heldSales';
 
-const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, canRecall, currency, now }) => {
+const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, canRecall, currency, now, status = 'unavailable' }) => {
+  const shared = status === 'online' || status === 'offline'; // the server keeps held sales: some may still be only on this device
   const [discarding, setDiscarding] = useState(null); // the held sale someone is about to throw away
   const [renaming, setRenaming] = useState(null);
 
@@ -32,11 +33,12 @@ const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, ca
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography variant="subtitle2" noWrap>{title}</Typography>
                         <Typography variant="caption" color="text.secondary" component="div">
-                          {customer}{h.cart.length} item{h.cart.length === 1 ? '' : 's'} · {money(heldTotal(h), currency)}
+                          {customer}{h.cart.length} item{h.cart.length === 1 ? '' : 's'} · {money(heldTotal(h), currency)}{h.heldBy ? ` · by ${h.heldBy}` : ''}
                         </Typography>
                         <Typography variant="caption" color={age.stale ? 'warning.main' : 'text.secondary'} component="div" sx={{ fontWeight: age.stale ? 700 : 400 }}>
                           Held {age.text}
                           {age.stale && <Chip label="Open a long time" size="small" color="warning" variant="outlined" sx={{ ml: 1, height: 18, fontSize: '0.6875rem' }} />}
+                          {shared && h.where === 'device' && <Chip label="This device only" size="small" color="info" variant="outlined" sx={{ ml: 1, height: 18, fontSize: '0.6875rem' }} />}
                         </Typography>
                       </Box>
                       <Button size="small" variant="outlined" disabled={!canRecall} onClick={() => onRecall(h.id)}>Bring back</Button>
@@ -47,7 +49,9 @@ const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, ca
                 })}
               </List>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
-                Held sales are kept on this device only. Another till or phone cannot see them.
+                {status === 'online' && 'Held sales are shared with every till and phone in this store.'}
+                {status === 'offline' && 'The server cannot be reached right now. Bills held now stay on this device and are shared when the connection returns.'}
+                {(status === 'unavailable' || status === 'checking') && 'Held sales are kept on this device only. Another till or phone cannot see them.'}
               </Typography>
             </>
           )}

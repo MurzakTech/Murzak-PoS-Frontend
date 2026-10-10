@@ -41,7 +41,8 @@ import ReceiptDialog from './pos/ReceiptDialog';
 import CloseTillDialog from './pos/CloseTillDialog';
 import HeldSalesDialog from './pos/HeldSalesDialog';
 import HoldSaleDialog from './pos/HoldSaleDialog';
-import { readHeld, writeHeld, makeHeldSale, heldTitle, labelInUse, renameHeld } from '../../utils/heldSales';
+import { makeHeldSale, heldTitle, labelInUse } from '../../utils/heldSales';
+import useHeldSales from '../../hooks/useHeldSales';
 import PosConfirm from './pos/PosConfirm';
 import PriceEntryDialog from './pos/PriceEntryDialog';
 import PhoneSaleBar from './pos/PhoneSaleBar';
@@ -185,14 +186,19 @@ const NewSale = () => {
   const [amountGiven, setAmountGiven] = useState(0);
   const [tileLimit, setTileLimit] = useState(TILE_PAGE); // how many product tiles are drawn
   const [shiftChecked, setShiftChecked] = useState(false); // have we looked for an already-open shift?
-  // Held sales are kept per business on this device (see utils/heldSales)
-  const [heldSales, setHeldSales] = useState(() => readHeld(localStorage, userCompany));
+  // Held sales: on the server when it supports them (shared by every till), otherwise on this device (see hooks/useHeldSales)
+  const {
+    held: heldSales,
+    status: heldStatus,
+    hold: holdSale,
+    claim: claimHeld,
+    discard: discardHeld,
+    rename: renameHeldSale,
+  } = useHeldSales({ company: userCompany, warehouse: activeWarehouse?.name || activeWarehouse?.warehouse_name || '' });
   const [heldDialogOpen, setHeldDialogOpen] = useState(false);
   const [holdDialogOpen, setHoldDialogOpen] = useState(false);
   const [activeHeldLabel, setActiveHeldLabel] = useState(''); // name of the held sale that was brought back, so holding it again keeps its name
-  useEffect(() => {
-    setHeldSales(readHeld(localStorage, userCompany));
-  }, [userCompany]);
+  const heldBusyRef = useRef(false); // true while a hold or bring-back waits for the server: the cart must not change meanwhile
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -630,6 +636,7 @@ const NewSale = () => {
   // Add to cart with stock validation
   // enteredRate: the price typed on the "Enter price" keypad, for products with no fixed price
   const addToCart = async (product, enteredRate) => {
+    if (heldBusyRef.current) return; // a hold or bring-back is waiting for the server
     const itemCode = product.item_code;
     
     if (!defaultWarehouse) {
@@ -1358,14 +1365,6 @@ const NewSale = () => {
 
 
   // ---------------------------------------------------------------- hold, recall, clear
-  // Saves the held list on this device and returns whether the browser accepted it. With onlyIfSaved, the list
-  // on screen changes only when the save worked, so a bill that could not be kept is never shown as held.
-  const commitHeld = (next, { onlyIfSaved = false } = {}) => {
-    const saved = writeHeld(localStorage, userCompany, next);
-    if (saved || !onlyIfSaved) setHeldSales(next);
-    return saved;
-  };
-
   const resetSale = () => {
     setCart([]);
     setIsCheckoutMode(false);
@@ -1380,39 +1379,69 @@ const NewSale = () => {
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
-  const holdCurrentSale = (label) => {
-    if (cart.length === 0) return;
-    const held = makeHeldSale(
-      { cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue },
-      label
-    );
-    const saved = commitHeld([...heldSales, held], { onlyIfSaved: true });
-    if (!saved) {
-      // The sale stays on screen: clearing it now would lose it
-      setSnackbarMessage('This sale could not be kept on hold: the browser would not save it. It is still on screen, so finish it or write it down first.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-    resetSale();
-    setSnackbarMessage(`"${heldTitle(held)}" is on hold. Find it under Held sales at the top.`);
-    setSnackbarSeverity('success');
+  const showHeldMessage = (message, severity) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
     setSnackbarOpen(true);
   };
 
-  const recallHeldSale = (id) => {
-    const held = heldSales.find((h) => h.id === id);
-    if (!held || cart.length > 0) return;
-    setCart(held.cart);
-    setCustomer(held.customer || 'Walk-in Customer');
-    setCustomerId(held.customerId || null);
-    setSelectedCustomerObj(held.selectedCustomerObj || null);
-    setCustomerPriceList(held.customerPriceList || 'Standard Selling');
-    setManualDiscountType(held.manualDiscountType || 'percentage');
-    setManualDiscountValue(held.manualDiscountValue || 0);
-    setActiveHeldLabel(held.label || '');
-    commitHeld(heldSales.filter((h) => h.id !== id));
-    setHeldDialogOpen(false);
+  const holdCurrentSale = async (label) => {
+    if (cart.length === 0 || heldBusyRef.current) return;
+    heldBusyRef.current = true;
+    try {
+      const held = makeHeldSale(
+        { cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue },
+        label
+      );
+      const result = await holdSale(held);
+      if (!result.ok) {
+        // The sale stays on screen: clearing it now would lose it
+        showHeldMessage('This sale could not be put on hold: neither the server nor this device would keep it. It is still on screen, so finish it or write it down first.', 'error');
+        return;
+      }
+      resetSale();
+      const name = heldTitle(held);
+      if (result.where === 'server') showHeldMessage(`"${name}" is on hold and shared with the other tills. Find it under Held sales at the top.`, 'success');
+      else if (result.fellBack) showHeldMessage(`"${name}" is on hold on this device only, because the server could not be reached. It will be shared when the connection returns.`, 'warning');
+      else showHeldMessage(`"${name}" is on hold. Find it under Held sales at the top.`, 'success');
+    } finally {
+      heldBusyRef.current = false;
+    }
+  };
+
+  const recallHeldSale = async (id) => {
+    if (cart.length > 0 || heldBusyRef.current) return;
+    heldBusyRef.current = true;
+    try {
+      const result = await claimHeld(id);
+      if (!result.ok) {
+        if (result.reason === 'taken') showHeldMessage('This sale was already brought back on another till.', 'warning');
+        else if (result.reason === 'offline') showHeldMessage('The server could not be reached, so this sale was not brought back. Try again in a moment.', 'error');
+        return;
+      }
+      const held = result.entry;
+      setCart(held.cart);
+      setCustomer(held.customer || 'Walk-in Customer');
+      setCustomerId(held.customerId || null);
+      setSelectedCustomerObj(held.selectedCustomerObj || null);
+      setCustomerPriceList(held.customerPriceList || 'Standard Selling');
+      setManualDiscountType(held.manualDiscountType || 'percentage');
+      setManualDiscountValue(held.manualDiscountValue || 0);
+      setActiveHeldLabel(held.label || '');
+      setHeldDialogOpen(false);
+    } finally {
+      heldBusyRef.current = false;
+    }
+  };
+
+  const discardHeldSale = async (id) => {
+    const result = await discardHeld(id);
+    if (!result.ok && result.reason === 'offline') showHeldMessage('The server could not be reached, so that held sale was not discarded. Try again in a moment.', 'error');
+  };
+
+  const renameHeldSaleWithMessage = async (id, label) => {
+    const result = await renameHeldSale(id, label);
+    if (!result.ok && result.reason === 'offline') showHeldMessage('The server could not be reached, so the name was not changed. Try again in a moment.', 'error');
   };
 
   const requestExit = () => {
@@ -1846,8 +1875,9 @@ const NewSale = () => {
         onClose={() => setHeldDialogOpen(false)}
         held={heldSales}
         onRecall={recallHeldSale}
-        onDelete={(id) => commitHeld(heldSales.filter((h) => h.id !== id))}
-        onRename={(id, label) => commitHeld(renameHeld(heldSales, id, label))}
+        onDelete={discardHeldSale}
+        onRename={renameHeldSaleWithMessage}
+        status={heldStatus}
         canRecall={cart.length === 0}
         currency={currency}
       />
