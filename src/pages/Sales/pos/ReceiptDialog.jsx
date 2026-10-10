@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Dialog, DialogActions, Divider, Typography } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, Divider, Typography } from '@mui/material';
 import { CheckCircle, Print, Receipt } from '@mui/icons-material';
 import { fmt, money, round2 } from './money';
 
@@ -48,12 +48,19 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
         ) : (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{money(grand, currency)} received</Typography>
         )}
+        {invoice.offline && (
+          <Alert severity="info" sx={{ mt: 1.5, textAlign: 'left' }}>
+            Saved on this device while offline. It uploads automatically when the connection returns.
+          </Alert>
+        )}
       </Box>
 
       <Box className="receipt-printable" sx={{ p: 3, pt: 2.5, fontSize: '0.8125rem' }}>
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>{companyName || 'Receipt'}</Typography>
-          <Typography variant="caption" color="text.secondary">Sales receipt</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {invoice.offline ? 'Sales receipt (recorded offline)' : 'Sales receipt'}
+          </Typography>
         </Box>
         <Divider sx={{ borderStyle: 'dashed', mb: 1 }} />
         <Row label="Receipt no." value={invoice.name} />
@@ -97,7 +104,9 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
         </Button>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button fullWidth variant="outlined" startIcon={<Print />} onClick={onPrint}>Print receipt</Button>
-          {invoice.name && <Button fullWidth variant="outlined" startIcon={<Receipt />} onClick={onViewInvoice}>View invoice</Button>}
+          {invoice.name && !invoice.offline && (
+            <Button fullWidth variant="outlined" startIcon={<Receipt />} onClick={onViewInvoice}>View invoice</Button>
+          )}
         </Box>
       </DialogActions>
     </Dialog>

@@ -80,6 +80,8 @@ export const useInventoryDiscounts = ({
   // Note: We use itemsKey to detect content changes, not items array reference
   // This prevents infinite loops when items array is recreated with same content
   useEffect(() => {
+    // Offline: skip the lookup instead of showing a connection error mid-sale
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
     if (autoFetch && itemsKey && userCompany) {
       const currentItems = itemsRef.current;
       if (currentItems && currentItems.length > 0) {

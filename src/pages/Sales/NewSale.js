@@ -68,6 +68,10 @@ import PriceEntryDialog from './pos/PriceEntryDialog';
 import PhoneSaleBar from './pos/PhoneSaleBar';
 import { round2 } from './pos/money';
 import { getPosPaymentOptions } from '../../api/paymentGatewayApi';
+import OfflineSalesBar from './pos/OfflineSalesBar';
+import useOfflineSales from '../../hooks/useOfflineSales';
+import { enqueueSale, isConnectionProblem, loadQueue, offlineBlocker, queueRoom } from '../../utils/offlineSales';
+import { clearShift, loadCatalog, loadShift, saveCatalog, saveShift } from '../../utils/offlineTill';
 
 // Short id for one sale, sent to M-Pesa / Pesapal / PayPal so payments can be traced to it
 const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
@@ -143,7 +147,7 @@ const NewSale = () => {
   const { mode: themeMode, toggleColorMode } = useThemeMode();
 
   // Redux selectors
-  const { products, itemGroups, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
+  const { products: liveProducts, itemGroups, isLoading: isLoadingProducts, isLoadingReference: isLoadingItemGroups } = useAppSelector((state) => state.product);
   const { 
     isLoading: isCreatingInvoice, 
     paymentMethods,
@@ -156,6 +160,14 @@ const NewSale = () => {
 
   const userCompany = user?.company || user?.custom_company || user?.company_name || 
                       user?.company_data?.name || user?.company_data?.company_name;
+  const userId = user?.email || user?.name || user?.user;
+
+  // Offline: sell from the product list saved the last time the till was online
+  const offlineCatalog = useMemo(() => loadCatalog(userCompany), [userCompany]);
+  const products = liveProducts.length > 0 ? liveProducts : offlineCatalog;
+  useEffect(() => {
+    if (liveProducts.length > 0) saveCatalog(userCompany, liveProducts);
+  }, [liveProducts, userCompany]);
 
   // Refs for accessibility
   const searchInputRef = useRef(null);
@@ -369,6 +381,7 @@ const NewSale = () => {
 
   // Fetch stock quantities for all products when warehouse changes
   useEffect(() => {
+    if (!navigator.onLine) return; // offline: keep the last known stock figures
     if (defaultWarehouse && products.length > 0 && userCompany) {
       const itemCodes = products.map(p => p.item_code).filter(Boolean);
       if (itemCodes.length > 0) {
@@ -537,6 +550,10 @@ const NewSale = () => {
           // Only ever adopt a shift that clearly belongs to the signed-in person
           const mine = (result.payload.posOpeningEntries || []).find((e) => e.status === 'Open' && e.user && me && e.user === me);
           if (mine) dispatch(resumePOSSession(mine));
+        } else if (isConnectionProblem(result.payload)) {
+          // Offline: carry on with the shift this person had open when last online
+          const saved = loadShift(userCompany, me);
+          if (saved) dispatch(resumePOSSession(saved));
         }
         setShiftChecked(true);
       })
@@ -545,6 +562,12 @@ const NewSale = () => {
       cancelled = true;
     };
   }, [dispatch, isPOSSessionOpen, shiftChecked, userCompany, user]);
+
+  // Remember the open shift so the till can keep selling if it is reopened offline
+  useEffect(() => {
+    if (isPOSSessionOpen && posOpeningEntry?.name) saveShift(userCompany, userId, posOpeningEntry);
+    else if (!isPOSSessionOpen && shiftChecked && navigator.onLine) clearShift();
+  }, [isPOSSessionOpen, posOpeningEntry, userCompany, userId, shiftChecked]);
 
   // Use the shift's own POS profile when we picked one up
   useEffect(() => {
@@ -1055,6 +1078,47 @@ const NewSale = () => {
       }),
     };
 
+    // No connection: keep a cash sale on this device and upload it later (see utils/offlineSales)
+    const saveOffline = () => {
+      const blocker = offlineBlocker({ paymentLines, loyaltyPoints: loyaltyPointsToRedeem })
+        || queueRoom(loadQueue()).reason;
+      if (blocker) {
+        setSnackbarMessage(blocker);
+        setSnackbarSeverity('warning');
+        setSnackbarOpen(true);
+        return;
+      }
+      const entry = enqueueSale({
+        payload: invoiceData,
+        receipt: { grandTotal, itemCount: cart.length },
+        company: userCompany,
+        user: userId,
+      });
+      setCompletedInvoice({ name: entry.id, customer: invoiceCustomer, grand_total: grandTotal, offline: true });
+      setCompletedSaleData({
+        items: cart,
+        customer,
+        paymentMode,
+        payments: paymentsPayload,
+        amountGiven,
+        grandTotal,
+        timestamp: new Date(),
+      });
+      setReceiptDialogOpen(true);
+      setCart([]);
+      setIsCheckoutMode(false);
+      setAmountGiven(0);
+      setManualDiscountType('percentage');
+      setManualDiscountValue(0);
+      setSearchTerm('');
+      setSaleReference(newSaleReference());
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      saveOffline();
+      return;
+    }
+
     try {
       // Try creating POS Invoice first
       let result = await dispatch(createPOSInvoice(invoiceData));
@@ -1106,6 +1170,11 @@ const NewSale = () => {
             setSaleReference(newSaleReference());
             return;
           }
+        } else if (isConnectionProblem(errorMessage)) {
+          // The connection dropped while sending. Keeping it is safe: the server records
+          // a sale id only once, even if this attempt did reach it.
+          saveOffline();
+          return;
         } else {
           // Other error - show it
           setSnackbarMessage(errorMessage || 'Failed to create invoice');
@@ -1826,6 +1895,25 @@ const NewSale = () => {
   useEffect(() => setTileLimit(TILE_PAGE), [debouncedSearchTerm, selectedCategory]);
 
   const showShiftCheck = !isPOSSessionOpen && !shiftChecked;
+
+  const offlineSales = useOfflineSales(userCompany, {
+    onSynced: ({ uploaded, flagged }) => {
+      if (uploaded) {
+        dispatch(showNotification({
+          message: `${uploaded} sale${uploaded === 1 ? '' : 's'} made offline ${uploaded === 1 ? 'was' : 'were'} uploaded.`,
+          severity: 'success',
+          title: 'Offline sales uploaded',
+        }));
+      }
+      if (flagged) {
+        dispatch(showNotification({
+          message: `${flagged} offline sale${flagged === 1 ? ' was' : 's were'} refused by the server. Open the list on the till to see why.`,
+          severity: 'warning',
+          title: 'Offline sales need a manager',
+        }));
+      }
+    },
+  });
   const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
 
   const orderPanel = (
@@ -1888,6 +1976,8 @@ const NewSale = () => {
         onOpenReady={() => setReadyOpen(true)}
         onOpenKitchenSettings={() => setKitchenSettingsOpen(true)}
       />
+
+      <OfflineSalesBar {...offlineSales} onSyncNow={offlineSales.syncNow} />
 
       {/* Screen reader announcements for cart changes */}
       <Box ref={cartAnnouncementRef} role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }} />
