@@ -4,6 +4,8 @@
 
 When a waiter holds a bill on one till, the other tills of the business only find out at their next 20 second check. This file describes one more live message, `kind: "held"`, that the server sends when a held bill is saved or removed. It follows exactly the same pattern as the payment and kitchen messages in `REALTIME_EVENTS.md`: the message only says "refresh", and the till then asks `list_held_sales` for the facts.
 
+**Status: written.** The backend change below is in [Murzak-PoS-Backend#26](https://github.com/MurzakTech/Murzak-PoS-Backend/pull/26), stacked on #25 (the `murzak_pos` rename), and `docs/REALTIME_EVENTS.md` here is the updated copy. This file stays as the reasoning behind it.
+
 The frontend is already built for it (`src/hooks/useHeldSales.js`). Until the backend sends the message, nothing breaks: the held sales list is simply checked every 20 seconds, as today.
 
 ## The message
