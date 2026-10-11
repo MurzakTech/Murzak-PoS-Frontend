@@ -1,4 +1,4 @@
-import { cashSuggestions, fmt, formatBuffer, money, nextBuffer, round2 } from './money';
+import { cashSuggestions, fmt, formatBuffer, money, nextBuffer, perUnit, round2, unitLabel } from './money';
 
 describe('till money helpers', () => {
   test('whole amounts drop decimals, others keep two', () => {
@@ -34,5 +34,22 @@ describe('till money helpers', () => {
     expect(nextBuffer('12', 'clear')).toBe('');
     expect(formatBuffer('1250.5')).toBe('1,250.5');
     expect(formatBuffer('1250')).toBe('1,250');
+  });
+});
+
+describe('unit wording on the till', () => {
+  test('counted items read as each / pcs, never "Nos"', () => {
+    expect(perUnit('Nos')).toBe('each');
+    expect(perUnit('Unit')).toBe('each');
+    expect(perUnit(undefined)).toBe('each');
+    expect(unitLabel('Nos')).toBe('pcs');
+    expect(unitLabel('Nos', 1)).toBe('pc');
+    expect(unitLabel('Nos', 2)).toBe('pcs');
+    expect(unitLabel('')).toBe('pcs');
+  });
+
+  test('measured items keep their unit', () => {
+    expect(perUnit('Kg')).toBe('per Kg');
+    expect(unitLabel('Litre')).toBe('Litre');
   });
 });

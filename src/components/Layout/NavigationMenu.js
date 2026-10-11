@@ -81,7 +81,7 @@ const NavigationMenu = React.memo(({ desktopOpen, onNavigate }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <Box component="nav" aria-label="Main" sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: 1.5, py: 0.5 }}>
         {sections.main.map((section, i) => (
-          <Box key={section.title || 'top'} sx={{ mt: i === 0 ? 0 : 1 }}>
+          <Box key={section.title || 'top'} sx={{ mt: i === 0 ? 0 : 1, '@media (max-height: 820px)': { mt: i === 0 ? 0 : 0.5 } }}>
             {section.title &&
               (desktopOpen ? (
                 <Typography

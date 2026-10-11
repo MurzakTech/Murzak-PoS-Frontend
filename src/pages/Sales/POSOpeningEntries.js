@@ -344,8 +344,8 @@ const POSOpeningEntries = () => {
   return (
     <Box>
       <PageHeader
-        title="POS Opening Entries"
-        subtitle="View and manage POS session opening entries"
+        title="Till Shifts"
+        subtitle="Each time a cashier opens and closes a till (POS opening entries)"
         icon={History}
         stats={[
           { value: totalEntries, label: 'Total Entries', color: 'primary.main' },

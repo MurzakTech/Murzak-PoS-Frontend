@@ -141,7 +141,7 @@ const MaterialReceiptsList = () => {
             </IconButton>
             <Box>
               <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-                Material Receipts
+                Stock In (Material Receipts)
               </Typography>
               <Typography variant="body1" color="text.secondary">
                 View all material receipt transactions

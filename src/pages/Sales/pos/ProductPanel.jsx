@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { Search, Close, QrCodeScanner, Inventory2Outlined, LocalOffer } from '@mui/icons-material';
 import EmptyState from '../../../components/Common/EmptyState';
 import ProductImage from '../../../components/Common/ProductImage';
-import { fmt } from './money';
+import { fmt, perUnit } from './money';
 import { isPrescriptionOnly } from '../../../utils/prescription';
 
 const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, stockQty, cartQty, uom, disabled, onAdd, showImage }) => {
@@ -92,7 +92,7 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
             </Typography>
           )}
           <Typography variant="caption" color="text.secondary">
-            per {uom}
+            {perUnit(uom)}
           </Typography>
         </Box>
         <Box sx={{ textAlign: 'right', flexShrink: 0 }}>

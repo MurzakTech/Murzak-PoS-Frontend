@@ -190,7 +190,7 @@ const StockReconciliation = () => {
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" component="h1">
-            Stock Reconciliation
+            Stock Count (Reconciliation)
           </Typography>
         </Box>
 

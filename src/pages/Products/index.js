@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
+import { fmt, isCounted } from '../Sales/pos/money';
 import {
   Box,
   Typography,
@@ -662,9 +663,9 @@ const Products = () => {
     {
       field: 'item_code',
       header: 'Item Code',
-      width: '15%',
+      width: '11%',
       render: (value) => (
-        <Typography variant="body2" fontWeight={500}>
+        <Typography variant="body2" fontWeight={500} noWrap>
           {value}
         </Typography>
       ),
@@ -672,7 +673,7 @@ const Products = () => {
     {
       field: 'item_name',
       header: 'Name',
-      width: '24%',
+      width: '26%',
       render: (value, row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
           <ProductImage product={row} shape="square" rounded={1.5} sx={{ width: 36 }} />
@@ -688,25 +689,30 @@ const Products = () => {
     },
     {
       field: 'stock_uom',
-      header: 'UOM',
-      width: '8%',
-      render: (value) => value || '-',
+      header: 'Unit',
+      width: '7%',
+      render: (value) => (value ? (isCounted(value) ? 'Each' : value) : '-'),
     },
     {
       field: 'price',
       header: 'Price',
-      width: '10%',
+      width: '11%',
       align: 'right',
-      render: (value) => (
-        <Typography variant="body2" fontWeight={500}>
-          KES {value || '0.00'}
+      // A price of 0 means "the cashier types the price at the till" (fresh produce, services)
+      render: (value) => (Number(value) > 0 ? (
+        <Typography variant="body2" fontWeight={500} noWrap>
+          KES {fmt(value)}
         </Typography>
-      ),
+      ) : (
+        <Typography variant="body2" color="text.secondary" noWrap>
+          Set at sale
+        </Typography>
+      )),
     },
     {
       field: 'discount',
       header: 'Discount',
-      width: '12%',
+      width: '10%',
       render: (value, row) => {
         if (isLoadingDiscounts) {
           return <CircularProgress size={16} />;
@@ -721,8 +727,8 @@ const Products = () => {
     },
     {
       field: 'stock_qty',
-      header: 'Stock Qty',
-      width: '10%',
+      header: 'In stock',
+      width: '9%',
       align: 'right',
       render: (value) => {
         if (value === undefined || value === null) {
@@ -741,7 +747,7 @@ const Products = () => {
     {
       field: 'disabled',
       header: 'Status',
-      width: '10%',
+      width: '9%',
       render: (value) => (
         <StatusChip
           status={value === 1 ? 'disabled' : 'enabled'}
@@ -754,6 +760,7 @@ const Products = () => {
       header: 'Actions',
       width: '5%',
       align: 'right',
+      stickyRight: true,
       render: (value, row) => (
         <IconButton 
           size="small" 

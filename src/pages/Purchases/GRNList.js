@@ -350,8 +350,8 @@ const GRNList = () => {
   return (
     <Box>
       <PageHeader
-        title="Goods Receipt Notes (GRN)"
-        subtitle="View and manage goods receipt notes"
+        title="Goods Received (GRN)"
+        subtitle="Deliveries from suppliers that have been checked in (goods receipt notes)"
         icon={Inventory}
         stats={[
           { value: grns.length, label: 'Total GRNs', color: 'primary.main' },

@@ -52,7 +52,7 @@ const CommandPalette = ({ open, onClose, onNavigate }) => {
           path: child.path,
           icon: child.icon || route.icon,
           group: 'Go to',
-          keywords: child.label,
+          keywords: `${child.label} ${child.keywords || ''}`,
         });
       });
     });

@@ -49,6 +49,7 @@ import StatCard from '../../components/Common/StatCard';
 import EmptyState from '../../components/Common/EmptyState';
 import { PageSkeleton } from '../../components/Common/LoadingState';
 import GettingStarted, { useChecklistState } from './GettingStarted';
+import useRoleAccess from '../../hooks/useRoleAccess';
 import WelcomeSetup from './WelcomeSetup';
 import { SalesTrendChart, MonthlySalesChart } from './DashboardCharts';
 import { formatMoney, getGreeting, PERIOD_LABELS } from './formatters';
@@ -215,6 +216,9 @@ const Dashboard = () => {
   };
 
   const goTo = (path) => navigate(path);
+  // Cashiers and other limited roles are only offered what they can actually open
+  const { hasAccess } = useRoleAccess();
+  const canSetUp = hasAccess('/products/load-products') && hasAccess('/products/new');
 
   const handleLoadStarter = async () => {
     const code = industry?.industry_code || industry?.name;
@@ -235,7 +239,7 @@ const Dashboard = () => {
   }
 
   // Brand-new business with no products: guide them to add some
-  const hasNoProducts = productCheck === 'done' && pagination.total === 0;
+  const hasNoProducts = canSetUp && productCheck === 'done' && pagination.total === 0;
   if (hasNoProducts) {
     return (
       <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
@@ -247,7 +251,7 @@ const Dashboard = () => {
           onLoadStarter={handleLoadStarter}
           onNavigate={goTo}
         />
-        <GettingStarted checklist={checklist} productCount={0} staffCount={staffUsers.length} hasSales={false} onNavigate={goTo} />
+        <GettingStarted checklist={checklist} productCount={0} staffCount={staffUsers.length} hasSales={false} onNavigate={goTo} canOpen={hasAccess} />
       </Box>
     );
   }
@@ -315,7 +319,7 @@ const Dashboard = () => {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.25}>
-          {!guideVisible && (
+          {!guideVisible && canSetUp && (
             <Button
               color="inherit"
               startIcon={<RocketLaunchOutlined />}
@@ -325,9 +329,11 @@ const Dashboard = () => {
               Setup guide
             </Button>
           )}
-          <Button variant="outlined" startIcon={<Add />} onClick={() => goTo('/products/new')}>
-            Add product
-          </Button>
+          {hasAccess('/products/new') && (
+            <Button variant="outlined" startIcon={<Add />} onClick={() => goTo('/products/new')}>
+              Add product
+            </Button>
+          )}
           <Button variant="contained" startIcon={<PointOfSale />} onClick={() => goTo('/sales/pos')}>
             New sale
           </Button>
@@ -340,6 +346,7 @@ const Dashboard = () => {
         staffCount={staffUsers.length}
         hasSales={stats.totalSales > 0}
         onNavigate={goTo}
+        canOpen={hasAccess}
       />
 
       <FilterBar

@@ -340,7 +340,7 @@ const StockLedger = () => {
   return (
     <Box>
       <PageHeader
-        title="Stock Ledger"
+        title="Stock History (Ledger)"
         subtitle="Transaction history for stock movements"
         icon={History}
         stats={[

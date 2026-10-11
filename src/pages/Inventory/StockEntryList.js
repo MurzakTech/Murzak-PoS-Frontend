@@ -146,7 +146,7 @@ const StockEntryList = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box>
             <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
-              Stock Entries
+              Stock Movements (Stock Entries)
             </Typography>
             <Typography variant="body1" color="text.secondary">
               View and manage all stock entry transactions

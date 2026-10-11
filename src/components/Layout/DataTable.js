@@ -175,6 +175,9 @@ const DataTable = ({
                     maxWidth: column.maxWidth,
                     fontWeight: 600,
                     whiteSpace: 'nowrap',
+                    px: 1.5,
+                    // A column marked stickyRight (row actions) stays visible while a wide table scrolls sideways
+                    ...(column.stickyRight && { position: 'sticky', right: 0, zIndex: 3, backgroundColor: (t) => t.custom?.surface?.subtle || 'background.paper' }),
                     ...column.headerSx,
                   }}
                 >
@@ -206,6 +209,8 @@ const DataTable = ({
                       key={`${row[rowKey] || rowIndex}-${column.field || colIndex}`}
                       align={column.align || 'left'}
                       sx={{
+                        px: 1.5,
+                        ...(column.stickyRight && { position: 'sticky', right: 0, zIndex: 1, backgroundColor: 'background.paper', boxShadow: (t) => `-8px 0 8px -8px ${alpha(t.palette.common.black, 0.15)}` }),
                         ...column.cellSx,
                       }}
                     >

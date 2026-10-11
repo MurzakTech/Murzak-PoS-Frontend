@@ -162,12 +162,12 @@ const SubmitPurchaseOrder = () => {
             Back
           </Button>
           <Typography variant="h4" component="h1">
-            Submit Purchase Orders
+            Approve Purchase Orders
           </Typography>
         </Box>
 
         <Alert severity="info" sx={{ mb: 3 }}>
-          This page shows all Purchase Orders in Draft state. Submit them to make them available for goods receipt.
+          This page shows all Purchase Orders in Draft state. Approve (submit) them so the goods can be received when they arrive.
         </Alert>
 
         {/* Draft Purchase Orders List */}

@@ -7,6 +7,7 @@ const Numpad = ({ onKey }) => {
   const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '00', '0', '.'];
   const keyBtn = {
     height: 60,
+    '@media (max-height: 820px)': { height: 46 },
     borderRadius: 2.5,
     border: 1,
     borderColor: 'divider',

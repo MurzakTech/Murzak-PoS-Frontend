@@ -177,7 +177,7 @@ const MaterialIssue = () => {
               <ArrowBack />
             </IconButton>
             <Typography variant="h4" component="h1">
-              Material Issue
+              Stock Out (Material Issue)
             </Typography>
           </Box>
           <Button

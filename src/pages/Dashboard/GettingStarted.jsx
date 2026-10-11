@@ -59,10 +59,13 @@ export const useChecklistState = (company) => {
   return [state, persist];
 };
 
-const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavigate }) => {
+// `canOpen(path)` says whether the signed-in person may open a page. A cashier has no use
+// for "Import stock" or "Add staff" (the buttons would bounce them back here), so steps they
+// cannot act on are left out, and the whole guide disappears when none are left for them.
+const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavigate, canOpen = () => true }) => {
   const [state, persist] = checklist;
 
-  const steps = useMemo(
+  const allSteps = useMemo(
     () => [
       {
         id: 'account',
@@ -110,6 +113,12 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
     ],
     [productCount, staffCount, hasSales]
   );
+  const steps = useMemo(
+    () => allSteps.filter((s) => !s.cta || canOpen(s.cta.path)),
+    [allSteps, canOpen]
+  );
+  // "Create your account" and "Make your first sale" alone are not a setup guide
+  const hasSetupWork = steps.some((s) => s.cta && s.id !== 'sale');
 
   const isDone = (s) => s.done || state.done.includes(s.id);
   const doneCount = steps.filter(isDone).length;
@@ -118,7 +127,7 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
   // New businesses see the full list; once most steps are done it starts tucked away
   const expanded = state.collapsed === undefined ? doneCount < 4 : !state.collapsed;
 
-  if (state.dismissed) return null;
+  if (state.dismissed || !hasSetupWork) return null;
 
   return (
     <Card sx={{ mb: 3, overflow: 'hidden', background: (t) => (complete ? undefined : t.custom.gradientSoft) }}>
@@ -174,6 +183,8 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
+                  // On a phone the buttons drop under the text instead of squeezing it
+                  flexWrap: { xs: 'wrap', sm: 'nowrap' },
                   gap: 1.5,
                   px: 1,
                   py: 1.25,
@@ -186,7 +197,7 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
                 ) : (
                   <RadioButtonUnchecked sx={{ color: isNext ? 'primary.main' : 'text.disabled' }} />
                 )}
-                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                <Box sx={{ flexGrow: 1, minWidth: 0, flexBasis: { xs: 'calc(100% - 44px)', sm: 'auto' } }}>
                   <Typography
                     variant="subtitle2"
                     sx={{ textDecoration: done ? 'line-through' : 'none', color: done ? 'text.secondary' : 'text.primary' }}
@@ -200,7 +211,7 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
                   )}
                 </Box>
                 {!done && step.cta && (
-                  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0 }}>
+                  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0, pl: { xs: 4.5, sm: 0 } }}>
                     {!step.auto && (
                       <Button size="small" color="inherit" sx={{ color: 'text.secondary' }} onClick={() => persist({ ...state, done: [...state.done, step.id] })}>
                         Mark done

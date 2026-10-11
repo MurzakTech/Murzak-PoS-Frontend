@@ -122,16 +122,17 @@ const PaymentPanel = ({
 
   return (
     <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', animation: 'murzak-fade-up .2s ease both' }}>
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 2.5, overscrollBehavior: 'contain' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+      {/* Laptop tills are only 768px tall: on short screens everything tightens so the whole keypad and the Complete button are in view without scrolling */}
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 2.5, overscrollBehavior: 'contain', '@media (max-height: 820px)': { p: 1.5 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, '@media (max-height: 820px)': { mb: 0.25 } }}>
           <Button color="inherit" startIcon={<ArrowBack />} onClick={onBack} sx={{ color: 'text.secondary', ml: -1 }}>
             Back to items
           </Button>
         </Box>
 
-        <Box sx={{ mb: 2.5 }}>
+        <Box sx={{ mb: 2.5, '@media (max-height: 820px)': { mb: 1 } }}>
           <Typography variant="overline" color="text.secondary">Amount due</Typography>
-          <Typography variant="h1" sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em', fontSize: { xs: '2.5rem', md: '3.25rem' } }}>
+          <Typography variant="h1" sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em', fontSize: { xs: '2.5rem', md: '3.25rem' }, '@media (max-height: 820px)': { fontSize: '2.5rem', lineHeight: 1.1 } }}>
             <Box component="span" sx={{ fontSize: '0.45em', color: 'text.secondary', mr: 1, fontWeight: 650 }}>{currency}</Box>
             {fmt(total)}
           </Typography>
@@ -151,6 +152,7 @@ const PaymentPanel = ({
                 aria-pressed={selected}
                 sx={{
                   height: 76,
+                  '@media (max-height: 820px)': { height: 58 },
                   borderRadius: 3,
                   flexDirection: 'column',
                   gap: 0.5,
@@ -171,7 +173,7 @@ const PaymentPanel = ({
         <FormControlLabel
           control={<Switch checked={splitPayments} onChange={(e) => setSplitPayments(e.target.checked)} />}
           label={<Typography variant="body2">Split between several methods</Typography>}
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, '@media (max-height: 820px)': { mb: 0.75 } }}
         />
 
         {/* Cash */}
@@ -180,7 +182,7 @@ const PaymentPanel = ({
             <Box>
               <Typography variant="overline" color="text.secondary">Customer gives</Typography>
               <Box
-                sx={{ height: 72, px: 2, borderRadius: 3, border: 2, borderColor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', bgcolor: 'background.paper', mb: 1.25 }}
+                sx={{ height: 72, '@media (max-height: 820px)': { height: 60 }, px: 2, borderRadius: 3, border: 2, borderColor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', bgcolor: 'background.paper', mb: 1.25 }}
                 aria-live="polite"
               >
                 <Typography variant="h3" sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
@@ -340,7 +342,7 @@ const PaymentPanel = ({
           disabled={!canComplete}
           onClick={onComplete}
           startIcon={isCreating ? <CircularProgress size={22} color="inherit" /> : <CheckCircle />}
-          sx={{ height: 68, fontSize: '1.375rem', fontWeight: 800, borderRadius: 3, bgcolor: 'success.main', color: 'success.contrastText', '&:hover': { bgcolor: 'success.dark' }, '&.Mui-disabled': { bgcolor: 'action.disabledBackground' } }}
+          sx={{ height: 68, '@media (max-height: 820px)': { height: 56 }, fontSize: '1.375rem', fontWeight: 800, borderRadius: 3, bgcolor: 'success.main', color: 'success.contrastText', '&:hover': { bgcolor: 'success.dark' }, '&.Mui-disabled': { bgcolor: 'action.disabledBackground' } }}
         >
           {isCreating ? 'Processing...' : 'Complete sale'}
         </Button>
