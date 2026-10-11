@@ -84,3 +84,30 @@ Then the real test, with two tills of one business signed in:
 ## Undoing it
 
 Delete the `set` and `include` lines from each `server` block, then run `sudo nginx -t && sudo systemctl reload nginx`. The tills go back to checking every few seconds, which is how they worked before.
+
+## How it was set up on the production server (11 October 2026)
+
+This section records the real file names and values, so the setup can be checked or repeated.
+
+| Address | File edited | Lines added |
+|---|---|---|
+| `pos.murzaktech.tech` (shared till) | `/etc/nginx/conf.d/pos_frontend.conf`, in the first `server` block (the `listen 443` one), after `index index.html;` | `set $frappe_site api.pos.murzaktech.tech;` and `include /etc/nginx/snippets/murzak-realtime-proxy.conf;` |
+| `<shop>.pos.murzaktech.tech` (every shop) | `/etc/nginx/sites-available/pos-tenants-wildcard`, in the 443 `server` block, after `set $murzak_pos_site ...;` | `set $frappe_site $murzak_pos_site;` and the same `include` |
+
+- **The map.** `/etc/nginx/conf.d/websocket-upgrade.conf` defines `$connection_upgrade`. The server already had a similar map with a different name (`$murzak_apps_connection_upgrade`, for the apps sites), so the two do not clash.
+- **Shops need no per-shop edit.** The shop block already works out each shop's Frappe site from its address (`<shop>.erp.murzaktech.tech`) and keeps it in `$murzak_pos_site`, so one pair of lines covers every present and future shop.
+- **The Frappe programs** are on the same server: the web program on `127.0.0.1:8000` and the live-connection program on port `9000`, so the addresses in the rules file were used unchanged.
+- **The shop guard does not interfere.** `snippets/murzak-pos-guard.conf` only acts on `/api/method/techsavanna_pos.…` requests. The live connection (`/socket.io/`) and the sign-in check (`/api/method/frappe.realtime.get_user_info`) do not match, so the guard leaves them alone.
+
+### What was checked
+
+- Shared till, `/socket.io/`: `HTTP/2 200` with a body starting `0{"sid":` and `"upgrades":["websocket"]`.
+- Shared till, sign-in check: a JSON reply from the backend (a Guest session), not the web page.
+- Shop address, `/socket.io/`: `HTTP/2 200`, `text/plain`, the same reply, with the shop block's security headers present. No shop sites existed yet, so a made-up shop name was used.
+- Shop address, sign-in check: Frappe's "not found" for a shop that does not exist. That shows the request reached the backend pinned to the shop's site name. It should be repeated against a real shop once one is provisioned.
+
+### Still to do
+
+- **Guard patterns after the app rename.** `conf.d/00-murzak-pos-guard-map.conf` only matches `techsavanna_pos.` in method names. When a shop's site moves to the renamed `murzak_pos` release, none of its methods match, and the guard silently stops protecting that shop (sign-up blocking, and the sign-in requirement for private methods). The patterns must accept both names at the same time as the cutover.
+- **Port 9000.** The live-connection program listens on all network addresses (`*:9000`). Confirm the firewall (`sudo ufw status`, and the hosting provider's firewall) does not allow it from outside; the tills reach it only through Nginx.
+- **Real-shop test.** Once a shop exists, repeat the two checks above against it, then do the two-till test in step 5.
