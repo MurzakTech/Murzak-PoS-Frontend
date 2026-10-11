@@ -1,0 +1,216 @@
+From de0555267fb9f3169a21092856da434c064fc137 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 11 Oct 2026 14:50:06 +0000
+Subject: [PATCH] Dashboard figures: refuse cashiers, hide money from stock
+ roles
+
+get_dashboard_metrics checked only the warehouse, so any signed-in user,
+including a cashier, could ask for the shop's sales, profit, purchases and
+expenses. The frontend now sends a cashier straight to the till and hides
+these figures, but the browser cannot be the lock.
+
+- require_dashboard_role(): only money roles (the roles that may open
+  Reports in the frontend) and stock roles may call it. A cashier, the
+  generic "All" and "Guest" roles are refused.
+- may_see_money_figures(): money roles get everything; stock roles get
+  the stock lists (low stock, pending shipments) with every money figure
+  removed.
+- Tests added to test_access_control.py (role sets, money visibility,
+  stock-only trimming, and the "check comes first" table).
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01QisqeRhNwdme8fSoc7H2RH
+---
+ techsavanna_pos/api/access_control.py      | 36 ++++++++++++++++++
+ techsavanna_pos/api/dashboard_api.py       | 43 +++++++++++++++++-----
+ techsavanna_pos/api/test_access_control.py | 36 ++++++++++++++++++
+ 3 files changed, 105 insertions(+), 10 deletions(-)
+
+diff --git a/techsavanna_pos/api/access_control.py b/techsavanna_pos/api/access_control.py
+index 795172b..f877f26 100644
+--- a/techsavanna_pos/api/access_control.py
++++ b/techsavanna_pos/api/access_control.py
+@@ -63,6 +63,29 @@ CREDIT_ROLES = frozenset(
+ LOYALTY_ROLES = frozenset({"System Manager", "Accounts Manager"})
+ TRANSFER_ROLES = frozenset({"System Manager", "Stock Manager", "Stock User"})
+ 
++# Who may see the shop's dashboard figures. Copied from the frontend: the roles that may open Reports see
++# the money figures (sales, profit, what customers owe, purchases, expenses); the roles that move stock see
++# the stock figures only. A cashier sees neither: the frontend sends a cashier straight to the till.
++DASHBOARD_MONEY_ROLES = frozenset(
++	{
++		"System Manager",
++		"Sales Manager",
++		"Purchase Manager",
++		"Stock Manager",
++		"Item Manager",
++		"Accounts Manager",
++		"Accounts User",
++		"Delivery Manager",
++		"Agent Manager",
++		"Analytics",
++		"Auditor",
++		"Expense Approver",
++		"Dashboard Manager",
++		"Agriculture Manager",
++	}
++)
++DASHBOARD_STOCK_ROLES = STOCK_ROLES | TRANSFER_ROLES
++
+ 
+ def require_manager() -> None:
+ 	"""Refuse anyone who is not signed in, or is not a business owner (System Manager) or the Administrator."""
+@@ -162,6 +185,19 @@ def require_credit_role() -> None:
+ 	require_any_role(CREDIT_ROLES, _("change customer credit limits"))
+ 
+ 
++def require_dashboard_role() -> None:
++	"""Reading the dashboard figures: money roles and stock roles only, never a cashier."""
++	require_any_role(DASHBOARD_MONEY_ROLES | DASHBOARD_STOCK_ROLES, _("see the dashboard figures"))
++
++
++def may_see_money_figures() -> bool:
++	"""True for the Administrator and the roles that may open Reports in the frontend."""
++	user = frappe.session.user
++	if user == "Administrator":
++		return True
++	return bool(DASHBOARD_MONEY_ROLES & set(frappe.get_roles(user)))
++
++
+ def require_loyalty_role() -> None:
+ 	"""Creating a loyalty program or assigning one to customers."""
+ 	require_any_role(LOYALTY_ROLES, _("manage loyalty programs"))
+diff --git a/techsavanna_pos/api/dashboard_api.py b/techsavanna_pos/api/dashboard_api.py
+index 77a1d39..ea870d3 100755
+--- a/techsavanna_pos/api/dashboard_api.py
++++ b/techsavanna_pos/api/dashboard_api.py
+@@ -15,7 +15,11 @@ from frappe.utils import flt, nowdate, getdate, add_days, add_months, get_first_
+ from frappe.query_builder import DocType, functions as fn
+ from pypika.terms import Case
+ 
+-from techsavanna_pos.api.access_control import ensure_record_access
++from techsavanna_pos.api.access_control import (
++    ensure_record_access,
++    may_see_money_figures,
++    require_dashboard_role,
++)
+ from techsavanna_pos.api.payment_gateway_common import resolve_company
+ from techsavanna_pos.api.profit_calc import summarize_profit
+ 
+@@ -97,6 +101,8 @@ def get_dashboard_metrics(
+     Returns:
+         dict: Complete dashboard metrics
+     """
++    # Shop-wide figures are for money and stock roles; a cashier is refused before anything is read
++    require_dashboard_role()
+     ensure_record_access("Warehouse", warehouse)
+     try:
+         # Set date range based on period
+@@ -133,17 +139,21 @@ def get_dashboard_metrics(
+         stock_alerts = _get_stock_alerts(warehouse_filter, company)
+         pending_shipments = _get_pending_shipments(filters, company)
+         
++        data = {
++            "stats": stats,
++            "salesLast30Days": sales_last_30_days,
++            "monthlySales": monthly_sales,
++            "salesDue": sales_due,
++            "purchasesDue": purchases_due,
++            "stockAlerts": stock_alerts,
++            "pendingShipments": pending_shipments,
++        }
++        if not may_see_money_figures():
++            data = _stock_figures_only(data)
++
+         return {
+             "success": True,
+-            "data": {
+-                "stats": stats,
+-                "salesLast30Days": sales_last_30_days,
+-                "monthlySales": monthly_sales,
+-                "salesDue": sales_due,
+-                "purchasesDue": purchases_due,
+-                "stockAlerts": stock_alerts,
+-                "pendingShipments": pending_shipments,
+-            },
++            "data": data,
+             "filters": {
+                 "company": company,
+                 "warehouse": warehouse,
+@@ -161,6 +171,19 @@ def get_dashboard_metrics(
+         }
+ 
+ 
++def _stock_figures_only(data: Dict) -> Dict:
++    """What a stock role may see: the stock lists, with every money figure removed."""
++    return {
++        "stats": {},
++        "salesLast30Days": [],
++        "monthlySales": [],
++        "salesDue": [],
++        "purchasesDue": [],
++        "stockAlerts": data.get("stockAlerts", []),
++        "pendingShipments": data.get("pendingShipments", []),
++    }
++
++
+ def _get_sales_stats(filters: Dict, warehouse_filter: Dict, company: str) -> Dict:
+     """Get sales statistics."""
+     SalesInvoice = DocType("Sales Invoice")
+diff --git a/techsavanna_pos/api/test_access_control.py b/techsavanna_pos/api/test_access_control.py
+index 88903de..d3eb987 100644
+--- a/techsavanna_pos/api/test_access_control.py
++++ b/techsavanna_pos/api/test_access_control.py
+@@ -408,6 +408,7 @@ SENSITIVE_CALLS = {
+ 			"confirm_receive_transfer",
+ 		],
+ 	},
++	"require_dashboard_role": {"dashboard_api": ["get_dashboard_metrics"]},
+ 	"require_credit_role": {"customer_api": ["set_customer_credit_limit", "remove_customer_credit_limit"]},
+ 	"require_loyalty_role": {"loyalty": ["create_loyalty_program", "assign_loyalty_program"]},
+ 	"require_manager": {
+@@ -478,6 +479,41 @@ class TestRoleSets(AccessCase):
+ 		self.assertFalse(self.allowed(access_control.require_stock_count_role, ("Stock User",)))
+ 		self.assertTrue(self.allowed(access_control.require_stock_count_role, ("Stock Manager",)))
+ 
++	def test_dashboard_figures_follow_the_frontends_dashboard(self):
++		check = access_control.require_dashboard_role
++		# money roles and stock roles may read it; a cashier and the generic roles may not
++		for role in ("Sales Manager", "Accounts Manager", "Stock User", "Stock Manager"):
++			self.assertTrue(self.allowed(check, (role,)), role)
++		for role in ("Sales User", "Desk User", "Employee", "Agent", "Guest", "All"):
++			self.assertFalse(self.allowed(check, (role,)), role)
++
++	def test_only_money_roles_see_money_figures(self):
++		def sees_money(roles):
++			self.as_user("someone@shop-a.test", roles=roles)
++			return access_control.may_see_money_figures()
++
++		self.assertTrue(sees_money(("Sales Manager",)))
++		self.assertTrue(sees_money(("Sales User", "Accounts Manager")))
++		self.assertFalse(sees_money(("Stock User",)))
++		self.assertFalse(sees_money(("Sales User",)))
++
++	def test_a_stock_role_gets_the_stock_lists_and_no_money(self):
++		everything = {
++			"stats": {"totalSales": 100},
++			"salesLast30Days": [1],
++			"monthlySales": [1],
++			"salesDue": [1],
++			"purchasesDue": [1],
++			"stockAlerts": ["low"],
++			"pendingShipments": ["ship"],
++		}
++		trimmed = dashboard_api._stock_figures_only(everything)
++		self.assertEqual(trimmed["stockAlerts"], ["low"])
++		self.assertEqual(trimmed["pendingShipments"], ["ship"])
++		self.assertEqual(trimmed["stats"], {})
++		for key in ("salesLast30Days", "monthlySales", "salesDue", "purchasesDue"):
++			self.assertEqual(trimmed[key], [], key)
++
+ 	def test_credit_limits_follow_the_frontends_credit_screen(self):
+ 		credit = access_control.require_credit_role
+ 		for role in ("Sales Manager", "Accounts Manager", "Accounts User"):
+-- 
+2.43.0
+

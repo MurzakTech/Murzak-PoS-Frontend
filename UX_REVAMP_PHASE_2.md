@@ -95,7 +95,17 @@ def require_dashboard_role() -> None:
     require_dashboard_role()
 ```
 
-The same applies to any other call that returns shop-wide totals. Stock roles that only need the "running low" list would need a smaller call or an exception. This was not applied because the backend deploys straight to the live server on merge, so it should be reviewed first.
+The same applies to any other call that returns shop-wide totals. Stock roles that only need the "running low" list would need a smaller call or an exception. This is not applied to the server, because the backend deploys straight to the live server on merge, so it should be reviewed first.
+
+The change is written, with tests, as a ready patch: `backend-patches/dashboard-role-check.patch`. It was prepared against the backend's `main` and applies cleanly. It could not be opened as a backend pull request from this session, which has no write access to that repository. To turn it into one, in a copy of the backend repository:
+
+```
+git checkout -b dashboard-role-check
+git am /path/to/backend-patches/dashboard-role-check.patch
+git push -u origin dashboard-role-check
+```
+
+Then open a pull request from that branch and run the backend's tests (`bench run-tests`). The role logic was checked on its own here, but the backend's own test suite needs Frappe and was not run. The patch also lets stock roles (Stock User and similar) keep their "running low" and "stock on the way" lists, with every money figure removed, because the app shows them those.
 
 ## 5. Suggested next steps
 
