@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
   const location = useLocation();
   const { isAuthenticated, isLoading, user } = useAppSelector((state) => state.auth);
   const { isCompleted: onboardingCompleted } = useAppSelector((state) => state.onboarding);
-  const { hasAccess, hasRole, roles } = useRoleAccess();
+  const { hasAccess, hasRole, roles, homePath } = useRoleAccess();
   const [isInitializing, setIsInitializing] = useState(true);
   
   // Check if user has company data (staff users have company data but may not have onboarding_completed flag)
@@ -82,7 +82,7 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
 
   // If onboarding is completed (or user has company data) and user tries to access onboarding page, redirect to dashboard
   if (shouldSkipOnboarding && location.pathname === '/onboarding') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={homePath || '/dashboard'} replace />;
   }
 
   // Check role-based access
@@ -121,8 +121,25 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     // Skip check for public routes like /onboarding
     const publicPaths = ['/onboarding', '/login', '/register'];
     if (!publicPaths.includes(location.pathname) && !hasAccess(location.pathname)) {
-      // User doesn't have access to this route - redirect to dashboard
-      return <Navigate to="/dashboard" replace />;
+      // No access to this page: send them to where they start (the till for a cashier).
+      // If that is not possible, say so instead of redirecting in circles.
+      if (homePath && homePath !== location.pathname) {
+        return <Navigate to={homePath} replace />;
+      }
+      return (
+        <Layout>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 200px)', p: 3 }}>
+            <Paper sx={{ p: 4, textAlign: 'center', maxWidth: 480 }}>
+              <Typography variant="h5" gutterBottom>
+                Your account has no access yet
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Ask your manager to give your account a role, such as Sales User for the till. Then sign out and sign in again.
+              </Typography>
+            </Paper>
+          </Box>
+        </Layout>
+      );
     }
   }
 

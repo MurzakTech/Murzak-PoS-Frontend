@@ -61,11 +61,41 @@ The setup checklist squeezed its text into a column one word wide, because two b
 
 No page address changed, so saved links and bookmarks still work.
 
-## 4. Needs a decision from the business
+## 4. Decisions made by the owner, and what was done
 
-1. **What should a cashier see on the dashboard?** Today a Sales User can still see the whole shop's revenue, purchases and expenses. This phase only removed the actions they cannot use. If cashiers should not see money figures, that is a permission decision for the owner, and it should be enforced on the server as well.
-2. **Where should a cashier land after signing in?** The dashboard (as now) or straight into the till. A till-only role might prefer the second. This was not changed because some cashiers also look at past sales.
-3. **A user with no till profile.** If a user account has no POS profile, "Open till" refuses with a message about a "POS profile" that the cashier cannot see or fix. The right fix is to assign a profile when the account is created; the till screen could also say "Ask your manager to assign you a till". Not changed here.
+| Decision | What was built |
+|---|---|
+| A cashier must not see the shop's revenue and similar figures | The dashboard is built from the person's roles. Shop-wide money figures (revenue, profit, money owed, purchases, returns, expenses, sales charts, unpaid invoices) show only to roles that may open **Reports**. Stock figures show to roles that may open stock pages. A role with neither gets shortcuts to the places it can open. Where a role has no figures, the browser does not even request them |
+| A cashier lands straight in the till. Extra roles that carry a dashboard give a dashboard for that role | The cashier roles (Sales User, Desk User, Employee, Agent, Academics User) no longer have a dashboard. After signing in they go to the till. The rule is one function, `getHomePath`: dashboard if any of the person's roles has one, otherwise the till. A cashier with an extra role (for example Sales Manager) starts on a dashboard that shows only what the combined roles allow. The logo, the "page not allowed" redirect, the 404 page and "Exit" in the till all follow the same rule, and Exit never sends a cashier back into the till (it goes to their sales list, which has the menu and sign-out). An account with no usable role sees "Your account has no access yet" instead of a redirect loop |
+| Assign a till profile when creating the account | See the note below |
+
+### Note on the till profile
+Reading the server code showed that there is no per-person profile to assign. When anyone signs in, the server gives them the business's current till profile, and creates one if none exists. So every new staff account already has a till. What was added:
+- The Create Staff form now says: choose **Sales User** for a cashier; they go straight to the till, see no shop figures, and their till is set up automatically; add other roles only when they need more.
+- If an account somehow arrives without a till (a failed profile load), "Open till" now says "This account is not set up for a till yet. Ask your manager to check your account, then sign out and sign in again." instead of a pop-up about a "POS profile".
+
+If you want a different till for each person or branch (for example a separate cash drawer or store per cashier), that needs a server change: a till-profile field on the user, a matching option in `create_staff_user`, and `get_current_user` using it. It is not built.
+
+### Important: the figures are hidden in the app, but the server still sends them
+`get_dashboard_metrics` on the server does not check the caller's role, so a cashier who knows how to call the server directly could still ask for the numbers. The app no longer asks and no longer shows them, but the real lock must be on the server. The server already has the pattern for this (`access_control.py`, with role lists copied from this app). Suggested change, for the backend repository:
+
+```python
+# techsavanna_pos/api/access_control.py
+# Roles that may see shop-wide figures: the same roles that may open Reports in the app
+DASHBOARD_ROLES = frozenset({
+    "System Manager", "Sales Manager", "Purchase Manager", "Stock Manager", "Item Manager",
+    "Accounts Manager", "Accounts User", "Delivery Manager", "Agent Manager", "Analytics",
+    "Auditor", "Expense Approver", "Dashboard Manager", "Agriculture Manager",
+})
+
+def require_dashboard_role() -> None:
+    require_any_role(DASHBOARD_ROLES, _("see the shop's dashboard figures"))
+
+# techsavanna_pos/api/dashboard_api.py, first line inside get_dashboard_metrics:
+    require_dashboard_role()
+```
+
+The same applies to any other call that returns shop-wide totals. Stock roles that only need the "running low" list would need a smaller call or an exception. This was not applied because the backend deploys straight to the live server on merge, so it should be reviewed first.
 
 ## 5. Suggested next steps
 
@@ -76,4 +106,6 @@ No page address changed, so saved links and bookmarks still work.
 
 ## 6. How it was verified
 
-All 482 automated tests pass (new tests cover the setup checklist per role and the unit wording). The production build passes. The browser walkthrough was repeated after the changes: cashier and owner dashboards, every menu section at 1366 by 768, the Inventory landing page, the 404 page, the product list, the payment screen, a full cash sale to the receipt, and the phone dashboard. No console errors were seen.
+All 488 automated tests pass (new tests cover the setup checklist per role, the unit wording and the landing rules). The production build passes. The browser walkthrough was repeated after the changes: cashier and owner dashboards, every menu section at 1366 by 768, the Inventory landing page, the 404 page, the product list, the payment screen, a full cash sale to the receipt, and the phone dashboard. No console errors were seen.
+
+Second round (landing and dashboard by role): in the browser, a cashier signed in through the real sign-in form and arrived at the till; opening `/dashboard` or a page the cashier may not open returned to the till; "Exit" in the till opened the sales list; a Sales User with Sales Manager added got the dashboard with figures; a Stock User got stock figures only and no money; a Guest got shortcuts only; an account with no roles got the "no access yet" message; roles with no figures made no dashboard request.

@@ -153,6 +153,26 @@ const FilterBar = ({ filters, onChange, warehouses, staffUsers, loading, onRefre
   </Card>
 );
 
+// Shortcuts for a role that has a dashboard but no figures: only places it can open
+const QUICK_LINKS = [
+  { path: '/sales/pos', label: 'Open the till', text: 'Ring up a sale.', icon: <PointOfSale /> },
+  { path: '/sales/history', label: 'Sales history', text: 'Look up past sales.', icon: <Receipt /> },
+  { path: '/products', label: 'Products', text: 'Look up products and prices.', icon: <Inventory /> },
+  { path: '/customers', label: 'Customers', text: 'Look up a customer.', icon: <AssignmentReturn /> },
+];
+
+const QuickLinks = ({ hasAccess, onNavigate }) => {
+  const links = QUICK_LINKS.filter((l) => hasAccess(l.path));
+  if (links.length === 0) return null;
+  return (
+    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, mb: 3 }}>
+      {links.map((l) => (
+        <StatCard key={l.path} size="sm" label={l.text} value={l.label} icon={l.icon} accent="primary" onClick={() => onNavigate(l.path)} />
+      ))}
+    </Box>
+  );
+};
+
 const statusColor = (status) => (status === 'Overdue' || status === 'Critical' ? 'error' : status === 'Due Soon' || status === 'Low' ? 'warning' : 'default');
 
 const Dashboard = () => {
@@ -195,7 +215,16 @@ const Dashboard = () => {
     }
   }, [dispatch, user, company, productCheck, isLoadingAuth]);
 
-  const { data: dashboardData, loading: metricsLoading, error, refetch } = useDashboardMetrics(filters);
+  // The dashboard is built from what the person's roles allow. Shop-wide money figures (sales,
+  // profit, what customers owe, purchases, expenses) go only to roles that may open Reports; a
+  // cashier gets none of them, and their browser does not even request them.
+  const { hasAccess } = useRoleAccess();
+  const canSeeMoney = hasAccess('/reports');
+  const canSeeStock = hasAccess('/inventory/low-stock');
+  const canSeeTransfers = hasAccess('/stock-transfers');
+  const hasFigures = canSeeMoney || canSeeStock || canSeeTransfers;
+
+  const { data: dashboardData, loading: metricsLoading, error, refetch } = useDashboardMetrics(filters, { enabled: hasFigures });
 
   useEffect(() => {
     if (company) {
@@ -216,8 +245,6 @@ const Dashboard = () => {
   };
 
   const goTo = (path) => navigate(path);
-  // Cashiers and other limited roles are only offered what they can actually open
-  const { hasAccess } = useRoleAccess();
   const canSetUp = hasAccess('/products/load-products') && hasAccess('/products/new');
 
   const handleLoadStarter = async () => {
@@ -315,7 +342,9 @@ const Dashboard = () => {
             {firstName ? `, ${firstName}` : ''}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Here is how {user?.company_name || company || 'your business'} is doing. Showing {periodLabel.toLowerCase()}.
+            {canSeeMoney
+              ? `Here is how ${user?.company_name || company || 'your business'} is doing. Showing ${periodLabel.toLowerCase()}.`
+              : `What needs your attention at ${user?.company_name || company || 'your business'}.`}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.25}>
@@ -334,9 +363,11 @@ const Dashboard = () => {
               Add product
             </Button>
           )}
-          <Button variant="contained" startIcon={<PointOfSale />} onClick={() => goTo('/sales/pos')}>
-            New sale
-          </Button>
+          {hasAccess('/sales/pos') && (
+            <Button variant="contained" startIcon={<PointOfSale />} onClick={() => goTo('/sales/pos')}>
+              New sale
+            </Button>
+          )}
         </Stack>
       </Stack>
 
@@ -349,6 +380,7 @@ const Dashboard = () => {
         canOpen={hasAccess}
       />
 
+      {canSeeMoney && (
       <FilterBar
         filters={filters}
         onChange={handleFilterChange}
@@ -358,8 +390,9 @@ const Dashboard = () => {
         onRefresh={refetch}
         onExport={handleExportCSV}
       />
+      )}
 
-      {error && !dashboardData && (
+      {hasFigures && error && !dashboardData && (
         <Alert
           severity="error"
           sx={{ mb: 3 }}
@@ -373,7 +406,8 @@ const Dashboard = () => {
         </Alert>
       )}
 
-      {/* Headline numbers */}
+      {/* Headline numbers: shop-wide money, for roles that may see it */}
+      {canSeeMoney && (
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, mb: 2 }}>
         <StatCard label="Revenue" value={money(stats.totalSales)} hint={`Net of returns: ${money(stats.netSales)}`} icon={<TrendingUp />} accent="primary" loading={metricsLoading} />
         <StatCard
@@ -395,10 +429,14 @@ const Dashboard = () => {
         />
         <StatCard label="Purchases" value={money(stats.totalPurchases)} hint={`Net of returns: ${money(stats.netPurchases)}`} icon={<Inventory />} accent="secondary" loading={metricsLoading} onClick={() => goTo('/purchases')} />
       </Box>
+      )}
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, mb: 3 }}>
+        {canSeeMoney && (<>
         <StatCard size="sm" label="Sales returns" value={money(stats.salesReturns)} hint={`${stats.salesReturnsCount} returns`} icon={<AssignmentReturn />} accent="warning" loading={metricsLoading} />
         <StatCard size="sm" label="Purchase returns" value={money(stats.purchaseReturns)} hint={`${stats.purchaseReturnsCount} returns`} icon={<TrendingDown />} accent="error" loading={metricsLoading} />
         <StatCard size="sm" label="Operating expenses" value={money(stats.totalExpense)} hint="In this period" icon={<AccountBalance />} accent="info" loading={metricsLoading} />
+        </>)}
+        {canSeeTransfers && (
         <StatCard
           size="sm"
           label="Stock on the way"
@@ -409,16 +447,23 @@ const Dashboard = () => {
           loading={metricsLoading}
           onClick={() => goTo('/stock-transfers')}
         />
+        )}
       </Box>
 
       {/* Trends */}
+      {canSeeMoney && (
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, mb: 3 }}>
         <SalesTrendChart data={data.salesLast30Days} currency={currency} subtitle={periodLabel} onOpenPOS={() => goTo('/sales/pos')} />
         <MonthlySalesChart data={data.monthlySales} currency={currency} onOpenPOS={() => goTo('/sales/pos')} />
       </Box>
+      )}
+
+      {/* A role with no figures of its own gets shortcuts to the places it can open */}
+      {!hasFigures && <QuickLinks hasAccess={hasAccess} onNavigate={goTo} />}
 
       {/* Things that need attention */}
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
+      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: canSeeMoney && canSeeStock ? '1fr 1fr' : '1fr' } }}>
+        {canSeeMoney && (
         <SectionCard
           title="Unpaid invoices"
           subtitle="Customers who still owe you"
@@ -456,7 +501,9 @@ const Dashboard = () => {
             </TableContainer>
           )}
         </SectionCard>
+        )}
 
+        {canSeeStock && (
         <SectionCard
           title="Running low on stock"
           subtitle="Reorder these soon"
@@ -492,6 +539,7 @@ const Dashboard = () => {
             </TableContainer>
           )}
         </SectionCard>
+        )}
       </Box>
     </Box>
   );

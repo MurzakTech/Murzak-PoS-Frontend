@@ -60,7 +60,7 @@ Updated `fetchCurrentUser` to store the `roles` array from the API response in t
 
 ### Sales Roles
 - **Sales Manager** - Dashboard, Sales, Customers, Products, Reports, Stock Summary
-- **Sales User** - Dashboard, Sales, Sales History, Customers, Products, Stock Summary
+- **Sales User** - starts at the till (no dashboard), Sales, Sales History, Customers, Products, Stock Summary
 
 ### Purchase Roles
 - **Purchase Manager** - Dashboard, Purchases, Suppliers, Inventory, Reports, Products

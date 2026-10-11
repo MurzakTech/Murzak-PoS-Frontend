@@ -34,11 +34,13 @@ const NotFound = () => {
       </Typography>
       {isAuthenticated ? (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-          <Button variant="contained" startIcon={<Home />} onClick={() => navigate('/dashboard')}>
-            Go to Dashboard
-          </Button>
+          {hasAccess('/dashboard') && (
+            <Button variant="contained" startIcon={<Home />} onClick={() => navigate('/dashboard')}>
+              Go to Dashboard
+            </Button>
+          )}
           {hasAccess('/sales/pos') && (
-            <Button variant="outlined" startIcon={<PointOfSale />} onClick={() => navigate('/sales/pos')}>
+            <Button variant={hasAccess('/dashboard') ? 'outlined' : 'contained'} startIcon={<PointOfSale />} onClick={() => navigate('/sales/pos')}>
               Open the till
             </Button>
           )}

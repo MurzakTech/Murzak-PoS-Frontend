@@ -1165,6 +1165,11 @@ const Staff = () => {
 
         <Grid item xs={12}>
           <FormLabel sx={{ mb: 0.5 }}>Assign Roles</FormLabel>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            For a cashier, choose <b>Sales User</b>. A cashier goes straight to the till after signing in and does not see the shop's
+            sales figures. Their till is set up automatically. Add other roles only when they need more, such as Sales Manager for the
+            dashboard and reports.
+          </Typography>
           <Controller
             name="roles"
             control={createControl}
