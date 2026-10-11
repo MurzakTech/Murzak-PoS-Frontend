@@ -68,6 +68,7 @@ import logoMain from '../assets/logo_mark.png';
 import { normalizeKenyanPhone, isValidKenyanMobile, PHONE_ERROR } from '../utils/phone';
 import logoIcon from '../assets/logo_mark.png';
 import posIcon from '../assets/pos-icon.png';
+import Photo from '../components/Common/Photo';
 import { IS_TENANT_BUILD } from '../config/deployment';
 import { validatePassword } from '../utils/passwordRules';
 import PasswordChecklist from '../components/Auth/PasswordChecklist';
@@ -1468,17 +1469,24 @@ const Register = () => {
           
           {/* POS Illustration */}
           <Box sx={{ mb: 6, textAlign: 'center' }}>
-            <Box
-              component="img"
-              src={posIcon}
-              alt="POS System"
-              sx={{
-                maxWidth: '100%',
-                height: 'auto',
-                filter: theme.palette.mode === 'dark' 
-                  ? 'brightness(0.9)' 
-                  : 'none',
-              }}
+            <Photo
+              name="auth-side"
+              ratio={4 / 3}
+              sx={{ borderRadius: 4, boxShadow: 6 }}
+              fallback={
+                <Box
+                  component="img"
+                  src={posIcon}
+                  alt="POS System"
+                  sx={{
+                    maxWidth: '100%',
+                    height: 'auto',
+                    filter: theme.palette.mode === 'dark' 
+                      ? 'brightness(0.9)' 
+                      : 'none',
+                  }}
+                />
+              }
             />
           </Box>
           

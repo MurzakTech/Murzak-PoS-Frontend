@@ -30,6 +30,7 @@ import { loginUser, clearError, fetchCurrentUser } from '../store/authSlice';
 import { checkOnboardingStatus } from '../store/onboardingSlice';
 import BrandLogo from '../components/Common/BrandLogo';
 import posIcon from '../assets/pos-icon.png';
+import Photo from '../components/Common/Photo';
 import { classifyLoginId, looksLikePhone, LOGIN_ID_ERROR } from '../utils/phone';
 import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../config/deployment';
 
@@ -169,11 +170,18 @@ const Login = () => {
             <BrandLogo size={40} textVariant="h4" />
           </RouterLink>
 
-          <Box
-            component="img"
-            src={posIcon}
-            alt=""
-            sx={{ display: 'block', width: '100%', height: 'auto', my: 5, filter: (t) => (t.palette.mode === 'dark' ? 'brightness(0.92)' : 'none') }}
+          <Photo
+            name="auth-side"
+            ratio={4 / 3}
+            sx={{ borderRadius: 4, my: 5, boxShadow: (t) => t.shadows[6] }}
+            fallback={
+              <Box
+                component="img"
+                src={posIcon}
+                alt=""
+                sx={{ display: 'block', width: '100%', height: 'auto', my: 5, filter: (t) => (t.palette.mode === 'dark' ? 'brightness(0.92)' : 'none') }}
+              />
+            }
           />
 
           <Typography variant="h4" sx={{ mb: 2.5 }}>

@@ -247,6 +247,7 @@ const ProductPanel = ({
         ) : products.length === 0 ? (
           <EmptyState
             icon={<Inventory2Outlined />}
+            photo={searchTerm || selectedCategory !== 'all' ? undefined : 'empty-shelf'}
             title={searchTerm || selectedCategory !== 'all' ? 'No products match' : 'No products to sell yet'}
             description={searchTerm || selectedCategory !== 'all' ? 'Try a different word, or choose All Products.' : 'Add your products first, then they will appear here as tiles.'}
             actions={
