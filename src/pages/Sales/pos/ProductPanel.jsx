@@ -7,7 +7,7 @@ import ProductImage from '../../../components/Common/ProductImage';
 import { fmt } from './money';
 
 const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, stockQty, cartQty, uom, disabled, onAdd, showImage }) => {
-  const out = stockQty !== null && stockQty < 1;
+  const out = stockQty !== null && stockQty <= 0; // 0.6 kg left is still for sale
   const short = stockQty !== null && !out && stockQty < cartQty + 1 && cartQty > 0;
   const low = stockQty !== null && !out && stockQty <= 5;
 

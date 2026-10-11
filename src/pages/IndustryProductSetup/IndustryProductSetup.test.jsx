@@ -138,6 +138,61 @@ describe('Starter products page', () => {
     expect(body.items).toEqual([{ item_code: 'REST-001', item_name: 'Veg Burger', item_price: 350, item_group: 'Food', uom: 'Nos' }]);
   });
 
+  describe('units and services sent by the server', () => {
+    beforeEach(() => {
+      seedList = [
+        { sku: 'REST-001', name: 'Veg Burger', status: 'available', uom: 'Nos', is_service: false },
+        { sku: 'REST-002', name: 'Cheese Block', status: 'available', uom: 'Kg', is_service: false },
+        { sku: 'REST-003', name: 'Table Booking', status: 'available', uom: 'Nos', is_service: true },
+      ];
+    });
+
+    it('shows which products are services and which are sold by the kilo', async () => {
+      renderPage();
+      await loaded();
+      expect(screen.getByText('Service')).toBeInTheDocument();
+      expect(screen.getByText('per Kg')).toBeInTheDocument();
+      expect(screen.getByLabelText('Quantity for Table Booking')).toBeDisabled();
+      expect(screen.getByLabelText('Quantity for Table Booking')).toHaveAttribute('placeholder', 'No stock');
+      expect(screen.getByLabelText('Quantity for Cheese Block')).toBeEnabled();
+    });
+
+    it('saves a service as keeping no stock, in its own unit, with no quantity', async () => {
+      renderPage();
+      await loaded();
+      tick('Table Booking');
+      typePrice('Table Booking', '500');
+      pressCreate(1);
+      await waitFor(() => expect(createCalls()).toHaveLength(1));
+      const item = createCalls()[0][1].items[0];
+      expect(item).toMatchObject({ item_code: 'REST-003', item_price: 500, is_stock_item: 0, uom: 'Nos' });
+      expect(item).not.toHaveProperty('qty');
+    });
+
+    it('records opening stock in parts of a kilo for a measured product', async () => {
+      renderPage();
+      await loaded();
+      tick('Cheese Block');
+      typePrice('Cheese Block', '900');
+      fireEvent.change(screen.getByLabelText('Quantity for Cheese Block'), { target: { value: '2.5' } });
+      pressCreate(1);
+      await waitFor(() => expect(createCalls()).toHaveLength(1));
+      expect(createCalls()[0][1].items[0]).toMatchObject({ item_code: 'REST-002', uom: 'Kg', qty: 2.5, warehouse: 'Main Store - SA' });
+      expect(createCalls()[0][1].items[0]).not.toHaveProperty('is_stock_item');
+    });
+
+    it('still refuses parts of a piece', async () => {
+      renderPage();
+      await loaded();
+      tick('Veg Burger');
+      typePrice('Veg Burger', '350');
+      fireEvent.change(screen.getByLabelText('Quantity for Veg Burger'), { target: { value: '2.5' } });
+      pressCreate(1);
+      expect(await screen.findByText(/Veg Burger: The quantity must be a whole number/)).toBeInTheDocument();
+      expect(createCalls()).toHaveLength(0);
+    });
+  });
+
   it('records opening stock in the active store, with its cost', async () => {
     renderPage();
     await loaded();

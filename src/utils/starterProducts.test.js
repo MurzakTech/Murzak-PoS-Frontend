@@ -18,7 +18,20 @@ const sheet = (csv) => parseCsv(csv).rows;
 
 describe('buildStarterItems', () => {
   it('makes rows with nothing filled in, instead of a price of 0', () => {
-    expect(items()[0]).toEqual({ item_code: 'REST-001', item_name: 'Veg Burger', item_group: '', uom: 'Nos', item_price: null, buying_price: null, qty: null });
+    expect(items()[0]).toEqual({ item_code: 'REST-001', item_name: 'Veg Burger', item_group: '', uom: 'Nos', is_service: false, item_price: null, buying_price: null, qty: null });
+  });
+
+  it('keeps the unit and the service flag the server sends', () => {
+    const list = buildStarterItems([
+      { sku: 'GRO-1', name: 'Cheese 250g', uom: 'Kg', is_service: false },
+      { sku: 'SAL-1', name: 'Haircut Service', uom: 'Nos', is_service: true },
+      { sku: 'FUEL-1', name: 'Diesel', uom: ' L ' },
+    ]);
+    expect(list.map((i) => [i.uom, i.is_service])).toEqual([['Kg', false], ['Nos', true], ['L', false]]);
+  });
+
+  it('copes with a server that sends no unit or service flag (it reads as pieces, not a service)', () => {
+    expect(buildStarterItems([{ sku: 'A', name: 'B', uom: '', is_service: undefined }])[0]).toMatchObject({ uom: 'Nos', is_service: false });
   });
 
   it('skips entries without a code or name and copes with a missing list', () => {
@@ -58,6 +71,19 @@ describe('checkStarterSelection', () => {
     expect(checkStarterSelection(withPrice(100, { qty: 0 }), first, null).problems).toEqual([]);
   });
 
+  it('accepts parts of a kilo or litre for a measured product, and still refuses parts of a piece', () => {
+    expect(checkStarterSelection(withPrice(100, { uom: 'Kg', qty: 2.5 }), first, 'S').problems).toEqual([]);
+    expect(checkStarterSelection(withPrice(100, { uom: 'L', qty: 0.5 }), first, 'S').problems).toEqual([]);
+    expect(checkStarterSelection(withPrice(100, { uom: 'Kg', qty: -1 }), first, 'S').problems[0].message).toContain('0 or more');
+    expect(checkStarterSelection(withPrice(100, { uom: 'Nos', qty: 2.5 }), first, 'S').problems[0].message).toContain('whole number');
+  });
+
+  it('refuses a quantity on a service, which keeps no stock, but accepts it with none or 0', () => {
+    expect(checkStarterSelection(withPrice(100, { is_service: true, qty: 5 }), first, 'S').problems[0].message).toContain('no stock');
+    expect(checkStarterSelection(withPrice(100, { is_service: true, qty: null }), first, null).problems).toEqual([]);
+    expect(checkStarterSelection(withPrice(100, { is_service: true, qty: 0 }), first, null).problems).toEqual([]);
+  });
+
   it('refuses a fractional or negative quantity and a negative buying price', () => {
     expect(checkStarterSelection(withPrice(100, { qty: 1.5 }), first, 'S').problems[0].message).toContain('whole number');
     expect(checkStarterSelection(withPrice(100, { buying_price: -1 }), first, 'S').problems[0].message).toContain('buying price');
@@ -79,6 +105,22 @@ describe('buildSeedPayload', () => {
     });
   });
 
+  it('marks a service as keeping no stock and sends no quantity for it', () => {
+    const p = buildSeedPayload({
+      items: [{ ...list[0], is_service: true, qty: 5, buying_price: 20 }, { ...list[1] }],
+      priceList: 'S', buyingPriceList: 'B', warehouse: 'Main Store',
+    });
+    expect(p.items[0]).toMatchObject({ is_stock_item: 0, buying_price: 20 });
+    expect(p.items[0]).not.toHaveProperty('qty');
+    expect(p.items[0]).not.toHaveProperty('basic_rate');
+    expect(p.items[1]).not.toHaveProperty('is_stock_item'); // goods are sent as before
+  });
+
+  it('sends the unit a product is measured in', () => {
+    const p = buildSeedPayload({ items: [{ ...list[0], uom: 'Kg', qty: 2.5 }], priceList: 'S', buyingPriceList: 'B', warehouse: 'W' });
+    expect(p.items[0]).toMatchObject({ uom: 'Kg', qty: 2.5 });
+  });
+
   it('adds stock, store and valuation cost only for products that have a quantity', () => {
     const p = buildSeedPayload({
       items: [{ ...list[0], item_group: 'Food', buying_price: 40, qty: 10 }, { ...list[1], buying_price: 30 }],
@@ -96,8 +138,8 @@ describe('starterTemplateCsv', () => {
     const csv = starterTemplateCsv(list);
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     const rows = parseCsv(csv).rows;
-    expect(rows[0]).toEqual(['item_code', 'item_name', 'category', 'selling_price', 'buying_price', 'quantity']);
-    expect(rows[1]).toEqual(['REST-001', 'Burger, "Big"', '', '350', '', '']);
+    expect(rows[0]).toEqual(['item_code', 'item_name', 'category', 'unit', 'selling_price', 'buying_price', 'quantity']);
+    expect(rows[1]).toEqual(['REST-001', 'Burger, "Big"', '', 'Nos', '350', '', '']);
   });
 
   it('can be uploaded straight back without changing anything', () => {
@@ -105,6 +147,42 @@ describe('starterTemplateCsv', () => {
     expect(r.fileProblems).toEqual([]);
     expect(r.problems).toEqual([]);
     expect(r.updated + r.added).toBe(0);
+  });
+});
+
+describe('applySheetToItems with units and services', () => {
+  const list = () => buildStarterItems([
+    { sku: 'GRO-1', name: 'Cheese', uom: 'Kg' },
+    { sku: 'SAL-1', name: 'Haircut Service', uom: 'Nos', is_service: true },
+    { sku: 'REST-1', name: 'Burger', uom: 'Nos' },
+  ]);
+
+  it('takes parts of a kilo for a measured product and still refuses parts of a piece', () => {
+    const r = applySheetToItems(list(), sheet('item_code,selling_price,quantity\nGRO-1,500,2.5\nREST-1,300,2.5'));
+    expect(r.items[0]).toMatchObject({ item_price: 500, qty: 2.5 });
+    expect(r.problems).toHaveLength(1);
+    expect(r.problems[0]).toMatchObject({ itemCode: 'REST-1' });
+    expect(r.problems[0].message).toContain('whole number');
+  });
+
+  it('judges a quantity by the unit written in the same row', () => {
+    const r = applySheetToItems(list(), sheet('item_code,unit,selling_price,quantity\nREST-1,Kg,300,2.5'));
+    expect(r.problems).toEqual([]);
+    expect(r.items[2]).toMatchObject({ uom: 'Kg', qty: 2.5 });
+  });
+
+  it('refuses a quantity for a service and says it keeps no stock, but takes its price', () => {
+    const r = applySheetToItems(list(), sheet('item_code,selling_price,quantity\nSAL-1,800,3'));
+    expect(r.problems[0].message).toContain('service');
+    expect(r.items[1].qty).toBeNull();
+    const ok = applySheetToItems(list(), sheet('item_code,selling_price\nSAL-1,800'));
+    expect(ok.items[1]).toMatchObject({ item_price: 800, is_service: true });
+  });
+
+  it('never writes a quantity for a service into the spreadsheet it hands out', () => {
+    const rows = parseCsv(starterTemplateCsv(list().map((i) => ({ ...i, qty: 4 })))).rows;
+    expect(rows[2][0]).toBe('SAL-1');
+    expect(rows[2][6]).toBe('');
   });
 });
 
