@@ -537,6 +537,18 @@ export const getPOSOpeningEntry = createAsyncThunk(
   }
 );
 
+// What to tell the person after a close request, by the server's outcome
+const CLOSE_NOTICES = {
+  closed: { message: 'Till closed. Your shift has ended.', severity: 'success', title: 'Till closed' },
+  closing: {
+    message: "Closing the till. This shift's sales are being added up in the background, which can take a minute.",
+    severity: 'info',
+    title: 'Closing the till',
+  },
+  already_closed: { message: 'This shift is already closed.', severity: 'info', title: 'Already closed' },
+};
+export const closeNotice = (outcome) => CLOSE_NOTICES[outcome] || CLOSE_NOTICES.closed;
+
 // Close POS Opening Entry
 export const closePOSOpeningEntry = createAsyncThunk(
   'sales/closePOSOpeningEntry',
@@ -548,13 +560,12 @@ export const closePOSOpeningEntry = createAsyncThunk(
       });
       ensureSucceeded(response);
       const data = extractResponseData(response);
-      dispatch(showNotification({
-        message: 'Till closed. Your shift has ended.',
-        severity: 'success',
-        title: 'Till closed',
-      }));
+      // closed, closing (still running in the background) or already_closed
+      const outcome = data?.data?.outcome || data?.outcome || 'closed';
+      dispatch(showNotification(closeNotice(outcome)));
       
       return {
+        outcome,
         closingEntry: data?.closing_entry || data?.data?.closing_entry,
         openingEntry: data?.opening_entry || data?.data?.opening_entry,
         fullData: data?.data || data,
@@ -1367,20 +1378,22 @@ const salesSlice = createSlice({
       .addCase(closePOSOpeningEntry.fulfilled, (state, action) => {
         state.isClosingPOSOpening = false;
         const closedName = action.payload.openingEntry?.name || action.payload.requestedName;
+        // A close still running in the background shows as Closing until the server reports Closed
+        const status = action.payload.outcome === 'closing' ? 'Closing' : 'Closed';
 
         const index = state.posOpeningEntries.findIndex((entry) => entry.name === closedName);
         if (index !== -1) {
           state.posOpeningEntries[index] = {
             ...state.posOpeningEntries[index],
             ...(action.payload.openingEntry || {}),
-            status: 'Closed',
+            status,
           };
         }
         if (state.selectedPOSOpeningEntry?.name === closedName) {
           state.selectedPOSOpeningEntry = {
             ...state.selectedPOSOpeningEntry,
             ...(action.payload.openingEntry || {}),
-            status: 'Closed',
+            status,
           };
         }
         // Always close the current session if it's the one we asked to close,
@@ -1389,7 +1402,7 @@ const salesSlice = createSlice({
           state.posOpeningEntry = {
             ...state.posOpeningEntry,
             ...(action.payload.openingEntry || {}),
-            status: 'Closed',
+            status,
           };
           state.isPOSSessionOpen = false;
         }

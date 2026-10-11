@@ -650,11 +650,7 @@ const NewSale = () => {
 
     if (closePOSOpeningEntry.fulfilled.match(result)) {
       setCloseSessionDialogOpen(false);
-      dispatch(showNotification({
-        message: 'POS session closed successfully',
-        severity: 'success',
-        title: 'Session Closed',
-      }));
+      // The close itself already told the cashier whether the till closed or is still closing
       // Stay on the POS screen - isPOSSessionOpen is now correctly false,
       // so the "No Active POS Session" reopen banner takes over.
     }
