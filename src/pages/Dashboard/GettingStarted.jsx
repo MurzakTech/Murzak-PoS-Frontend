@@ -105,7 +105,7 @@ const GettingStarted = ({ checklist, productCount, staffCount, hasSales, onNavig
         description: 'Open the point of sale and ring up a test sale to see how it all fits together.',
         auto: true,
         done: !!hasSales,
-        cta: { label: 'Open POS', path: '/sales' },
+        cta: { label: 'Open POS', path: '/sales/pos' },
       },
     ],
     [productCount, staffCount, hasSales]

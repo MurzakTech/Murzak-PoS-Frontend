@@ -104,7 +104,7 @@ const Layout = ({ children }) => {
   );
 
   // The point-of-sale screen and the kitchen station screen are full-screen, without the app shell
-  const isPOSRoute = location.pathname === '/sales' || location.pathname === '/sales/pos' || location.pathname === '/kitchen';
+  const isPOSRoute = location.pathname === '/sales/pos' || location.pathname === '/kitchen';
 
   const userCompany =
     user?.company ||
@@ -361,7 +361,7 @@ const Layout = ({ children }) => {
             <Button
               variant="contained"
               startIcon={<PointOfSale />}
-              onClick={() => handleNavigation('/sales')}
+              onClick={() => handleNavigation('/sales/pos')}
               sx={{
                 display: { xs: 'none', sm: 'inline-flex' },
                 background: (t) => t.custom.gradient,
@@ -375,7 +375,7 @@ const Layout = ({ children }) => {
             <Tooltip title="Open point of sale">
               <IconButton
                 aria-label="Open point of sale"
-                onClick={() => handleNavigation('/sales')}
+                onClick={() => handleNavigation('/sales/pos')}
                 sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: '#fff', background: (t) => t.custom.gradient }}
               >
                 <PointOfSale />

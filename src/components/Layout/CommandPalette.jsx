@@ -22,7 +22,7 @@ import iconMap from './iconMap';
 
 // Common jobs, phrased the way a shop owner would say them
 const QUICK_ACTIONS = [
-  { label: 'Open point of sale', path: '/sales', icon: 'PointOfSale', keywords: 'new sale checkout sell till cashier' },
+  { label: 'Open point of sale', path: '/sales/pos', icon: 'PointOfSale', keywords: 'new sale checkout sell till cashier' },
   { label: 'Add a product', path: '/products/new', icon: 'Add', keywords: 'new item create stock' },
   { label: 'Load starter products for my industry', path: '/products/load-products', icon: 'CloudDownload', keywords: 'import seed template catalogue' },
   { label: 'Import products from a spreadsheet', path: '/products/bulk-import', icon: 'Upload', keywords: 'csv excel bulk' },

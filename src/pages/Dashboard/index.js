@@ -328,7 +328,7 @@ const Dashboard = () => {
           <Button variant="outlined" startIcon={<Add />} onClick={() => goTo('/products/new')}>
             Add product
           </Button>
-          <Button variant="contained" startIcon={<PointOfSale />} onClick={() => goTo('/sales')}>
+          <Button variant="contained" startIcon={<PointOfSale />} onClick={() => goTo('/sales/pos')}>
             New sale
           </Button>
         </Stack>
@@ -406,8 +406,8 @@ const Dashboard = () => {
 
       {/* Trends */}
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, mb: 3 }}>
-        <SalesTrendChart data={data.salesLast30Days} currency={currency} subtitle={periodLabel} onOpenPOS={() => goTo('/sales')} />
-        <MonthlySalesChart data={data.monthlySales} currency={currency} onOpenPOS={() => goTo('/sales')} />
+        <SalesTrendChart data={data.salesLast30Days} currency={currency} subtitle={periodLabel} onOpenPOS={() => goTo('/sales/pos')} />
+        <MonthlySalesChart data={data.monthlySales} currency={currency} onOpenPOS={() => goTo('/sales/pos')} />
       </Box>
 
       {/* Things that need attention */}

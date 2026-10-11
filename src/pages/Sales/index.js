@@ -5,9 +5,9 @@ const Sales = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Check if we're on the exact /sales route - redirect to /sales/history
+  // The Sales area opens on Sales History; the till has its own address, /sales/pos
   if (location.pathname === '/sales') {
-    return <Navigate to="/sales/pos" replace />;
+    return <Navigate to="/sales/history" replace />;
   }
   
   // Render child routes (SalesHistory, SalesInvoiceDetails, etc.)
