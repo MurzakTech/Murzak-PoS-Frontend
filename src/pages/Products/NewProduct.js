@@ -78,6 +78,7 @@ const NewProduct = () => {
       is_stock_item: true,
       is_sales_item: true,
       is_purchase_item: false,
+      prescription_only: false,
       brand: '',
       barcode: '',
       image: '',
@@ -448,6 +449,21 @@ const NewProduct = () => {
                                   />
                                 }
                                 label="Purchase"
+                                componentsProps={{ typography: { variant: 'body2' } }}
+                              />
+                            </Tooltip>
+                          )}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Controller
+                          name="prescription_only"
+                          control={control}
+                          render={({ field }) => (
+                            <Tooltip title="A sale of this product needs the patient's name and who prescribed it. For pharmacies.">
+                              <FormControlLabel
+                                control={<Switch {...field} checked={!!field.value} size="small" color="error" />}
+                                label="Prescription only"
                                 componentsProps={{ typography: { variant: 'body2' } }}
                               />
                             </Tooltip>

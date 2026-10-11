@@ -65,6 +65,7 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
             {money(item.rate, currency)} each{hasOffer ? ' · offer applied' : ''}
             {store ? ` · from ${store.warehouse_name || store.name}` : ''}
           </Typography>
+          {item.prescription_only && <Chip size="small" color="warning" variant="outlined" label="Rx only" sx={{ height: 18, fontSize: '0.6875rem', ml: 0.75 }} />}
           {kitchenEnabled && (item.note || item.sentQty > 0) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.25 }}>
               {item.sentQty > 0 && <Chip size="small" color="success" variant="outlined" label={`${item.sentQty} sent`} sx={{ height: 18, fontSize: '0.6875rem' }} />}

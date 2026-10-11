@@ -204,6 +204,7 @@ const Products = () => {
       is_stock_item: true,
       is_sales_item: true,
       is_purchase_item: false,
+      prescription_only: false,
       brand: '',
       image: '',
     },
@@ -351,6 +352,7 @@ const Products = () => {
       is_stock_item: product.is_stock_item === 1,
       is_sales_item: product.is_sales_item === 1,
       is_purchase_item: product.is_purchase_item === 1,
+      prescription_only: product.custom_prescription_only === 1 || product.prescription_only === true,
       brand: product.brand || '',
       image: product.image || '',
     });
@@ -1270,6 +1272,19 @@ const Products = () => {
               <FormControlLabel
                 control={<Switch {...field} checked={!!field.value} size="small" />}
                 label="Purchase Item"
+              />
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={4}>
+          <Controller
+            name="prescription_only"
+            control={editControl}
+            render={({ field }) => (
+              <FormControlLabel
+                control={<Switch {...field} checked={!!field.value} size="small" color="error" />}
+                label="Prescription only"
               />
             )}
           />
