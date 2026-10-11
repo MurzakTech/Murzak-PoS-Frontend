@@ -59,6 +59,8 @@ import ItemNoteDialog from './pos/ItemNoteDialog';
 import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
 import KitchenTicketDialog from './pos/KitchenTicketDialog';
 import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
+import PrescriptionDialog from './pos/PrescriptionDialog';
+import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
 import useKitchenSettings from '../../hooks/useKitchenSettings';
@@ -253,6 +255,9 @@ const NewSale = () => {
   const [clearSentOpen, setClearSentOpen] = useState(false);
   const chargeAnywayRef = useRef(null);
   const chargeCheckedRef = useRef(false);
+  // Prescription-only medicines on the sale: who it is for and who prescribed it (kept on the invoice)
+  const [dispensing, setDispensing] = useState(null);
+  const [rxOpen, setRxOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -754,6 +759,7 @@ const NewSale = () => {
           warehouse: defaultWarehouse, // Use default warehouse
           description: product.description || '',
           item_group: product.item_group || '', // for the cart picture only
+          prescription_only: isPrescriptionOnly(product), // sold only against a prescription
           image: product.image || '', // for the cart picture only
           subtotal: discountedPrice,
           discount_amount: discountAmount,
@@ -854,6 +860,19 @@ const NewSale = () => {
   const calculateSubtotal = () => grandTotal;
 
   // Handle checkout button click - Enter checkout mode
+  const startCheckoutMode = () => {
+    setIsCheckoutMode(true);
+    // Auto-focus amount given field for cash payments
+    if (paymentMode === 'Cash') {
+      setTimeout(() => {
+        const amountInput = document.getElementById('amount-given-input');
+        if (amountInput) amountInput.focus();
+      }, 100);
+    }
+  };
+
+  const rxNames = useMemo(() => prescriptionItems(cart), [cart]);
+
   const handleCheckoutClick = () => {
     if (cart.length === 0) return;
     // Items the kitchen was never told about: ask before charging (every way of charging comes through here)
@@ -865,22 +884,25 @@ const NewSale = () => {
         return;
       }
     }
-    setIsCheckoutMode(true);
-    // Auto-focus amount given field for cash payments
-    if (paymentMode === 'Cash') {
-      setTimeout(() => {
-        const amountInput = document.getElementById('amount-given-input');
-        if (amountInput) amountInput.focus();
-      }, 100);
+    // Prescription-only medicines: the patient and the prescriber are asked for before payment
+    if (rxNames.length > 0 && !isDispensingComplete(dispensing)) {
+      setRxOpen(true);
+      return;
     }
+    startCheckoutMode();
   };
 
-  // Handle complete sale - Create POS Invoice
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setSnackbarMessage('Cart is empty');
       setSnackbarSeverity('warning');
       setSnackbarOpen(true);
+      return;
+    }
+
+    // Never complete a sale of prescription-only medicines without the patient and prescriber
+    if (rxNames.length > 0 && !isDispensingComplete(dispensing)) {
+      setRxOpen(true);
       return;
     }
 
@@ -1069,6 +1091,8 @@ const NewSale = () => {
       invoice_type: "POS Invoice",
       // Same id on a retry, so a sale whose reply was lost is not recorded twice
       client_reference: saleReference,
+      // The dispensing record, for a sale that includes prescription-only medicines
+      ...(rxNames.length > 0 && isDispensingComplete(dispensing) ? { dispensing } : {}),
       // is_pos: creditUsed > 0 ? 0 : 1,
       
       // Add loyalty redemption if points are being redeemed
@@ -1504,6 +1528,7 @@ const NewSale = () => {
     setSearchTerm('');
     setActiveHeldLabel('');
     setKitchen(EMPTY_KITCHEN);
+    setDispensing(null);
     handleSelectCustomer(null);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
@@ -1828,7 +1853,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -2210,6 +2235,18 @@ const NewSale = () => {
         onRetry={retrySend}
         onPrintOnly={printOnly}
         onClose={() => setTicketDialog((d) => ({ ...d, open: false }))}
+      />
+
+      <PrescriptionDialog
+        open={rxOpen}
+        items={rxNames}
+        initial={dispensing}
+        onClose={() => setRxOpen(false)}
+        onConfirm={(record) => {
+          setDispensing(record);
+          setRxOpen(false);
+          startCheckoutMode();
+        }}
       />
 
       <ReadyTicketsDialog open={readyOpen} tickets={kitchenTickets.ready} onServe={serveTicket} onClose={() => setReadyOpen(false)} />

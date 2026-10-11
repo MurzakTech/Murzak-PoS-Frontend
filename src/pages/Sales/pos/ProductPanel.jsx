@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { Box, Button, ButtonBase, CircularProgress, IconButton, InputBase, Skeleton, Typography, useMediaQuery } from '@mui/material';
+import { Box, Button, ButtonBase, Chip, CircularProgress, IconButton, InputBase, Skeleton, Typography, useMediaQuery } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Search, Close, QrCodeScanner, Inventory2Outlined, LocalOffer } from '@mui/icons-material';
 import EmptyState from '../../../components/Common/EmptyState';
 import ProductImage from '../../../components/Common/ProductImage';
 import { fmt } from './money';
+import { isPrescriptionOnly } from '../../../utils/prescription';
 
 const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, stockQty, cartQty, uom, disabled, onAdd, showImage }) => {
   const out = stockQty !== null && stockQty <= 0; // 0.6 kg left is still for sale
@@ -62,6 +63,9 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
       >
         {product.item_name || product.name || product.item_code}
       </Typography>
+      {isPrescriptionOnly(product) && (
+        <Chip size="small" color="warning" variant="outlined" label="Rx only" sx={{ height: 18, fontSize: '0.6875rem', alignSelf: 'flex-start' }} />
+      )}
 
       <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 1 }}>
         <Box sx={{ minWidth: 0 }}>
