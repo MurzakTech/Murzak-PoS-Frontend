@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as serverApi from '../api/kitchenApi';
+import useRealtimeRefresh, { pollEvery } from './useRealtimeRefresh';
 
 const OPEN = ['New', 'Preparing', 'Ready'];
 const DAY = 24 * 60 * 60 * 1000;
@@ -13,6 +14,9 @@ const DAY = 24 * 60 * 60 * 1000;
  *  - onNew(tickets): called when tickets arrive that were not there before (never for the first look),
  *    for the sound.
  *  - history: tickets from the last day that cancel something, when withHistory is true.
+ *
+ * Tickets also refresh the moment the server says one changed (docs/REALTIME_EVENTS.md); while that live
+ * connection is up, polling slows down to a safety net.
  *
  * status: 'checking', 'online', 'offline' (showing the last tickets it had, still trying) or 'unavailable'.
  */
@@ -73,10 +77,13 @@ const useStationBoard = ({ company, warehouse, station, withHistory = false, onN
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, warehouse, station]);
 
+  const live = useRealtimeRefresh({ kind: 'kitchen', company, enabled: Boolean(company && station), onRefresh: refresh });
+  const everyMs = pollEvery(pollMs, live);
+
   useEffect(() => {
     if (!company || !station) return undefined;
     const tick = () => { if (!document.hidden) refresh(); };
-    const timer = setInterval(tick, pollMs);
+    const timer = setInterval(tick, everyMs);
     window.addEventListener('focus', tick);
     window.addEventListener('online', tick);
     return () => {
@@ -84,7 +91,7 @@ const useStationBoard = ({ company, warehouse, station, withHistory = false, onN
       window.removeEventListener('focus', tick);
       window.removeEventListener('online', tick);
     };
-  }, [company, station, pollMs, refresh]);
+  }, [company, station, everyMs, refresh]);
 
   useEffect(() => {
     if (!withHistory || !company || !station) return undefined;

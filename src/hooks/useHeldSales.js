@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as serverApi from '../api/heldSalesApi';
 import { readHeld, writeHeld, renameHeld as renameInList, cleanLabel } from '../utils/heldSales';
+import useRealtimeRefresh, { pollEvery } from './useRealtimeRefresh';
 
 /**
  * Held sales for the till, kept on the server when the server supports it and
@@ -16,6 +17,10 @@ import { readHeld, writeHeld, renameHeld as renameInList, cleanLabel } from '../
  *    copy could be paid twice).
  *  - A server without the held-sales calls is detected once and the till then
  *    behaves exactly as it did before they existed.
+ *
+ * Bills held, brought back or thrown away on another till show up at once when the server sends its
+ * live "held" message (docs/REALTIME_HELD_SALES_BACKEND.md); polling stays as the safety net. A server
+ * that never sends the message simply keeps being polled, exactly as before.
  *
  * status: 'checking' (asking the server), 'online', 'offline' (could not reach
  * it just now), 'unavailable' (this server has no held-sales calls).
@@ -109,11 +114,24 @@ const useHeldSales = ({ company, warehouse, storage = window.localStorage, api =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, warehouse]);
 
-  // Keep up with what other tills do
+  // Keep up with what other tills do: at once when the server says a bill changed, and by asking now and then
+  const live = useRealtimeRefresh({
+    kind: 'held',
+    company,
+    enabled: Boolean(company),
+    onRefresh: (message) => {
+      // A bill of another store is not on this list (a message that names no store, or none at all, always counts)
+      const mine = latest.current.warehouse;
+      if (message?.warehouse && mine && message.warehouse !== mine) return;
+      refresh();
+    },
+  });
+  const everyMs = pollEvery(pollMs, live);
+
   useEffect(() => {
     if (!company) return undefined;
     const tick = () => { if (!document.hidden) refresh(); };
-    const timer = setInterval(tick, pollMs);
+    const timer = setInterval(tick, everyMs);
     window.addEventListener('focus', tick);
     window.addEventListener('online', tick);
     return () => {
@@ -121,7 +139,7 @@ const useHeldSales = ({ company, warehouse, storage = window.localStorage, api =
       window.removeEventListener('focus', tick);
       window.removeEventListener('online', tick);
     };
-  }, [company, pollMs, refresh]);
+  }, [company, everyMs, refresh]);
 
   const held = useMemo(() => combine(serverHeld, localHeld), [serverHeld, localHeld]);
   const find = (id) => combine(serverRef.current, localRef.current).find((h) => idOf(h) === String(id));

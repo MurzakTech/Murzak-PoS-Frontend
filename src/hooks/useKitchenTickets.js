@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as serverApi from '../api/kitchenApi';
+import useRealtimeRefresh, { pollEvery } from './useRealtimeRefresh';
 
 /**
  * The till's side of station screens, used only when the business has turned them on:
@@ -10,6 +11,9 @@ import * as serverApi from '../api/kitchenApi';
  *  - newlyReady: tickets that became ready since the last time it was cleared (the first look never counts),
  *    so the till can tell the waiter once.
  *  - markServed(id): the waiter has taken it to the table or called the number.
+ *
+ * Ready tickets also show the moment the server says one changed (docs/REALTIME_EVENTS.md); while that live
+ * connection is up, polling slows down to a safety net.
  *
  * status: 'off', 'checking', 'online', 'offline' or 'unavailable' (this server has no kitchen calls).
  */
@@ -56,10 +60,13 @@ const useKitchenTickets = ({ company, warehouse, enabled, api = serverApi, pollM
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, warehouse, enabled]);
 
+  const live = useRealtimeRefresh({ kind: 'kitchen', company, enabled: Boolean(enabled && company), onRefresh: refresh });
+  const everyMs = pollEvery(pollMs, live);
+
   useEffect(() => {
     if (!enabled || !company) return undefined;
     const tick = () => { if (!document.hidden) refresh(); };
-    const timer = setInterval(tick, pollMs);
+    const timer = setInterval(tick, everyMs);
     window.addEventListener('focus', tick);
     window.addEventListener('online', tick);
     return () => {
@@ -67,7 +74,7 @@ const useKitchenTickets = ({ company, warehouse, enabled, api = serverApi, pollM
       window.removeEventListener('focus', tick);
       window.removeEventListener('online', tick);
     };
-  }, [enabled, company, pollMs, refresh]);
+  }, [enabled, company, everyMs, refresh]);
 
   const send = useCallback(async (tickets) => {
     const { company: c, warehouse: w, api: a } = latest.current;

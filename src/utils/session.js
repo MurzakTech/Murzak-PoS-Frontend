@@ -1,3 +1,5 @@
+import { disconnectRealtime } from '../realtime/realtimeClient';
+
 // Everything the browser keeps for the person signed in. Tills are often shared,
 // so when a session ends none of this may be left for the next person.
 // (themeMode is a device preference, so it stays.)
@@ -20,4 +22,6 @@ const SESSION_KEYS = [
 
 export const clearSession = () => {
   SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
+  // The live connection belongs to the person who signed in
+  disconnectRealtime();
 };
