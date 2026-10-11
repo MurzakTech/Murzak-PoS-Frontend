@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -37,6 +38,27 @@ import {
   cancelPOSOpeningEntry,
   clearSelectedPOSOpeningEntry,
 } from '../../store/salesSlice';
+
+// How often, and for how long, the page checks on a close running in the background
+const CLOSING_CHECK_MS = 5000;
+const CLOSING_CHECK_LIMIT = 36; // 3 minutes
+
+/**
+ * Where a shift's close stands, from the entry as the server reports it (plus "Closing",
+ * which the page sets the moment a close is accepted but still running in the background).
+ */
+export const closeState = (entry) => {
+  const latest = entry?.closing;
+  const closing = entry?.status === 'Closing' || (entry?.status === 'Open' && latest?.status === 'Queued');
+  const failed = entry?.status === 'Open' && latest?.status === 'Failed';
+  return {
+    closing,
+    failed,
+    failedReason: failed ? latest?.error_message || '' : '',
+    canClose: entry?.status === 'Open' && !closing,
+    canCancel: (entry?.status === 'Draft' || entry?.status === 'Open') && !closing,
+  };
+};
 
 const POSOpeningEntryDetails = () => {
   const navigate = useNavigate();
@@ -55,6 +77,28 @@ const POSOpeningEntryDetails = () => {
   const [cancelReason, setCancelReason] = useState('');
 
   const entry = selectedPOSOpeningEntry;
+  const { closing, failed, failedReason, canClose, canCancel } = closeState(entry);
+  const closingChecks = useRef(0);
+  const [stillClosing, setStillClosing] = useState(false);
+
+  // While a close runs in the background, check on it until it finishes (or 3 minutes pass)
+  useEffect(() => {
+    if (!closing || !entry?.name) {
+      closingChecks.current = 0;
+      setStillClosing(false);
+      return undefined;
+    }
+    const timer = setInterval(() => {
+      closingChecks.current += 1;
+      if (closingChecks.current > CLOSING_CHECK_LIMIT) {
+        clearInterval(timer);
+        setStillClosing(true);
+        return;
+      }
+      dispatch(getPOSOpeningEntry({ name: entry.name }));
+    }, CLOSING_CHECK_MS);
+    return () => clearInterval(timer);
+  }, [closing, entry?.name, dispatch]);
 
   useEffect(() => {
     if (name) {
@@ -111,6 +155,8 @@ const POSOpeningEntryDetails = () => {
         return <Chip label="Draft" size="small" color="default" />;
       case 'Open':
         return <Chip label="Open" size="small" color="success" />;
+      case 'Closing':
+        return <Chip label="Closing" size="small" color="warning" />;
       case 'Closed':
         return <Chip label="Closed" size="small" color="info" />;
       case 'Cancelled':
@@ -120,10 +166,8 @@ const POSOpeningEntryDetails = () => {
     }
   };
 
-  const canClose = entry?.status === 'Open';
-  const canCancel = entry?.status === 'Draft' || entry?.status === 'Open';
-
-  if (isLoadingPOSOpeningDetails) {
+  // Only the first load blanks the page; later checks update it in place
+  if (isLoadingPOSOpeningDetails && !entry) {
     return (
       <Container maxWidth="xl">
         <Box sx={{ py: 4, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -209,6 +253,19 @@ const POSOpeningEntryDetails = () => {
             )}
           </Box>
         </Box>
+
+        {closing && (
+          <Alert severity="info" sx={{ mb: 3 }} role="status">
+            {stillClosing
+              ? "This shift is still being closed. Press Refresh in a minute to see whether it has finished."
+              : "This shift is being closed. Its sales are being added up in the background, which can take a minute. This page updates by itself."}
+          </Alert>
+        )}
+        {failed && (
+          <Alert severity="error" sx={{ mb: 3 }} role="alert">
+            Closing this shift did not finish{failedReason ? `: ${failedReason}` : '.'} Fix the problem, then press Close Entry to try again.
+          </Alert>
+        )}
 
         <Grid container spacing={3}>
           {/* Main Details */}
