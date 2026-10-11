@@ -106,8 +106,15 @@ This section records the real file names and values, so the setup can be checked
 - Shop address, `/socket.io/`: `HTTP/2 200`, `text/plain`, the same reply, with the shop block's security headers present. No shop sites existed yet, so a made-up shop name was used.
 - Shop address, sign-in check: Frappe's "not found" for a shop that does not exist. That shows the request reached the backend pinned to the shop's site name. It should be repeated against a real shop once one is provisioned.
 
+### Shop guard after the app rename (done 11 October 2026)
+
+`/etc/nginx/conf.d/00-murzak-pos-guard-map.conf` matched only `techsavanna_pos.` in method names, so once the backend was renamed to `murzak_pos` the guard would have silently stopped protecting the shops. Every pattern now accepts either name (`(techsavanna_pos|murzak_pos)`). The `techsavanna_pos|` part can be dropped once no site uses the old name.
+
+The same change opened exactly two more doors before sign-in, on purpose, so shop staff can reset their own password: `password_reset.request_password_reset` and `password_reset.reset_password_with_code`. They are safe to expose because the backend rate limits them, answers the same whether or not an account exists, sends the code only to the address on the account, and locks after wrong guesses. A shop needs a default outgoing Email Account and a working email address on each staff account for the code to arrive.
+
+Checked on the server (against a made-up shop name, since the guard decides before the shop is looked up): both reset methods pass the guard; any other method in that module still answers `401 Please sign in to continue.`; `register_user` still answers `403`.
+
 ### Still to do
 
-- **Guard patterns after the app rename.** `conf.d/00-murzak-pos-guard-map.conf` only matches `techsavanna_pos.` in method names. When a shop's site moves to the renamed `murzak_pos` release, none of its methods match, and the guard silently stops protecting that shop (sign-up blocking, and the sign-in requirement for private methods). The patterns must accept both names at the same time as the cutover.
 - **Port 9000.** The live-connection program listens on all network addresses (`*:9000`). Confirm the firewall (`sudo ufw status`, and the hosting provider's firewall) does not allow it from outside; the tills reach it only through Nginx.
 - **Real-shop test.** Once a shop exists, repeat the two checks above against it, then do the two-till test in step 5.
