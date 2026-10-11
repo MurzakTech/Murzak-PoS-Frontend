@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 import { friendlyErrorMessage } from '../utils/friendlyError';
 
-const REPORTS_API_BASE = 'techsavanna_pos.api.reports';
+const REPORTS_API_BASE = 'murzak_pos.api.reports';
 
 // Helper to build endpoint URL
 // Note: The baseURL in axiosInstance already includes /api/method/, so we just return the endpoint string

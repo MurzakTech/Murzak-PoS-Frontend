@@ -1,6 +1,6 @@
 # POS Sale Flow - React App Implementation Guide
 
-This document provides a complete guide for implementing POS (Point of Sale) sales functionality in a React application using the TechSavanna POS API.
+This document provides a complete guide for implementing POS (Point of Sale) sales functionality in a React application using the Murzak POS API.
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -70,7 +70,7 @@ The POS sale flow involves several steps:
 
 ### 1. Get Products List
 
-**Endpoint:** `techsavanna_pos.api.product_api.get_products`
+**Endpoint:** `murzak_pos.api.product_api.get_products`
 
 **Method:** `POST`
 
@@ -137,7 +137,7 @@ The POS sale flow involves several steps:
 
 ### 2. Get Product Details
 
-**Endpoint:** `techsavanna_pos.api.product_api.get_product_details`
+**Endpoint:** `murzak_pos.api.product_api.get_product_details`
 
 **Method:** `GET` or `POST`
 
@@ -149,7 +149,7 @@ The POS sale flow involves several steps:
 
 **Example Request:**
 ```
-GET /api/method/techsavanna_pos.api.product_api.get_product_details?item_code=HA-FASH-021&company=Hassis
+GET /api/method/murzak_pos.api.product_api.get_product_details?item_code=HA-FASH-021&company=Hassis
 ```
 
 **Response:**
@@ -175,7 +175,7 @@ GET /api/method/techsavanna_pos.api.product_api.get_product_details?item_code=HA
 
 ### 3. Get Product Price
 
-**Endpoint:** `techsavanna_pos.api.product_api.get_product_price`
+**Endpoint:** `murzak_pos.api.product_api.get_product_price`
 
 **Method:** `GET` or `POST`
 
@@ -188,7 +188,7 @@ GET /api/method/techsavanna_pos.api.product_api.get_product_details?item_code=HA
 
 **Example Request:**
 ```
-GET /api/method/techsavanna_pos.api.product_api.get_product_price?item_code=HA-FASH-021&price_list=Standard Selling&company=Hassis
+GET /api/method/murzak_pos.api.product_api.get_product_price?item_code=HA-FASH-021&price_list=Standard Selling&company=Hassis
 ```
 
 **Response:**
@@ -206,7 +206,7 @@ GET /api/method/techsavanna_pos.api.product_api.get_product_price?item_code=HA-F
 
 ### 4. List Customers
 
-**Endpoint:** `techsavanna_pos.api.customer_api.list_customers`
+**Endpoint:** `murzak_pos.api.customer_api.list_customers`
 
 **Method:** `GET` or `POST`
 
@@ -265,7 +265,7 @@ GET /api/method/techsavanna_pos.api.product_api.get_product_price?item_code=HA-F
 
 ### 5. Get Customer Details
 
-**Endpoint:** `techsavanna_pos.api.customer_api.get_customer`
+**Endpoint:** `murzak_pos.api.customer_api.get_customer`
 
 **Method:** `GET` or `POST`
 
@@ -276,7 +276,7 @@ GET /api/method/techsavanna_pos.api.product_api.get_product_price?item_code=HA-F
 
 **Example Request:**
 ```
-GET /api/method/techsavanna_pos.api.customer_api.get_customer?name=CUST-00001
+GET /api/method/murzak_pos.api.customer_api.get_customer?name=CUST-00001
 ```
 
 **Response:**
@@ -303,7 +303,7 @@ GET /api/method/techsavanna_pos.api.customer_api.get_customer?name=CUST-00001
 
 ### 6. Create POS Invoice
 
-**Endpoint:** `techsavanna_pos.api.sales_api.create_pos_invoice`
+**Endpoint:** `murzak_pos.api.sales_api.create_pos_invoice`
 
 **Method:** `POST`
 
@@ -593,7 +593,7 @@ export interface ProductListResponse {
 export const productService = {
   async getProducts(params: ProductListRequest) {
     const response = await apiCall<{ message: ProductListResponse }>(
-      'techsavanna_pos.api.product_api.get_products',
+      'murzak_pos.api.product_api.get_products',
       'POST',
       params
     );
@@ -603,7 +603,7 @@ export const productService = {
   async getProductDetails(itemCode: string, company?: string) {
     const params = company ? `?item_code=${itemCode}&company=${company}` : `?item_code=${itemCode}`;
     const response = await apiCall(
-      `techsavanna_pos.api.product_api.get_product_details${params}`,
+      `murzak_pos.api.product_api.get_product_details${params}`,
       'GET'
     );
     return response.data;
@@ -615,7 +615,7 @@ export const productService = {
     if (company) params += `&company=${company}`;
     
     const response = await apiCall(
-      `techsavanna_pos.api.product_api.get_product_price${params}`,
+      `murzak_pos.api.product_api.get_product_price${params}`,
       'GET'
     );
     return response.data;
@@ -656,7 +656,7 @@ export interface CustomerListRequest {
 export const customerService = {
   async listCustomers(params: CustomerListRequest = {}) {
     const response = await apiCall<{ data: { customers: Customer[] } }>(
-      'techsavanna_pos.api.customer_api.list_customers',
+      'murzak_pos.api.customer_api.list_customers',
       'POST',
       params
     );
@@ -665,7 +665,7 @@ export const customerService = {
 
   async getCustomer(name: string) {
     const response = await apiCall<{ data: Customer }>(
-      `techsavanna_pos.api.customer_api.get_customer?name=${name}`,
+      `murzak_pos.api.customer_api.get_customer?name=${name}`,
       'GET'
     );
     return response.data;
@@ -729,7 +729,7 @@ export interface PosInvoiceResponse {
 export const salesService = {
   async createPosInvoice(request: CreatePosInvoiceRequest) {
     const response = await apiCall<{ data: PosInvoiceResponse }>(
-      'techsavanna_pos.api.sales_api.create_pos_invoice',
+      'murzak_pos.api.sales_api.create_pos_invoice',
       'POST',
       request
     );
@@ -1258,7 +1258,7 @@ This guide provides a complete implementation guide for POS sales in React. The 
 7. **Clear cart** and show receipt on success
 
 For additional API documentation, refer to:
-- Product API: `techsavanna_pos.api.product_api`
-- Customer API: `techsavanna_pos.api.customer_api`
-- Sales API: `techsavanna_pos.api.sales_api`
+- Product API: `murzak_pos.api.product_api`
+- Customer API: `murzak_pos.api.customer_api`
+- Sales API: `murzak_pos.api.sales_api`
 

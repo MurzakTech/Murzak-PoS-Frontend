@@ -522,7 +522,7 @@ export const useSalesAnalytics = (filters) => {
 ```javascript
 // Already documented in REPORTS_API_DOCUMENTATION.md
 const response = await axiosInstance.get(
-  '/api/method/techsavanna_pos.api.reports.inventory_movement_report',
+  '/api/method/murzak_pos.api.reports.inventory_movement_report',
   {
     params: {
       start_date: '2024-01-01',

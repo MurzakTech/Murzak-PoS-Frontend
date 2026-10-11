@@ -6,7 +6,7 @@ import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
  * Authenticator and similar). Each person manages it for their own account.
  */
 
-const TWO_FACTOR = 'techsavanna_pos.api.two_factor_api';
+const TWO_FACTOR = 'murzak_pos.api.two_factor_api';
 
 // Frappe wraps return values in { message }; these endpoints answer { success, message, data }.
 const call = async (method, data, { get = false } = {}) => {

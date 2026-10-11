@@ -36,9 +36,9 @@ axiosInstance.interceptors.request.use(
     // tenant front doors (<shop>.pos.murzaktech.tech) refuse unauthenticated
     // calls to them, so stripping the token there would break onboarding.
     const publicEndpoints = [
-      'techsavanna_pos.api.auth_api.login_user',
-      'techsavanna_pos.api.auth_api.register_user',
-      'techsavanna_pos.api.password_reset.',
+      'murzak_pos.api.auth_api.login_user',
+      'murzak_pos.api.auth_api.register_user',
+      'murzak_pos.api.password_reset.',
     ];
     
     // Check if this is a public endpoint

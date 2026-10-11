@@ -8,17 +8,17 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Onboarding API endpoints
 const ENDPOINTS = {
-  createCompany: 'techsavanna_pos.api.onboarding_api.create_company',
-  createPOSProfile: 'techsavanna_pos.api.onboarding_api.create_pos_profile',
-  createETIMSSettings: 'techsavanna_pos.api.onboarding_api.create_etims_settings',
-  completeOnboarding: 'techsavanna_pos.api.onboarding_api.complete_onboarding',
-  updateCompany: 'techsavanna_pos.api.onboarding_api.update_company',
-  updatePOSProfile: 'techsavanna_pos.api.onboarding_api.update_pos_profile',
-  updateETIMSSettings: 'techsavanna_pos.api.onboarding_api.update_etims_settings',
-  getCompany: 'techsavanna_pos.api.onboarding_api.get_company',
-  getPOSProfile: 'techsavanna_pos.api.onboarding_api.get_pos_profile',
-  getETIMSSettings: 'techsavanna_pos.api.onboarding_api.get_etims_settings',
-  checkAbbreviationExists: 'techsavanna_pos.api.onboarding_api.check_abbreviation_exists',
+  createCompany: 'murzak_pos.api.onboarding_api.create_company',
+  createPOSProfile: 'murzak_pos.api.onboarding_api.create_pos_profile',
+  createETIMSSettings: 'murzak_pos.api.onboarding_api.create_etims_settings',
+  completeOnboarding: 'murzak_pos.api.onboarding_api.complete_onboarding',
+  updateCompany: 'murzak_pos.api.onboarding_api.update_company',
+  updatePOSProfile: 'murzak_pos.api.onboarding_api.update_pos_profile',
+  updateETIMSSettings: 'murzak_pos.api.onboarding_api.update_etims_settings',
+  getCompany: 'murzak_pos.api.onboarding_api.get_company',
+  getPOSProfile: 'murzak_pos.api.onboarding_api.get_pos_profile',
+  getETIMSSettings: 'murzak_pos.api.onboarding_api.get_etims_settings',
+  checkAbbreviationExists: 'murzak_pos.api.onboarding_api.check_abbreviation_exists',
 };
 
 // Helper function to extract data from nested message response

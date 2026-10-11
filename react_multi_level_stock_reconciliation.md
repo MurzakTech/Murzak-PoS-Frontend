@@ -31,7 +31,7 @@ Create an API configuration file:
 ```typescript
 // src/config/api.ts
 export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://your-domain.com';
-export const API_METHOD_BASE = `${API_BASE_URL}/api/method/techsavanna_pos.api.inventory_api`;
+export const API_METHOD_BASE = `${API_BASE_URL}/api/method/murzak_pos.api.inventory_api`;
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {

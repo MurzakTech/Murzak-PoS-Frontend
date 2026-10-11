@@ -5,17 +5,17 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Loyalty API endpoints - matching LOYALTY_API_DOCUMENTATION.md
 const ENDPOINTS = {
-  createLoyaltyProgram: 'techsavanna_pos.api.loyalty.create_loyalty_program',
-  listLoyaltyPrograms: 'techsavanna_pos.api.loyalty.list_loyalty_programs',
-  getLoyaltyProgramRules: 'techsavanna_pos.api.loyalty.get_loyalty_program_rules',
-  assignLoyaltyProgram: 'techsavanna_pos.api.loyalty.assign_loyalty_program',
-  earnLoyaltyPoints: 'techsavanna_pos.api.loyalty.earn_loyalty_points',
-  getLoyaltyBalance: 'techsavanna_pos.api.loyalty.get_loyalty_balance',
-  redeemPoints: 'techsavanna_pos.api.loyalty.redeem_points',
-  getPointsHistory: 'techsavanna_pos.api.loyalty.get_points_history',
+  createLoyaltyProgram: 'murzak_pos.api.loyalty.create_loyalty_program',
+  listLoyaltyPrograms: 'murzak_pos.api.loyalty.list_loyalty_programs',
+  getLoyaltyProgramRules: 'murzak_pos.api.loyalty.get_loyalty_program_rules',
+  assignLoyaltyProgram: 'murzak_pos.api.loyalty.assign_loyalty_program',
+  earnLoyaltyPoints: 'murzak_pos.api.loyalty.earn_loyalty_points',
+  getLoyaltyBalance: 'murzak_pos.api.loyalty.get_loyalty_balance',
+  redeemPoints: 'murzak_pos.api.loyalty.redeem_points',
+  getPointsHistory: 'murzak_pos.api.loyalty.get_points_history',
   // Loyalty Points Redemption endpoints
-  getCustomerLoyaltyDetails: 'techsavanna_pos.api.loyalty.get_customer_loyalty_details',
-  calculateLoyaltyRedemption: 'techsavanna_pos.api.loyalty.calculate_loyalty_redemption',
+  getCustomerLoyaltyDetails: 'murzak_pos.api.loyalty.get_customer_loyalty_details',
+  calculateLoyaltyRedemption: 'murzak_pos.api.loyalty.calculate_loyalty_redemption',
 };
 
 // Helper function to extract data from API response

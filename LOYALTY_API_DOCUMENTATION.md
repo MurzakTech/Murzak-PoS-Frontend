@@ -7,12 +7,12 @@ This document provides comprehensive API documentation for the Loyalty Program e
 All API endpoints are accessed through the Frappe framework. The base URL format is:
 
 ```
-/api/method/techsavanna_pos.api.loyalty.<function_name>
+/api/method/murzak_pos.api.loyalty.<function_name>
 ```
 
 **Example:** 
 ```
-/api/method/techsavanna_pos.api.loyalty.get_loyalty_balance
+/api/method/murzak_pos.api.loyalty.get_loyalty_balance
 ```
 
 ---
@@ -64,7 +64,7 @@ All endpoints return a JSON response with the following structure:
 
 Creates a new loyalty program with specified rules and collection factors.
 
-**Endpoint:** `/api/method/techsavanna_pos.api.loyalty.create_loyalty_program`
+**Endpoint:** `/api/method/murzak_pos.api.loyalty.create_loyalty_program`
 
 **Method:** `POST`
 
@@ -84,7 +84,7 @@ Creates a new loyalty program with specified rules and collection factors.
 
 ```javascript
 const createLoyaltyProgram = async () => {
-  const response = await fetch('/api/method/techsavanna_pos.api.loyalty.create_loyalty_program', {
+  const response = await fetch('/api/method/murzak_pos.api.loyalty.create_loyalty_program', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ const createLoyaltyProgram = async () => {
 
 Assigns a loyalty program to a specific customer.
 
-**Endpoint:** `/api/method/techsavanna_pos.api.loyalty.assign_loyalty_program`
+**Endpoint:** `/api/method/murzak_pos.api.loyalty.assign_loyalty_program`
 
 **Method:** `POST`
 
@@ -151,7 +151,7 @@ Assigns a loyalty program to a specific customer.
 
 ```javascript
 const assignLoyaltyProgram = async (customerId, programName) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.loyalty.assign_loyalty_program', {
+  const response = await fetch('/api/method/murzak_pos.api.loyalty.assign_loyalty_program', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ const assignLoyaltyProgram = async (customerId, programName) => {
 
 Awards loyalty points to a customer based on their purchase amount.
 
-**Endpoint:** `/api/method/techsavanna_pos.api.loyalty.earn_loyalty_points`
+**Endpoint:** `/api/method/murzak_pos.api.loyalty.earn_loyalty_points`
 
 **Method:** `POST`
 
@@ -219,7 +219,7 @@ Points are calculated based on the loyalty program's `collection_factor`. If `co
 
 ```javascript
 const earnLoyaltyPoints = async (customerId, purchaseAmount) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.loyalty.earn_loyalty_points', {
+  const response = await fetch('/api/method/murzak_pos.api.loyalty.earn_loyalty_points', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ const earnLoyaltyPoints = async (customerId, purchaseAmount) => {
 
 Retrieves the current loyalty points balance and recent transactions for a customer.
 
-**Endpoint:** `/api/method/techsavanna_pos.api.loyalty.get_loyalty_balance`
+**Endpoint:** `/api/method/murzak_pos.api.loyalty.get_loyalty_balance`
 
 **Method:** `GET` or `POST`
 
@@ -292,7 +292,7 @@ const getLoyaltyBalance = async (customerId, limit = 5) => {
   });
   
   const response = await fetch(
-    `/api/method/techsavanna_pos.api.loyalty.get_loyalty_balance?${params}`,
+    `/api/method/murzak_pos.api.loyalty.get_loyalty_balance?${params}`,
     {
       method: 'GET',
       headers: {
@@ -310,7 +310,7 @@ const getLoyaltyBalance = async (customerId, limit = 5) => {
 
 ```javascript
 const getLoyaltyBalance = async (customerId, limit = 5) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.loyalty.get_loyalty_balance', {
+  const response = await fetch('/api/method/murzak_pos.api.loyalty.get_loyalty_balance', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -360,7 +360,7 @@ const getLoyaltyBalance = async (customerId, limit = 5) => {
 
 Redeems loyalty points for a customer.
 
-**Endpoint:** `/api/method/techsavanna_pos.api.loyalty.redeem_points`
+**Endpoint:** `/api/method/murzak_pos.api.loyalty.redeem_points`
 
 **Method:** `POST`
 
@@ -378,7 +378,7 @@ Redeems loyalty points for a customer.
 
 ```javascript
 const redeemPoints = async (customerId, points, referenceDoc = null) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.loyalty.redeem_points', {
+  const response = await fetch('/api/method/murzak_pos.api.loyalty.redeem_points', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -426,7 +426,7 @@ const redeemPoints = async (customerId, points, referenceDoc = null) => {
 
 Retrieves detailed transaction history with filtering and pagination support.
 
-**Endpoint:** `/api/method/techsavanna_pos.api.loyalty.get_points_history`
+**Endpoint:** `/api/method/murzak_pos.api.loyalty.get_points_history`
 
 **Method:** `GET` or `POST`
 
@@ -461,7 +461,7 @@ const getPointsHistory = async (customerId, filters = {}) => {
     params[key] === null && delete params[key]
   );
   
-  const response = await fetch('/api/method/techsavanna_pos.api.loyalty.get_points_history', {
+  const response = await fetch('/api/method/murzak_pos.api.loyalty.get_points_history', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -525,7 +525,7 @@ export const useLoyalty = (apiBaseUrl = '') => {
     setError(null);
     
     try {
-      const response = await fetch(`${apiBaseUrl}/api/method/techsavanna_pos.api.loyalty.${endpoint}`, {
+      const response = await fetch(`${apiBaseUrl}/api/method/murzak_pos.api.loyalty.${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

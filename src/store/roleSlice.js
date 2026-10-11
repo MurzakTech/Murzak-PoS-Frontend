@@ -4,16 +4,16 @@ import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 const ENDPOINTS = {
-  createRole: 'techsavanna_pos.api.role_api.create_role',
-  updateRole: 'techsavanna_pos.api.role_api.update_role',
-  deleteRole: 'techsavanna_pos.api.role_api.delete_role',
-  disableRole: 'techsavanna_pos.api.role_api.disable_role',
-  enableRole: 'techsavanna_pos.api.role_api.enable_role',
-  assignPermissions: 'techsavanna_pos.api.role_api.assign_permissions_to_role',
-  getRolePermissions: 'techsavanna_pos.api.role_api.get_role_permissions',
-  removePermissions: 'techsavanna_pos.api.role_api.remove_permissions_from_role',
-  listRoles: 'techsavanna_pos.api.role_api.list_roles',
-  getRoleDetails: 'techsavanna_pos.api.role_api.get_role_details',
+  createRole: 'murzak_pos.api.role_api.create_role',
+  updateRole: 'murzak_pos.api.role_api.update_role',
+  deleteRole: 'murzak_pos.api.role_api.delete_role',
+  disableRole: 'murzak_pos.api.role_api.disable_role',
+  enableRole: 'murzak_pos.api.role_api.enable_role',
+  assignPermissions: 'murzak_pos.api.role_api.assign_permissions_to_role',
+  getRolePermissions: 'murzak_pos.api.role_api.get_role_permissions',
+  removePermissions: 'murzak_pos.api.role_api.remove_permissions_from_role',
+  listRoles: 'murzak_pos.api.role_api.list_roles',
+  getRoleDetails: 'murzak_pos.api.role_api.get_role_details',
 };
 
 const extractResponseData = (response) => {

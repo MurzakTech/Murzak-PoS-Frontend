@@ -26,7 +26,7 @@ const ENDPOINTS = {
 ```javascript
 const ENDPOINTS = {
   // ...
-  createStockTransferRequest: 'techsavanna_pos.api.stock.create_stock_transfer_request',
+  createStockTransferRequest: 'murzak_pos.api.stock.create_stock_transfer_request',
   submitMaterialRequest: 'frappe.client.submit', // Kept for manual submission if needed
 };
 ```
@@ -34,7 +34,7 @@ const ENDPOINTS = {
 ### 2. Refactored `createMaterialRequest` Thunk
 
 **Key Changes:**
-- ✅ Now uses the documented endpoint: `techsavanna_pos.api.stock.create_stock_transfer_request`
+- ✅ Now uses the documented endpoint: `murzak_pos.api.stock.create_stock_transfer_request`
 - ✅ Request format matches API documentation exactly
 - ✅ Uses `application/json` content type
 - ✅ Supports `submit` parameter (replaces `auto_submit`)

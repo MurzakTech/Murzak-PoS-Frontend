@@ -4,7 +4,7 @@ Complete API reference with detailed payload structures and response formats for
 
 ## Base URL
 ```
-/api/method/techsavanna_pos.api.inventory_api.{endpoint_name}
+/api/method/murzak_pos.api.inventory_api.{endpoint_name}
 ```
 
 ## Authentication
@@ -66,7 +66,7 @@ Creates a new stock reconciliation document for the multi-level workflow.
 ### Example Request
 
 ```bash
-curl -X POST "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.create_multi_level_stock_reconciliation" \
+curl -X POST "https://your-domain.com/api/method/murzak_pos.api.inventory_api.create_multi_level_stock_reconciliation" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -165,7 +165,7 @@ Adds stock counts and comments from the Sales User.
 ### Example Request
 
 ```bash
-curl -X POST "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.add_sales_person_stock_take" \
+curl -X POST "https://your-domain.com/api/method/murzak_pos.api.inventory_api.add_sales_person_stock_take" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -256,7 +256,7 @@ Same as [Add Sales User Stock Take](#2-add-sales-user-stock-take)
 ### Example Request
 
 ```bash
-curl -X POST "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.add_stock_controller_stock_take" \
+curl -X POST "https://your-domain.com/api/method/murzak_pos.api.inventory_api.add_stock_controller_stock_take" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -340,7 +340,7 @@ Adds stock counts and comments from the Stock Manager and optionally submits the
 ### Example Request
 
 ```bash
-curl -X POST "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.add_stock_manager_stock_take_and_submit" \
+curl -X POST "https://your-domain.com/api/method/murzak_pos.api.inventory_api.add_stock_manager_stock_take_and_submit" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -457,11 +457,11 @@ Gets a stock reconciliation document with all levels of stock taking records.
 
 ```bash
 # GET request
-curl -X GET "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.get_multi_level_stock_reconciliation?reconciliation_name=MAT-RECO-2025-00001" \
+curl -X GET "https://your-domain.com/api/method/murzak_pos.api.inventory_api.get_multi_level_stock_reconciliation?reconciliation_name=MAT-RECO-2025-00001" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # POST request
-curl -X POST "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.get_multi_level_stock_reconciliation" \
+curl -X POST "https://your-domain.com/api/method/murzak_pos.api.inventory_api.get_multi_level_stock_reconciliation" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
@@ -634,11 +634,11 @@ Lists multi-level stock reconciliations with optional filters and pagination.
 
 ```bash
 # GET request
-curl -X GET "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.list_multi_level_stock_reconciliations?workflow_status=Pending Sales User&limit=20&offset=0" \
+curl -X GET "https://your-domain.com/api/method/murzak_pos.api.inventory_api.list_multi_level_stock_reconciliations?workflow_status=Pending Sales User&limit=20&offset=0" \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # POST request
-curl -X POST "https://your-domain.com/api/method/techsavanna_pos.api.inventory_api.list_multi_level_stock_reconciliations" \
+curl -X POST "https://your-domain.com/api/method/murzak_pos.api.inventory_api.list_multi_level_stock_reconciliations" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{

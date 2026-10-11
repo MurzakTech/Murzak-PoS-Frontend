@@ -129,32 +129,32 @@ If a user doesn't have the required role, they see an access denied message with
 ### Endpoints Used
 
 1. **Create Purchase Order**
-   - Endpoint: `techsavanna_pos.api.purchase.create_purchase_order`
+   - Endpoint: `murzak_pos.api.purchase.create_purchase_order`
    - Method: POST
    - Auth: Guest allowed (but form requires auth for consistency)
    - Returns: `{ status: "success", lpo_no: "PUR-ORD-...", data: {...} }`
 
 2. **Submit Purchase Order**
-   - Endpoint: `techsavanna_pos.api.purchase.submit_purchase_order`
+   - Endpoint: `murzak_pos.api.purchase.submit_purchase_order`
    - Method: POST
    - Auth: Required
    - Body: `{ lpo_no: "PUR-ORD-..." }`
    - Returns: `{ status: "success", lpo_no: "PUR-ORD-...", data: {...} }`
 
 3. **Get Purchase Order**
-   - Endpoint: `techsavanna_pos.api.purchase.get_purchase_order`
+   - Endpoint: `murzak_pos.api.purchase.get_purchase_order`
    - Method: GET
    - Query: `?po_name=PUR-ORD-...`
    - Returns: `{ status: "success", purchase_order: {...} }`
 
 4. **List Purchase Orders**
-   - Endpoint: `techsavanna_pos.api.purchase.list_purchase_orders`
+   - Endpoint: `murzak_pos.api.purchase.list_purchase_orders`
    - Method: GET
    - Query: `?filters={"docstatus":0}&company=...`
    - Returns: `{ status: "success", purchase_orders: [...], total_count: N }`
 
 5. **Create GRN**
-   - Endpoint: `techsavanna_pos.api.purchase.create_grn`
+   - Endpoint: `murzak_pos.api.purchase.create_grn`
    - Method: POST
    - Auth: Required
    - Body: `{ lpo_no: "...", warehouse: "...", items: [{ item_code: "...", qty: N }] }`

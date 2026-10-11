@@ -9,8 +9,8 @@ This document outlines the implementation plan for integrating Purchase Invoice 
 - **Existing Purchase Order Implementation**: The codebase already has Purchase Order (LPO) functionality implemented
 - **Missing Purchase Invoice Implementation**: Purchase Invoices are a separate entity from Purchase Orders and need to be implemented
 - **API Endpoints Available**:
-  - `GET /api/method/techsavanna_pos.api.purchase.list_purchase_invoices` - List Purchase Invoices
-  - `GET /api/method/techsavanna_pos.api.purchase.get_purchase_invoice_details` - Get Purchase Invoice Details
+  - `GET /api/method/murzak_pos.api.purchase.list_purchase_invoices` - List Purchase Invoices
+  - `GET /api/method/murzak_pos.api.purchase.get_purchase_invoice_details` - Get Purchase Invoice Details
 
 ### Key Differences: Purchase Orders vs Purchase Invoices
 - **Purchase Orders (LPO)**: Documents created to order goods from suppliers (already implemented)
@@ -28,8 +28,8 @@ This document outlines the implementation plan for integrating Purchase Invoice 
 **Tasks**:
 - [ ] Add new endpoints to `ENDPOINTS` constant:
   ```javascript
-  listPurchaseInvoices: 'techsavanna_pos.api.purchase.list_purchase_invoices',
-  getPurchaseInvoiceDetails: 'techsavanna_pos.api.purchase.get_purchase_invoice_details',
+  listPurchaseInvoices: 'murzak_pos.api.purchase.list_purchase_invoices',
+  getPurchaseInvoiceDetails: 'murzak_pos.api.purchase.get_purchase_invoice_details',
   ```
 
 - [ ] Create async thunk: `listPurchaseInvoices`

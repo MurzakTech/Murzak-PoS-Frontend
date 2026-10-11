@@ -2,7 +2,7 @@ import axiosInstance from './axiosInstance';
 import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
 import { isConnectionProblem } from '../utils/offlineSales';
 
-const SALES = 'techsavanna_pos.api.sales_api';
+const SALES = 'murzak_pos.api.sales_api';
 
 const post = async (method, payload) => {
   try {

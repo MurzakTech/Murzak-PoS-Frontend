@@ -19,7 +19,7 @@ This document provides comprehensive API documentation for Loyalty Points Redemp
 
 The Loyalty Points Redemption API provides endpoints to retrieve customer loyalty points information and calculate redemption amounts. These endpoints integrate with ERPNext's built-in loyalty program system to enable customers to redeem their accumulated loyalty points as discounts on purchases.
 
-**Base URL:** `/api/method/techsavanna_pos.api.loyalty`
+**Base URL:** `/api/method/murzak_pos.api.loyalty`
 
 **Key Concepts:**
 - **Loyalty Points**: Points earned by customers through purchases
@@ -35,7 +35,7 @@ The Loyalty Points Redemption API provides endpoints to retrieve customer loyalt
 
 Retrieve customer's loyalty points balance, conversion factor, and redemption details. Use this endpoint to display loyalty information to users before they make a purchase.
 
-**Endpoint:** `GET /api/method/techsavanna_pos.api.loyalty.get_customer_loyalty_details`
+**Endpoint:** `GET /api/method/murzak_pos.api.loyalty.get_customer_loyalty_details`
 
 **Authentication:** Guest accessible (allow_guest=True)
 
@@ -61,7 +61,7 @@ const getCustomerLoyaltyDetails = async (customerId: string, invoiceAmount?: num
   }
 
   const response = await fetch(
-    `/api/method/techsavanna_pos.api.loyalty.get_customer_loyalty_details?${params.toString()}`,
+    `/api/method/murzak_pos.api.loyalty.get_customer_loyalty_details?${params.toString()}`,
     {
       method: 'GET',
       headers: {
@@ -81,7 +81,7 @@ import axios from 'axios';
 
 const getCustomerLoyaltyDetails = async (customerId: string, invoiceAmount?: number) => {
   const response = await axios.get(
-    '/api/method/techsavanna_pos.api.loyalty.get_customer_loyalty_details',
+    '/api/method/murzak_pos.api.loyalty.get_customer_loyalty_details',
     {
       params: {
         customer_id: customerId,
@@ -196,7 +196,7 @@ const getCustomerLoyaltyDetails = async (customerId: string, invoiceAmount?: num
 
 Calculate the discount amount for redeeming loyalty points and validate if the redemption is possible. Use this endpoint when the user selects how many points to redeem.
 
-**Endpoint:** `GET /api/method/techsavanna_pos.api.loyalty.calculate_loyalty_redemption`
+**Endpoint:** `GET /api/method/murzak_pos.api.loyalty.calculate_loyalty_redemption`
 
 **Authentication:** Guest accessible (allow_guest=True)
 
@@ -228,7 +228,7 @@ const calculateRedemption = async (
   }
 
   const response = await fetch(
-    `/api/method/techsavanna_pos.api.loyalty.calculate_loyalty_redemption?${params.toString()}`,
+    `/api/method/murzak_pos.api.loyalty.calculate_loyalty_redemption?${params.toString()}`,
     {
       method: 'GET',
       headers: {
@@ -252,7 +252,7 @@ const calculateRedemption = async (
   invoiceAmount?: number
 ) => {
   const response = await axios.get(
-    '/api/method/techsavanna_pos.api.loyalty.calculate_loyalty_redemption',
+    '/api/method/murzak_pos.api.loyalty.calculate_loyalty_redemption',
     {
       params: {
         customer_id: customerId,
@@ -428,7 +428,7 @@ export const useCustomerLoyalty = ({
 
     try {
       const response = await axios.get<{ message: CustomerLoyaltyDetailsResponse }>(
-        '/api/method/techsavanna_pos.api.loyalty.get_customer_loyalty_details',
+        '/api/method/murzak_pos.api.loyalty.get_customer_loyalty_details',
         {
           params: {
             customer_id: customerId,
@@ -481,7 +481,7 @@ export const useLoyaltyRedemption = () => {
 
     try {
       const response = await axios.get<{ message: CalculateRedemptionResponse }>(
-        '/api/method/techsavanna_pos.api.loyalty.calculate_loyalty_redemption',
+        '/api/method/murzak_pos.api.loyalty.calculate_loyalty_redemption',
         {
           params: {
             customer_id: customerId,
@@ -709,7 +709,7 @@ const CreateInvoiceWithLoyalty: React.FC<CreateInvoiceWithLoyaltyProps> = ({
       }
 
       const response = await axios.post(
-        '/api/method/techsavanna_pos.api.sales.create_pos_invoice',
+        '/api/method/murzak_pos.api.sales.create_pos_invoice',
         payload
       );
 
@@ -813,14 +813,14 @@ const handleLoyaltyRedemption = async (
 2. Calculate Invoice Total
    ↓
 3. Get Customer Loyalty Details
-   GET /api/method/techsavanna_pos.api.loyalty.get_customer_loyalty_details
+   GET /api/method/murzak_pos.api.loyalty.get_customer_loyalty_details
    ↓
 4. Display Available Points & Max Redeemable
    ↓
 5. User Selects Points to Redeem (Optional)
    ↓
 6. Calculate Redemption
-   GET /api/method/techsavanna_pos.api.loyalty.calculate_loyalty_redemption
+   GET /api/method/murzak_pos.api.loyalty.calculate_loyalty_redemption
    ↓
 7. Validate Redemption
    - Sufficient points?
@@ -834,7 +834,7 @@ const handleLoyaltyRedemption = async (
 9. User Confirms & Proceeds to Payment
    ↓
 10. Create Invoice with Loyalty Redemption
-    POST /api/method/techsavanna_pos.api.sales.create_pos_invoice
+    POST /api/method/murzak_pos.api.sales.create_pos_invoice
     {
       redeem_loyalty_points: true,
       loyalty_points: <selected_points>,

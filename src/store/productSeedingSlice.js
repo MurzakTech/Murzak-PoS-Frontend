@@ -6,10 +6,10 @@ import { summarizeSeedResult } from '../utils/seedResult';
 
 // Product Seeding API endpoints
 const ENDPOINTS = {
-  getPOSIndustries: 'techsavanna_pos.api.product_seeding.get_pos_industries',
-  seedProducts: 'techsavanna_pos.api.product_seeding.seed_products',
-  bulkUploadProducts: 'techsavanna_pos.api.product_seeding.bulk_upload_products',
-  createSeedItem: 'techsavanna_pos.api.product_seeding.create_seed_item',
+  getPOSIndustries: 'murzak_pos.api.product_seeding.get_pos_industries',
+  seedProducts: 'murzak_pos.api.product_seeding.seed_products',
+  bulkUploadProducts: 'murzak_pos.api.product_seeding.bulk_upload_products',
+  createSeedItem: 'murzak_pos.api.product_seeding.create_seed_item',
 };
 
 // Helper function to extract data from response

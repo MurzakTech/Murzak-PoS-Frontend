@@ -1,6 +1,6 @@
 # Purchase Order & GRN API Documentation
 
-Complete API documentation for Purchase Order and Goods Receipt Note (GRN) operations in TechSavanna POS.
+Complete API documentation for Purchase Order and Goods Receipt Note (GRN) operations in Murzak POS.
 
 ---
 
@@ -27,7 +27,7 @@ Complete API documentation for Purchase Order and Goods Receipt Note (GRN) opera
 
 ### Base URL
 ```
-https://your-domain.com/api/method/techsavanna_pos.api.purchase
+https://your-domain.com/api/method/murzak_pos.api.purchase
 ```
 
 ### Authentication
@@ -319,7 +319,7 @@ Retrieves detailed information for a specific Purchase Order.
 
 #### Request Example
 ```
-GET /api/method/techsavanna_pos.api.purchase.get_purchase_order?po_name=PUR-ORD-2024-00001
+GET /api/method/murzak_pos.api.purchase.get_purchase_order?po_name=PUR-ORD-2024-00001
 ```
 
 #### Success Response (200 OK)
@@ -385,7 +385,7 @@ Lists Purchase Orders with optional filters and pagination.
 
 #### Request Example
 ```
-GET /api/method/techsavanna_pos.api.purchase.list_purchase_orders?filters={"supplier":"Supplier A"}&limit_start=0&limit_page_length=20
+GET /api/method/murzak_pos.api.purchase.list_purchase_orders?filters={"supplier":"Supplier A"}&limit_start=0&limit_page_length=20
 ```
 
 #### Success Response (200 OK)
@@ -614,7 +614,7 @@ Create a service file for API calls:
 ```javascript
 // services/api.js
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://your-domain.com/api/method';
-const API_NAMESPACE = 'techsavanna_pos.api.purchase';
+const API_NAMESPACE = 'murzak_pos.api.purchase';
 
 // Get CSRF token (if using session-based auth)
 export const getCSRFToken = async () => {
@@ -1362,5 +1362,5 @@ describe('Purchase API', () => {
 
 ## Support & Contact
 
-For API support, please contact the TechSavanna POS development team.
+For API support, please contact the Murzak POS development team.
 

@@ -5,17 +5,17 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Stock Transfer API endpoints - matching STOCK_TRANSFER_API_DOCUMENTATION.md
 const ENDPOINTS = {
-  createStockTransfer: 'techsavanna_pos.api.stock.create_stock_transfer',
-  createStockTransferRequest: 'techsavanna_pos.api.stock.create_stock_transfer_request',
-  submitStockTransferRequest: 'techsavanna_pos.api.stock.submit_stock_transfer_request',
-  listStockTransferRequests: 'techsavanna_pos.api.stock.list_stock_transfer_requests',
-  getStockTransferRequest: 'techsavanna_pos.api.stock.get_stock_transfer_request',
-  approveStockTransfer: 'techsavanna_pos.api.stock.approve_stock_transfer',
-  approveStockTransferWorkflow: 'techsavanna_pos.api.stock.approve_stock_transfer_workflow',
-  dispatchStock: 'techsavanna_pos.api.stock.dispatch_stock',
-  receiveStockDestination: 'techsavanna_pos.api.stock.receive_stock_destination',
-  cancelStockTransferRequest: 'techsavanna_pos.api.stock.cancel_stock_transfer_request',
-  confirmReceiveTransfer: 'techsavanna_pos.api.stock.confirm_receive_transfer',
+  createStockTransfer: 'murzak_pos.api.stock.create_stock_transfer',
+  createStockTransferRequest: 'murzak_pos.api.stock.create_stock_transfer_request',
+  submitStockTransferRequest: 'murzak_pos.api.stock.submit_stock_transfer_request',
+  listStockTransferRequests: 'murzak_pos.api.stock.list_stock_transfer_requests',
+  getStockTransferRequest: 'murzak_pos.api.stock.get_stock_transfer_request',
+  approveStockTransfer: 'murzak_pos.api.stock.approve_stock_transfer',
+  approveStockTransferWorkflow: 'murzak_pos.api.stock.approve_stock_transfer_workflow',
+  dispatchStock: 'murzak_pos.api.stock.dispatch_stock',
+  receiveStockDestination: 'murzak_pos.api.stock.receive_stock_destination',
+  cancelStockTransferRequest: 'murzak_pos.api.stock.cancel_stock_transfer_request',
+  confirmReceiveTransfer: 'murzak_pos.api.stock.confirm_receive_transfer',
 };
 
 // Helper function to extract data from API response
@@ -232,7 +232,7 @@ export const listDirectStockTransfers = createAsyncThunk(
       };
 
       const response = await axiosInstance.post(
-        'techsavanna_pos.api.inventory_api.list_material_transfers',
+        'murzak_pos.api.inventory_api.list_material_transfers',
         requestParams
       );
 

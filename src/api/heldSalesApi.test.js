@@ -121,7 +121,7 @@ describe('failures', () => {
   });
 
   it('knows Frappe naming a missing method', async () => {
-    axiosInstance.post.mockReturnValue(fail({ status: 500, data: { exception: 'AttributeError: module techsavanna_pos.api.held_sales_api has no attribute list_held_sales' } }));
+    axiosInstance.post.mockReturnValue(fail({ status: 500, data: { exception: 'AttributeError: module murzak_pos.api.held_sales_api has no attribute list_held_sales' } }));
     expect((await kindOf(listHeldSales({ company: 'Shop A' }))).kind).toBe('unavailable');
   });
 

@@ -7,14 +7,14 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Full endpoint paths from your API
 const ENDPOINTS = {
-  login: 'techsavanna_pos.api.auth_api.login_user',
-  register: 'techsavanna_pos.api.auth_api.register_user',
-  me: 'techsavanna_pos.api.auth_api.get_current_user',
-  refreshToken: 'techsavanna_pos.api.auth_api.refresh_token',
-  updateProfile: 'techsavanna_pos.api.auth_api.update_user_profile',
-  changePassword: 'techsavanna_pos.api.auth_api.change_password',
-  getPOSIndustries: 'techsavanna_pos.api.industry_api.get_pos_industries',
-  getUserIndustry: 'techsavanna_pos.api.industry_api.get_user_industry',
+  login: 'murzak_pos.api.auth_api.login_user',
+  register: 'murzak_pos.api.auth_api.register_user',
+  me: 'murzak_pos.api.auth_api.get_current_user',
+  refreshToken: 'murzak_pos.api.auth_api.refresh_token',
+  updateProfile: 'murzak_pos.api.auth_api.update_user_profile',
+  changePassword: 'murzak_pos.api.auth_api.change_password',
+  getPOSIndustries: 'murzak_pos.api.industry_api.get_pos_industries',
+  getUserIndustry: 'murzak_pos.api.industry_api.get_user_industry',
 };
 
 // Helper function to extract data from nested message response

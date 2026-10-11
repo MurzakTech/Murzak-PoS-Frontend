@@ -5,14 +5,14 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Supplier API endpoints - matching PURCHASE_API_DOCUMENTATION.md
 const ENDPOINTS = {
-  createSupplier: 'techsavanna_pos.api.supplier_api.create_supplier',
-  getSuppliers: 'techsavanna_pos.api.supplier_api.get_suppliers',
-  getSupplierDetails: 'techsavanna_pos.api.supplier_api.get_supplier_details',
-  updateSupplier: 'techsavanna_pos.api.supplier_api.update_supplier',
-  getSupplierGroups: 'techsavanna_pos.api.supplier_api.get_supplier_groups',
-  createSupplierGroup: 'techsavanna_pos.api.supplier_api.create_supplier_group',
-  updateSupplierGroup: 'techsavanna_pos.api.supplier_api.update_supplier_group',
-  getSupplierGroupDetails: 'techsavanna_pos.api.supplier_api.get_supplier_group_details',
+  createSupplier: 'murzak_pos.api.supplier_api.create_supplier',
+  getSuppliers: 'murzak_pos.api.supplier_api.get_suppliers',
+  getSupplierDetails: 'murzak_pos.api.supplier_api.get_supplier_details',
+  updateSupplier: 'murzak_pos.api.supplier_api.update_supplier',
+  getSupplierGroups: 'murzak_pos.api.supplier_api.get_supplier_groups',
+  createSupplierGroup: 'murzak_pos.api.supplier_api.create_supplier_group',
+  updateSupplierGroup: 'murzak_pos.api.supplier_api.update_supplier_group',
+  getSupplierGroupDetails: 'murzak_pos.api.supplier_api.get_supplier_group_details',
 };
 
 // Helper function to extract data from API response

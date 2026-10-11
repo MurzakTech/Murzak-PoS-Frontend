@@ -92,7 +92,7 @@ describe('BulkImport page', () => {
 
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
     const [url, body] = axiosInstance.post.mock.calls[0];
-    expect(url).toBe('techsavanna_pos.api.product_api.bulk_create_products');
+    expect(url).toBe('murzak_pos.api.product_api.bulk_create_products');
     expect(body.company).toBe('Shop A Ltd');
     expect(Array.isArray(body.products)).toBe(true);
     expect(body.products.map((p) => [p.item_code, p.item_name, p.standard_rate])).toEqual([

@@ -5,17 +5,17 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Warehouse API endpoints - matching PURCHASE_API_DOCUMENTATION.md
 const ENDPOINTS = {
-  createWarehouse: 'techsavanna_pos.api.warehouse_api.create_warehouse',
-  listWarehouses: 'techsavanna_pos.api.warehouse_api.list_warehouses',
-  getWarehouseDetails: 'techsavanna_pos.api.warehouse_api.get_warehouse_details',
-  updateWarehouse: 'techsavanna_pos.api.warehouse_api.update_warehouse',
-  assignWarehousesToStaff: 'techsavanna_pos.api.warehouse_api.assign_warehouses_to_staff',
-  getStaffWarehouses: 'techsavanna_pos.api.warehouse_api.get_staff_warehouses',
-  getWarehouseStaff: 'techsavanna_pos.api.warehouse_api.get_warehouse_staff',
-  removeWarehouseFromStaff: 'techsavanna_pos.api.warehouse_api.remove_warehouse_from_staff',
-  listWarehouseTypes: 'techsavanna_pos.api.warehouse_api.list_warehouse_types',
-  setDefaultWarehouse: 'techsavanna_pos.api.warehouse_api.set_default_warehouse',
-  getDefaultWarehouse: 'techsavanna_pos.api.warehouse_api.get_default_warehouse',
+  createWarehouse: 'murzak_pos.api.warehouse_api.create_warehouse',
+  listWarehouses: 'murzak_pos.api.warehouse_api.list_warehouses',
+  getWarehouseDetails: 'murzak_pos.api.warehouse_api.get_warehouse_details',
+  updateWarehouse: 'murzak_pos.api.warehouse_api.update_warehouse',
+  assignWarehousesToStaff: 'murzak_pos.api.warehouse_api.assign_warehouses_to_staff',
+  getStaffWarehouses: 'murzak_pos.api.warehouse_api.get_staff_warehouses',
+  getWarehouseStaff: 'murzak_pos.api.warehouse_api.get_warehouse_staff',
+  removeWarehouseFromStaff: 'murzak_pos.api.warehouse_api.remove_warehouse_from_staff',
+  listWarehouseTypes: 'murzak_pos.api.warehouse_api.list_warehouse_types',
+  setDefaultWarehouse: 'murzak_pos.api.warehouse_api.set_default_warehouse',
+  getDefaultWarehouse: 'murzak_pos.api.warehouse_api.get_default_warehouse',
 };
 
 // Helper function to extract data from API response

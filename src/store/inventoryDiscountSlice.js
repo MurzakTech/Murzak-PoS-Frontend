@@ -5,13 +5,13 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Inventory Discount API endpoints - matching INVENTORY_DISCOUNT_API.md
 const ENDPOINTS = {
-  createInventoryDiscountRule: 'techsavanna_pos.api.inventory_api.create_inventory_discount_rule',
-  updateInventoryDiscountRule: 'techsavanna_pos.api.inventory_api.update_inventory_discount_rule',
-  deleteInventoryDiscountRule: 'techsavanna_pos.api.inventory_api.delete_inventory_discount_rule',
-  getInventoryDiscountRule: 'techsavanna_pos.api.inventory_api.get_inventory_discount_rule',
-  listInventoryDiscountRules: 'techsavanna_pos.api.inventory_api.list_inventory_discount_rules',
-  getInventoryDiscountForItem: 'techsavanna_pos.api.inventory_api.get_inventory_discount_for_item',
-  bulkGetInventoryDiscounts: 'techsavanna_pos.api.inventory_api.bulk_get_inventory_discounts',
+  createInventoryDiscountRule: 'murzak_pos.api.inventory_api.create_inventory_discount_rule',
+  updateInventoryDiscountRule: 'murzak_pos.api.inventory_api.update_inventory_discount_rule',
+  deleteInventoryDiscountRule: 'murzak_pos.api.inventory_api.delete_inventory_discount_rule',
+  getInventoryDiscountRule: 'murzak_pos.api.inventory_api.get_inventory_discount_rule',
+  listInventoryDiscountRules: 'murzak_pos.api.inventory_api.list_inventory_discount_rules',
+  getInventoryDiscountForItem: 'murzak_pos.api.inventory_api.get_inventory_discount_for_item',
+  bulkGetInventoryDiscounts: 'murzak_pos.api.inventory_api.bulk_get_inventory_discounts',
 };
 
 // Helper function to extract data from API response

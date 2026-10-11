@@ -6,7 +6,7 @@ import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
  * The server combines batch expiry dates with the dates entered when stock was loaded.
  */
 
-const EXPIRY = 'techsavanna_pos.api.expiry_api';
+const EXPIRY = 'murzak_pos.api.expiry_api';
 
 export const getExpiryAlerts = async ({ company, days = 30, warehouse, includeExpired = true } = {}) => {
   const params = { days, include_expired: includeExpired ? 1 : 0 };

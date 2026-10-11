@@ -5,43 +5,43 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Purchase API endpoints - matching API_DOCUMENTATION_PURCHASE.md
 const ENDPOINTS = {
-  createPurchaseInvoice: 'techsavanna_pos.api.purchase.create_purchase_order',
-  updatePurchaseInvoice: 'techsavanna_pos.api.purchase.update_purchase_order', // Deprecated: Use upsertPurchaseOrder
-  upsertPurchaseOrder: 'techsavanna_pos.api.purchase.upsert_purchase_order',
-  submitPurchaseOrder: 'techsavanna_pos.api.purchase.submit_purchase_order',
-  getPurchaseInvoice: 'techsavanna_pos.api.purchase.get_purchase_order',
-  listPurchaseOrders: 'techsavanna_pos.api.purchase.list_purchase_orders', // Purchase Orders (LPO)
-  submitToETIMS: 'techsavanna_pos.api.submit_purchase_invoice_to_etims',
-  cancelPurchaseInvoice: 'techsavanna_pos.api.cancel_purchase_invoice',
+  createPurchaseInvoice: 'murzak_pos.api.purchase.create_purchase_order',
+  updatePurchaseInvoice: 'murzak_pos.api.purchase.update_purchase_order', // Deprecated: Use upsertPurchaseOrder
+  upsertPurchaseOrder: 'murzak_pos.api.purchase.upsert_purchase_order',
+  submitPurchaseOrder: 'murzak_pos.api.purchase.submit_purchase_order',
+  getPurchaseInvoice: 'murzak_pos.api.purchase.get_purchase_order',
+  listPurchaseOrders: 'murzak_pos.api.purchase.list_purchase_orders', // Purchase Orders (LPO)
+  submitToETIMS: 'murzak_pos.api.submit_purchase_invoice_to_etims',
+  cancelPurchaseInvoice: 'murzak_pos.api.cancel_purchase_invoice',
   // Purchase Receipt endpoints
-  createPurchaseReceipt: 'techsavanna_pos.api.purchase.create_purchase_receipt',
-  createStockReceipt: 'techsavanna_pos.api.purchase.create_stock_receipt',
-  getPurchaseReceipt: 'techsavanna_pos.api.purchase.get_purchase_receipt',
-  listPurchaseReceipts: 'techsavanna_pos.api.purchase.list_purchase_receipts',
+  createPurchaseReceipt: 'murzak_pos.api.purchase.create_purchase_receipt',
+  createStockReceipt: 'murzak_pos.api.purchase.create_stock_receipt',
+  getPurchaseReceipt: 'murzak_pos.api.purchase.get_purchase_receipt',
+  listPurchaseReceipts: 'murzak_pos.api.purchase.list_purchase_receipts',
   // GRN endpoints (based on PURCHASE_API_DOCUMENTATION.md)
-  createGRN: 'techsavanna_pos.api.purchase.create_grn',
-  fetchRegisteredPurchases: 'techsavanna_pos.api.purchase.fetch_registered_purchases',
-  listRegisteredPurchases: 'techsavanna_pos.api.purchase.list_registered_purchases',
-  createFromRegisteredPurchase: 'techsavanna_pos.api.purchase.create_purchase_invoice_from_registered_purchase',
-  createPurchaseReturn: 'techsavanna_pos.api.purchase.create_purchase_return',
-  bulkSubmitToETIMS: 'techsavanna_pos.api.purchase.bulk_submit_purchase_invoices',
-  checkETIMSStatus: 'techsavanna_pos.api.check_etims_registration_status',
+  createGRN: 'murzak_pos.api.purchase.create_grn',
+  fetchRegisteredPurchases: 'murzak_pos.api.purchase.fetch_registered_purchases',
+  listRegisteredPurchases: 'murzak_pos.api.purchase.list_registered_purchases',
+  createFromRegisteredPurchase: 'murzak_pos.api.purchase.create_purchase_invoice_from_registered_purchase',
+  createPurchaseReturn: 'murzak_pos.api.purchase.create_purchase_return',
+  bulkSubmitToETIMS: 'murzak_pos.api.purchase.bulk_submit_purchase_invoices',
+  checkETIMSStatus: 'murzak_pos.api.check_etims_registration_status',
   // Bank and Account Management endpoints
-  createCashOrBankAccount: 'techsavanna_pos.api.create_cash_or_bank_account',
-  listCashAndBankAccounts: 'techsavanna_pos.api.list_cash_and_bank_accounts',
-  getAccountDetails: 'techsavanna_pos.api.get_account_details',
-  updateAccount: 'techsavanna_pos.api.update_account',
-  createBank: 'techsavanna_pos.api.create_bank',
-  listBanks: 'techsavanna_pos.api.list_banks',
-  createBankAccount: 'techsavanna_pos.api.create_bank_account',
-  listBankAccounts: 'techsavanna_pos.api.list_bank_accounts',
-  getBankAccountDetails: 'techsavanna_pos.api.get_bank_account_details',
+  createCashOrBankAccount: 'murzak_pos.api.create_cash_or_bank_account',
+  listCashAndBankAccounts: 'murzak_pos.api.list_cash_and_bank_accounts',
+  getAccountDetails: 'murzak_pos.api.get_account_details',
+  updateAccount: 'murzak_pos.api.update_account',
+  createBank: 'murzak_pos.api.create_bank',
+  listBanks: 'murzak_pos.api.list_banks',
+  createBankAccount: 'murzak_pos.api.create_bank_account',
+  listBankAccounts: 'murzak_pos.api.list_bank_accounts',
+  getBankAccountDetails: 'murzak_pos.api.get_bank_account_details',
   // Purchase Invoice endpoints (based on PURCHASE_INVOICE_API_DOCUMENTATION.md)
-  listPurchaseInvoices: 'techsavanna_pos.api.purchase.list_purchase_invoices',
-  getPurchaseInvoiceDetails: 'techsavanna_pos.api.purchase.get_purchase_invoice_details',
-  createPurchaseInvoiceFromGRN: 'techsavanna_pos.api.purchase.create_purchase_invoice_from_grn',
-  updatePurchaseInvoiceAPI: 'techsavanna_pos.api.purchase.update_purchase_invoice',
-  payPurchaseInvoice: 'techsavanna_pos.api.purchase.pay_purchase_invoice',
+  listPurchaseInvoices: 'murzak_pos.api.purchase.list_purchase_invoices',
+  getPurchaseInvoiceDetails: 'murzak_pos.api.purchase.get_purchase_invoice_details',
+  createPurchaseInvoiceFromGRN: 'murzak_pos.api.purchase.create_purchase_invoice_from_grn',
+  updatePurchaseInvoiceAPI: 'murzak_pos.api.purchase.update_purchase_invoice',
+  payPurchaseInvoice: 'murzak_pos.api.purchase.pay_purchase_invoice',
 };
 
 // Helper function to extract data from API response

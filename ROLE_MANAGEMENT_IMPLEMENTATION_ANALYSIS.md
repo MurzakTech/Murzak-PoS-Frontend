@@ -29,7 +29,7 @@ This document analyzes the current role management implementation in the Savanna
 - ✅ Remove permissions from roles (`removePermissions`)
 
 #### 2. **Role API Integration**
-- **Endpoint Pattern**: `techsavanna_pos.api.role_api.*`
+- **Endpoint Pattern**: `murzak_pos.api.role_api.*`
 - **All Role APIs from documentation are implemented**:
   - `create_role` ✅
   - `update_role` ✅
