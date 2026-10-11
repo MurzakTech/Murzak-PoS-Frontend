@@ -22,33 +22,24 @@ A name with no file is harmless: the page shows its normal design instead (the i
 | `industry-restaurant.webp` | Landing page, "Made for your kind of business" | Cropped to portrait. |
 | `industry-grocery.webp` | Same | Cropped to portrait; the branded snack packaging on the right of the original is cropped out. |
 | `industry-salon.webp` | Same | A barber. |
+| `industry-pharmacy.webp` | Same | The pharmacy chain's logo and the staff name badge were removed from the coat. |
+| `industry-fashion.webp` | Same | The screen shows another company's till software, in German. |
+| `industry-hardware.webp` | Same | Cropped to the air tools; one tool-maker label was removed. |
+| `empty-shelf.webp` | The till, when a new business has no products yet | Empty bakery shelves, cropped to 16:9. |
 | `cta-banner.webp` | Landing page, behind the closing "Create your account" box | A hardware maker's name was removed from the stand. Shown faintly under the colour. |
 
 All of these were supplied by Murzak. See the source table at the end of this page.
 
-## Photos to add
+## Photos still to add
 
-Priority 1 makes the biggest visible difference. Aim to add these first.
-
-### Priority 1: the first things a visitor and a new customer see
-
-| File name (before the dot) | Shape | Where it shows | What to look for |
-|---|---|---|---|
-| `empty-shelf` | Landscape 16:9 | The till, when a new business has no products yet | A tidy empty shelf, or hands arranging stock. The mood is "ready to fill". |
-| `industry-pharmacy` | Portrait 4:5 | Landing page, "Made for your kind of business" | A pharmacist at a counter with shelves behind. Avoid readable medicine brand names. |
-| `industry-fashion` | Portrait 4:5 | Same strip | A boutique rail, or a customer paying at a clothes shop. |
-
-The "Made for your kind of business" strip on the landing page appears automatically once **three or more** industry photos exist, and spreads to fill the row (up to four across). Add `industry-pharmacy` and `industry-fashion` to make it four.
-
-### Priority 2: more industries
+Every slot except the industries below is now filled. Each missing industry adds one more picture to the strip on the landing page.
 
 | File name (before the dot) | Shape | Industry |
 |---|---|---|
 | `industry-electronics` | Portrait 4:5 | Phone and electronics shop |
-| `industry-hardware` | Portrait 4:5 | Hardware and building supplies |
 | `industry-bookstore` | Portrait 4:5 | Bookshop and stationery |
 
-Other industries Murzak supports (auto, fuel, hotel, sports, jewelry, furniture, online) can be added by extending the `INDUSTRIES` list at the top of `src/pages/Landing.js`.
+The strip lays itself out: up to four photos in one row, three across for five or six, four across for seven or eight. Other industries Murzak supports (auto, fuel, hotel, sports, jewelry, furniture, online) can be added by extending the `INDUSTRIES` list at the top of `src/pages/Landing.js`.
 
 ## What not to use
 
@@ -79,6 +70,10 @@ Keep a record of where each photo came from. Add a line to the table below when 
 | `industry-grocery.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 | `industry-salon.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 | `cta-banner.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-pharmacy.webp` | Supplied by Murzak | Confirm the original licence and that the person shown agreed to be used | 2026-10 |
+| `industry-fashion.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-hardware.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `empty-shelf.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 
 ## Preparing a photo
 

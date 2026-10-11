@@ -277,6 +277,9 @@ const CounterStory = () => (
   </Section>
 );
 
+// Photos per row: all of them up to four, then three across for five or six, otherwise four
+const stripColumns = (count) => (count <= 4 ? count : count <= 6 ? 3 : 4);
+
 // "Made for your kind of shop": appears once at least three industry photos exist
 const IndustryStrip = () => {
   const shown = INDUSTRIES.filter((i) => photoUrl(i.photo));
@@ -289,8 +292,8 @@ const IndustryStrip = () => {
           Pick your industry when you sign up and start with a ready-made product list.
         </Typography>
       </Box>
-      {/* One column on a phone, then as many columns as there are photos (up to four) so no gap is left */}
-      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(shown.length, 4)}, 1fr)` } }}>
+      {/* One column on a phone, then columns chosen so the last row is not left with a lone photo */}
+      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${stripColumns(shown.length)}, 1fr)` } }}>
         {shown.map((i) => (
           <Photo key={i.key} name={i.photo} alt={i.label} ratio={4 / 5} position="50% 20%" sx={{ borderRadius: 3, aspectRatio: { xs: '1 / 1', sm: '4 / 5' } }}>
             <PhotoCaption>{i.label}</PhotoCaption>
