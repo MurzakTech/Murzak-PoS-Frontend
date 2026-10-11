@@ -7,7 +7,7 @@ Every photo in this folder is **self-hosted**: it is built into the website, not
 To add a photo:
 
 1. Prepare it (see "Preparing a photo" below).
-2. Save it in this folder using **exactly** one of the file names in the tables below, for example `industry-pharmacy.jpg`.
+2. Save it in this folder using **exactly** one of the file names in the tables below, ending in `.webp` (or `.jpg` or `.png`). For example `industry-pharmacy.webp`. The part before the dot is what matters; the ending can be any of the three.
 3. Commit it. No code change is needed. The page that uses that name shows it from the next build.
 
 A name with no file is harmless: the page shows its normal design instead (the illustration, the icon, or nothing). So the library can grow one picture at a time, and nothing breaks while it is incomplete.
@@ -25,25 +25,25 @@ Priority 1 makes the biggest visible difference. Aim to add these first.
 
 ### Priority 1: the first things a visitor and a new customer see
 
-| File name | Shape | Where it shows | What to look for |
+| File name (before the dot) | Shape | Where it shows | What to look for |
 |---|---|---|---|
-| `auth-side.jpg` | Landscape 4:3 | Sign in and Register pages, left panel (replaces the line drawing) | A shop owner or cashier smiling at a till or tablet, in a Kenyan or East African setting if you can. Warm, bright, uncluttered. |
-| `empty-shelf.jpg` | Landscape 16:9 | The till, when a new business has no products yet | A tidy empty shelf, or hands arranging stock. The mood is "ready to fill". |
-| `industry-restaurant.jpg` | Portrait 4:5 | Landing page, "Made for your kind of business" | A busy cafe or restaurant counter, or a waiter taking an order on a tablet. |
-| `industry-grocery.jpg` | Portrait 4:5 | Same | A kiosk, mini-market or supermarket aisle with a cashier. |
-| `industry-pharmacy.jpg` | Portrait 4:5 | Same | A pharmacist at a counter with shelves behind. Avoid readable medicine brand names. |
-| `industry-fashion.jpg` | Portrait 4:5 | Same | A boutique rail, or a customer paying at a clothes shop. |
+| `auth-side` | Landscape 4:3 | Sign in and Register pages, left panel (replaces the line drawing) | A shop owner or cashier smiling at a till or tablet, in a Kenyan or East African setting if you can. Warm, bright, uncluttered. |
+| `empty-shelf` | Landscape 16:9 | The till, when a new business has no products yet | A tidy empty shelf, or hands arranging stock. The mood is "ready to fill". |
+| `industry-restaurant` | Portrait 4:5 | Landing page, "Made for your kind of business" | A busy cafe or restaurant counter, or a waiter taking an order on a tablet. |
+| `industry-grocery` | Portrait 4:5 | Same | A kiosk, mini-market or supermarket aisle with a cashier. |
+| `industry-pharmacy` | Portrait 4:5 | Same | A pharmacist at a counter with shelves behind. Avoid readable medicine brand names. |
+| `industry-fashion` | Portrait 4:5 | Same | A boutique rail, or a customer paying at a clothes shop. |
 
 The "Made for your kind of business" strip on the landing page appears automatically once **three or more** industry photos exist.
 
 ### Priority 2: more industries
 
-| File name | Shape | Industry |
+| File name (before the dot) | Shape | Industry |
 |---|---|---|
-| `industry-electronics.jpg` | Portrait 4:5 | Phone and electronics shop |
-| `industry-salon.jpg` | Portrait 4:5 | Salon or barber |
-| `industry-hardware.jpg` | Portrait 4:5 | Hardware and building supplies |
-| `industry-bookstore.jpg` | Portrait 4:5 | Bookshop and stationery |
+| `industry-electronics` | Portrait 4:5 | Phone and electronics shop |
+| `industry-salon` | Portrait 4:5 | Salon or barber |
+| `industry-hardware` | Portrait 4:5 | Hardware and building supplies |
+| `industry-bookstore` | Portrait 4:5 | Bookshop and stationery |
 
 Other industries Murzak supports (auto, fuel, hotel, sports, jewelry, furniture, online) can be added by extending the `INDUSTRIES` list at the top of `src/pages/Landing.js`.
 
@@ -77,11 +77,12 @@ Keep a record of where each photo came from. Add a line to the table below when 
 A photo straight from a camera or a stock site is 3 to 8 MB. That is far too heavy for a web page on mobile data. Before saving it here:
 
 * **Size:** 1200 pixels on the long side is plenty. Landscape photos about 1400 wide; portrait photos about 960 wide.
-* **Weight:** aim for **under 200 KB** each. Save as JPEG at about 78 percent quality.
+* **Format:** save as **WebP** at about 78 percent quality. It is roughly a third smaller than JPEG and every current browser shows it. Use JPEG only if your tool cannot save WebP. Do not use HEIC (the iPhone default), TIFF, BMP or GIF. Use SVG for logos and icons, and PNG only for screenshots with small text or pictures that need a transparent background.
+* **Weight:** aim for **under 150 KB** each.
 * **Crop to the shape in the table** and keep the subject (the person, the till, the shelf) in the middle, since small screens crop the edges.
 * **Brightness:** pick bright, warm photos. Very dark ones look heavy beside the page's light design.
 
-A quick way to shrink one on any computer is the free site squoosh.app: drop the photo in, choose "MozJPEG", set quality to 78, and resize to the width above.
+A quick way to shrink one on any computer is the free site squoosh.app: drop the photo in, choose **WebP** on the right, set quality to 78, resize to the width above, and download it.
 
 ## Product photos are a different thing
 
