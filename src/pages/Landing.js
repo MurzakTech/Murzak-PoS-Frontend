@@ -289,13 +289,17 @@ const IndustryStrip = () => {
           Pick your industry when you sign up and start with a ready-made product list.
         </Typography>
       </Box>
-      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
+      {/* One column on a phone, then as many columns as there are photos (up to four) so no gap is left */}
+      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(shown.length, 4)}, 1fr)` } }}>
         {shown.map((i) => (
-          <Photo key={i.key} name={i.photo} alt={i.label} ratio={4 / 5} sx={{ borderRadius: 3 }}>
+          <Photo key={i.key} name={i.photo} alt={i.label} ratio={4 / 5} position="50% 20%" sx={{ borderRadius: 3, aspectRatio: { xs: '1 / 1', sm: '4 / 5' } }}>
             <PhotoCaption>{i.label}</PhotoCaption>
           </Photo>
         ))}
       </Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 2.5 }}>
+        Illustrative photos.
+      </Typography>
     </Section>
   );
 };
@@ -513,6 +517,8 @@ const Landing = () => {
       {/* Closing call to action */}
       <Section sx={{ pt: 0 }}>
         <Box sx={{ position: 'relative', overflow: 'hidden', textAlign: 'center', p: { xs: 4, md: 7 }, borderRadius: 5, color: '#fff', background: (t) => t.custom.gradient }}>
+          {/* Optional photo behind the colour; nothing shows until cta-banner has been added */}
+          <Photo name="cta-banner" ratio="auto" position="50% 40%" sx={{ position: 'absolute', inset: 0, opacity: 0.3, mixBlendMode: 'luminosity', bgcolor: 'transparent' }} />
           <Box aria-hidden="true" sx={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', top: -120, right: -60, bgcolor: 'rgba(255,255,255,.12)' }} />
           <Box aria-hidden="true" sx={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', bottom: -90, left: -40, bgcolor: 'rgba(255,255,255,.1)' }} />
           <Typography variant="h2" sx={{ position: 'relative', color: '#fff', mb: 1.5 }}>

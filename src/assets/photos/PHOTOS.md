@@ -16,8 +16,15 @@ A name with no file is harmless: the page shows its normal design instead (the i
 
 | File | Where it shows | Note |
 |---|---|---|
-| `counter-cashier.jpg` | Landing page, "Built around your counter" | Supplied by Murzak. A third-party logo was removed from the screen frame and card reader. |
-| `counter-card-reader.jpg` | Landing page, same section | Supplied by Murzak. |
+| `counter-cashier.jpg` | Landing page, "Built around your counter" | A third-party logo was removed from the screen frame and card reader. |
+| `counter-card-reader.jpg` | Landing page, same section | |
+| `auth-side.webp` | Sign in and Register pages, left panel | |
+| `industry-restaurant.webp` | Landing page, "Made for your kind of business" | Cropped to portrait. |
+| `industry-grocery.webp` | Same | Cropped to portrait; the branded snack packaging on the right of the original is cropped out. |
+| `industry-salon.webp` | Same | A barber. |
+| `cta-banner.webp` | Landing page, behind the closing "Create your account" box | A hardware maker's name was removed from the stand. Shown faintly under the colour. |
+
+All of these were supplied by Murzak. See the source table at the end of this page.
 
 ## Photos to add
 
@@ -27,21 +34,17 @@ Priority 1 makes the biggest visible difference. Aim to add these first.
 
 | File name (before the dot) | Shape | Where it shows | What to look for |
 |---|---|---|---|
-| `auth-side` | Landscape 4:3 | Sign in and Register pages, left panel (replaces the line drawing) | A shop owner or cashier smiling at a till or tablet, in a Kenyan or East African setting if you can. Warm, bright, uncluttered. |
 | `empty-shelf` | Landscape 16:9 | The till, when a new business has no products yet | A tidy empty shelf, or hands arranging stock. The mood is "ready to fill". |
-| `industry-restaurant` | Portrait 4:5 | Landing page, "Made for your kind of business" | A busy cafe or restaurant counter, or a waiter taking an order on a tablet. |
-| `industry-grocery` | Portrait 4:5 | Same | A kiosk, mini-market or supermarket aisle with a cashier. |
-| `industry-pharmacy` | Portrait 4:5 | Same | A pharmacist at a counter with shelves behind. Avoid readable medicine brand names. |
-| `industry-fashion` | Portrait 4:5 | Same | A boutique rail, or a customer paying at a clothes shop. |
+| `industry-pharmacy` | Portrait 4:5 | Landing page, "Made for your kind of business" | A pharmacist at a counter with shelves behind. Avoid readable medicine brand names. |
+| `industry-fashion` | Portrait 4:5 | Same strip | A boutique rail, or a customer paying at a clothes shop. |
 
-The "Made for your kind of business" strip on the landing page appears automatically once **three or more** industry photos exist.
+The "Made for your kind of business" strip on the landing page appears automatically once **three or more** industry photos exist, and spreads to fill the row (up to four across). Add `industry-pharmacy` and `industry-fashion` to make it four.
 
 ### Priority 2: more industries
 
 | File name (before the dot) | Shape | Industry |
 |---|---|---|
 | `industry-electronics` | Portrait 4:5 | Phone and electronics shop |
-| `industry-salon` | Portrait 4:5 | Salon or barber |
 | `industry-hardware` | Portrait 4:5 | Hardware and building supplies |
 | `industry-bookstore` | Portrait 4:5 | Bookshop and stationery |
 
@@ -71,6 +74,11 @@ Keep a record of where each photo came from. Add a line to the table below when 
 |---|---|---|---|
 | `counter-cashier.jpg` | Supplied by Murzak (stock photograph) | Confirm the original licence before publishing | 2026-10 |
 | `counter-card-reader.jpg` | Supplied by Murzak (stock photograph) | Confirm the original licence before publishing | 2026-10 |
+| `auth-side.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-restaurant.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-grocery.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-salon.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `cta-banner.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 
 ## Preparing a photo
 
