@@ -1,13 +1,17 @@
 import React from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
+import Photo from './Photo';
+import { photoUrl } from '../../assets/photos';
 
 /**
  * Friendly "nothing here yet" panel. An empty screen should always tell the
  * person what this area is for and offer the one obvious next step.
  *
  * actions: [{ label, onClick, to, icon, variant }]  (first one is the primary)
+ * photo: name of a picture in the photo library (see src/assets/photos/PHOTOS.md),
+ *        shown above the title when it has been added, otherwise the icon is used
  */
-const EmptyState = ({ icon, title, description, actions = [], compact = false, sx }) => (
+const EmptyState = ({ icon, photo, title, description, actions = [], compact = false, sx }) => (
   <Box
     sx={{
       textAlign: 'center',
@@ -19,7 +23,10 @@ const EmptyState = ({ icon, title, description, actions = [], compact = false, s
       ...sx,
     }}
   >
-    {icon && (
+    {photo && !compact && (
+      <Photo name={photo} ratio={16 / 9} sx={{ width: '100%', maxWidth: 360, mb: 2.5, borderRadius: 3 }} fallback={null} />
+    )}
+    {icon && !(photo && !compact && photoUrl(photo)) && (
       <Box
         sx={{
           width: compact ? 48 : 64,

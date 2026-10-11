@@ -25,6 +25,8 @@ import {
 import { useThemeMode } from '../theme/ThemeProvider';
 import BrandLogo from '../components/Common/BrandLogo';
 import ProductImage from '../components/Common/ProductImage';
+import Photo from '../components/Common/Photo';
+import { photoUrl } from '../assets/photos';
 import tillDesktop from '../assets/landing/till-desktop.jpg';
 import tillPhone from '../assets/landing/till-phone.jpg';
 import payPhone from '../assets/landing/pay-phone.jpg';
@@ -74,7 +76,20 @@ const SHOWCASE = [
   ['Coca-Cola 500ml', 'Drinks'],
 ].map(([item_name, item_group], i) => ({ item_code: `showcase-${i}`, item_name, item_group }));
 
-const noMotion = { '@media (prefers-reduced-motion: reduce)': { animation: 'none' } };
+// The industries we serve. Each one shows up only once its photo has been added
+// to src/assets/photos (see PHOTOS.md), so the strip grows as the library does.
+const INDUSTRIES = [
+  ['restaurant', 'Restaurants and bars'],
+  ['grocery', 'Groceries and supermarkets'],
+  ['pharmacy', 'Pharmacies'],
+  ['fashion', 'Fashion and boutiques'],
+  ['electronics', 'Electronics and phones'],
+  ['salon', 'Salons and barbers'],
+  ['hardware', 'Hardware and building'],
+  ['bookstore', 'Bookshops and stationery'],
+].map(([key, label]) => ({ key, label, photo: `industry-${key}` }));
+
+const noMotion ={ '@media (prefers-reduced-motion: reduce)': { animation: 'none' } };
 
 const Section = ({ children, sx, id }) => (
   <Box id={id} component="section" sx={{ py: { xs: 7, md: 10 }, ...sx }}>
@@ -218,6 +233,73 @@ const Spotlight = ({ eyebrow, title, text, points, visual, flip }) => (
   </Box>
 );
 
+// A caption sitting on the bottom of a photo
+const PhotoCaption = ({ children }) => (
+  <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, px: 2, pb: 1.75, pt: 6, color: '#fff', background: 'linear-gradient(to top, rgba(10,12,30,.72), rgba(10,12,30,0))' }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'inherit', textShadow: '0 1px 6px rgba(0,0,0,.35)' }}>{children}</Typography>
+  </Box>
+);
+
+// Real counters, real devices: ties the screens above to the place they are used
+const CounterStory = () => (
+  <Section id="counter" sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
+    <Box sx={{ display: 'grid', gap: { xs: 4, md: 7 }, alignItems: 'center', gridTemplateColumns: { xs: '1fr', md: '5fr 6fr' } }}>
+      <Photo
+        name="counter-cashier"
+        alt="A cashier tapping the card reader at a till that shows the items in the current sale"
+        ratio={4 / 5}
+        position="50% 45%"
+        sx={{ borderRadius: 4, boxShadow: (t) => t.shadows[8] }}
+      >
+        <PhotoCaption>Ring up the sale on the till</PhotoCaption>
+      </Photo>
+      <Box>
+        <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>Built around your counter</Typography>
+        <Typography variant="h3" sx={{ mt: 0.5, mb: 1.5 }}>From the first item to the last payment</Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 520 }}>
+          Murzak POS runs in a web browser, so it fits what is already on your counter: a tablet, a touchscreen computer or a phone. Ring up the sale, then take payment the way your customer prefers.
+        </Typography>
+        <Photo
+          name="counter-card-reader"
+          alt="A counter with a till screen showing the total and a card machine ready for payment"
+          ratio={3 / 2}
+          position="50% 55%"
+          sx={{ borderRadius: 4, mb: 3, boxShadow: (t) => t.shadows[6] }}
+        >
+          <PhotoCaption>Cash, M-Pesa, card machine or credit, recorded at the till</PhotoCaption>
+        </Photo>
+        <Ticks items={['Works in any modern browser, nothing to install', 'Card machine sales are recorded at the till like any other payment', 'Receipts print on a till roll, or skip printing']} />
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2.5 }}>
+          Illustrative photos. Murzak POS is software: it runs on the devices you already own.
+        </Typography>
+      </Box>
+    </Box>
+  </Section>
+);
+
+// "Made for your kind of shop": appears once at least three industry photos exist
+const IndustryStrip = () => {
+  const shown = INDUSTRIES.filter((i) => photoUrl(i.photo));
+  if (shown.length < 3) return null;
+  return (
+    <Section id="industries">
+      <Box sx={{ textAlign: 'center', mb: 5 }}>
+        <Typography variant="h2" sx={{ mb: 1.5 }}>Made for your kind of business</Typography>
+        <Typography variant="body1" color="text.secondary">
+          Pick your industry when you sign up and start with a ready-made product list.
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
+        {shown.map((i) => (
+          <Photo key={i.key} name={i.photo} alt={i.label} ratio={4 / 5} sx={{ borderRadius: 3 }}>
+            <PhotoCaption>{i.label}</PhotoCaption>
+          </Photo>
+        ))}
+      </Box>
+    </Section>
+  );
+};
+
 const Landing = () => {
   const navigate = useNavigate();
   const { mode, toggleColorMode } = useThemeMode();
@@ -302,6 +384,9 @@ const Landing = () => {
         </Container>
         <ProductStrip />
       </Box>
+
+      {/* The counter: where the product is used */}
+      <CounterStory />
 
       {/* Spotlights */}
       <Section>
@@ -422,6 +507,8 @@ const Landing = () => {
           ))}
         </Box>
       </Section>
+
+      <IndustryStrip />
 
       {/* Closing call to action */}
       <Section sx={{ pt: 0 }}>
