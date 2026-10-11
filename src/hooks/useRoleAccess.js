@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAppSelector } from '../store/hooks';
-import { canAccessRoute, getAllowedRoutes, isRouteAllowed } from '../config/roleAccessConfig';
+import { canAccessRoute, getAllowedRoutes, getHomePath, getTillExitPath, isRouteAllowed } from '../config/roleAccessConfig';
 
 /**
  * Hook to check role-based access
@@ -140,8 +140,14 @@ export const useRoleAccess = () => {
     };
   }, [roles]);
 
+  // Where this person starts, and where leaving the till takes them
+  const homePath = useMemo(() => getHomePath(roles), [roles]);
+  const tillExitPath = useMemo(() => getTillExitPath(roles), [roles]);
+
   return {
     roles,
+    homePath,
+    tillExitPath,
     hasAccess,
     allowedRoutes,
     isAllowed,

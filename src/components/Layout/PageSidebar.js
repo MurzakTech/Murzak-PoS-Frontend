@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
+  Typography,
   List,
   ListItem,
   ListItemButton,
@@ -60,6 +61,9 @@ import {
   Autorenew,
   CalendarToday,
   Timeline,
+  AddShoppingCart,
+  Send,
+  LocalShipping,
 } from '@mui/icons-material';
 import { getNavigationRoutes } from '../../routes/routes';
 import useRoleAccess from '../../hooks/useRoleAccess';
@@ -115,6 +119,9 @@ const iconMap = {
   Autorenew,
   CalendarToday,
   Timeline,
+  AddShoppingCart,
+  Send,
+  LocalShipping,
 };
 
 const PageSidebar = () => {
@@ -168,8 +175,8 @@ const PageSidebar = () => {
   return (
     <Box
       sx={{
-        width: 180,
-        minWidth: 180,
+        width: 196,
+        minWidth: 196,
         borderRight: 1,
         borderColor: 'divider',
         backgroundColor: 'background.paper',
@@ -182,20 +189,32 @@ const PageSidebar = () => {
       {/* Navigation Items */}
       <List sx={{ flex: 1, px: 0.75, py: 1.5, overflowY: 'auto' }}>
         {/* Only list pages this user may open; the others would bounce them to the dashboard. */}
-        {currentParentRoute.pageChildren.filter((child) => hasAccess(child.path)).map((child) => {
+        {currentParentRoute.pageChildren.filter((child) => hasAccess(child.path)).map((child, index, visible) => {
           const IconComponent = iconMap[child.icon] || Dashboard;
           const isSelected = isChildSelected(child.path);
+          // Long lists (Settings) are grouped; a small heading starts each group
+          const startsGroup = child.group && child.group !== visible[index - 1]?.group;
 
           return (
-            <ListItem key={child.path} disablePadding sx={{ mb: 0.125 }}>
+            <React.Fragment key={child.path}>
+              {startsGroup && (
+                <Typography
+                  variant="overline"
+                  component="li"
+                  sx={{ display: 'block', listStyle: 'none', px: 1, pt: index === 0 ? 0 : 1.5, pb: 0.25, color: 'text.disabled', lineHeight: 1.8 }}
+                >
+                  {child.group}
+                </Typography>
+              )}
+            <ListItem disablePadding sx={{ mb: 0.125 }}>
               <ListItemButton
                 selected={isSelected}
                 onClick={() => handleNavigate(child.path)}
                 sx={{
-                  borderRadius: 0.5,
-                  minHeight: 32,
+                  borderRadius: 1,
+                  minHeight: 38,
                   py: 0.5,
-                  px: 1,
+                  px: 1.25,
                   position: 'relative',
                   '&.Mui-selected': {
                     backgroundColor: alpha(theme.palette.primary.main, 0.1),
@@ -227,23 +246,24 @@ const PageSidebar = () => {
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: 24,
+                    minWidth: 30,
                     justifyContent: 'center',
                     display: 'flex',
                     alignItems: 'center',
                   }}
                 >
-                  <IconComponent sx={{ fontSize: '0.875rem' }} />
+                  <IconComponent sx={{ fontSize: '1.1rem' }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={child.label}
                   primaryTypographyProps={{
-                    fontSize: '0.6875rem',
+                    fontSize: '0.8125rem',
                     fontWeight: isSelected ? 600 : 500,
                   }}
                 />
               </ListItemButton>
             </ListItem>
+            </React.Fragment>
           );
         })}
       </List>

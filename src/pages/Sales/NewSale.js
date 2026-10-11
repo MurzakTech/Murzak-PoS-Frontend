@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useRoleAccess from '../../hooks/useRoleAccess';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Alert, Backdrop, Box, CircularProgress, Drawer, IconButton, Snackbar, Typography, useMediaQuery } from '@mui/material';
@@ -145,6 +146,8 @@ const exactCodeMatch = (p, t) => (p.item_code || '').toLowerCase() === t || barc
 
 const NewSale = () => {
   const navigate = useNavigate();
+  // Leaving the till goes to the dashboard, or for a cashier (who has none) to their sales list
+  const { tillExitPath } = useRoleAccess();
   const dispatch = useAppDispatch();
   const { mode: themeMode, toggleColorMode } = useThemeMode();
 
@@ -594,11 +597,8 @@ const NewSale = () => {
 
   const handleOpenPOSSession = async (formData) => {
     if (!formData.pos_profile || !formData.pos_profile.trim()) {
-      dispatch(showNotification({
-        message: 'POS profile is required',
-        severity: 'error',
-        title: 'Validation Error',
-      }));
+      // The cashier cannot see or choose a till profile, so say what to do instead of naming it
+      setOpenTillError('This account is not set up for a till yet. Ask your manager to check your account, then sign out and sign in again.');
       return;
     }
 
@@ -1732,7 +1732,7 @@ const NewSale = () => {
 
   const requestExit = () => {
     if (cart.length > 0) setLeaveDialogOpen(true);
-    else navigate('/dashboard');
+    else navigate(tillExitPath);
   };
 
   const handlePaymentModeChange = (mode) => {
@@ -2026,7 +2026,7 @@ const NewSale = () => {
           cashierName={cashierName}
           storeName={storeName}
           currency={currency}
-          onExit={() => navigate('/dashboard')}
+          onExit={() => navigate(tillExitPath)}
           openError={openTillError}
         />
       ) : (
@@ -2311,7 +2311,7 @@ const NewSale = () => {
         onClose={() => setLeaveDialogOpen(false)}
         onConfirm={() => {
           setLeaveDialogOpen(false);
-          navigate('/dashboard');
+          navigate(tillExitPath);
         }}
       />
 

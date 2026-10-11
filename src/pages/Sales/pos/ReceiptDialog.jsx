@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Box, Button, Dialog, DialogActions, Divider, Typography } from '@mui/material';
 import { CheckCircle, Print, Receipt } from '@mui/icons-material';
-import { fmt, money, round2 } from './money';
+import { fmt, money, round2, unitLabel } from './money';
 
 // Prints only the receipt (on any printer; it is laid out for an 80mm till roll)
 const PRINT_CSS = `
@@ -73,7 +73,7 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
           <Box key={item.item_code} sx={{ py: 0.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 650 }}>{item.item_name || item.item_code}</Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">{fmt(item.qty)} {item.uom} x {fmt(item.rate)}</Typography>
+              <Typography variant="caption" color="text.secondary">{fmt(item.qty)} {unitLabel(item.uom, item.qty)} x {fmt(item.rate)}</Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmt(item.subtotal ?? item.rate * item.qty)}</Typography>
             </Box>
             {item.discount_amount > 0 && <Typography variant="caption" color="success.main">Offer: -{fmt(item.discount_amount)}</Typography>}

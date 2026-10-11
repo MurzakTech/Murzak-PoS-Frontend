@@ -139,7 +139,7 @@ const MaterialReceipt = () => {
               <ArrowBack />
             </IconButton>
             <Typography variant="h4" component="h1">
-              Material Receipt
+              Stock In (Material Receipt)
             </Typography>
           </Box>
           <Button

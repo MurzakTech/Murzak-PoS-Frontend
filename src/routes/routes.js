@@ -307,9 +307,9 @@ export const protectedRoutes = [
     pageChildren: [
       { path: '/sales/pos', label: 'Point of Sale', icon: 'PointOfSale' },
       { path: '/sales/history', label: 'Sales History', icon: 'History' },
-      { path: '/sales/invoice/new', label: 'New Invoice', icon: 'Add' },
-      { path: '/sales/pos-opening-entries', label: 'Opening Entries', icon: 'History' },
-      { path: '/sales/returns', label: 'Returns', icon: 'AssignmentReturn' },
+      { path: '/sales/invoice/new', label: 'New Invoice', icon: 'Add', keywords: 'bill customer credit delivery quotation' },
+      { path: '/sales/pos-opening-entries', label: 'Till Shifts', icon: 'History', keywords: 'opening entries session cash up closing' },
+      { path: '/sales/returns', label: 'Customer Returns', icon: 'AssignmentReturn', keywords: 'refund credit note sales returns' },
     ],
     children: [
       {
@@ -432,11 +432,11 @@ export const protectedRoutes = [
       { path: '/inventory/stock-summary', label: 'Stock List', icon: 'Assessment' },
       { path: '/inventory/low-stock', label: 'Low Stock', icon: 'Warning' },
       { path: '/inventory/expiry-alerts', label: 'Expiry Alerts', icon: 'CalendarToday' },
-      { path: '/inventory/stock-ledger', label: 'Stock Ledger', icon: 'Book' },
-      { path: '/inventory/stock-entries', label: 'Entries', icon: 'ListAlt' },
-      { path: '/inventory/material-receipts', label: 'Material Receipts', icon: 'Input' },
-      { path: '/inventory/material-issues', label: 'Material Issues', icon: 'Output' },
-      { path: '/inventory/multi-level-reconciliation', label: 'Reconciliation', icon: 'Checklist' },
+      { path: '/inventory/stock-ledger', label: 'Stock History', icon: 'Book', keywords: 'stock ledger movements log' },
+      { path: '/inventory/stock-entries', label: 'Stock Movements', icon: 'ListAlt', keywords: 'stock entries' },
+      { path: '/inventory/material-receipts', label: 'Stock In', icon: 'Input', keywords: 'material receipts receive add stock' },
+      { path: '/inventory/material-issues', label: 'Stock Out', icon: 'Output', keywords: 'material issues damaged expired write off remove stock' },
+      { path: '/inventory/multi-level-reconciliation', label: 'Stock Count', icon: 'Checklist', keywords: 'reconciliation stocktake physical count' },
     ],
     children: [
       {
@@ -631,11 +631,11 @@ export const protectedRoutes = [
     // Page-specific child navigation
     pageChildren: [
       { path: '/purchases', label: 'All Purchases', icon: 'ShoppingCart' },
-      { path: '/purchases/invoices', label: 'Purchase Invoices', icon: 'Receipt' },
-      { path: '/purchases/create-order', label: 'Create Order', icon: 'AddShoppingCart' },
-      { path: '/purchases/submit-order', label: 'Submit Order', icon: 'Send' },
-      { path: '/purchases/create-grn', label: 'Create GRN', icon: 'Inventory' },
-      { path: '/purchases/grns', label: 'GRN List', icon: 'Receipt' },
+      { path: '/purchases/invoices', label: 'Purchase Invoices', icon: 'Description' },
+      { path: '/purchases/create-order', label: 'New Order', icon: 'AddShoppingCart', keywords: 'create purchase order supplier buy' },
+      { path: '/purchases/submit-order', label: 'Approve Orders', icon: 'Send', keywords: 'submit draft purchase orders' },
+      { path: '/purchases/create-grn', label: 'Receive Goods', icon: 'Inventory', keywords: 'create grn goods receipt note delivery' },
+      { path: '/purchases/grns', label: 'Goods Received', icon: 'LocalShipping', keywords: 'grn list goods receipt notes' },
       { path: '/purchases/returns', label: 'Purchase Returns', icon: 'AssignmentReturn' },
       { path: '/purchases/receipts', label: 'Purchase Receipts', icon: 'Receipt' },
     ],
@@ -855,17 +855,17 @@ export const protectedRoutes = [
     icon: 'Settings',
     // Page-specific child navigation
     pageChildren: [
-      { path: '/settings/pos-profile', label: 'POS Profile', icon: 'PointOfSale' },
-      { path: '/settings/business', label: 'Business', icon: 'Business' },
-      { path: '/settings/etims', label: 'eTIMS', icon: 'Settings' },
-      { path: '/settings/bank-accounts', label: 'Bank Accounts', icon: 'AccountBalance' },
-      { path: '/settings/account-provisioning', label: 'Account Provisioning', icon: 'AccountBalance' },
-      { path: '/settings/payment-methods', label: 'Payment Methods', icon: 'CreditCard' },
-      { path: '/settings/payment-gateways', label: 'Payment Gateways', icon: 'CreditCard' },
-      { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
-      { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
-      { path: '/settings/audit-trail', label: 'Audit Trail', icon: 'History' },
-      { path: '/settings/security', label: 'Security', icon: 'Security' },
+      { path: '/settings/business', label: 'Business Details', icon: 'Business', group: 'Business', keywords: 'company name address logo' },
+      { path: '/settings/pos-profile', label: 'Till Settings', icon: 'PointOfSale', group: 'Business', keywords: 'pos profile cashier discounts price changes partial payment' },
+      { path: '/settings/etims', label: 'KRA eTIMS', icon: 'Settings', group: 'Business', keywords: 'etims tax receipts kra vat' },
+      { path: '/settings/payment-methods', label: 'Payment Methods', icon: 'CreditCard', group: 'Money', keywords: 'cash mpesa card' },
+      { path: '/settings/payment-gateways', label: 'M-Pesa and Cards', icon: 'CreditCard', group: 'Money', keywords: 'payment gateways mpesa daraja stk push online' },
+      { path: '/settings/bank-accounts', label: 'Bank Accounts', icon: 'AccountBalance', group: 'Money', keywords: '' },
+      { path: '/settings/account-provisioning', label: 'Accounting Setup', icon: 'AccountBalance', group: 'Money', keywords: 'account provisioning chart of accounts' },
+      { path: '/settings/inventory-discounts', label: 'Discounts', icon: 'LocalOffer', group: 'Selling', keywords: 'inventory discounts offers promotions' },
+      { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star', group: 'Selling', keywords: 'points rewards' },
+      { path: '/settings/security', label: 'Security', icon: 'Security', group: 'Safety', keywords: 'password two step 2fa' },
+      { path: '/settings/audit-trail', label: 'Activity Log', icon: 'History', group: 'Safety', keywords: 'audit trail who did what' },
     ],
     children: [
       {

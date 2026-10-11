@@ -137,7 +137,7 @@ const MultiLevelReconciliation = () => {
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            Stock Reconciliation
+            Team Stock Count (Reconciliation)
           </Typography>
           <Button
             variant="contained"

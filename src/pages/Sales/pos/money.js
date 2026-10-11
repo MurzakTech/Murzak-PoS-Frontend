@@ -51,3 +51,14 @@ export const formatBuffer = (buffer) => {
   const [whole, cents] = buffer.split('.');
   return `${Number(whole || 0).toLocaleString('en-KE')}.${cents}`;
 };
+
+/**
+ * How a unit of measure is worded on the till. The server calls a counted item "Nos"
+ * (numbers), which means nothing to a cashier or a customer reading a receipt.
+ * Counted items read as "each" on a price and "pcs" beside a quantity; weighed or
+ * measured items (Kg, L, Metre) are shown as they are.
+ */
+const COUNTED_UNITS = /^(nos|no|unit|units|pcs|pc|piece|pieces|each|item|items)$/i;
+export const isCounted = (uom) => !uom || COUNTED_UNITS.test(String(uom).trim());
+export const perUnit = (uom) => (isCounted(uom) ? 'each' : `per ${uom}`);
+export const unitLabel = (uom, qty) => (isCounted(uom) ? (Number(qty) === 1 ? 'pc' : 'pcs') : String(uom).trim());

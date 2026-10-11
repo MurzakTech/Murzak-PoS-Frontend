@@ -331,7 +331,7 @@ const CreateGRN = () => {
             Back
           </Button>
           <Typography variant="h4" component="h1">
-            Create GRN (Goods Receipt Note)
+            Receive Goods (GRN)
           </Typography>
         </Box>
 

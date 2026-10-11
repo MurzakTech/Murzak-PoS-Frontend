@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, fetchCurrentUser } from '../store/authSlice';
+import { getHomePath } from '../config/roleAccessConfig';
 import { checkOnboardingStatus } from '../store/onboardingSlice';
 import BrandLogo from '../components/Common/BrandLogo';
 import posIcon from '../assets/pos-icon.png';
@@ -66,9 +67,12 @@ const Login = () => {
   // One box for email or phone: the icon follows what is being typed
   const isPhoneEntry = looksLikePhone(watch('loginId'));
 
-  // Where to go after signing in (the page they were trying to open, or the dashboard)
-  const from = location.state?.from?.pathname || location.state?.from || '/dashboard';
-  const redirectPath = typeof from === 'string' ? from : from.pathname || '/dashboard';
+  // Where to go after signing in: the page they were trying to open, otherwise where their
+  // role starts (the till for a cashier, the dashboard for people who have one)
+  const from = location.state?.from?.pathname || location.state?.from || null;
+  const requestedPath = typeof from === 'string' ? from : from?.pathname || null;
+  const startPath = (roles) => requestedPath || getHomePath(roles) || '/dashboard';
+  const redirectPath = startPath(user?.roles);
 
   // Already signed in when the page loads: skip the form
   useEffect(() => {
@@ -137,7 +141,7 @@ const Login = () => {
       }
     }
     // Signed in; even if the profile fetch failed, let them in
-    navigate(redirectPath, { replace: true });
+    navigate(startPath(fetchResult.payload?.roles), { replace: true });
   };
 
   return (

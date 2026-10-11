@@ -35,7 +35,7 @@ import {
   EditNoteOutlined,
   RestaurantOutlined,
 } from '@mui/icons-material';
-import { fmt, money } from './money';
+import { fmt, money, unitLabel } from './money';
 import ProductImage from '../../../components/Common/ProductImage';
 
 const StepperButton = ({ children, ...props }) => (
@@ -101,7 +101,7 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
             <Add fontSize="small" />
           </StepperButton>
           <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-            {item.uom}
+            {unitLabel(item.uom)}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
           {kitchenEnabled && (
@@ -128,7 +128,7 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
         </Box>
       ) : (
         <Typography variant="caption" color="text.secondary" sx={{ gridColumn: '1 / -1', mt: -0.5 }}>
-          {item.qty} {item.uom}
+          {item.qty} {unitLabel(item.uom, item.qty)}
         </Typography>
       )}
     </Box>

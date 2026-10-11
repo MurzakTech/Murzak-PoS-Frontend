@@ -267,7 +267,6 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   'Sales User': [
-    '/dashboard',
     ...combineRoutes('SALES_TILL', 'RECONCILIATION_STEP'),
     '/sales/invoice/new',
     '/kitchen', // station screen on a tablet
@@ -359,7 +358,6 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Desk User - POS operations
   'Desk User': [
-    '/dashboard',
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
     '/products', // View products for POS
@@ -376,7 +374,6 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Employee - Basic access
   Employee: [
-    '/dashboard',
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
     '/products',
@@ -410,7 +407,6 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   Agent: [
-    '/dashboard',
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
     '/customers',
@@ -468,7 +464,6 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Academics roles (if applicable)
   'Academics User': [
-    '/dashboard',
     '/products',
     ...combineRoutes('SALES_TILL'),
   ],
@@ -576,3 +571,26 @@ export const canAccessRoute = (routePath, roles) => {
   return isRouteAllowed(routePath, allowedRoutes);
 };
 
+
+/**
+ * Where a person starts after signing in.
+ *
+ * A cashier has no dashboard: they go straight to the till. A person whose roles
+ * include one that has a dashboard (an extra role such as Sales Manager) starts there
+ * instead, and sees only the parts of it that their roles allow.
+ */
+export const getHomePath = (roles) => {
+  if (canAccessRoute('/dashboard', roles)) return '/dashboard';
+  if (canAccessRoute('/sales/pos', roles)) return '/sales/pos';
+  return getAllowedRoutes(roles)[0] || null;
+};
+
+/**
+ * Where "Exit" in the till leads. A person who starts in the till must not be sent
+ * back to it, so they are taken to their sales list, which has the menu and sign-out.
+ */
+export const getTillExitPath = (roles) => {
+  const home = getHomePath(roles);
+  if (home && home !== '/sales/pos') return home;
+  return canAccessRoute('/sales/history', roles) ? '/sales/history' : home || '/';
+};

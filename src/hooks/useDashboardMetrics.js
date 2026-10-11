@@ -10,9 +10,11 @@ import { getDashboardMetrics } from '../store/dashboardSlice';
  * @param {string} filters.staff - Staff/user name to filter by
  * @param {string} filters.from_date - Start date for custom period (YYYY-MM-DD)
  * @param {string} filters.to_date - End date for custom period (YYYY-MM-DD)
+ * @param {Object} options
+ * @param {boolean} options.enabled - false for people whose role shows no figures, so nothing is requested
  * @returns {Object} - { data, loading, error, refetch }
  */
-export const useDashboardMetrics = (filters = {}) => {
+export const useDashboardMetrics = (filters = {}, { enabled = true } = {}) => {
   const dispatch = useAppDispatch();
   const {
     stats,
@@ -28,6 +30,7 @@ export const useDashboardMetrics = (filters = {}) => {
 
   // Fetch dashboard data when filters change
   useEffect(() => {
+    if (!enabled) return;
     // Format dates to YYYY-MM-DD if they are Date objects
     const formatDate = (date) => {
       if (!date) return null;
@@ -49,6 +52,7 @@ export const useDashboardMetrics = (filters = {}) => {
     dispatch(getDashboardMetrics(params));
   }, [
     dispatch,
+    enabled,
     filters.period,
     filters.warehouse,
     filters.staff,
@@ -58,6 +62,7 @@ export const useDashboardMetrics = (filters = {}) => {
 
   // Refetch function
   const refetch = () => {
+    if (!enabled) return;
     // Format dates to YYYY-MM-DD if they are Date objects
     const formatDate = (date) => {
       if (!date) return null;

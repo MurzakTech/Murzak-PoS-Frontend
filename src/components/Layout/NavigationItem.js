@@ -16,6 +16,8 @@ const NavigationItem = React.memo(({ route, isSelected, desktopOpen, IconCompone
         sx={{
           borderRadius: 2.5,
           minHeight: 38,
+          // Laptop screens are short (768px); tighten so every section, including Team, is in view
+          '@media (max-height: 820px)': { minHeight: 32, py: 0, '& .MuiListItemText-root': { my: 0 } },
           px: desktopOpen ? 1.5 : 0,
           justifyContent: desktopOpen ? 'flex-start' : 'center',
           gap: desktopOpen ? 1.5 : 0,

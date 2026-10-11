@@ -4,8 +4,8 @@ import useRoleAccess from '../../hooks/useRoleAccess';
 
 // Settings pages in menu order; /settings opens the first one the person's role allows
 const SETTINGS_PAGES = [
-  '/settings/pos-profile',
   '/settings/business',
+  '/settings/pos-profile',
   '/settings/etims',
   '/settings/bank-accounts',
   '/settings/account-provisioning',
@@ -13,6 +13,7 @@ const SETTINGS_PAGES = [
   '/settings/payment-gateways',
   '/settings/inventory-discounts',
   '/settings/loyalty-programs',
+  '/settings/security',
   '/settings/audit-trail',
 ];
 

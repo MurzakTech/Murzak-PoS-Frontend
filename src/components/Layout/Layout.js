@@ -43,6 +43,7 @@ import NavigationMenu from './NavigationMenu';
 import PageSidebar from './PageSidebar';
 import CommandPalette from './CommandPalette';
 import MobileBottomNav from './MobileBottomNav';
+import useRoleAccess from '../../hooks/useRoleAccess';
 import BrandLogo from '../Common/BrandLogo';
 import ErrorBoundary from '../Common/ErrorBoundary';
 
@@ -88,6 +89,8 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const { mode, toggleColorMode } = useThemeMode();
   const { user } = useAppSelector((state) => state.auth);
+  const { homePath, hasAccess } = useRoleAccess();
+  const canSell = hasAccess('/sales/pos'); // the quick "Open POS" button is only for people who can use the till
   const { warehouses, activeWarehouse, defaultWarehouse, isLoading } = useAppSelector((state) => state.warehouse);
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -182,7 +185,7 @@ const Layout = ({ children }) => {
           flexShrink: 0,
         }}
       >
-        <ButtonBase component={RouterLink} to="/dashboard" aria-label="Murzak POS home" sx={{ borderRadius: 2 }}>
+        <ButtonBase component={RouterLink} to={homePath || '/dashboard'} aria-label="Murzak POS home" sx={{ borderRadius: 2 }}>
           <BrandLogo size={isCollapsed ? 30 : 32} showText={!isCollapsed} textVariant="h5" />
         </ButtonBase>
       </Box>
@@ -358,6 +361,7 @@ const Layout = ({ children }) => {
               </Select>
             )}
 
+            {canSell && (<>
             <Button
               variant="contained"
               startIcon={<PointOfSale />}
@@ -381,6 +385,7 @@ const Layout = ({ children }) => {
                 <PointOfSale />
               </IconButton>
             </Tooltip>
+            </>)}
 
             <SystemStatus />
 

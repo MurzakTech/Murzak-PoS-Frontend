@@ -1,4 +1,4 @@
-import { canAccessRoute, isRouteAllowed, resolveRoutePattern, getAllowedRoutes } from './roleAccessConfig';
+import { canAccessRoute, isRouteAllowed, resolveRoutePattern, getAllowedRoutes, getHomePath, getTillExitPath } from './roleAccessConfig';
 import { protectedRoutes } from '../routes/routes';
 
 const can = (role, path) => canAccessRoute(path, [role]);
@@ -131,5 +131,46 @@ describe('restricted pages', () => {
   it('always lets owners in', () => {
     expect(canAccessRoute('/settings/audit-trail', ['System Manager'])).toBe(true);
     expect(canAccessRoute('/sales/returns', ['Administrator'])).toBe(true);
+  });
+});
+
+describe('where people start after signing in', () => {
+  test('a cashier has no dashboard and starts at the till', () => {
+    ['Sales User', 'Desk User', 'Employee', 'Agent'].forEach((role) => {
+      expect(can(role, '/dashboard')).toBe(false);
+      expect(getHomePath([role])).toBe('/sales/pos');
+    });
+  });
+
+  test('a cashier given an extra role that has a dashboard starts on that dashboard', () => {
+    expect(getHomePath(['Sales User', 'Sales Manager'])).toBe('/dashboard');
+    expect(getHomePath(['Sales User', 'Stock User'])).toBe('/dashboard');
+  });
+
+  test('owners and managers start on the dashboard', () => {
+    expect(getHomePath(['System Manager'])).toBe('/dashboard');
+    expect(getHomePath(['Accounts Manager'])).toBe('/dashboard');
+  });
+
+  test('a person with no usable role has nowhere to start', () => {
+    expect(getHomePath([])).toBeNull();
+    expect(getHomePath(['All'])).toBeNull();
+  });
+
+  test('leaving the till never leads back to the till', () => {
+    expect(getTillExitPath(['Sales User'])).toBe('/sales/history');
+    expect(getTillExitPath(['Sales User', 'Sales Manager'])).toBe('/dashboard');
+    expect(getTillExitPath(['System Manager'])).toBe('/dashboard');
+  });
+});
+
+describe('shop-wide figures', () => {
+  test('cashiers cannot open Reports, which is what unlocks the dashboard figures', () => {
+    ['Sales User', 'Desk User', 'Employee', 'Agent', 'Stock User', 'Guest'].forEach((role) => {
+      expect(can(role, '/reports')).toBe(false);
+    });
+    ['Sales Manager', 'Accounts Manager', 'System Manager'].forEach((role) => {
+      expect(can(role, '/reports')).toBe(true);
+    });
   });
 });
