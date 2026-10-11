@@ -24,6 +24,8 @@ A name with no file is harmless: the page shows its normal design instead (the i
 | `industry-salon.webp` | Same | A barber. |
 | `industry-pharmacy.webp` | Same | The pharmacy chain's logo and the staff name badge were removed from the coat. |
 | `industry-fashion.webp` | Same | The screen shows another company's till software, in German. |
+| `industry-electronics.webp` | Same | A phone display. The "Fitness+" lettering on a panel was removed; the phones themselves are recognisable models. |
+| `industry-bookstore.webp` | Same | A notebook shelf. The clearest brand lettering on the notebooks was blurred; small print on spines remains. |
 | `industry-hardware.webp` | Same | Cropped to the air tools; one tool-maker label was removed. |
 | `empty-shelf.webp` | The till, when a new business has no products yet | Empty bakery shelves, cropped to 16:9. |
 | `cta-banner.webp` | Landing page, behind the closing "Create your account" box | A hardware maker's name was removed from the stand. Shown faintly under the colour. |
@@ -32,14 +34,11 @@ All of these were supplied by Murzak. See the source table at the end of this pa
 
 ## Photos still to add
 
-Every slot except the industries below is now filled. Each missing industry adds one more picture to the strip on the landing page.
+All eight industries on the landing page strip now have a photo, and every other slot is filled. The strip lays itself out: up to four photos in one row, three across for five or six, four across for seven or eight.
 
-| File name (before the dot) | Shape | Industry |
-|---|---|---|
-| `industry-electronics` | Portrait 4:5 | Phone and electronics shop |
-| `industry-bookstore` | Portrait 4:5 | Bookshop and stationery |
+More industries Murzak supports (auto, fuel, hotel, sports, jewelry, furniture, online) can be added by extending the `INDUSTRIES` list at the top of `src/pages/Landing.js` and saving a photo named `industry-<name>`.
 
-The strip lays itself out: up to four photos in one row, three across for five or six, four across for seven or eight. Other industries Murzak supports (auto, fuel, hotel, sports, jewelry, furniture, online) can be added by extending the `INDUSTRIES` list at the top of `src/pages/Landing.js`.
+Photos supplied but not used, and why: a Korean pharmacy shelf (full of other companies' packaging and cartoon characters), an Indonesian fruit shelf (the supermarket's name on every shelf edge, rupiah prices), a second version of the cafe scene (the first fits the audience better), and an American supermarket aisle (dollar price tags, branded boxes).
 
 ## What not to use
 
@@ -74,6 +73,8 @@ Keep a record of where each photo came from. Add a line to the table below when 
 | `industry-fashion.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 | `industry-hardware.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 | `empty-shelf.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-electronics.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
+| `industry-bookstore.webp` | Supplied by Murzak | Confirm the original licence before publishing | 2026-10 |
 
 ## Preparing a photo
 
