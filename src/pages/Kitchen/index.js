@@ -218,7 +218,7 @@ const KitchenStation = () => {
       <Typography variant="h5" sx={{ mb: 1 }}>{title}</Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>{text}</Typography>
       {extra}
-      <Button sx={{ mt: 2 }} startIcon={<ArrowBack />} onClick={() => navigate('/sales')}>Back to the till</Button>
+      <Button sx={{ mt: 2 }} startIcon={<ArrowBack />} onClick={() => navigate('/sales/pos')}>Back to the till</Button>
     </Box>
   );
 
@@ -278,7 +278,7 @@ const KitchenStation = () => {
     <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
       <Box component="header" sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1, px: 1, minHeight: 56, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', flexWrap: 'wrap' }}>
         <Tooltip title="Back to the till">
-          <IconButton onClick={() => navigate('/sales')} aria-label="Back to the till"><ArrowBack /></IconButton>
+          <IconButton onClick={() => navigate('/sales/pos')} aria-label="Back to the till"><ArrowBack /></IconButton>
         </Tooltip>
         <Typography variant="h6" sx={{ fontWeight: 900 }}>{station ? station.name : 'Station screen'}</Typography>
         {station && (

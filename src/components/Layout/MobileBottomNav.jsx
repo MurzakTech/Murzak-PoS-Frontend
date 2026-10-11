@@ -18,7 +18,7 @@ import useRoleAccess from '../../hooks/useRoleAccess';
 const TABS = [
   { label: 'Home', path: '/dashboard', icon: SpaceDashboardOutlined },
   { label: 'Sales', path: '/sales/history', icon: ReceiptLongOutlined },
-  { label: 'Sell', path: '/sales', icon: PointOfSale, primary: true },
+  { label: 'Sell', path: '/sales/pos', icon: PointOfSale, primary: true },
   { label: 'Products', path: '/products', icon: Inventory2Outlined },
 ];
 
