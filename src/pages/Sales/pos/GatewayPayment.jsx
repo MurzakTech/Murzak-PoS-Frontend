@@ -26,6 +26,7 @@ import {
   normalizeKenyanPhone,
   sendMpesaPrompt,
 } from '../../../api/paymentGatewayApi';
+import useRealtimeRefresh, { pollEvery } from '../../../hooks/useRealtimeRefresh';
 import { money } from './money';
 
 const POLL_MS = 3000;
@@ -67,30 +68,52 @@ const Confirmed = ({ value, currency, onUndo }) => (
   </Alert>
 );
 
-// Polls fn every POLL_MS while active; stops when fn returns true or on unmount.
+// Checks fn every POLL_MS while active; stops when fn returns true or on unmount. When the server says a
+// payment changed (docs/REALTIME_EVENTS.md) it checks at once, and while that live connection is up the
+// timer only runs as a slow safety net.
 const usePoll = (active, fn) => {
   const fnRef = useRef(fn);
   fnRef.current = fn;
+  const nudgeRef = useRef(null);
+  const live = useRealtimeRefresh({ kind: 'payment', enabled: Boolean(active), onRefresh: () => nudgeRef.current && nudgeRef.current() });
+  const everyMs = pollEvery(POLL_MS, live);
   useEffect(() => {
     if (!active) return undefined;
     let stopped = false;
+    let running = false;
+    let again = false;
     let timer;
     const tick = async () => {
       if (stopped) return;
+      if (running) {
+        again = true; // a message arrived during a check: check once more when it ends
+        return;
+      }
+      clearTimeout(timer);
+      running = true;
       let done = false;
       try {
         done = await fnRef.current();
       } catch (e) {
         done = false; // a failed check is retried on the next tick
       }
-      if (!stopped && !done) timer = setTimeout(tick, POLL_MS);
+      running = false;
+      if (stopped || done) return;
+      if (again) {
+        again = false;
+        tick();
+        return;
+      }
+      timer = setTimeout(tick, everyMs);
     };
-    timer = setTimeout(tick, POLL_MS);
+    nudgeRef.current = tick;
+    timer = setTimeout(tick, everyMs);
     return () => {
       stopped = true;
       clearTimeout(timer);
+      nudgeRef.current = null;
     };
-  }, [active]);
+  }, [active, everyMs]);
 };
 
 // ---------------------------------------------------------------------------
@@ -224,6 +247,9 @@ const MpesaCode = ({ option, amount, currency, company, onChange }) => {
   useEffect(() => {
     loadRecent();
   }, [loadRecent]);
+
+  // A payment made straight to the till shows in the list as soon as the server hears of it
+  useRealtimeRefresh({ kind: 'payment', company, enabled: Boolean(option.c2b_enabled), onRefresh: loadRecent });
 
   const accept = (t) => {
     if (Number(t.amount) + 1 < Number(amount)) {
