@@ -1775,7 +1775,9 @@ const NewSale = () => {
       base = customerProductPrices[itemCode];
     }
     const rule = discountsMap[itemCode];
-    const stock = defaultWarehouse ? productStocks[itemCode]?.[defaultWarehouse] ?? null : null;
+    // A service (a haircut, a room charge) keeps no stock, so it never shows one
+    const keepsStock = !(product.is_stock_item === 0 || product.is_stock_item === false);
+    const stock = defaultWarehouse && keepsStock ? productStocks[itemCode]?.[defaultWarehouse] ?? null : null;
     return {
       price: rule ? calculateDiscountedPrice(base, rule) : base,
       originalPrice: rule ? base : null,

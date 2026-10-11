@@ -12,6 +12,10 @@ import { parseAmount } from './productImport';
 export const DEFAULT_GROUP = 'All Item Groups'; // what the server gets when no category is chosen
 export const DEFAULT_UOM = 'Nos';
 
+// Units that can be sold in parts (half a kilo, 2.5 litres). Anything else is sold in whole pieces.
+const MEASURE_UNITS = new Set(['kg', 'g', 'gram', 'l', 'ltr', 'litre', 'liter', 'ml', 'millilitre', 'milliliter', 'm', 'meter', 'metre', 'cm']);
+export const allowsParts = (uom) => MEASURE_UNITS.has(String(uom || '').trim().toLowerCase());
+
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 // ---------------------------------------------------------------- the list
@@ -24,7 +28,9 @@ export const buildStarterItems = (seedProducts) =>
       item_code: String(p.sku),
       item_name: String(p.name),
       item_group: '',
-      uom: DEFAULT_UOM,
+      // The server says which unit each is sold in (Kg, L, ml...) and which are services; an older server says nothing
+      uom: String(p.uom || '').trim() || DEFAULT_UOM,
+      is_service: p.is_service === true || p.is_service === 1,
       item_price: null,
       buying_price: null,
       qty: null,
@@ -55,8 +61,13 @@ export const checkStarterSelection = (items, selected, activeWarehouseName) => {
     if (hasValue(item.buying_price) && !(item.buying_price >= 0)) messages.push('The buying price cannot be negative.');
 
     if (hasValue(item.qty)) {
-      if (!Number.isInteger(item.qty) || item.qty < 0) messages.push('The quantity must be a whole number, 0 or more.');
-      else if (item.qty > 0 && !activeWarehouseName) messages.push('Choose a store in the top bar before adding stock quantities.');
+      if (item.is_service) {
+        if (item.qty > 0) messages.push('This is a service, so it has no stock. Leave the quantity empty.');
+      } else if (!(item.qty >= 0) || (!allowsParts(item.uom) && !Number.isInteger(item.qty))) {
+        messages.push(allowsParts(item.uom) ? 'The quantity must be 0 or more.' : 'The quantity must be a whole number, 0 or more.');
+      } else if (item.qty > 0 && !activeWarehouseName) {
+        messages.push('Choose a store in the top bar before adding stock quantities.');
+      }
     }
 
     if (messages.length) problems.push({ item_code: item.item_code, item_name: item.item_name, message: messages.join(' ') });
@@ -80,7 +91,8 @@ export const buildSeedPayload = ({ items, priceList, buyingPriceList, warehouse,
         uom: item.uom || DEFAULT_UOM,
       };
       if (hasValue(item.buying_price)) out.buying_price = Number(item.buying_price);
-      if (hasValue(item.qty) && item.qty > 0) {
+      if (item.is_service) out.is_stock_item = 0; // a service keeps no stock, so it can be sold at any time
+      if (!item.is_service && hasValue(item.qty) && item.qty > 0) {
         out.qty = item.qty;
         if (warehouse) out.warehouse = warehouse;
         if (out.buying_price !== undefined) out.basic_rate = out.buying_price; // cost used to value the opening stock
@@ -96,11 +108,11 @@ export const buildSeedPayload = ({ items, priceList, buyingPriceList, warehouse,
 
 // ---------------------------------------------------------------- the spreadsheet round trip
 
-const HEADINGS = ['item_code', 'item_name', 'category', 'selling_price', 'buying_price', 'quantity'];
+const HEADINGS = ['item_code', 'item_name', 'category', 'unit', 'selling_price', 'buying_price', 'quantity'];
 
 /** The list as a CSV to fill in with Excel. The leading BOM makes Excel read it as UTF-8. */
 export const starterTemplateCsv = (items) => {
-  const rows = items.map((i) => [i.item_code, i.item_name, i.item_group, i.item_price ?? '', i.buying_price ?? '', i.qty ?? '']);
+  const rows = items.map((i) => [i.item_code, i.item_name, i.item_group, i.uom, i.item_price ?? '', i.buying_price ?? '', i.is_service ? '' : i.qty ?? '']);
   return '\uFEFF' + [HEADINGS, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 };
 
@@ -182,18 +194,28 @@ export const applySheetToItems = (items, sheet) => {
       const n = parseAmount(raw);
       if (n === null || n < 0) { problem(`The ${label} "${raw}" is not a valid amount.`); bad = true; } else read[field] = n;
     });
-    const rawQty = get(cells, 'qty');
-    if (rawQty !== '') {
-      const q = parseAmount(rawQty);
-      if (q === null || q < 0 || !Number.isInteger(q)) { problem(`The quantity "${rawQty}" must be a whole number, 0 or more.`); bad = true; } else read.qty = q;
-    }
-    if (bad) return;
-
     const name = get(cells, 'item_name');
     const group = get(cells, 'item_group');
     const uom = get(cells, 'uom');
     const at = indexByCode.get(key);
     const isNew = at === undefined;
+
+    // A quantity is judged by the unit the product will have and whether it keeps stock at all
+    const rawQty = get(cells, 'qty');
+    if (rawQty !== '') {
+      const q = parseAmount(rawQty);
+      const unit = uom || (isNew ? DEFAULT_UOM : next[at].uom);
+      if (q === null || q < 0 || (!allowsParts(unit) && !Number.isInteger(q))) {
+        problem(`The quantity "${rawQty}" must be ${allowsParts(unit) ? 'a number' : 'a whole number'}, 0 or more.`);
+        bad = true;
+      } else if (!isNew && next[at].is_service && q > 0) {
+        problem(`${next[at].item_name} is a service, so it has no stock. Leave the quantity empty.`);
+        bad = true;
+      } else {
+        read.qty = q;
+      }
+    }
+    if (bad) return;
 
     if (isNew && !name) return problem('This code is not in the list and the row has no item_name, so it cannot be added.');
 

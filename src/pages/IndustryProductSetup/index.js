@@ -48,6 +48,7 @@ import {
   starterTemplateCsv,
   applySheetToItems,
   jsonToSheet,
+  allowsParts,
 } from '../../utils/starterProducts';
 
 const ROWS_PER_PAGE = 25;
@@ -171,7 +172,7 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
       if (item.item_code !== code) return item;
       let v = value;
       if (field === 'qty') {
-        v = value === '' ? null : parseInt(value, 10);
+        v = value === '' ? null : parseFloat(value); // whole pieces or parts of a kilo or litre: the checks decide which is allowed
         if (Number.isNaN(v)) v = null;
       } else if (field === 'item_price' || field === 'buying_price') {
         v = value === '' ? null : parseFloat(value);
@@ -582,7 +583,11 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
                           />
                         </TableCell>
                         <TableCell>{item.item_code}</TableCell>
-                        <TableCell>{item.item_name}</TableCell>
+                        <TableCell>
+                          {item.item_name}
+                          {item.is_service && <Chip size="small" color="info" variant="outlined" label="Service" sx={{ ml: 1, height: 20 }} />}
+                          {allowsParts(item.uom) && <Chip size="small" variant="outlined" label={`per ${item.uom}`} sx={{ ml: 1, height: 20 }} />}
+                        </TableCell>
                         <TableCell>
                           <Select
                             size="small"
@@ -628,13 +633,14 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
                         <TableCell align="right">
                           <TextField
                             type="number"
-                            value={item.qty ?? ''}
+                            value={item.is_service ? '' : item.qty ?? ''}
                             onChange={(e) => updateItem(item.item_code, 'qty', e.target.value)}
                             size="small"
                             sx={{ width: 100 }}
-                            inputProps={{ min: 0, step: 1, 'aria-label': `Quantity for ${item.item_name}` }}
+                            disabled={Boolean(item.is_service)}
+                            inputProps={{ min: 0, step: allowsParts(item.uom) ? 'any' : 1, 'aria-label': `Quantity for ${item.item_name}` }}
                             error={isSelected && (fieldHasProblem(item.item_code, 'quantity') || fieldHasProblem(item.item_code, 'store'))}
-                            placeholder="Optional"
+                            placeholder={item.is_service ? 'No stock' : 'Optional'}
                           />
                         </TableCell>
                       </TableRow>
