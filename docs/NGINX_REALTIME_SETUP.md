@@ -114,7 +114,11 @@ The same change opened exactly two more doors before sign-in, on purpose, so sho
 
 Checked on the server (against a made-up shop name, since the guard decides before the shop is looked up): both reset methods pass the guard; any other method in that module still answers `401 Please sign in to continue.`; `register_user` still answers `403`.
 
+### Port 9000 (checked 11 October 2026)
+
+The Frappe live-connection program listens on all network addresses (`*:9000`), but the firewall (`sudo ufw status verbose`) shows `Default: deny (incoming)` with only ports 22, 80, 443 and 8010 allowed, so port 9000 cannot be reached from outside. The tills reach it only through Nginx on 443.
+
 ### Still to do
 
-- **Port 9000.** The live-connection program listens on all network addresses (`*:9000`). Confirm the firewall (`sudo ufw status`, and the hosting provider's firewall) does not allow it from outside; the tills reach it only through Nginx.
+- **Docker ports and the firewall.** Port 8010 is published by a Docker container (`docker-proxy`) and is allowed through the firewall. Docker adds its own network rules in front of `ufw`, so any other port a container publishes is reachable from outside even if `ufw` does not list it. List the containers (`sudo docker ps`) and the outward-facing ports (`sudo ss -ltn | grep -v '127.0.0'`) and confirm each is expected.
 - **Real-shop test.** Once a shop exists, repeat the two checks above against it, then do the two-till test in step 5.
