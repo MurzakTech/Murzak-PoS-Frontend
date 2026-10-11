@@ -377,11 +377,11 @@ Purchase Receipt (GRN) - After Submission
 
 | Endpoint | Method | Function | Purpose |
 |----------|--------|----------|---------|
-| `/api/method/techsavanna_pos.api.purchase.create_purchase_order` | POST | `create_purchase_order()` | Create PO (Draft) |
-| `/api/method/techsavanna_pos.api.purchase.submit_purchase_order` | POST | `submit_purchase_order()` | Submit PO |
-| `/api/method/techsavanna_pos.api.purchase.get_purchase_order` | GET | `get_purchase_order()` | Get PO details |
-| `/api/method/techsavanna_pos.api.purchase.list_purchase_orders` | GET | `list_purchase_orders()` | List POs |
-| `/api/method/techsavanna_pos.api.purchase.create_grn` | POST | `create_grn()` | Create & Submit GRN |
-| `/api/method/techsavanna_pos.api.purchase.create_grn_full` | POST | `create_grn_full()` | Create & Submit GRN (duplicate) |
-| `/api/method/techsavanna_pos.api.purchase.grn_to_inventory` | POST | `grn_to_inventory()` | Apply GRN to inventory (redundant) |
+| `/api/method/murzak_pos.api.purchase.create_purchase_order` | POST | `create_purchase_order()` | Create PO (Draft) |
+| `/api/method/murzak_pos.api.purchase.submit_purchase_order` | POST | `submit_purchase_order()` | Submit PO |
+| `/api/method/murzak_pos.api.purchase.get_purchase_order` | GET | `get_purchase_order()` | Get PO details |
+| `/api/method/murzak_pos.api.purchase.list_purchase_orders` | GET | `list_purchase_orders()` | List POs |
+| `/api/method/murzak_pos.api.purchase.create_grn` | POST | `create_grn()` | Create & Submit GRN |
+| `/api/method/murzak_pos.api.purchase.create_grn_full` | POST | `create_grn_full()` | Create & Submit GRN (duplicate) |
+| `/api/method/murzak_pos.api.purchase.grn_to_inventory` | POST | `grn_to_inventory()` | Apply GRN to inventory (redundant) |
 

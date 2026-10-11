@@ -5,7 +5,7 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Dashboard API endpoints
 const ENDPOINTS = {
-  getDashboardMetrics: 'techsavanna_pos.api.dashboard_api.get_dashboard_metrics',
+  getDashboardMetrics: 'murzak_pos.api.dashboard_api.get_dashboard_metrics',
 };
 
 // Helper function to extract data from API response

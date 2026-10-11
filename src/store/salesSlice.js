@@ -6,39 +6,39 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 // Sales API endpoints - matching SALES_API_DOCUMENTATION.md
 const ENDPOINTS = {
   // Sales Invoice Management
-  createSalesInvoice: 'techsavanna_pos.api.sales_api.create_sales_invoice',
-  updateSalesInvoice: 'techsavanna_pos.api.sales_api.update_sales_invoice',
-  getSalesInvoice: 'techsavanna_pos.api.sales_api.get_sales_invoice',
-  listSalesInvoices: 'techsavanna_pos.api.sales_api.list_sales_invoices',
-  cancelSalesInvoice: 'techsavanna_pos.api.sales_api.cancel_sales_invoice',
-  submitInvoice: 'techsavanna_pos.api.sales_api.submit_invoice',
+  createSalesInvoice: 'murzak_pos.api.sales_api.create_sales_invoice',
+  updateSalesInvoice: 'murzak_pos.api.sales_api.update_sales_invoice',
+  getSalesInvoice: 'murzak_pos.api.sales_api.get_sales_invoice',
+  listSalesInvoices: 'murzak_pos.api.sales_api.list_sales_invoices',
+  cancelSalesInvoice: 'murzak_pos.api.sales_api.cancel_sales_invoice',
+  submitInvoice: 'murzak_pos.api.sales_api.submit_invoice',
   
   // POS Invoice Management
-  createPOSInvoice: 'techsavanna_pos.api.sales_api.create_pos_invoice',
-  updatePOSInvoice: 'techsavanna_pos.api.sales_api.update_pos_invoice',
-  getPOSInvoice: 'techsavanna_pos.api.sales_api.get_pos_invoice',
-  listPOSInvoices: 'techsavanna_pos.api.sales_api.list_pos_invoices',
-  cancelPOSInvoice: 'techsavanna_pos.api.sales_api.cancel_pos_invoice',
-  createPOSOpeningEntry: 'techsavanna_pos.api.sales_api.create_pos_opening_entry',
-  listPOSOpeningEntries: 'techsavanna_pos.api.sales_api.list_pos_opening_entries',
-  getPOSOpeningEntry: 'techsavanna_pos.api.sales_api.get_pos_opening_entry',
-  closePOSOpeningEntry: 'techsavanna_pos.api.sales_api.close_pos_opening_entry',
-  cancelPOSOpeningEntry: 'techsavanna_pos.api.sales_api.cancel_pos_opening_entry',
+  createPOSInvoice: 'murzak_pos.api.sales_api.create_pos_invoice',
+  updatePOSInvoice: 'murzak_pos.api.sales_api.update_pos_invoice',
+  getPOSInvoice: 'murzak_pos.api.sales_api.get_pos_invoice',
+  listPOSInvoices: 'murzak_pos.api.sales_api.list_pos_invoices',
+  cancelPOSInvoice: 'murzak_pos.api.sales_api.cancel_pos_invoice',
+  createPOSOpeningEntry: 'murzak_pos.api.sales_api.create_pos_opening_entry',
+  listPOSOpeningEntries: 'murzak_pos.api.sales_api.list_pos_opening_entries',
+  getPOSOpeningEntry: 'murzak_pos.api.sales_api.get_pos_opening_entry',
+  closePOSOpeningEntry: 'murzak_pos.api.sales_api.close_pos_opening_entry',
+  cancelPOSOpeningEntry: 'murzak_pos.api.sales_api.cancel_pos_opening_entry',
   
   // Sales Returns (Credit Notes)
-  createSalesReturn: 'techsavanna_pos.api.sales_api.create_sales_return',
-  getSalesReturn: 'techsavanna_pos.api.sales_api.get_sales_return',
-  listSalesReturns: 'techsavanna_pos.api.sales_api.list_sales_returns',
-  cancelSalesReturn: 'techsavanna_pos.api.sales_api.cancel_sales_return',
+  createSalesReturn: 'murzak_pos.api.sales_api.create_sales_return',
+  getSalesReturn: 'murzak_pos.api.sales_api.get_sales_return',
+  listSalesReturns: 'murzak_pos.api.sales_api.list_sales_returns',
+  cancelSalesReturn: 'murzak_pos.api.sales_api.cancel_sales_return',
   
   // Payment Methods
-  listPaymentMethods: 'techsavanna_pos.api.sales_api.list_payment_methods',
-  getReceivableAccount: 'techsavanna_pos.api.sales_api.get_receivable_account',
-  createCreditModeOfPayment: 'techsavanna_pos.api.sales_api.create_credit_mode_of_payment',
+  listPaymentMethods: 'murzak_pos.api.sales_api.list_payment_methods',
+  getReceivableAccount: 'murzak_pos.api.sales_api.get_receivable_account',
+  createCreditModeOfPayment: 'murzak_pos.api.sales_api.create_credit_mode_of_payment',
   
   // POS Invoice Type
-  getPOSInvoiceType: 'techsavanna_pos.api.sales_api.get_pos_invoice_type',
-  setPOSInvoiceType: 'techsavanna_pos.api.sales_api.set_pos_invoice_type',
+  getPOSInvoiceType: 'murzak_pos.api.sales_api.get_pos_invoice_type',
+  setPOSInvoiceType: 'murzak_pos.api.sales_api.set_pos_invoice_type',
 };
 
 // Helper function to extract data from API response

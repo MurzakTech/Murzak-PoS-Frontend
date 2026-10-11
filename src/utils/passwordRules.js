@@ -1,6 +1,6 @@
 /**
  * The password rules the server enforces when an account is created
- * (techsavanna_pos.api.auth_api.validate_password_strength). Checking them in
+ * (murzak_pos.api.auth_api.validate_password_strength). Checking them in
  * the browser as the person types means they never submit a password only to
  * be told, afterwards, that it is not good enough.
  */

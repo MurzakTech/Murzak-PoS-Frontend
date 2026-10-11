@@ -5,15 +5,15 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Customer API endpoints - matching CUSTOMER_API_DOCUMENTATION.md
 const ENDPOINTS = {
-  createCustomer: 'techsavanna_pos.api.customer_api.create_customer',
-  listCustomers: 'techsavanna_pos.api.customer_api.list_customers',
-  getCustomer: 'techsavanna_pos.api.customer_api.get_customer',
-  updateCustomer: 'techsavanna_pos.api.customer_api.update_customer',
+  createCustomer: 'murzak_pos.api.customer_api.create_customer',
+  listCustomers: 'murzak_pos.api.customer_api.list_customers',
+  getCustomer: 'murzak_pos.api.customer_api.get_customer',
+  updateCustomer: 'murzak_pos.api.customer_api.update_customer',
   // Credit Limit endpoints
-  setCreditLimit: 'techsavanna_pos.api.customer_api.set_customer_credit_limit',
-  getCreditLimit: 'techsavanna_pos.api.customer_api.get_customer_credit_limit',
-  getCreditHistory: 'techsavanna_pos.api.customer_api.get_customer_credit_history',
-  removeCreditLimit: 'techsavanna_pos.api.customer_api.remove_customer_credit_limit',
+  setCreditLimit: 'murzak_pos.api.customer_api.set_customer_credit_limit',
+  getCreditLimit: 'murzak_pos.api.customer_api.get_customer_credit_limit',
+  getCreditHistory: 'murzak_pos.api.customer_api.get_customer_credit_history',
+  removeCreditLimit: 'murzak_pos.api.customer_api.remove_customer_credit_limit',
 };
 
 // Helper function to extract data from API response

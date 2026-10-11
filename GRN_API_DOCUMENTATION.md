@@ -26,7 +26,7 @@ The GRN API provides endpoints to list and retrieve detailed information about G
 ## Base URL
 
 ```
-https://your-domain.com/api/method/techsavanna_pos.api.reports
+https://your-domain.com/api/method/murzak_pos.api.reports
 ```
 
 ---
@@ -57,7 +57,7 @@ Retrieve a paginated list of GRNs with optional filtering.
 #### Endpoint
 
 ```
-GET /api/method/techsavanna_pos.api.reports.grn_list_report
+GET /api/method/murzak_pos.api.reports.grn_list_report
 ```
 
 #### Query Parameters
@@ -90,7 +90,7 @@ const fetchGRNs = async () => {
   });
 
   const response = await fetch(
-    `https://your-domain.com/api/method/techsavanna_pos.api.reports.grn_list_report?${params}`,
+    `https://your-domain.com/api/method/murzak_pos.api.reports.grn_list_report?${params}`,
     {
       method: 'GET',
       credentials: 'include'
@@ -174,7 +174,7 @@ Retrieve detailed information for a specific GRN, including all items and stock 
 #### Endpoint
 
 ```
-GET /api/method/techsavanna_pos.api.reports.grn_detail_report
+GET /api/method/murzak_pos.api.reports.grn_detail_report
 ```
 
 #### Query Parameters
@@ -188,7 +188,7 @@ GET /api/method/techsavanna_pos.api.reports.grn_detail_report
 ```javascript
 const fetchGRNDetails = async (grnNo) => {
   const response = await fetch(
-    `https://your-domain.com/api/method/techsavanna_pos.api.reports.grn_detail_report?grn_no=${grnNo}`,
+    `https://your-domain.com/api/method/murzak_pos.api.reports.grn_detail_report?grn_no=${grnNo}`,
     {
       method: 'GET',
       credentials: 'include'
@@ -381,7 +381,7 @@ const GRNList = () => {
       };
 
       const response = await axios.get(
-        '/api/method/techsavanna_pos.api.reports.grn_list_report',
+        '/api/method/murzak_pos.api.reports.grn_list_report',
         { params }
       );
 
@@ -490,7 +490,7 @@ const GRNListWithFilters = () => {
       );
 
       const response = await axios.get(
-        '/api/method/techsavanna_pos.api.reports.grn_list_report',
+        '/api/method/murzak_pos.api.reports.grn_list_report',
         { params: activeFilters }
       );
 
@@ -583,7 +583,7 @@ const GRNDetail = ({ grnNo }) => {
 
       try {
         const response = await axios.get(
-          '/api/method/techsavanna_pos.api.reports.grn_detail_report',
+          '/api/method/murzak_pos.api.reports.grn_detail_report',
           { params: { grn_no: grnNo } }
         );
 
@@ -703,7 +703,7 @@ const useGRNList = (filters = {}, page = 1, pageSize = 20) => {
       };
 
       const response = await axios.get(
-        '/api/method/techsavanna_pos.api.reports.grn_list_report',
+        '/api/method/murzak_pos.api.reports.grn_list_report',
         { params }
       );
 

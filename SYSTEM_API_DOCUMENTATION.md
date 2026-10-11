@@ -34,7 +34,7 @@ The System API provides endpoints to discover and explore doctypes, modules, and
 All endpoints are relative to your Frappe backend API:
 
 ```
-/api/method/techsavanna_pos.api.system_api.<endpoint_name>
+/api/method/murzak_pos.api.system_api.<endpoint_name>
 ```
 
 ### Authentication
@@ -43,7 +43,7 @@ All endpoints require authentication. Include session cookie or API key in your 
 
 ```javascript
 // Using fetch with session cookie (automatic)
-fetch('/api/method/techsavanna_pos.api.system_api.list_doctypes', {
+fetch('/api/method/murzak_pos.api.system_api.list_doctypes', {
   method: 'GET',
   credentials: 'include',
   headers: {
@@ -52,7 +52,7 @@ fetch('/api/method/techsavanna_pos.api.system_api.list_doctypes', {
 })
 
 // Using API key
-fetch('/api/method/techsavanna_pos.api.system_api.list_doctypes', {
+fetch('/api/method/murzak_pos.api.system_api.list_doctypes', {
   method: 'GET',
   headers: {
     'Authorization': 'token <api_key>:<api_secret>',
@@ -113,7 +113,7 @@ Lists all roles in the system with optional filtering, search, and pagination. U
 
 **Endpoint:** `list_roles` (from `role_api`)  
 **Method:** `GET`  
-**URL:** `/api/method/techsavanna_pos.api.role_api.list_roles`  
+**URL:** `/api/method/murzak_pos.api.role_api.list_roles`  
 **Authentication:** Required
 
 #### Query Parameters
@@ -180,7 +180,7 @@ const listRoles = async (filters = {}) => {
     if (filters.page_size) params.append('page_size', filters.page_size);
     
     const response = await fetch(
-      `/api/method/techsavanna_pos.api.role_api.list_roles?${params.toString()}`,
+      `/api/method/murzak_pos.api.role_api.list_roles?${params.toString()}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -231,7 +231,7 @@ Lists all doctypes in the system with optional filtering and pagination.
 
 **Endpoint:** `list_doctypes`  
 **Method:** `GET`  
-**URL:** `/api/method/techsavanna_pos.api.system_api.list_doctypes`  
+**URL:** `/api/method/murzak_pos.api.system_api.list_doctypes`  
 **Authentication:** Required
 
 #### Query Parameters
@@ -307,7 +307,7 @@ const listDoctypes = async (filters = {}) => {
     if (filters.page_size) params.append('page_size', filters.page_size);
     
     const response = await fetch(
-      `/api/method/techsavanna_pos.api.system_api.list_doctypes?${params.toString()}`,
+      `/api/method/murzak_pos.api.system_api.list_doctypes?${params.toString()}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -347,7 +347,7 @@ Retrieves detailed information about a specific doctype, including permissions, 
 
 **Endpoint:** `get_doctype_details`  
 **Method:** `GET`  
-**URL:** `/api/method/techsavanna_pos.api.system_api.get_doctype_details`  
+**URL:** `/api/method/murzak_pos.api.system_api.get_doctype_details`  
 **Authentication:** Required
 
 #### Query Parameters
@@ -416,7 +416,7 @@ Retrieves detailed information about a specific doctype, including permissions, 
 const getDoctypeDetails = async (doctype) => {
   try {
     const response = await fetch(
-      `/api/method/techsavanna_pos.api.system_api.get_doctype_details?doctype=${encodeURIComponent(doctype)}`,
+      `/api/method/murzak_pos.api.system_api.get_doctype_details?doctype=${encodeURIComponent(doctype)}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -448,7 +448,7 @@ Lists all modules in the system with their doctype counts.
 
 **Endpoint:** `list_modules`  
 **Method:** `GET`  
-**URL:** `/api/method/techsavanna_pos.api.system_api.list_modules`  
+**URL:** `/api/method/murzak_pos.api.system_api.list_modules`  
 **Authentication:** Required
 
 #### Response
@@ -486,7 +486,7 @@ Lists all modules in the system with their doctype counts.
 const listModules = async () => {
   try {
     const response = await fetch(
-      '/api/method/techsavanna_pos.api.system_api.list_modules',
+      '/api/method/murzak_pos.api.system_api.list_modules',
       {
         method: 'GET',
         credentials: 'include',
@@ -1370,5 +1370,5 @@ When integrating these APIs with role creation:
 
 **Last Updated:** January 2025  
 **API Version:** 1.0  
-**Module:** techsavanna_pos.api.system_api
+**Module:** murzak_pos.api.system_api
 

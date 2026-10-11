@@ -19,7 +19,7 @@ This document provides comprehensive API documentation for Purchase Invoice endp
 
 The Purchase Invoice API provides endpoints to list, retrieve detailed information, and make payments for Purchase Invoices in the system. These endpoints support filtering, pagination, detailed item-level information, and payment processing.
 
-**Base URL:** `/api/method/techsavanna_pos.api.purchase`
+**Base URL:** `/api/method/murzak_pos.api.purchase`
 
 ---
 
@@ -29,7 +29,7 @@ The Purchase Invoice API provides endpoints to list, retrieve detailed informati
 
 Retrieve a paginated list of Purchase Invoices with optional filtering.
 
-**Endpoint:** `GET /api/method/techsavanna_pos.api.purchase.list_purchase_invoices`
+**Endpoint:** `GET /api/method/murzak_pos.api.purchase.list_purchase_invoices`
 
 **Authentication:** Required (not guest accessible)
 
@@ -64,7 +64,7 @@ const fetchPurchaseInvoices = async () => {
   });
 
   const response = await fetch(
-    `/api/method/techsavanna_pos.api.purchase.list_purchase_invoices?${params}`,
+    `/api/method/murzak_pos.api.purchase.list_purchase_invoices?${params}`,
     {
       method: 'GET',
       headers: {
@@ -84,7 +84,7 @@ import axios from 'axios';
 
 const fetchPurchaseInvoices = async (filters: PurchaseInvoiceFilters) => {
   const response = await axios.get(
-    '/api/method/techsavanna_pos.api.purchase.list_purchase_invoices',
+    '/api/method/murzak_pos.api.purchase.list_purchase_invoices',
     { params: filters }
   );
   return response.data;
@@ -169,7 +169,7 @@ const fetchPurchaseInvoices = async (filters: PurchaseInvoiceFilters) => {
 
 Retrieve detailed information for a specific Purchase Invoice, including all items, taxes, linked documents, and attachments.
 
-**Endpoint:** `GET /api/method/techsavanna_pos.api.purchase.get_purchase_invoice_details`
+**Endpoint:** `GET /api/method/murzak_pos.api.purchase.get_purchase_invoice_details`
 
 **Authentication:** Required (not guest accessible)
 
@@ -185,7 +185,7 @@ Retrieve detailed information for a specific Purchase Invoice, including all ite
 // Using fetch API
 const fetchPurchaseInvoiceDetails = async (invoiceNo: string) => {
   const response = await fetch(
-    `/api/method/techsavanna_pos.api.purchase.get_purchase_invoice_details?invoice_no=${invoiceNo}`,
+    `/api/method/murzak_pos.api.purchase.get_purchase_invoice_details?invoice_no=${invoiceNo}`,
     {
       method: 'GET',
       headers: {
@@ -205,7 +205,7 @@ import axios from 'axios';
 
 const fetchPurchaseInvoiceDetails = async (invoiceNo: string) => {
   const response = await axios.get(
-    '/api/method/techsavanna_pos.api.purchase.get_purchase_invoice_details',
+    '/api/method/murzak_pos.api.purchase.get_purchase_invoice_details',
     { params: { invoice_no: invoiceNo } }
   );
   return response.data;
@@ -354,7 +354,7 @@ const fetchPurchaseInvoiceDetails = async (invoiceNo: string) => {
 
 Create a Payment Entry against a Purchase Invoice to record payment made to the supplier. This moves the invoice from "Partly Paid" or "Unpaid" to "Paid" status when fully paid.
 
-**Endpoint:** `POST /api/method/techsavanna_pos.api.purchase.pay_purchase_invoice`
+**Endpoint:** `POST /api/method/murzak_pos.api.purchase.pay_purchase_invoice`
 
 **Authentication:** Required (guest accessible)
 
@@ -378,7 +378,7 @@ Create a Payment Entry against a Purchase Invoice to record payment made to the 
 // Using fetch API
 const payPurchaseInvoice = async (invoiceNo: string, amount: number) => {
   const response = await fetch(
-    '/api/method/techsavanna_pos.api.purchase.pay_purchase_invoice',
+    '/api/method/murzak_pos.api.purchase.pay_purchase_invoice',
     {
       method: 'POST',
       headers: {
@@ -405,7 +405,7 @@ import axios from 'axios';
 
 const payPurchaseInvoice = async (invoiceNo: string, amount: number) => {
   const response = await axios.post(
-    '/api/method/techsavanna_pos.api.purchase.pay_purchase_invoice',
+    '/api/method/murzak_pos.api.purchase.pay_purchase_invoice',
     {
       invoice_no: invoiceNo,
       paid_amount: amount,
@@ -830,7 +830,7 @@ export const usePurchaseInvoiceList = ({
       };
 
       const response = await axios.get(
-        '/api/method/techsavanna_pos.api.purchase.list_purchase_invoices',
+        '/api/method/murzak_pos.api.purchase.list_purchase_invoices',
         { params }
       );
 
@@ -980,7 +980,7 @@ export const usePurchaseInvoiceDetails = (invoiceNo: string | null) => {
 
       try {
         const response = await axios.get(
-          '/api/method/techsavanna_pos.api.purchase.get_purchase_invoice_details',
+          '/api/method/murzak_pos.api.purchase.get_purchase_invoice_details',
           { params: { invoice_no: invoiceNo } }
         );
 
@@ -1200,7 +1200,7 @@ const PayInvoiceForm: React.FC<PayInvoiceFormProps> = ({
 
     try {
       const response = await axios.post<PayPurchaseInvoiceResponse>(
-        '/api/method/techsavanna_pos.api.purchase.pay_purchase_invoice',
+        '/api/method/murzak_pos.api.purchase.pay_purchase_invoice',
         formData
       );
 
@@ -1395,7 +1395,7 @@ export const usePayPurchaseInvoice = () => {
 
     try {
       const response = await axios.post<PayPurchaseInvoiceResponse>(
-        '/api/method/techsavanna_pos.api.purchase.pay_purchase_invoice',
+        '/api/method/murzak_pos.api.purchase.pay_purchase_invoice',
         request
       );
 

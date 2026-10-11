@@ -91,7 +91,7 @@ The documentation is **mostly accurate** and well-structured. However, there is 
 **Status:** ⚠️ **DISCREPANCY**
 
 **Issue:**
-- Documentation describes endpoint: `/api/method/techsavanna_pos.api.stock.create_stock_transfer_request`
+- Documentation describes endpoint: `/api/method/murzak_pos.api.stock.create_stock_transfer_request`
 - **Frontend implementation does NOT use this endpoint**
 - Instead, frontend uses Frappe's standard `frappe.client.insert` API
 

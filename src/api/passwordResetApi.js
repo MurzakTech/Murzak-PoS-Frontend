@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
 // Relative to the API address, which already ends in /api/method
-const BASE = 'techsavanna_pos.api.password_reset';
+const BASE = 'murzak_pos.api.password_reset';
 
 const result = (response) => response.data?.message || {};
 

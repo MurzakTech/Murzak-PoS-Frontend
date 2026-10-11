@@ -4,9 +4,9 @@ import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 const ENDPOINTS = {
-  listModules: 'techsavanna_pos.api.system_api.list_modules',
-  listDoctypes: 'techsavanna_pos.api.system_api.list_doctypes',
-  getDoctypeDetails: 'techsavanna_pos.api.system_api.get_doctype_details',
+  listModules: 'murzak_pos.api.system_api.list_modules',
+  listDoctypes: 'murzak_pos.api.system_api.list_doctypes',
+  getDoctypeDetails: 'murzak_pos.api.system_api.get_doctype_details',
 };
 
 // Helper function to extract data from nested message response

@@ -1,7 +1,7 @@
 /**
  * BULK PRICE UPDATE - React Implementation Example
  * 
- * Endpoint: techsavanna_pos.api.product_api.bulk_update_prices
+ * Endpoint: murzak_pos.api.product_api.bulk_update_prices
  * Method: POST
  */
 
@@ -14,7 +14,7 @@ import { bulkUpdatePrices } from '../store/productSlice';
 // ============================================================================
 
 /**
- * Endpoint: 'techsavanna_pos.api.product_api.bulk_update_prices'
+ * Endpoint: 'murzak_pos.api.product_api.bulk_update_prices'
  * Method: POST
  * 
  * Request Payload Structure:
@@ -225,7 +225,7 @@ import axiosInstance from '../api/axiosInstance';
 
 const bulkUpdatePricesDirect = async (payload) => {
   try {
-    const endpoint = 'techsavanna_pos.api.product_api.bulk_update_prices';
+    const endpoint = 'murzak_pos.api.product_api.bulk_update_prices';
     
     const response = await axiosInstance.post(endpoint, payload);
     

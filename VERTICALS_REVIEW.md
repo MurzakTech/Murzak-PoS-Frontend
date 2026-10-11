@@ -8,7 +8,7 @@ This file records what was found when each industry was checked against what tha
 
 ## The 15 industries
 
-Restaurant, retail, grocery, pharmacy, fashion, electronics, salon, auto, fuel, hotel, bookstore, sports, jewelry, furniture and online. The starter lists are in `Murzak-PoS-Backend`, file `techsavanna_pos/products_seed_data/industry_products.json`.
+Restaurant, retail, grocery, pharmacy, fashion, electronics, salon, auto, fuel, hotel, bookstore, sports, jewelry, furniture and online. The starter lists are in `Murzak-PoS-Backend`, file `murzak_pos/products_seed_data/industry_products.json`.
 
 ## Faults found in how the starter lists were loaded
 

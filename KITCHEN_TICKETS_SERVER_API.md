@@ -4,7 +4,7 @@
 
 Station screens let a kitchen or a bar see orders on a tablet or monitor instead of (or as well as) on paper. A waiter presses "Send to kitchen" at a till or on a phone; the order appears on the screen of the right station; the cook presses Start, then Ready; the waiter's till shows "Ready" and the waiter takes it to the table.
 
-For that to work, the tickets have to live on the server, where every device can see them. This file is the contract for the five calls the front end needs, plus a reference implementation for the Frappe app (`techsavanna_pos`). The front end is already built and tested against this contract (`src/api/kitchenApi.js`, `src/hooks/useKitchenSettings.js`, `src/hooks/useKitchenTickets.js`, `src/hooks/useStationBoard.js`, `src/pages/Kitchen`).
+For that to work, the tickets have to live on the server, where every device can see them. This file is the contract for the five calls the front end needs, plus a reference implementation for the Frappe app (`murzak_pos`). The front end is already built and tested against this contract (`src/api/kitchenApi.js`, `src/hooks/useKitchenSettings.js`, `src/hooks/useKitchenTickets.js`, `src/hooks/useStationBoard.js`, `src/pages/Kitchen`).
 
 Until the calls exist, nothing breaks. The "Also show tickets on station screens" switch is greyed out with an explanation, and kitchen tickets keep printing exactly as before.
 
@@ -20,7 +20,7 @@ Until the calls exist, nothing breaks. The "Also show tickets on station screens
 
 ## The five calls
 
-All are `POST`, require a signed-in user, and are called as `techsavanna_pos.api.kitchen_api.<name>`. Replies follow the same pattern as the sales API: `{ "message": { "success": true, "data": { ... } } }`. On a refusal, return `{ "message": { "success": false, "message": "reason in plain words" } }`.
+All are `POST`, require a signed-in user, and are called as `murzak_pos.api.kitchen_api.<name>`. Replies follow the same pattern as the sales API: `{ "message": { "success": true, "data": { ... } } }`. On a refusal, return `{ "message": { "success": false, "message": "reason in plain words" } }`.
 
 ### `get_kitchen_settings`
 
@@ -141,11 +141,11 @@ Request: `{ "company": "Shop A Ltd", "id": "a1b2c3", "status": "Ready" }`
 
 ## Reference implementation (an untested sketch, matched to your server code)
 
-**The real implementation is in the backend repository: [Murzak-PoS-Backend PR #17](https://github.com/MurzakTech/Murzak-PoS-Backend/pull/17)** (`techsavanna_pos/api/kitchen_api.py`, with tests). It differs from the sketch below in one important way: it serialises numbering with a database lock (`GET_LOCK`) and commits before releasing it, which is sturdier than the `FOR UPDATE` idea in the sketch. Where the two differ, the backend code is the one to trust. The sketch is kept for reading.
+**The real implementation is in the backend repository: [Murzak-PoS-Backend PR #17](https://github.com/MurzakTech/Murzak-PoS-Backend/pull/17)** (`murzak_pos/api/kitchen_api.py`, with tests). It differs from the sketch below in one important way: it serialises numbering with a database lock (`GET_LOCK`) and commits before releasing it, which is sturdier than the `FOR UPDATE` idea in the sketch. Where the two differ, the backend code is the one to trust. The sketch is kept for reading.
 
 The sketch has not been run. It follows the pattern of `HELD_SALES_SERVER_API.md`: the company check is `resolve_company` from `api/payment_gateway_common.py`, and tables are created by `bench migrate` when this is merged to `main`. A Frappe developer should review it, in particular the numbering.
 
-**1. Two tables.** Create two DocType folders under `techsavanna_pos/techsavanna_pos/doctype/`, each with an empty `__init__.py`, a `.py` file holding an empty `Document` class, and a `.json` definition (module "Techsavanna POS", not submittable).
+**1. Two tables.** Create two DocType folders under `murzak_pos/murzak_pos/doctype/`, each with an empty `__init__.py`, a `.py` file holding an empty `Document` class, and a `.json` definition (module "Murzak POS", not submittable).
 
 `kitchen_ticket/` (naming: hash):
 
@@ -170,7 +170,7 @@ The record's `owner` is who sent it. Also add an index on (`company`, `warehouse
 
 `pos_kitchen_settings/` (naming: by field `company`, so there is one row per business): fields `company` (Link to Company, required, unique) and `settings` (Long Text, JSON).
 
-**2. The calls**, in `techsavanna_pos/api/kitchen_api.py`:
+**2. The calls**, in `murzak_pos/api/kitchen_api.py`:
 ```python
 """
 Kitchen and bar tickets: orders sent from a till to the stations, and what the stations do with them.
@@ -184,7 +184,7 @@ import json
 import frappe
 from frappe import _
 
-from techsavanna_pos.api.payment_gateway_common import resolve_company
+from murzak_pos.api.payment_gateway_common import resolve_company
 
 STATUSES = ("New", "Preparing", "Ready", "Served")
 ORDER_TYPES = ("table", "counter")
@@ -327,12 +327,12 @@ def purge_old_tickets():
 
 Two things a reviewer should look at closely. First, the numbering: `SELECT ... FOR UPDATE` over a `MAX` is a common way to serialise numbering in MariaDB under Frappe's default isolation, but a unique index on (`company`, `warehouse`, `station`, `ticket_date`, `number`), added in a small patch, is a good safety net; with a retry on a duplicate-key error. Second, `frappe.db.commit()` inside a whitelisted call: Frappe commits at the end of a request anyway, so it may be unnecessary, and is shown only to make the intent plain (the numbers must be visible to the next request at once).
 
-**3. The daily clean-up.** In `techsavanna_pos/hooks.py`, the `scheduler_events` block (already needed for held sales) gets a second entry:
+**3. The daily clean-up.** In `murzak_pos/hooks.py`, the `scheduler_events` block (already needed for held sales) gets a second entry:
 ```python
 scheduler_events = {
     "daily": [
-        "techsavanna_pos.api.held_sales_api.purge_old_held_sales",
-        "techsavanna_pos.api.kitchen_api.purge_old_tickets",
+        "murzak_pos.api.held_sales_api.purge_old_held_sales",
+        "murzak_pos.api.kitchen_api.purge_old_tickets",
     ],
 }
 ```

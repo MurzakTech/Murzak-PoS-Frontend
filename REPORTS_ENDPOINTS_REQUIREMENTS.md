@@ -20,13 +20,13 @@ This document lists all endpoints required to have both **Inventory Reports** an
 ### Currently Available (✅)
 
 1. **List Sales Invoices**
-   - Endpoint: `techsavanna_pos.api.sales_api.list_sales_invoices`
+   - Endpoint: `murzak_pos.api.sales_api.list_sales_invoices`
    - Status: ✅ Available
    - Parameters: `company`, `customer`, `from_date`, `to_date`, `status`, `limit`, `offset`, `search_term`
    - Used for: Frontend aggregation of sales data
 
 2. **List POS Invoices**
-   - Endpoint: `techsavanna_pos.api.sales_api.list_pos_invoices`
+   - Endpoint: `murzak_pos.api.sales_api.list_pos_invoices`
    - Status: ✅ Available
    - Parameters: `company`, `customer`, `from_date`, `to_date`, `status`, `limit`, `offset`, `search_term`, `pos_profile`
    - Used for: Frontend aggregation of POS sales data
@@ -34,7 +34,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
 ### Required for Full Functionality (❌)
 
 3. **Sales Analytics Report** 🔵 Recommended
-   - Endpoint: `techsavanna_pos.api.reports.sales_analytics_report` (NEW)
+   - Endpoint: `murzak_pos.api.reports.sales_analytics_report` (NEW)
    - Status: ❌ Required
    - Method: `GET`
    - Parameters:
@@ -94,7 +94,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
    - Purpose: Aggregated sales data for analytics (better performance than frontend aggregation)
 
 4. **Export Sales Analytics Report** 🔵 Optional
-   - Endpoint: `techsavanna_pos.api.reports.export_sales_analytics_report` (NEW)
+   - Endpoint: `murzak_pos.api.reports.export_sales_analytics_report` (NEW)
    - Status: ❌ Required (for PDF/Excel export)
    - Method: `GET` or `POST`
    - Parameters: Same as `sales_analytics_report` + `format` (pdf/excel/csv)
@@ -108,28 +108,28 @@ This document lists all endpoints required to have both **Inventory Reports** an
 ### Currently Available (✅)
 
 5. **Inventory Summary Report**
-   - Endpoint: `techsavanna_pos.api.reports.inventory_summary_report`
+   - Endpoint: `murzak_pos.api.reports.inventory_summary_report`
    - Status: ✅ Available
    - Parameters: None
    - Response: Array of `{ warehouse, total_qty, total_value }`
    - Purpose: Total stock quantity and value by warehouse
 
 6. **Inventory Movement Report**
-   - Endpoint: `techsavanna_pos.api.reports.inventory_movement_report`
+   - Endpoint: `murzak_pos.api.reports.inventory_movement_report`
    - Status: ✅ Available
    - Parameters: `start_date` (required), `end_date` (required)
    - Response: Array of `{ item_code, received_qty, issued_qty, transferred_qty }`
    - Purpose: Stock movement details (received, issued, transferred)
 
 7. **Stock Aging Report**
-   - Endpoint: `techsavanna_pos.api.reports.stock_aging_report`
+   - Endpoint: `murzak_pos.api.reports.stock_aging_report`
    - Status: ✅ Available
    - Parameters: None
    - Response: Object with age brackets `{ "0-30": [...], "31-60": [...], "61-90": [...], "90+": [...] }`
    - Purpose: Stock categorized by age brackets
 
 8. **Inventory Value Report**
-   - Endpoint: `techsavanna_pos.api.reports.inventory_value_report`
+   - Endpoint: `murzak_pos.api.reports.inventory_value_report`
    - Status: ✅ Available
    - Parameters: None
    - Response: Array of `{ warehouse, total_value }`
@@ -140,7 +140,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
 #### Inventory Valuation Report Endpoints
 
 9. **Inventory Value by Category Report**
-   - Endpoint: `techsavanna_pos.api.reports.inventory_value_by_category_report` (NEW)
+   - Endpoint: `murzak_pos.api.reports.inventory_value_by_category_report` (NEW)
    - Status: ❌ Required
    - Method: `GET`
    - Parameters:
@@ -169,7 +169,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
    - Purpose: Value breakdown by item category/group
 
 10. **Inventory Cost Method Comparison Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_cost_method_comparison_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_cost_method_comparison_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -203,7 +203,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Compare inventory valuation using different cost methods
 
 11. **Inventory Value Trends Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_value_trends_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_value_trends_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -235,7 +235,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
 #### Stock Movement Analysis Endpoints
 
 12. **Inventory Turnover Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_turnover_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_turnover_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -267,7 +267,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Calculate turnover rates for inventory items
 
 13. **Inventory Days on Hand Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_days_on_hand_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_days_on_hand_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -298,7 +298,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Days of stock remaining based on current stock and average consumption
 
 14. **Inventory Movement Patterns Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_movement_patterns_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_movement_patterns_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -340,7 +340,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
 #### Aging Stock Report Endpoints
 
 15. **Stock Aging Report Enhancement** ⚠️
-    - Endpoint: `techsavanna_pos.api.reports.stock_aging_report` (ENHANCE)
+    - Endpoint: `murzak_pos.api.reports.stock_aging_report` (ENHANCE)
     - Status: ⚠️ Partial (needs enhancement)
     - Current: Returns age brackets
     - Enhancement Needed: Add `slow_moving_threshold` parameter and movement rate data
@@ -364,7 +364,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
       ```
 
 16. **Inventory Obsolescence Risk Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_obsolescence_risk_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_obsolescence_risk_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -396,7 +396,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Identify items with high obsolescence risk
 
 17. **Inventory Aging Recommendations Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_aging_recommendations_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_aging_recommendations_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -429,7 +429,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
 #### Performance Metrics Endpoints
 
 18. **Inventory Accuracy Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_accuracy_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_accuracy_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -458,7 +458,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Stock accuracy metrics (book vs actual)
 
 19. **Inventory Variance Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_variance_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_variance_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -492,7 +492,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Detailed variance analysis from stock counts
 
 20. **Inventory Adjustment Trends Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_adjustment_trends_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_adjustment_trends_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:
@@ -524,7 +524,7 @@ This document lists all endpoints required to have both **Inventory Reports** an
     - Purpose: Trends in stock adjustments over time
 
 21. **Inventory Transfer Efficiency Report**
-    - Endpoint: `techsavanna_pos.api.reports.inventory_transfer_efficiency_report` (NEW)
+    - Endpoint: `murzak_pos.api.reports.inventory_transfer_efficiency_report` (NEW)
     - Status: ❌ Required
     - Method: `GET`
     - Parameters:

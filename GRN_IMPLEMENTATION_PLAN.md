@@ -11,7 +11,7 @@ This document outlines the implementation plan for integrating GRN (Goods Receip
 Based on `GRN_API_DOCUMENTATION.md`, the following endpoints need to be implemented:
 
 ### 1.1 List GRNs
-- **Endpoint**: `GET /api/method/techsavanna_pos.api.reports.grn_list_report`
+- **Endpoint**: `GET /api/method/murzak_pos.api.reports.grn_list_report`
 - **Purpose**: Retrieve paginated list of GRNs with optional filtering
 - **Query Parameters**:
   - `company` (optional, defaults to user's company)
@@ -26,7 +26,7 @@ Based on `GRN_API_DOCUMENTATION.md`, the following endpoints need to be implemen
   - `page_size` (optional, default: 20, max: 100)
 
 ### 1.2 Get GRN Details
-- **Endpoint**: `GET /api/method/techsavanna_pos.api.reports.grn_detail_report`
+- **Endpoint**: `GET /api/method/murzak_pos.api.reports.grn_detail_report`
 - **Purpose**: Retrieve detailed information for a specific GRN
 - **Query Parameters**:
   - `grn_no` (required) - GRN number (Purchase Receipt name)

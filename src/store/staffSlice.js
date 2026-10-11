@@ -5,15 +5,15 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 
 // Staff API endpoints
 const ENDPOINTS = {
-  getAllRoles: 'techsavanna_pos.api.staff_api.get_all_roles',
-  createStaffUser: 'techsavanna_pos.api.staff_api.create_staff_user',
-  assignRoles: 'techsavanna_pos.api.staff_api.assign_roles_to_staff',
-  getStaffUsers: 'techsavanna_pos.api.staff_api.get_staff_users',
-  getStaffUserDetails: 'techsavanna_pos.api.staff_api.get_staff_user_details',
-  updateStaffUser: 'techsavanna_pos.api.staff_api.update_staff_user',
-  removeRoles: 'techsavanna_pos.api.staff_api.remove_roles_from_staff',
-  disableStaffUser: 'techsavanna_pos.api.staff_api.disable_staff_user',
-  enableStaffUser: 'techsavanna_pos.api.staff_api.enable_staff_user',
+  getAllRoles: 'murzak_pos.api.staff_api.get_all_roles',
+  createStaffUser: 'murzak_pos.api.staff_api.create_staff_user',
+  assignRoles: 'murzak_pos.api.staff_api.assign_roles_to_staff',
+  getStaffUsers: 'murzak_pos.api.staff_api.get_staff_users',
+  getStaffUserDetails: 'murzak_pos.api.staff_api.get_staff_user_details',
+  updateStaffUser: 'murzak_pos.api.staff_api.update_staff_user',
+  removeRoles: 'murzak_pos.api.staff_api.remove_roles_from_staff',
+  disableStaffUser: 'murzak_pos.api.staff_api.disable_staff_user',
+  enableStaffUser: 'murzak_pos.api.staff_api.enable_staff_user',
 };
 
 // Helper function to extract data from nested message response

@@ -132,7 +132,7 @@ describe('Kitchen station screen', () => {
   });
 
   it('says so when the server has no station screen calls yet', async () => {
-    axiosInstance.post.mockReset().mockRejectedValue({ response: { status: 404, data: { exc: 'Failed to get method techsavanna_pos.api.kitchen_api.get_kitchen_settings' } } });
+    axiosInstance.post.mockReset().mockRejectedValue({ response: { status: 404, data: { exc: 'Failed to get method murzak_pos.api.kitchen_api.get_kitchen_settings' } } });
     renderPage();
     expect(await screen.findByText('Station screens are not available yet')).toBeInTheDocument();
   });

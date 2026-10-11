@@ -1,6 +1,6 @@
 import axiosInstance from './axiosInstance';
 
-const API_BASE = 'techsavanna_pos.api.account_provisioning_api';
+const API_BASE = 'murzak_pos.api.account_provisioning_api';
 
 // Helper function to extract data from nested message response
 const extractResponseData = (response) => {

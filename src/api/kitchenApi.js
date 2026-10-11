@@ -13,7 +13,7 @@
 import axiosInstance from './axiosInstance';
 import { friendlyErrorMessage } from '../utils/friendlyError';
 
-const BASE = 'techsavanna_pos.api.kitchen_api';
+const BASE = 'murzak_pos.api.kitchen_api';
 export const ENDPOINTS = {
   getSettings: `${BASE}.get_kitchen_settings`,
   saveSettings: `${BASE}.save_kitchen_settings`,

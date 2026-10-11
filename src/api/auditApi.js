@@ -7,7 +7,7 @@ import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
  * Accounts Managers and Auditors.
  */
 
-const AUDIT = 'techsavanna_pos.api.audit_api';
+const AUDIT = 'murzak_pos.api.audit_api';
 
 // Frappe wraps return values in { message }. Our endpoints answer { success, data, ... }.
 const get = async (method, params) => {

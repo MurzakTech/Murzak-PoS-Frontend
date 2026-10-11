@@ -31,8 +31,8 @@ Add new endpoints to `ENDPOINTS` object:
 ```javascript
 const ENDPOINTS = {
   // ... existing endpoints ...
-  getCustomerLoyaltyDetails: 'techsavanna_pos.api.loyalty.get_customer_loyalty_details',
-  calculateLoyaltyRedemption: 'techsavanna_pos.api.loyalty.calculate_loyalty_redemption',
+  getCustomerLoyaltyDetails: 'murzak_pos.api.loyalty.get_customer_loyalty_details',
+  calculateLoyaltyRedemption: 'murzak_pos.api.loyalty.calculate_loyalty_redemption',
 };
 ```
 
@@ -350,19 +350,19 @@ src/store/salesSlice.js                    (verify - likely no changes needed)
 
 ### Get Customer Loyalty Details
 - **Method:** GET
-- **Endpoint:** `/api/method/techsavanna_pos.api.loyalty.get_customer_loyalty_details`
+- **Endpoint:** `/api/method/murzak_pos.api.loyalty.get_customer_loyalty_details`
 - **Params:** `customer_id`, `invoice_amount` (optional), `company` (optional)
 - **Guest Accessible:** Yes
 
 ### Calculate Loyalty Redemption
 - **Method:** GET
-- **Endpoint:** `/api/method/techsavanna_pos.api.loyalty.calculate_loyalty_redemption`
+- **Endpoint:** `/api/method/murzak_pos.api.loyalty.calculate_loyalty_redemption`
 - **Params:** `customer_id`, `points_to_redeem`, `invoice_amount` (optional), `company` (optional)
 - **Guest Accessible:** Yes
 
 ### Create POS Invoice (with redemption)
 - **Method:** POST
-- **Endpoint:** `/api/method/techsavanna_pos.api.sales.create_pos_invoice`
+- **Endpoint:** `/api/method/murzak_pos.api.sales.create_pos_invoice`
 - **Additional Fields:**
   ```javascript
   {

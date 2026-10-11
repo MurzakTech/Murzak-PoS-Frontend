@@ -150,7 +150,7 @@ The list page (`MultiLevelReconciliation.js`) currently shows an empty state bec
 1. Add a list endpoint to the backend API: `list_multi_level_stock_reconciliations`
 2. Add the endpoint to `inventorySlice.js`:
    ```javascript
-   listMultiLevelReconciliations: 'techsavanna_pos.api.inventory_api.list_multi_level_stock_reconciliations',
+   listMultiLevelReconciliations: 'murzak_pos.api.inventory_api.list_multi_level_stock_reconciliations',
    ```
 3. Create an async thunk for listing
 4. Update the list page to fetch and display reconciliations

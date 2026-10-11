@@ -4,11 +4,11 @@
 
 A restaurant or bar keeps bills open: a table that orders in rounds, a tab that stays open all evening. The till's front end is ready to store these open bills on the server, so that every till and every waiter's phone sees the same ones. It will do so automatically as soon as the three calls below exist. Until they do, the till keeps working exactly as before, storing held bills in the browser on one device.
 
-This file is the contract for those three calls, and a reference implementation for the Frappe app (`techsavanna_pos`). The front end is already built and tested against this contract (see `src/api/heldSalesApi.js` and `src/hooks/useHeldSales.js`).
+This file is the contract for those three calls, and a reference implementation for the Frappe app (`murzak_pos`). The front end is already built and tested against this contract (see `src/api/heldSalesApi.js` and `src/hooks/useHeldSales.js`).
 
 ## Why separate calls and not draft invoices
 
-The server can already save a sale as a draft invoice, but that is a poor fit for an open bill. This was checked against the server code (`techsavanna_pos/api/sales_api.py` in `Murzak-PoS-Backend`):
+The server can already save a sale as a draft invoice, but that is a poor fit for an open bill. This was checked against the server code (`murzak_pos/api/sales_api.py` in `Murzak-PoS-Backend`):
 
 - **A draft invoice cannot be removed.** `cancel_pos_invoice` refuses anything that is not submitted ("Only submitted POS Invoices (docstatus 1) can be cancelled"), and there is no call that deletes a draft invoice. A discarded tab would stay behind as a draft forever.
 - There is nowhere to put the table or tab name.
@@ -19,7 +19,7 @@ A held bill is not an invoice. It is a note of what is on the table, until it is
 
 ## The three calls
 
-All are `POST`, require a signed-in user, and are called as `techsavanna_pos.api.held_sales_api.<name>`. Replies follow the same pattern as the sales API: `{ "message": { "success": true, "data": { ... } } }`. On a refusal, return `{ "message": { "success": false, "message": "reason in plain words" } }`.
+All are `POST`, require a signed-in user, and are called as `murzak_pos.api.held_sales_api.<name>`. Replies follow the same pattern as the sales API: `{ "message": { "success": true, "data": { ... } } }`. On a refusal, return `{ "message": { "success": false, "message": "reason in plain words" } }`.
 
 ### `list_held_sales`
 
@@ -99,7 +99,7 @@ Reply `data`: `{ "id": "h_lq3k2x9a", "deleted": true }`
 
 This has not been run. It is written to fit `Murzak-PoS-Backend`: it uses the server's own company check (`resolve_company` in `api/payment_gateway_common.py`, which refuses companies the user does not belong to and rejects guests), and it follows the folder layout used by the other tables. A Frappe developer should review it, in particular the atomic delete.
 
-**1. The table.** Create the folder `techsavanna_pos/techsavanna_pos/doctype/pos_held_sale/` with an empty `__init__.py`, a `pos_held_sale.py` containing `class POSHeldSale(Document): pass`, and a `pos_held_sale.json` that defines the DocType (module "Techsavanna POS", not submittable, naming by field `held_id`) with these fields:
+**1. The table.** Create the folder `murzak_pos/murzak_pos/doctype/pos_held_sale/` with an empty `__init__.py`, a `pos_held_sale.py` containing `class POSHeldSale(Document): pass`, and a `pos_held_sale.json` that defines the DocType (module "Murzak POS", not submittable, naming by field `held_id`) with these fields:
 
 | Field | Type | Notes |
 |---|---|---|
@@ -115,7 +115,7 @@ This has not been run. It is written to fit `Murzak-PoS-Backend`: it uses the se
 
 The record's `owner` is who held it. Merging to `main` runs `bench migrate` on the server (see `.github/workflows/deploy.yml`), which creates the table by itself.
 
-**2. The calls**, in `techsavanna_pos/api/held_sales_api.py`:
+**2. The calls**, in `murzak_pos/api/held_sales_api.py`:
 ```python
 """
 Held sales: bills put on hold at a till (a table, a tab) and shared by every till of a business.
@@ -129,7 +129,7 @@ import json
 import frappe
 from frappe import _
 
-from techsavanna_pos.api.payment_gateway_common import get_user_companies, resolve_company
+from murzak_pos.api.payment_gateway_common import get_user_companies, resolve_company
 
 MAX_LINES = 300
 MAX_PAYLOAD = 256 * 1024
@@ -209,10 +209,10 @@ def purge_old_held_sales():
     frappe.db.sql("DELETE FROM `tabPOS Held Sale` WHERE held_at < %s", (cutoff,))
 ```
 
-**3. The daily clean-up.** In `techsavanna_pos/hooks.py` the `scheduler_events` block is currently commented out. Enable it with:
+**3. The daily clean-up.** In `murzak_pos/hooks.py` the `scheduler_events` block is currently commented out. Enable it with:
 ```python
 scheduler_events = {
-    "daily": ["techsavanna_pos.api.held_sales_api.purge_old_held_sales"],
+    "daily": ["murzak_pos.api.held_sales_api.purge_old_held_sales"],
 }
 ```
 

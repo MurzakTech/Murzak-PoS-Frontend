@@ -9,8 +9,8 @@ import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
  * returns "***" for a saved secret, and sending "***" back leaves it unchanged.
  */
 
-const MPESA = 'techsavanna_pos.api.mpesa_api';
-const GATEWAYS = 'techsavanna_pos.api.payment_gateway_api';
+const MPESA = 'murzak_pos.api.mpesa_api';
+const GATEWAYS = 'murzak_pos.api.payment_gateway_api';
 
 export const SAVED_SECRET = '***';
 

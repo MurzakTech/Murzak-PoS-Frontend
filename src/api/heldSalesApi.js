@@ -14,7 +14,7 @@ import axiosInstance from './axiosInstance';
 import { friendlyErrorMessage } from '../utils/friendlyError';
 import { heldTotal } from '../utils/heldSales';
 
-const BASE = 'techsavanna_pos.api.held_sales_api';
+const BASE = 'murzak_pos.api.held_sales_api';
 export const ENDPOINTS = {
   list: `${BASE}.list_held_sales`,
   save: `${BASE}.save_held_sale`,

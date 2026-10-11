@@ -162,14 +162,14 @@ src/
 
 ```javascript
 const ENDPOINTS = {
-  createStockTransfer: 'techsavanna_pos.api.stock.create_stock_transfer',
-  listStockTransferRequests: 'techsavanna_pos.api.stock.list_stock_transfer_requests',
-  getStockTransferRequest: 'techsavanna_pos.api.stock.get_stock_transfer_request',
-  approveStockTransfer: 'techsavanna_pos.api.stock.approve_stock_transfer',
-  approveStockTransferWorkflow: 'techsavanna_pos.api.stock.approve_stock_transfer_workflow',
-  dispatchStock: 'techsavanna_pos.api.stock.dispatch_stock',
-  receiveStockDestination: 'techsavanna_pos.api.stock.receive_stock_destination',
-  confirmReceiveTransfer: 'techsavanna_pos.api.stock.confirm_receive_transfer',
+  createStockTransfer: 'murzak_pos.api.stock.create_stock_transfer',
+  listStockTransferRequests: 'murzak_pos.api.stock.list_stock_transfer_requests',
+  getStockTransferRequest: 'murzak_pos.api.stock.get_stock_transfer_request',
+  approveStockTransfer: 'murzak_pos.api.stock.approve_stock_transfer',
+  approveStockTransferWorkflow: 'murzak_pos.api.stock.approve_stock_transfer_workflow',
+  dispatchStock: 'murzak_pos.api.stock.dispatch_stock',
+  receiveStockDestination: 'murzak_pos.api.stock.receive_stock_destination',
+  confirmReceiveTransfer: 'murzak_pos.api.stock.confirm_receive_transfer',
 };
 ```
 

@@ -4,7 +4,7 @@ Complete API documentation for managing stock transfer requests (Material Reques
 
 ## Base URL
 ```
-/api/method/techsavanna_pos.api.stock.{endpoint_name}
+/api/method/murzak_pos.api.stock.{endpoint_name}
 ```
 
 ## Authentication
@@ -86,7 +86,7 @@ interface CreateStockTransferRequestPayload {
 
 ```javascript
 const createStockTransferRequest = async () => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.create_stock_transfer_request', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.create_stock_transfer_request', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ interface SubmitStockTransferRequestPayload {
 
 ```javascript
 const submitStockTransferRequest = async (requestId) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.submit_stock_transfer_request', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.submit_stock_transfer_request', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -231,7 +231,7 @@ interface ApproveStockTransferRequestPayload {
 
 ```javascript
 const approveStockTransferRequest = async (requestId, approvedBy, notes) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.approve_stock_transfer', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.approve_stock_transfer', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -310,7 +310,7 @@ interface DispatchStockPayload {
 
 ```javascript
 const dispatchStock = async (requestId, originWarehouse, items, dispatchedBy, notes) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.dispatch_stock', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.dispatch_stock', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -372,7 +372,7 @@ interface ReceiveStockPayload {
 
 ```javascript
 const receiveStock = async (requestId, destinationWarehouse, items, receivedBy, notes, grn) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.receive_stock_destination', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.receive_stock_destination', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -429,7 +429,7 @@ interface CancelStockTransferRequestPayload {
 
 ```javascript
 const cancelStockTransferRequest = async (requestId, reason) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.cancel_stock_transfer_request', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.cancel_stock_transfer_request', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -487,7 +487,7 @@ interface ListStockTransferRequestsPayload {
 
 ```javascript
 const listStockTransferRequests = async (filters = {}) => {
-  const response = await fetch('/api/method/techsavanna_pos.api.stock.list_stock_transfer_requests', {
+  const response = await fetch('/api/method/murzak_pos.api.stock.list_stock_transfer_requests', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -556,7 +556,7 @@ interface GetStockTransferRequestParams {
 ```javascript
 const getStockTransferRequest = async (requestId) => {
   const response = await fetch(
-    `/api/method/techsavanna_pos.api.stock.get_stock_transfer_request?request_id=${requestId}`,
+    `/api/method/murzak_pos.api.stock.get_stock_transfer_request?request_id=${requestId}`,
     {
       method: 'GET',
       headers: {
@@ -749,7 +749,7 @@ export const useStockTransferRequest = (): UseStockTransferRequestReturn => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/method/techsavanna_pos.api.stock.${endpoint}`, {
+      const response = await fetch(`/api/method/murzak_pos.api.stock.${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -795,7 +795,7 @@ export const useStockTransferRequest = (): UseStockTransferRequestReturn => {
     setError(null);
     try {
       const response = await fetch(
-        `/api/method/techsavanna_pos.api.stock.get_stock_transfer_request?request_id=${requestId}`
+        `/api/method/murzak_pos.api.stock.get_stock_transfer_request?request_id=${requestId}`
       );
       const data = await response.json();
       if (!data.success && data.message) {

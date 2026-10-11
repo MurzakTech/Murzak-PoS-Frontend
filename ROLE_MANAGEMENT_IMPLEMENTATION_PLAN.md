@@ -44,9 +44,9 @@ Create the foundation for doctype and module discovery by integrating System API
 ```javascript
 // Endpoints
 const ENDPOINTS = {
-  listModules: 'techsavanna_pos.api.system_api.list_modules',
-  listDoctypes: 'techsavanna_pos.api.system_api.list_doctypes',
-  getDoctypeDetails: 'techsavanna_pos.api.system_api.get_doctype_details',
+  listModules: 'murzak_pos.api.system_api.list_modules',
+  listDoctypes: 'murzak_pos.api.system_api.list_doctypes',
+  getDoctypeDetails: 'murzak_pos.api.system_api.get_doctype_details',
 };
 
 // Thunks to implement:
@@ -412,9 +412,9 @@ import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
 
 const ENDPOINTS = {
-  listModules: 'techsavanna_pos.api.system_api.list_modules',
-  listDoctypes: 'techsavanna_pos.api.system_api.list_doctypes',
-  getDoctypeDetails: 'techsavanna_pos.api.system_api.get_doctype_details',
+  listModules: 'murzak_pos.api.system_api.list_modules',
+  listDoctypes: 'murzak_pos.api.system_api.list_doctypes',
+  getDoctypeDetails: 'murzak_pos.api.system_api.get_doctype_details',
 };
 
 // Helper functions (similar to roleSlice.js)

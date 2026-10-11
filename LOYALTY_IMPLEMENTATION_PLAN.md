@@ -53,12 +53,12 @@ This document outlines the implementation plan for integrating Loyalty Program f
 **New Endpoints to Add:**
 ```javascript
 const ENDPOINTS = {
-  createLoyaltyProgram: 'techsavanna_pos.api.loyalty.create_loyalty_program',
-  assignLoyaltyProgram: 'techsavanna_pos.api.loyalty.assign_loyalty_program',
-  earnLoyaltyPoints: 'techsavanna_pos.api.loyalty.earn_loyalty_points',
-  getLoyaltyBalance: 'techsavanna_pos.api.loyalty.get_loyalty_balance',
-  redeemPoints: 'techsavanna_pos.api.loyalty.redeem_points',
-  getPointsHistory: 'techsavanna_pos.api.loyalty.get_points_history',
+  createLoyaltyProgram: 'murzak_pos.api.loyalty.create_loyalty_program',
+  assignLoyaltyProgram: 'murzak_pos.api.loyalty.assign_loyalty_program',
+  earnLoyaltyPoints: 'murzak_pos.api.loyalty.earn_loyalty_points',
+  getLoyaltyBalance: 'murzak_pos.api.loyalty.get_loyalty_balance',
+  redeemPoints: 'murzak_pos.api.loyalty.redeem_points',
+  getPointsHistory: 'murzak_pos.api.loyalty.get_points_history',
 };
 ```
 
@@ -410,7 +410,7 @@ src/
 ## API Integration Details
 
 ### 1. Create Loyalty Program
-- **Endpoint:** `techsavanna_pos.api.loyalty.create_loyalty_program`
+- **Endpoint:** `murzak_pos.api.loyalty.create_loyalty_program`
 - **Method:** POST
 - **Required Fields:** `loyalty_program_name`, `points_per_unit`, `program_type`
 - **Optional Fields:** `active`, `tier_name`
@@ -418,14 +418,14 @@ src/
 - **Note:** Add to interceptor's authenticated endpoints for production
 
 ### 2. Assign Loyalty Program
-- **Endpoint:** `techsavanna_pos.api.loyalty.assign_loyalty_program`
+- **Endpoint:** `murzak_pos.api.loyalty.assign_loyalty_program`
 - **Method:** POST
 - **Required Fields:** `customer_id`, `loyalty_program_name`
 - **Response:** `{ status: "success", customer: {...} }`
 - **Note:** Guest access allowed
 
 ### 3. Earn Loyalty Points
-- **Endpoint:** `techsavanna_pos.api.loyalty.earn_loyalty_points`
+- **Endpoint:** `murzak_pos.api.loyalty.earn_loyalty_points`
 - **Method:** POST
 - **Authentication:** **Required** (`allow_guest=False`)
 - **Required Fields:** `customer_id`, `purchase_amount`
@@ -434,7 +434,7 @@ src/
 - **Points Calculation:** `purchase_amount / collection_factor` (integer division)
 
 ### 4. Get Loyalty Balance
-- **Endpoint:** `techsavanna_pos.api.loyalty.get_loyalty_balance`
+- **Endpoint:** `murzak_pos.api.loyalty.get_loyalty_balance`
 - **Method:** GET or POST
 - **Required Fields:** `customer_id`
 - **Optional Fields:** `limit` (default: 5)
@@ -442,7 +442,7 @@ src/
 - **Note:** Support both GET and POST methods
 
 ### 5. Redeem Points
-- **Endpoint:** `techsavanna_pos.api.loyalty.redeem_points`
+- **Endpoint:** `murzak_pos.api.loyalty.redeem_points`
 - **Method:** POST
 - **Required Fields:** `customer_id`, `points_to_redeem`
 - **Optional Fields:** `reference_document`
@@ -450,7 +450,7 @@ src/
 - **Validation:** Must check balance before allowing redemption
 
 ### 6. Get Points History
-- **Endpoint:** `techsavanna_pos.api.loyalty.get_points_history`
+- **Endpoint:** `murzak_pos.api.loyalty.get_points_history`
 - **Method:** GET or POST
 - **Required Fields:** `customer_id`
 - **Optional Fields:** `start_date`, `end_date`, `transaction_type`, `limit`, `page`

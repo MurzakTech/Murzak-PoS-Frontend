@@ -15,12 +15,12 @@ Updated the React app implementation to match the new backend API documentation.
 
 #### ✅ `submit_stock_transfer_request`
 - **Before:** Used Frappe's standard `frappe.client.submit` API
-- **After:** Uses dedicated endpoint `techsavanna_pos.api.stock.submit_stock_transfer_request`
+- **After:** Uses dedicated endpoint `murzak_pos.api.stock.submit_stock_transfer_request`
 - **Format:** JSON request body with `{ request_id: string }`
 - **Response:** `{ success: true, message: "...", data: { request_id, status, docstatus } }`
 
 #### ✅ `cancel_stock_transfer_request` (NEW)
-- **Endpoint:** `techsavanna_pos.api.stock.cancel_stock_transfer_request`
+- **Endpoint:** `murzak_pos.api.stock.cancel_stock_transfer_request`
 - **Format:** JSON request body with `{ request_id: string, reason?: string }`
 - **Response:** `{ success: true, message: "...", data: { request_id, status: "Cancelled", docstatus: 2 } }`
 - **Functionality:** Allows cancelling Draft, Submitted, or Approved requests (not In Transit)
@@ -79,8 +79,8 @@ Updated all thunks to handle the new consistent response format:
 ```javascript
 const ENDPOINTS = {
   // ... existing endpoints
-  submitStockTransferRequest: 'techsavanna_pos.api.stock.submit_stock_transfer_request', // NEW
-  cancelStockTransferRequest: 'techsavanna_pos.api.stock.cancel_stock_transfer_request', // NEW
+  submitStockTransferRequest: 'murzak_pos.api.stock.submit_stock_transfer_request', // NEW
+  cancelStockTransferRequest: 'murzak_pos.api.stock.cancel_stock_transfer_request', // NEW
   // Removed: submitMaterialRequest: 'frappe.client.submit'
 };
 ```

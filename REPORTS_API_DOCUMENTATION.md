@@ -1,6 +1,6 @@
 # Reports API Documentation
 
-Complete API documentation for **Inventory Reports** and **Sales Analytics Reports** endpoints in the TechSavanna POS system.
+Complete API documentation for **Inventory Reports** and **Sales Analytics Reports** endpoints in the Murzak POS system.
 
 ---
 
@@ -41,7 +41,7 @@ All endpoints return data in a consistent format:
 
 ### Base URL
 ```
-/api/method/techsavanna_pos.api.reports.{endpoint_name}
+/api/method/murzak_pos.api.reports.{endpoint_name}
 ```
 
 ### Authentication
@@ -92,7 +92,7 @@ Get aggregated sales data for analytics including daily sales, revenue by item g
 ```javascript
 // GET Request
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.sales_analytics_report?company=Your Company&start_date=2024-01-01&end_date=2024-01-31`,
+  `/api/method/murzak_pos.api.reports.sales_analytics_report?company=Your Company&start_date=2024-01-01&end_date=2024-01-31`,
   {
     method: 'GET',
     headers: {
@@ -104,7 +104,7 @@ const response = await fetch(
 
 // POST Request
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.sales_analytics_report`,
+  `/api/method/murzak_pos.api.reports.sales_analytics_report`,
   {
     method: 'POST',
     headers: {
@@ -187,7 +187,7 @@ Same as `sales_analytics_report` plus:
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.export_sales_analytics_report`,
+  `/api/method/murzak_pos.api.reports.export_sales_analytics_report`,
   {
     method: 'POST',
     headers: {
@@ -239,7 +239,7 @@ Get inventory value breakdown by item category/group.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_value_by_category_report`,
+  `/api/method/murzak_pos.api.reports.inventory_value_by_category_report`,
   {
     method: 'POST',
     headers: {
@@ -300,7 +300,7 @@ Compare inventory valuation using different cost methods (FIFO, LIFO, Weighted A
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_cost_method_comparison_report`,
+  `/api/method/murzak_pos.api.reports.inventory_cost_method_comparison_report`,
   {
     method: 'POST',
     headers: {
@@ -359,7 +359,7 @@ Get historical inventory values over time with period grouping.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_value_trends_report`,
+  `/api/method/murzak_pos.api.reports.inventory_value_trends_report`,
   {
     method: 'POST',
     headers: {
@@ -424,7 +424,7 @@ Calculate turnover rates for inventory items.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_turnover_report`,
+  `/api/method/murzak_pos.api.reports.inventory_turnover_report`,
   {
     method: 'POST',
     headers: {
@@ -482,7 +482,7 @@ Calculate days of stock remaining based on current stock and average consumption
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_days_on_hand_report`,
+  `/api/method/murzak_pos.api.reports.inventory_days_on_hand_report`,
   {
     method: 'POST',
     headers: {
@@ -555,7 +555,7 @@ Get movement trends and patterns over time.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_movement_patterns_report`,
+  `/api/method/murzak_pos.api.reports.inventory_movement_patterns_report`,
   {
     method: 'POST',
     headers: {
@@ -631,7 +631,7 @@ Get stock aging report with movement rate and slow-moving threshold.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.stock_aging_report?slow_moving_threshold=5`,
+  `/api/method/murzak_pos.api.reports.stock_aging_report?slow_moving_threshold=5`,
   {
     method: 'GET',
     headers: {
@@ -696,7 +696,7 @@ Identify items with high obsolescence risk.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_obsolescence_risk_report`,
+  `/api/method/murzak_pos.api.reports.inventory_obsolescence_risk_report`,
   {
     method: 'POST',
     headers: {
@@ -764,7 +764,7 @@ Get recommended actions for aging stock items.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_aging_recommendations_report`,
+  `/api/method/murzak_pos.api.reports.inventory_aging_recommendations_report`,
   {
     method: 'POST',
     headers: {
@@ -836,7 +836,7 @@ Get stock accuracy metrics (book vs actual).
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_accuracy_report`,
+  `/api/method/murzak_pos.api.reports.inventory_accuracy_report`,
   {
     method: 'POST',
     headers: {
@@ -892,7 +892,7 @@ Get detailed variance analysis from stock counts.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_variance_report`,
+  `/api/method/murzak_pos.api.reports.inventory_variance_report`,
   {
     method: 'POST',
     headers: {
@@ -953,7 +953,7 @@ Get trends in stock adjustments over time.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_adjustment_trends_report`,
+  `/api/method/murzak_pos.api.reports.inventory_adjustment_trends_report`,
   {
     method: 'POST',
     headers: {
@@ -1012,7 +1012,7 @@ Get metrics on stock transfer performance.
 
 ```javascript
 const response = await fetch(
-  `/api/method/techsavanna_pos.api.reports.inventory_transfer_efficiency_report`,
+  `/api/method/murzak_pos.api.reports.inventory_transfer_efficiency_report`,
   {
     method: 'POST',
     headers: {
@@ -1055,7 +1055,7 @@ Create an API utility file:
 
 ```javascript
 // utils/api.js
-const API_BASE = '/api/method/techsavanna_pos.api.reports';
+const API_BASE = '/api/method/murzak_pos.api.reports';
 
 export const fetchReport = async (endpoint, params = {}, token) => {
   const url = `${API_BASE}.${endpoint}`;
@@ -1393,21 +1393,21 @@ try {
 
 | Endpoint | URL Pattern |
 |----------|-------------|
-| Sales Analytics | `/api/method/techsavanna_pos.api.reports.sales_analytics_report` |
-| Export Sales Analytics | `/api/method/techsavanna_pos.api.reports.export_sales_analytics_report` |
-| Value by Category | `/api/method/techsavanna_pos.api.reports.inventory_value_by_category_report` |
-| Cost Method Comparison | `/api/method/techsavanna_pos.api.reports.inventory_cost_method_comparison_report` |
-| Value Trends | `/api/method/techsavanna_pos.api.reports.inventory_value_trends_report` |
-| Turnover Report | `/api/method/techsavanna_pos.api.reports.inventory_turnover_report` |
-| Days on Hand | `/api/method/techsavanna_pos.api.reports.inventory_days_on_hand_report` |
-| Movement Patterns | `/api/method/techsavanna_pos.api.reports.inventory_movement_patterns_report` |
-| Stock Aging | `/api/method/techsavanna_pos.api.reports.stock_aging_report` |
-| Obsolescence Risk | `/api/method/techsavanna_pos.api.reports.inventory_obsolescence_risk_report` |
-| Aging Recommendations | `/api/method/techsavanna_pos.api.reports.inventory_aging_recommendations_report` |
-| Accuracy Report | `/api/method/techsavanna_pos.api.reports.inventory_accuracy_report` |
-| Variance Report | `/api/method/techsavanna_pos.api.reports.inventory_variance_report` |
-| Adjustment Trends | `/api/method/techsavanna_pos.api.reports.inventory_adjustment_trends_report` |
-| Transfer Efficiency | `/api/method/techsavanna_pos.api.reports.inventory_transfer_efficiency_report` |
+| Sales Analytics | `/api/method/murzak_pos.api.reports.sales_analytics_report` |
+| Export Sales Analytics | `/api/method/murzak_pos.api.reports.export_sales_analytics_report` |
+| Value by Category | `/api/method/murzak_pos.api.reports.inventory_value_by_category_report` |
+| Cost Method Comparison | `/api/method/murzak_pos.api.reports.inventory_cost_method_comparison_report` |
+| Value Trends | `/api/method/murzak_pos.api.reports.inventory_value_trends_report` |
+| Turnover Report | `/api/method/murzak_pos.api.reports.inventory_turnover_report` |
+| Days on Hand | `/api/method/murzak_pos.api.reports.inventory_days_on_hand_report` |
+| Movement Patterns | `/api/method/murzak_pos.api.reports.inventory_movement_patterns_report` |
+| Stock Aging | `/api/method/murzak_pos.api.reports.stock_aging_report` |
+| Obsolescence Risk | `/api/method/murzak_pos.api.reports.inventory_obsolescence_risk_report` |
+| Aging Recommendations | `/api/method/murzak_pos.api.reports.inventory_aging_recommendations_report` |
+| Accuracy Report | `/api/method/murzak_pos.api.reports.inventory_accuracy_report` |
+| Variance Report | `/api/method/murzak_pos.api.reports.inventory_variance_report` |
+| Adjustment Trends | `/api/method/murzak_pos.api.reports.inventory_adjustment_trends_report` |
+| Transfer Efficiency | `/api/method/murzak_pos.api.reports.inventory_transfer_efficiency_report` |
 
 ---
 

@@ -238,7 +238,7 @@ src/
 
 ```javascript
 // Structure
-const REPORTS_API_BASE = 'techsavanna_pos.api.reports';
+const REPORTS_API_BASE = 'murzak_pos.api.reports';
 
 // Functions to implement:
 - fetchSalesAnalyticsReport(params)
@@ -426,7 +426,7 @@ Chart wrapper component supporting:
 // Example: reportsApi.js
 import axiosInstance from '../api/axiosInstance';
 
-const REPORTS_API_BASE = 'techsavanna_pos.api.reports';
+const REPORTS_API_BASE = 'murzak_pos.api.reports';
 
 // Helper to build endpoint URL
 const buildEndpoint = (endpoint) => 
