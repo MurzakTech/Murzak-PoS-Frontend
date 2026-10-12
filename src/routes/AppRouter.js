@@ -5,6 +5,9 @@ import Layout from '../components/Layout/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import IdleSignOut from '../components/IdleSignOut';
 import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Common';
+import NewLookGate from '../newlook/NewLookGate';
+import NewLookShell from '../newlook/NewLookShell';
+import { newLookRoutes } from '../newlook/newLookRoutes';
 
 // Branded splash for public pages; layout-shaped skeleton inside the app shell
 const LoadingFallback = FullPageLoader;
@@ -159,6 +162,28 @@ const AppRouter = () => {
                 }) || []
             )}
           
+          {/* Redesigned screens: open only while the shop's New look switch is on (see src/newlook) */}
+          {newLookRoutes.map((route) => {
+            const Component = route.element;
+            return (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  <ProtectedRoute>
+                    <NewLookGate>
+                      <NewLookShell>
+                        <Suspense fallback={<ContentLoadingFallback />}>
+                          <Component />
+                        </Suspense>
+                      </NewLookShell>
+                    </NewLookGate>
+                  </ProtectedRoute>
+                }
+              />
+            );
+          })}
+
           {/* 404 route */}
           {routes
             .filter((route) => route.path === '*')
