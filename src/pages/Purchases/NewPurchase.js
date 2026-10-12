@@ -407,6 +407,7 @@ ITEM-002,5,50.00,Warehouse - Company`;
     if (draftName && isDraft) {
       const updateData = {
         ...basePurchaseData,
+        name: draftName,
         // Optional fields for upsert
         transaction_date: data.posting_date || undefined,
         idempotency_key: `po_update_${draftName}_${Date.now()}`,

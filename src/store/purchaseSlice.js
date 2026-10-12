@@ -6,13 +6,11 @@ import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
 // Purchase API endpoints - matching API_DOCUMENTATION_PURCHASE.md
 const ENDPOINTS = {
   createPurchaseInvoice: 'murzak_pos.api.purchase.create_purchase_order',
-  updatePurchaseInvoice: 'murzak_pos.api.purchase.update_purchase_order', // Deprecated: Use upsertPurchaseOrder
   upsertPurchaseOrder: 'murzak_pos.api.purchase.upsert_purchase_order',
   submitPurchaseOrder: 'murzak_pos.api.purchase.submit_purchase_order',
   getPurchaseInvoice: 'murzak_pos.api.purchase.get_purchase_order',
   listPurchaseOrders: 'murzak_pos.api.purchase.list_purchase_orders', // Purchase Orders (LPO)
-  submitToETIMS: 'murzak_pos.api.submit_purchase_invoice_to_etims',
-  cancelPurchaseInvoice: 'murzak_pos.api.cancel_purchase_invoice',
+  cancelPurchaseInvoice: 'murzak_pos.api.purchase.cancel_purchase_invoice',
   // Purchase Receipt endpoints
   createPurchaseReceipt: 'murzak_pos.api.purchase.create_purchase_receipt',
   createStockReceipt: 'murzak_pos.api.purchase.create_stock_receipt',
@@ -20,22 +18,18 @@ const ENDPOINTS = {
   listPurchaseReceipts: 'murzak_pos.api.purchase.list_purchase_receipts',
   // GRN endpoints (based on PURCHASE_API_DOCUMENTATION.md)
   createGRN: 'murzak_pos.api.purchase.create_grn',
-  fetchRegisteredPurchases: 'murzak_pos.api.purchase.fetch_registered_purchases',
-  listRegisteredPurchases: 'murzak_pos.api.purchase.list_registered_purchases',
-  createFromRegisteredPurchase: 'murzak_pos.api.purchase.create_purchase_invoice_from_registered_purchase',
   createPurchaseReturn: 'murzak_pos.api.purchase.create_purchase_return',
-  bulkSubmitToETIMS: 'murzak_pos.api.purchase.bulk_submit_purchase_invoices',
-  checkETIMSStatus: 'murzak_pos.api.check_etims_registration_status',
+  checkETIMSStatus: 'murzak_pos.api.purchase.check_etims_registration_status',
   // Bank and Account Management endpoints
-  createCashOrBankAccount: 'murzak_pos.api.create_cash_or_bank_account',
-  listCashAndBankAccounts: 'murzak_pos.api.list_cash_and_bank_accounts',
-  getAccountDetails: 'murzak_pos.api.get_account_details',
-  updateAccount: 'murzak_pos.api.update_account',
-  createBank: 'murzak_pos.api.create_bank',
-  listBanks: 'murzak_pos.api.list_banks',
-  createBankAccount: 'murzak_pos.api.create_bank_account',
-  listBankAccounts: 'murzak_pos.api.list_bank_accounts',
-  getBankAccountDetails: 'murzak_pos.api.get_bank_account_details',
+  createCashOrBankAccount: 'murzak_pos.api.bank_accounts_api.create_cash_or_bank_account',
+  listCashAndBankAccounts: 'murzak_pos.api.bank_accounts_api.list_cash_and_bank_accounts',
+  getAccountDetails: 'murzak_pos.api.bank_accounts_api.get_account_details',
+  updateAccount: 'murzak_pos.api.bank_accounts_api.update_account',
+  createBank: 'murzak_pos.api.bank_accounts_api.create_bank',
+  listBanks: 'murzak_pos.api.bank_accounts_api.list_banks',
+  createBankAccount: 'murzak_pos.api.bank_accounts_api.create_bank_account',
+  listBankAccounts: 'murzak_pos.api.bank_accounts_api.list_bank_accounts',
+  getBankAccountDetails: 'murzak_pos.api.bank_accounts_api.get_bank_account_details',
   // Purchase Invoice endpoints (based on PURCHASE_INVOICE_API_DOCUMENTATION.md)
   listPurchaseInvoices: 'murzak_pos.api.purchase.list_purchase_invoices',
   getPurchaseInvoiceDetails: 'murzak_pos.api.purchase.get_purchase_invoice_details',
@@ -502,7 +496,7 @@ export const createPurchaseInvoice = createAsyncThunk(
       }));
       
       return {
-        purchase: { name: data?.name || response.data?.name },
+        purchase: { name: data?.lpo_no || data?.name || data?.data?.name || response.data?.name },
         has_etims: data?.has_etims || response.data?.has_etims || false,
         etims_submission: data?.etims_submission || response.data?.etims_submission,
       };
@@ -512,36 +506,6 @@ export const createPurchaseInvoice = createAsyncThunk(
         message: errorMessage,
         severity: getErrorSeverity(error),
         title: 'Failed to create purchase invoice',
-      }));
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-// Update Purchase Invoice (Deprecated: Use upsertPurchaseOrder instead)
-export const updatePurchaseInvoice = createAsyncThunk(
-  'purchase/updatePurchaseInvoice',
-  async (purchaseData, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(ENDPOINTS.updatePurchaseInvoice, purchaseData);
-      const data = extractResponseData(response);
-      const successMessage = extractSuccessMessage(response) || 'Purchase Invoice updated successfully';
-      
-      dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
-      }));
-      
-      return {
-        purchase: { name: data?.name || purchaseData.name },
-      };
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({
-        message: errorMessage,
-        severity: getErrorSeverity(error),
-        title: 'Failed to update purchase invoice',
       }));
       return rejectWithValue(errorMessage);
     }
@@ -793,147 +757,6 @@ export const listPurchaseReceipts = createAsyncThunk(
         message: errorMessage,
         severity: getErrorSeverity(error),
         title: 'Failed to fetch purchase receipts',
-      }));
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-// Submit Purchase Invoice to eTIMS
-export const submitPurchaseInvoiceToETIMS = createAsyncThunk(
-  'purchase/submitPurchaseInvoiceToETIMS',
-  async ({ name, settings_name }, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(ENDPOINTS.submitToETIMS, {
-        name,
-        settings_name,
-      });
-      const successMessage = extractSuccessMessage(response) || 'Purchase Invoice submitted to eTIMS successfully';
-      
-      dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
-      }));
-      
-      return { name };
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({
-        message: errorMessage,
-        severity: getErrorSeverity(error),
-        title: 'Failed to submit to eTIMS',
-      }));
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-// Bulk Submit Purchase Invoices to eTIMS
-export const bulkSubmitPurchaseInvoicesToETIMS = createAsyncThunk(
-  'purchase/bulkSubmitPurchaseInvoicesToETIMS',
-  async ({ purchase_invoice_names, settings_name }, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(ENDPOINTS.bulkSubmitToETIMS, {
-        purchase_invoice_names,
-        settings_name,
-      });
-      const data = extractResponseData(response);
-      
-      dispatch(showNotification({
-        message: `Submitted ${data?.submitted_count || 0} purchase(s) to eTIMS`,
-        severity: 'success',
-        title: 'Bulk Submit Complete',
-      }));
-      
-      return data;
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({
-        message: errorMessage,
-        severity: getErrorSeverity(error),
-        title: 'Failed to submit purchases to eTIMS',
-      }));
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-// Fetch Registered Purchases from eTIMS
-export const fetchRegisteredPurchases = createAsyncThunk(
-  'purchase/fetchRegisteredPurchases',
-  async (params = {}, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(ENDPOINTS.fetchRegisteredPurchases, params);
-      const successMessage = extractSuccessMessage(response) || 'Fetching registered purchases from eTIMS';
-      
-      dispatch(showNotification({
-        message: successMessage,
-        severity: 'info',
-        title: 'Fetch Initiated',
-      }));
-      
-      return { success: true };
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({
-        message: errorMessage,
-        severity: getErrorSeverity(error),
-        title: 'Failed to fetch registered purchases',
-      }));
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-// List Registered Purchases
-export const listRegisteredPurchases = createAsyncThunk(
-  'purchase/listRegisteredPurchases',
-  async (params = {}, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(ENDPOINTS.listRegisteredPurchases, { params });
-      const data = extractResponseData(response);
-      return {
-        registeredPurchases: Array.isArray(data) ? data : (data?.data || []),
-        count: data?.count || (Array.isArray(data) ? data.length : 0),
-      };
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({
-        message: errorMessage,
-        severity: getErrorSeverity(error),
-        title: 'Failed to fetch registered purchases',
-      }));
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-// Create Purchase Invoice from Registered Purchase
-export const createPurchaseInvoiceFromRegisteredPurchase = createAsyncThunk(
-  'purchase/createPurchaseInvoiceFromRegisteredPurchase',
-  async ({ registered_purchase_name, company, warehouse }, { dispatch, rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(ENDPOINTS.createFromRegisteredPurchase, {
-        registered_purchase_name,
-        company,
-        warehouse,
-      });
-      const successMessage = extractSuccessMessage(response) || 'Purchase Invoice created from Registered Purchase successfully';
-      
-      dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
-      }));
-      
-      return { success: true };
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      dispatch(showNotification({
-        message: errorMessage,
-        severity: getErrorSeverity(error),
-        title: 'Failed to create purchase invoice',
       }));
       return rejectWithValue(errorMessage);
     }
@@ -1272,7 +1095,6 @@ export const getBankAccountDetails = createAsyncThunk(
 
 const initialState = {
   purchases: [],
-  registeredPurchases: [],
   selectedPurchase: null,
   // Purchase Receipt state
   purchaseReceipts: [],
@@ -1324,12 +1146,6 @@ const initialState = {
     total: 0,
     total_pages: 0,
   },
-  registeredPagination: {
-    page: 1,
-    page_size: 20,
-    total: 0,
-    total_pages: 0,
-  },
   filters: {
     search_term: '',
     supplier: '',
@@ -1339,7 +1155,6 @@ const initialState = {
   },
   isLoading: false,
   isLoadingDetails: false,
-  isLoadingRegistered: false,
   isLoadingAccounts: false,
   error: null,
 };
@@ -1448,20 +1263,6 @@ const purchaseSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      // Update Purchase Invoice
-      .addCase(updatePurchaseInvoice.fulfilled, (state, action) => {
-        if (action.payload.purchase) {
-          const index = state.purchases.findIndex(
-            (p) => p.name === action.payload.purchase.name
-          );
-          if (index !== -1) {
-            state.purchases[index] = { ...state.purchases[index], ...action.payload.purchase };
-          }
-          if (state.selectedPurchase?.name === action.payload.purchase.name) {
-            state.selectedPurchase = { ...state.selectedPurchase, ...action.payload.purchase };
-          }
-        }
-      })
       // Upsert Purchase Order
       .addCase(upsertPurchaseOrder.pending, (state) => {
         state.isLoading = true;
@@ -1531,21 +1332,6 @@ const purchaseSlice = createSlice({
         if (state.selectedPurchase?.name === action.payload.name) {
           state.selectedPurchase = { ...state.selectedPurchase, status: 'Cancelled' };
         }
-      })
-      // List Registered Purchases
-      .addCase(listRegisteredPurchases.pending, (state) => {
-        state.isLoadingRegistered = true;
-      })
-      .addCase(listRegisteredPurchases.fulfilled, (state, action) => {
-        state.isLoadingRegistered = false;
-        state.registeredPurchases = action.payload.registeredPurchases || [];
-        state.registeredPagination.total = action.payload.count || 0;
-        state.registeredPagination.total_pages = Math.ceil(
-          (action.payload.count || 0) / state.registeredPagination.page_size
-        );
-      })
-      .addCase(listRegisteredPurchases.rejected, (state) => {
-        state.isLoadingRegistered = false;
       })
       // Check eTIMS Status
       .addCase(checkETIMSStatus.fulfilled, (state, action) => {

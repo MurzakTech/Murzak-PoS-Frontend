@@ -266,7 +266,7 @@ const DiscountRuleForm = () => {
       company: data.company || userCompany,
       discount_type: data.discount_type,
       discount_value: parseFloat(data.discount_value),
-      priority: parseInt(data.priority) || 10,
+      priority: Math.min(10, Math.max(1, parseInt(data.priority) || 10)),
       is_active: data.is_active ? 1 : 0,
       ...(data.warehouse && { warehouse: data.warehouse }),
       ...(data.valid_from && { valid_from: data.valid_from }),
@@ -549,8 +549,8 @@ const DiscountRuleForm = () => {
                         label="Priority"
                         fullWidth
                         size="small"
-                        helperText="Lower number = higher priority"
-                        inputProps={{ min: 1 }}
+                        helperText="1 to 10. Lower number goes first. An item discount always beats an item group discount."
+                        inputProps={{ min: 1, max: 10 }}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
