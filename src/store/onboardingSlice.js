@@ -281,7 +281,7 @@ export const createETIMSSettings = createAsyncThunk(
         }));
       }
       
-      return { etimsSettings: data.etims_settings, message: successMessage };
+      return { etimsSettings: data?.etims_settings ?? null, message: successMessage };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
       
@@ -377,7 +377,7 @@ export const getPOSProfile = createAsyncThunk(
       });
       const data = extractResponseData(response);
       
-      return { posProfile: data.pos_profile || data };
+      return { posProfile: data?.pos_profile ?? null };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
       return rejectWithValue(errorMessage);
@@ -436,7 +436,7 @@ export const getETIMSSettings = createAsyncThunk(
       });
       const data = extractResponseData(response);
       
-      return { etimsSettings: data.etims_settings || data };
+      return { etimsSettings: data?.etims_settings ?? null };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
       return rejectWithValue(errorMessage);
@@ -461,7 +461,7 @@ export const updateETIMSSettings = createAsyncThunk(
         }));
       }
       
-      return { etimsSettings: data.etims_settings, message: successMessage };
+      return { etimsSettings: data?.etims_settings ?? null, message: successMessage };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
@@ -691,7 +691,8 @@ const onboardingSlice = createSlice({
     // Update POS profile
     builder
       .addCase(updatePOSProfile.fulfilled, (state, action) => {
-        state.posProfile = action.payload.posProfile;
+        // The reply names only a few settings, so keep the ones already loaded
+        state.posProfile = { ...state.posProfile, ...action.payload.posProfile };
       });
 
     // Get eTIMS settings
