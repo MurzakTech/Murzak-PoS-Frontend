@@ -32,15 +32,13 @@ Front end (this repository):
 | `src/App.js`, `src/routes/AppRouter.js`, `src/routes/routes.js` | Wire the above in (one provider, one block of routes, one Settings entry) |
 | `src/config/roleAccessConfig.js` | `/settings/new-look` is owners only |
 
-Back end (a **separate repository**, not yet merged): `docs/redesign/backend-patches/0001-new-look-switch.patch` adds `murzak_pos/api/new_look_api.py` (two calls, `get_new_look` and `set_new_look`) and `murzak_pos/api/test_new_look_api.py` (17 tests). The two calls follow the back end's own rules: `set_new_look` checks for an owner before it touches anything, both calls refuse a company the caller does not belong to, and a shop can never read or change another shop's switch.
+Back end (a **separate repository**): [Murzak-PoS-Backend#31](https://github.com/MurzakTech/Murzak-PoS-Backend/pull/31), a draft pull request on the branch `claude/new-look-switch`. It adds `murzak_pos/api/new_look_api.py` (two calls, `get_new_look` and `set_new_look`) and `murzak_pos/api/test_new_look_api.py` (17 tests). The two calls follow the back end's own rules: `set_new_look` checks for an owner before it touches anything, both calls refuse a company the caller does not belong to, and a shop can never read or change another shop's switch. A copy of the first commit is kept in `docs/redesign/backend-patches/0001-new-look-switch.patch` for reference (the pull request also has a small formatting commit on top of it).
 
-## Before a real shop can use it: install the back-end part
+## Before a real shop can use it: merge and install the back-end part
 
-This session could not push to `Murzak-PoS-Backend` (push access was declined), so the back-end change is delivered as a patch. To apply it:
-
-1. In a clone of `Murzak-PoS-Backend`: `git checkout -b new-look-switch` then `git am /path/to/0001-new-look-switch.patch`.
-2. Run its tests on a bench: `bench --site <site> run-tests --module murzak_pos.api.test_new_look_api`, and the existing `murzak_pos.api.test_access_control` (it reads every API file to check guards, so it covers the new one too).
-3. Review and merge. **Merging to the back end's main branch deploys it to the live server**, and each per-shop back end needs the new method installed before that shop's switch can be used (the plan's "before switching a shop on" step 2).
+1. Let the back end's own checks run on the pull request: the job "Unit tests (no database)" is the first run of the new tests against real Frappe (until then they have only run against a minimal stand-in).
+2. Review and merge it. **Merging to the back end's main branch deploys it to the live server.**
+3. Each per-shop back end needs the new method installed before that shop's switch can be used (the plan's "before switching a shop on", step 2).
 
 **Until the method exists on a shop's back end, that shop behaves exactly as today:** the app asks, gets no answer, and treats the shop as off. Nobody sees an error pop-up. The owner's page shows a warning "We could not check the setting just now".
 
@@ -48,7 +46,7 @@ This session could not push to `Murzak-PoS-Backend` (push access was declined), 
 
 - Front end: all 49 test files pass (550 tests, 32 of them new); lint is clean on the touched folders; the production build compiles.
 - Browser (Chromium against the production build, stubbed server, fake shop "Demo Shop"), **in the light and the dark theme**, 17 checks each, all passing: the current dashboard loads with the switch off; `/new-look` is "Page Not Found" when off; the owner finds Settings, New look; turning on asks first and sends `enabled: true`; the empty shell loads and survives a reload; "Back to the current screens" returns to the unchanged dashboard; turning off sends `enabled: false` with no confirmation and `/new-look` is "Page Not Found" again; a cashier is sent to the dashboard from both addresses and makes no change request; with the server unreachable, a saved "on" keeps the shell and nothing saved means off; no uncaught page errors.
-- Back end: 17 tests pass against a **minimal stand-in for Frappe, not a real bench**. They must be run on a bench (step 2 above) before merging.
+- Back end: 17 tests pass against a **minimal stand-in for Frappe, not a real bench**, and the back end's lint and changed-files check passes locally with its pinned `ruff 0.8.1`. The real run is the CI job on the back-end pull request.
 
 **Not yet checked:** a real shop (no test store login has been given), and the real back end.
 
