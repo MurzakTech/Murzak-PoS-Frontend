@@ -60,6 +60,10 @@ import {
   Autorenew,
   CalendarToday,
   Timeline,
+  FactCheck,
+  CompareArrows,
+  Restaurant,
+  Delete,
 } from '@mui/icons-material';
 import { getNavigationRoutes } from '../../routes/routes';
 import useRoleAccess from '../../hooks/useRoleAccess';
@@ -115,6 +119,10 @@ const iconMap = {
   Autorenew,
   CalendarToday,
   Timeline,
+  FactCheck,
+  CompareArrows,
+  Restaurant,
+  Delete,
 };
 
 const PageSidebar = () => {

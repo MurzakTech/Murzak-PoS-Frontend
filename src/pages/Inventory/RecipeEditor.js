@@ -206,7 +206,7 @@ const RecipeEditor = () => {
               <Box><Typography variant="caption" color="text.secondary">Margin</Typography><Typography variant="h6">{m === null ? 'No price' : `${money(info.margin)} (${m}%)`}</Typography></Box>
             </Box>
             {!info.costs_known && <Alert severity="warning" sx={{ mb: 2 }}>Some ingredients have no cost yet, so the cost shown is too low. Receive stock for them to set it.</Alert>}
-            <TextField select size="small" label="How many portions can I make from the stock in" value={warehouse} onChange={(e) => setWarehouse(e.target.value)} sx={{ minWidth: 300 }}>
+            <TextField select size="small" label="Portions possible from the stock in" value={warehouse} onChange={(e) => setWarehouse(e.target.value)} sx={{ minWidth: 340 }}>
               <MenuItem value="">Choose a store</MenuItem>
               {warehouses.map((w) => <MenuItem key={w} value={w}>{w}</MenuItem>)}
             </TextField>
