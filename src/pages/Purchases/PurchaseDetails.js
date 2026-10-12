@@ -49,6 +49,7 @@ import {
   clearSelectedPurchase,
   createStockReceipt,
 } from '../../store/purchaseSlice';
+import PrintButton from '../../components/Common/PrintButton';
 import { showNotification } from '../../store/notificationSlice';
 import useRoleAccess from '../../hooks/useRoleAccess';
 
@@ -302,24 +303,10 @@ const PurchaseDetails = () => {
                 Cancel
               </Button>
             )}
-            <Button
-              variant="outlined"
-              startIcon={<Print />}
-              onClick={() => {
-                // TODO: Implement print functionality
-                dispatch(showNotification({
-                  message: 'Print functionality coming soon',
-                  severity: 'info',
-                  title: 'Info',
-                }));
-              }}
-              sx={{ 
+            <PrintButton doctype={'Purchase Order'} name={selectedPurchase?.name || id} label="Print" sx={{ 
                 textTransform: 'none',
                 fontSize: '0.8125rem'
-              }}
-            >
-              Print
-            </Button>
+              }} />
           </Box>
         </Box>
 
@@ -626,24 +613,10 @@ const PurchaseDetails = () => {
                     >
                       Create Return
                     </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<Print />}
-                      onClick={() => {
-                        // TODO: Implement print functionality
-                        dispatch(showNotification({
-                          message: 'Print functionality coming soon',
-                          severity: 'info',
-                          title: 'Info',
-                        }));
-                      }}
-                      sx={{ 
+                    <PrintButton doctype={'Purchase Order'} name={selectedPurchase?.name || id} label="Print order" sx={{ 
                         textTransform: 'none',
                         fontSize: '0.8125rem'
-                      }}
-                    >
-                      Print Receipt
-                    </Button>
+                      }} />
                   </Box>
                 </CardContent>
               </Card>
