@@ -103,6 +103,12 @@ const BusinessSettings = lazy(() => import('../pages/Settings/BusinessSettings')
 const ETIMSSettings = lazy(() => import('../pages/Settings/ETIMSSettings'));
 const BankAccounts = lazy(() => import('../pages/Settings/BankAccounts'));
 const AuditTrail = lazy(() => import('../pages/Settings/AuditTrail'));
+const Recipes = lazy(() => import('../pages/Inventory/Recipes'));
+const RecipeEditor = lazy(() => import('../pages/Inventory/RecipeEditor'));
+const Wastage = lazy(() => import('../pages/Inventory/Wastage'));
+const Approvals = lazy(() => import('../pages/Settings/Approvals'));
+const PaymentMatching = lazy(() => import('../pages/Settings/PaymentMatching'));
+const SalesPeople = lazy(() => import('../pages/Settings/SalesPeople'));
 const Security = lazy(() => import('../pages/Settings/Security'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
@@ -437,6 +443,8 @@ export const protectedRoutes = [
       { path: '/inventory/material-receipts', label: 'Material Receipts', icon: 'Input' },
       { path: '/inventory/material-issues', label: 'Material Issues', icon: 'Output' },
       { path: '/inventory/multi-level-reconciliation', label: 'Reconciliation', icon: 'Checklist' },
+      { path: '/inventory/recipes', label: 'Recipes', icon: 'Restaurant' },
+      { path: '/inventory/wastage', label: 'Wastage', icon: 'Delete' },
     ],
     children: [
       {
@@ -474,6 +482,30 @@ export const protectedRoutes = [
         element: InventoryItemDetails,
         label: 'Inventory Details',
         icon: 'List',
+      },
+      {
+        path: '/inventory/recipes',
+        element: Recipes,
+        label: 'Recipes',
+        icon: 'Restaurant',
+      },
+      {
+        path: '/inventory/recipes/new',
+        element: RecipeEditor,
+        label: 'New Recipe',
+        icon: 'Add',
+      },
+      {
+        path: '/inventory/recipes/:dish',
+        element: RecipeEditor,
+        label: 'Recipe',
+        icon: 'Restaurant',
+      },
+      {
+        path: '/inventory/wastage',
+        element: Wastage,
+        label: 'Wastage',
+        icon: 'Delete',
       },
       {
         path: '/inventory/stock-entries',
@@ -865,6 +897,9 @@ export const protectedRoutes = [
       { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
       { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
       { path: '/settings/audit-trail', label: 'Audit Trail', icon: 'History' },
+      { path: '/settings/approvals', label: 'Approvals', icon: 'FactCheck' },
+      { path: '/settings/payment-matching', label: 'Payment Matching', icon: 'CompareArrows' },
+      { path: '/settings/sales-people', label: 'Sales People', icon: 'People' },
       { path: '/settings/security', label: 'Security', icon: 'Security' },
     ],
     children: [
@@ -927,6 +962,24 @@ export const protectedRoutes = [
         element: AuditTrail,
         label: 'Audit Trail',
         icon: 'History',
+      },
+      {
+        path: '/settings/approvals',
+        element: Approvals,
+        label: 'Approvals',
+        icon: 'FactCheck',
+      },
+      {
+        path: '/settings/payment-matching',
+        element: PaymentMatching,
+        label: 'Payment Matching',
+        icon: 'CompareArrows',
+      },
+      {
+        path: '/settings/sales-people',
+        element: SalesPeople,
+        label: 'Sales People',
+        icon: 'People',
       },
       {
         path: '/settings/security',

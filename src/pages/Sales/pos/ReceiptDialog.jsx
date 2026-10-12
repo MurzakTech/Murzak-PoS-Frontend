@@ -2,6 +2,11 @@ import React from 'react';
 import { Alert, Box, Button, Dialog, DialogActions, Divider, Typography } from '@mui/material';
 import { CheckCircle, Print, Receipt } from '@mui/icons-material';
 import { fmt, money, round2 } from './money';
+import PrintButton from '../../../components/Common/PrintButton';
+
+// The reply to a sale does not say which kind of invoice it made; the number does
+export const invoiceDoctype = (invoice) =>
+  invoice?.doctype || (/PSINV/i.test(invoice?.name || '') ? 'POS Invoice' : 'Sales Invoice');
 
 // Prints only the receipt (on any printer; it is laid out for an 80mm till roll)
 const PRINT_CSS = `
@@ -104,6 +109,9 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
         </Button>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button fullWidth variant="outlined" startIcon={<Print />} onClick={onPrint}>Print receipt</Button>
+          {invoice.name && !invoice.offline && (
+            <PrintButton doctype={invoiceDoctype(invoice)} name={invoice.name} label="Tax receipt" sx={{ flex: 1 }} />
+          )}
           {invoice.name && !invoice.offline && (
             <Button fullWidth variant="outlined" startIcon={<Receipt />} onClick={onViewInvoice}>View invoice</Button>
           )}

@@ -436,12 +436,14 @@ ITEM-002,5,50.00,Warehouse - Company`;
       }
       
       if (saveAsDraft || (result.payload?.purchase?.docstatus === 0)) {
-        // Still a draft
-        dispatch(showNotification({
-          message: 'Purchase saved as draft successfully',
-          severity: 'success',
-          title: 'Draft Saved',
-        }));
+        // Still a draft (the store already told the person when it is waiting for a manager)
+        if (!result.payload?.purchase?.waitingForApproval) {
+          dispatch(showNotification({
+            message: 'Purchase saved as draft successfully',
+            severity: 'success',
+            title: 'Draft Saved',
+          }));
+        }
         navigate(`/purchases/new?draft=${purchaseName}`);
       } else {
         // Submitted
