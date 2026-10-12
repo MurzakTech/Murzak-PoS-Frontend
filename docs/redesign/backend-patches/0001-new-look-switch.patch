@@ -1,0 +1,266 @@
+From 6eb7bdb8d212330a052c4024a4d64b4bee43cf7e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 12 Oct 2026 12:57:51 +0000
+Subject: [PATCH] Add the New look switch: one on or off setting per business
+
+A new, additive pair of calls (get_new_look, set_new_look). The setting is a key in Frappe's
+existing DefaultValue table, so there is no new document type, field or migration, and no
+existing record changes. A business is off until an owner (System Manager) turns it on.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01SfTsx7Jb3S6aaGULobQ7xR
+---
+ murzak_pos/api/new_look_api.py      |  74 +++++++++++++
+ murzak_pos/api/test_new_look_api.py | 159 ++++++++++++++++++++++++++++
+ 2 files changed, 233 insertions(+)
+ create mode 100644 murzak_pos/api/new_look_api.py
+ create mode 100644 murzak_pos/api/test_new_look_api.py
+
+diff --git a/murzak_pos/api/new_look_api.py b/murzak_pos/api/new_look_api.py
+new file mode 100644
+index 0000000..cbc82e0
+--- /dev/null
++++ b/murzak_pos/api/new_look_api.py
+@@ -0,0 +1,74 @@
++"""
++The "New look" switch: whether a business sees the redesigned screens.
++
++Each business has its own switch, and it is OFF until a business owner turns it on. Turning it off
++again puts the old screens back at once; nothing in the books changes either way, because this switch
++only decides which screens are drawn.
++
++Where it is kept: Frappe's own "DefaultValue" table, under one key per business. That table already
++exists on every site, so installing this adds no document type, no custom field and no migration, and
++it never alters a record that is there today. A business with no key is OFF.
++
++Who may do what:
++- anyone signed in may ask whether their own business has it on (the screens need to know)
++- only a business owner (a System Manager) or the Administrator may change it, and only for a
++  business they belong to
++"""
++
++from __future__ import annotations
++
++import hashlib
++
++import frappe
++from frappe import _
++
++from murzak_pos.api.access_control import require_manager
++from murzak_pos.api.payment_gateway_common import resolve_company
++
++KEY_PREFIX = "murzak_new_look"
++# DefaultValue.defkey holds at most 140 characters
++MAX_KEY_LENGTH = 140
++
++_ON = ("1", "true", "yes", "on")
++_OFF = ("0", "false", "no", "off")
++
++
++def _key(company: str) -> str:
++	"""One key per business. A very long company name is shortened to a fingerprint so it always fits."""
++	key = f"{KEY_PREFIX}:{company}"
++	if len(key) <= MAX_KEY_LENGTH:
++		return key
++	return f"{KEY_PREFIX}:{hashlib.sha1(company.encode('utf-8')).hexdigest()}"
++
++
++def _is_on(company: str) -> bool:
++	return str(frappe.db.get_default(_key(company)) or "0").strip().lower() in _ON
++
++
++def _as_flag(value) -> bool:
++	"""Read an on or off value however the browser sent it (true, "true", 1, "1"). Anything else is refused."""
++	if isinstance(value, bool):
++		return value
++	text = str(value if value is not None else "").strip().lower()
++	if text in _ON:
++		return True
++	if text in _OFF:
++		return False
++	frappe.throw(_("Say whether the New look should be on or off."), frappe.ValidationError)
++
++
++@frappe.whitelist()
++def get_new_look(company: str | None = None) -> dict:
++	"""Whether the redesigned screens are on for the caller's business. Off unless an owner turned it on."""
++	company = resolve_company(company)
++	return {"success": True, "data": {"company": company, "enabled": _is_on(company)}}
++
++
++@frappe.whitelist(methods=["POST"])
++def set_new_look(enabled, company: str | None = None) -> dict:
++	"""Turn the redesigned screens on or off for a business. Owners only."""
++	require_manager()
++	company = resolve_company(company)
++	on = _as_flag(enabled)
++	frappe.db.set_default(_key(company), "1" if on else "0")
++	return {"success": True, "data": {"company": company, "enabled": on}}
+diff --git a/murzak_pos/api/test_new_look_api.py b/murzak_pos/api/test_new_look_api.py
+new file mode 100644
+index 0000000..3a57d9b
+--- /dev/null
++++ b/murzak_pos/api/test_new_look_api.py
+@@ -0,0 +1,159 @@
++# Copyright (c) 2026, Murzak POS and Contributors
++# See license.txt
++"""
++Tests for the New look switch. They need no database: every Frappe call is mocked, so they run under
++`bench run-tests` and in plain Python alike.
++
++What they pin down: a business is OFF until an owner turns it on; only an owner may change it; nobody
++can change another business's switch; the switch of one business never leaks to another; and the one
++call that changes anything checks for an owner before it touches the database.
++"""
++
++import ast
++import os
++import unittest
++from unittest.mock import MagicMock, patch
++
++import frappe
++
++from murzak_pos.api import new_look_api
++
++OWNER_ROLES = ("System Manager", "Sales Manager", "Sales User", "Accounts Manager")
++CASHIER_ROLES = ("Sales User",)
++MANAGER_ROLES = ("Sales Manager", "Sales User")
++
++
++class NewLookCase(unittest.TestCase):
++	def as_user(self, user="owner@shop-a.test", roles=OWNER_ROLES, companies=("Shop A",), stored=None):
++		"""Run as `user` holding `roles`, who belongs to `companies`. `stored` maps a default key to its value."""
++		self.stored = dict(stored or {})
++		db = MagicMock()
++		db.exists.return_value = True
++		db.get_default.side_effect = lambda key, *a, **k: self.stored.get(key)
++		db.set_default.side_effect = lambda key, value, *a, **k: self.stored.__setitem__(key, value)
++		self.db = db
++		stack = [
++			patch.object(frappe, "session", frappe._dict(user=user)),
++			patch.object(frappe, "get_roles", create=True, side_effect=lambda user=None: list(roles)),
++			patch.object(frappe, "db", db, create=True),
++			patch("frappe.translate.get_all_translations", return_value={}),
++			patch("murzak_pos.api.payment_gateway_common.get_user_companies", return_value=set(companies)),
++		]
++		for p in stack:
++			p.start()
++			self.addCleanup(p.stop)
++
++
++class TestReading(NewLookCase):
++	def test_a_business_that_never_chose_is_off(self):
++		self.as_user()
++		result = new_look_api.get_new_look()
++		self.assertEqual(result["data"], {"company": "Shop A", "enabled": False})
++
++	def test_on_and_off_are_read_back(self):
++		self.as_user(stored={new_look_api._key("Shop A"): "1"})
++		self.assertTrue(new_look_api.get_new_look()["data"]["enabled"])
++		self.as_user(stored={new_look_api._key("Shop A"): "0"})
++		self.assertFalse(new_look_api.get_new_look()["data"]["enabled"])
++
++	def test_a_cashier_may_ask_whether_their_own_business_has_it_on(self):
++		self.as_user("till@shop-a.test", roles=CASHIER_ROLES, stored={new_look_api._key("Shop A"): "1"})
++		self.assertTrue(new_look_api.get_new_look()["data"]["enabled"])
++
++	def test_a_guest_is_refused(self):
++		self.as_user("Guest", roles=())
++		with self.assertRaises(frappe.AuthenticationError):
++			new_look_api.get_new_look()
++
++	def test_another_businesss_switch_cannot_be_read(self):
++		self.as_user(companies=("Shop A",), stored={new_look_api._key("Shop B"): "1"})
++		with self.assertRaises(frappe.PermissionError):
++			new_look_api.get_new_look(company="Shop B")
++
++
++class TestChanging(NewLookCase):
++	def test_an_owner_turns_it_on_and_off(self):
++		self.as_user()
++		on = new_look_api.set_new_look(True)
++		self.assertEqual(on["data"], {"company": "Shop A", "enabled": True})
++		self.assertTrue(new_look_api.get_new_look()["data"]["enabled"])
++		off = new_look_api.set_new_look(False)
++		self.assertFalse(off["data"]["enabled"])
++		self.assertFalse(new_look_api.get_new_look()["data"]["enabled"])
++
++	def test_the_browsers_spellings_of_on_and_off_are_understood(self):
++		for sent, expected in (("true", True), ("1", True), (1, True), ("false", False), ("0", False), (0, False)):
++			with self.subTest(sent=sent):
++				self.as_user()
++				self.assertEqual(new_look_api.set_new_look(sent)["data"]["enabled"], expected)
++
++	def test_nonsense_is_refused_and_nothing_is_written(self):
++		self.as_user()
++		for sent in ("maybe", None, "2"):
++			with self.subTest(sent=sent), self.assertRaises(frappe.ValidationError):
++				new_look_api.set_new_look(sent)
++		self.db.set_default.assert_not_called()
++
++	def test_a_cashier_cannot_change_it_and_nothing_is_written(self):
++		self.as_user("till@shop-a.test", roles=CASHIER_ROLES)
++		with self.assertRaises(frappe.PermissionError):
++			new_look_api.set_new_look(True)
++		self.db.set_default.assert_not_called()
++
++	def test_a_manager_who_is_not_the_owner_cannot_change_it(self):
++		self.as_user("sales@shop-a.test", roles=MANAGER_ROLES)
++		with self.assertRaises(frappe.PermissionError):
++			new_look_api.set_new_look(True)
++		self.db.set_default.assert_not_called()
++
++	def test_a_guest_cannot_change_it(self):
++		self.as_user("Guest", roles=())
++		with self.assertRaises(frappe.AuthenticationError):
++			new_look_api.set_new_look(True)
++		self.db.set_default.assert_not_called()
++
++	def test_an_owner_cannot_change_another_businesss_switch(self):
++		self.as_user(companies=("Shop A",))
++		with self.assertRaises(frappe.PermissionError):
++			new_look_api.set_new_look(True, company="Shop B")
++		self.db.set_default.assert_not_called()
++
++	def test_the_administrator_may_change_any_business(self):
++		self.as_user("Administrator", roles=(), companies=())
++		self.assertTrue(new_look_api.set_new_look(True, company="Shop B")["data"]["enabled"])
++
++	def test_one_business_never_turns_on_another(self):
++		self.as_user(companies=("Shop A", "Shop B"))
++		new_look_api.set_new_look(True, company="Shop A")
++		self.assertTrue(new_look_api.get_new_look(company="Shop A")["data"]["enabled"])
++		self.assertFalse(new_look_api.get_new_look(company="Shop B")["data"]["enabled"])
++
++
++class TestKey(unittest.TestCase):
++	def test_each_business_has_its_own_key(self):
++		self.assertNotEqual(new_look_api._key("Shop A"), new_look_api._key("Shop B"))
++
++	def test_a_very_long_company_name_still_fits_and_stays_unique(self):
++		a = new_look_api._key("A" * 200)
++		b = new_look_api._key("A" * 199 + "B")
++		self.assertLessEqual(len(a), new_look_api.MAX_KEY_LENGTH)
++		self.assertNotEqual(a, b)
++		self.assertEqual(a, new_look_api._key("A" * 200))
++
++
++class TestGuardIsNotForgotten(unittest.TestCase):
++	"""Reads the source, so a later edit that moves the owner check after a database call fails here."""
++
++	def test_the_call_that_changes_the_switch_checks_for_an_owner_first(self):
++		path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "new_look_api.py")
++		with open(path) as handle:
++			source = handle.read()
++		node = next(
++			n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == "set_new_look"
++		)
++		body = ast.get_source_segment(source, node)
++		call = body.find("require_manager()")
++		touching = [body.find(word) for word in ("frappe.db", "resolve_company(")]
++		self.assertNotEqual(call, -1, "set_new_look must call require_manager()")
++		self.assertTrue(all(call < position for position in touching if position != -1))
++		self.assertIn("methods=[\"POST\"]", ast.unparse(node.decorator_list[0]).replace("'", '"'))
+-- 
+2.43.0
+

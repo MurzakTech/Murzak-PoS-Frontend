@@ -133,3 +133,20 @@ describe('restricted pages', () => {
     expect(canAccessRoute('/sales/returns', ['Administrator'])).toBe(true);
   });
 });
+
+describe('the New look switch is for owners only', () => {
+  it('opens for the owner roles and for nobody else, even roles that hold the other Settings pages', () => {
+    expect(canAccessRoute('/settings/new-look', ['System Manager'])).toBe(true);
+    expect(canAccessRoute('/settings/new-look', ['Administrator'])).toBe(true);
+    ['Accounts Manager', 'Sales Manager', 'Stock Manager', 'Auditor'].forEach((role) => {
+      expect(canAccessRoute('/settings/new-look', [role, 'All'])).toBe(false);
+    });
+    expect(canAccessRoute('/settings/new-look', cashier)).toBe(false);
+  });
+
+  it('keeps the empty New look shell for owners until the roles ticket (P1-8)', () => {
+    expect(canAccessRoute('/new-look', ['System Manager'])).toBe(true);
+    expect(canAccessRoute('/new-look', cashier)).toBe(false);
+    expect(canAccessRoute('/new-look', ['Accounts Manager'])).toBe(false);
+  });
+});

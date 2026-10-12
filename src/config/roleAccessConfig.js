@@ -151,6 +151,7 @@ const ROUTE_GROUPS = {
     '/settings/loyalty-programs',
     '/settings/audit-trail',
     '/settings/security',
+    '/settings/new-look',
   ],
   INDUSTRY: [
     '/industry/:industryCode/products',
@@ -545,6 +546,8 @@ export const getAllowedRoutes = (roles) => {
 export const RESTRICTED_ROUTES = {
   '/sales/returns': ['Sales Manager', 'Accounts Manager'],
   '/settings/audit-trail': ['Accounts Manager', 'Auditor'],
+  // The New look switch: owners only. Administrator and System Manager always pass, so no other role is listed.
+  '/settings/new-look': [],
 };
 
 const restrictedRolesFor = (routePath) => {
