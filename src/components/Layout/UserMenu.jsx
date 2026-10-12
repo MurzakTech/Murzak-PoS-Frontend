@@ -26,6 +26,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { logout, updateUserProfile, changePassword } from '../../store/authSlice';
 import { useForm } from 'react-hook-form';
+import LanguageMenuItem from './LanguageMenuItem';
 
 const UserMenu = ({ anchorEl, open, onClose }) => {
   const dispatch = useAppDispatch();
@@ -155,6 +156,7 @@ const UserMenu = ({ anchorEl, open, onClose }) => {
           </ListItemIcon>
           <ListItemText>Change Password</ListItemText>
         </MenuItem>
+        <LanguageMenuItem onDone={onClose} />
         <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
