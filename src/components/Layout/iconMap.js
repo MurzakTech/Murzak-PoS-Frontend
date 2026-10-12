@@ -43,6 +43,7 @@ import {
   FactCheck,
   CompareArrows,
   Restaurant,
+  Delete,
 } from '@mui/icons-material';
 
 // Maps the icon names used in routes.js to MUI icon components
@@ -91,6 +92,7 @@ const iconMap = {
   FactCheck,
   CompareArrows,
   Restaurant,
+  Delete,
 };
 
 export default iconMap;

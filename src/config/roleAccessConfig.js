@@ -70,6 +70,10 @@ const ROUTE_GROUPS = {
     '/inventory/multi-level-reconciliation/new',
     '/inventory/multi-level-reconciliation/:id',
     '/inventory/multi-level-reconciliation/:id/stock-take',
+    '/inventory/recipes',
+    '/inventory/recipes/new',
+    '/inventory/recipes/:dish',
+    '/inventory/wastage',
   ],
   CUSTOMERS: [
     '/customers',
