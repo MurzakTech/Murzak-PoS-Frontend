@@ -36,7 +36,7 @@ Back end (a **separate repository**): [Murzak-PoS-Backend#31](https://github.com
 
 ## Before a real shop can use it: merge and install the back-end part
 
-1. Let the back end's own checks run on the pull request: the job "Unit tests (no database)" is the first run of the new tests against real Frappe (until then they have only run against a minimal stand-in).
+1. The back end's own checks on the pull request are green (see below). Still to do on a real shop: nothing has been tried against a real shop's back end.
 2. Review and merge it. **Merging to the back end's main branch deploys it to the live server.**
 3. Each per-shop back end needs the new method installed before that shop's switch can be used (the plan's "before switching a shop on", step 2).
 
@@ -46,7 +46,7 @@ Back end (a **separate repository**): [Murzak-PoS-Backend#31](https://github.com
 
 - Front end: all 49 test files pass (550 tests, 32 of them new); lint is clean on the touched folders; the production build compiles.
 - Browser (Chromium against the production build, stubbed server, fake shop "Demo Shop"), **in the light and the dark theme**, 17 checks each, all passing: the current dashboard loads with the switch off; `/new-look` is "Page Not Found" when off; the owner finds Settings, New look; turning on asks first and sends `enabled: true`; the empty shell loads and survives a reload; "Back to the current screens" returns to the unchanged dashboard; turning off sends `enabled: false` with no confirmation and `/new-look` is "Page Not Found" again; a cashier is sent to the dashboard from both addresses and makes no change request; with the server unreachable, a saved "on" keeps the shell and nothing saved means off; no uncaught page errors.
-- Back end: 17 tests pass against a **minimal stand-in for Frappe, not a real bench**, and the back end's lint and changed-files check passes locally with its pinned `ruff 0.8.1`. The real run is the CI job on the back-end pull request.
+- Back end: the 17 new tests passed on **real Frappe 15** in the back-end pull request's CI (the job "Unit tests (no database)", 769 tests in all), and its lint and changed-files check passed. That run also caught a missing Swahili translation, now added. The Swahili wording ("Muonekano Mpya" for New look) is a draft for a native speaker to confirm.
 
 **Not yet checked:** a real shop (no test store login has been given), and the real back end.
 
