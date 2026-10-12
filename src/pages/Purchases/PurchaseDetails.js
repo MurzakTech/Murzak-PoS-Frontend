@@ -33,7 +33,6 @@ import {
   ArrowBack,
   Edit,
   Delete,
-  Print,
   Receipt,
   AssignmentReturn,
   Send,
