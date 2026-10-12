@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { getCompany, updateCompany } from '../../store/onboardingSlice';
+import LetterHeadCard from '../../components/Settings/LetterHeadCard';
 
 const BusinessSettings = () => {
   const dispatch = useAppDispatch();
@@ -140,6 +141,7 @@ const BusinessSettings = () => {
   }
 
   return (
+    <>
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
@@ -568,6 +570,8 @@ const BusinessSettings = () => {
         </form>
       </CardContent>
     </Card>
+    <LetterHeadCard company={userCompany} />
+    </>
   );
 };
 
