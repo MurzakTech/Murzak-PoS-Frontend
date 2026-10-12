@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { isWaitingForApproval, waitingMessage } from '../api/approvalsApi';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
@@ -534,11 +535,13 @@ export const upsertPurchaseOrder = createAsyncThunk(
       // Handle response structure: { status: "success", purchase_order: string, docstatus: number, grand_total: number }
       if (data?.status === 'success') {
         const successMessage = data?.message || 'Purchase Order saved successfully';
+        // Above the business's limit the order is saved as a draft and waits for a manager
+        const waiting = isWaitingForApproval(data);
         
         dispatch(showNotification({
-          message: successMessage,
-          severity: 'success',
-          title: 'Success',
+          message: waiting ? waitingMessage(data) : successMessage,
+          severity: waiting ? 'info' : 'success',
+          title: waiting ? 'Sent for approval' : 'Success',
         }));
         
         return {
@@ -546,6 +549,7 @@ export const upsertPurchaseOrder = createAsyncThunk(
             name: data.purchase_order || data.name,
             docstatus: data.docstatus,
             grand_total: data.grand_total,
+            waitingForApproval: waiting,
           },
         };
       } else {
@@ -584,6 +588,20 @@ export const submitPurchaseOrder = createAsyncThunk(
       const messageData = extractResponseData(response);
       
       // messageData is the nested message object: { status, code, message, data, lpo_no }
+      if (messageData?.status === 'success' && isWaitingForApproval(messageData)) {
+        // Above the business's limit: saved, not submitted, waiting for a manager
+        dispatch(showNotification({
+          message: waitingMessage(messageData),
+          severity: 'info',
+          title: 'Sent for approval',
+        }));
+        return {
+          purchase_order: messageData.lpo_no || poName,
+          docstatus: 0,
+          waitingForApproval: true,
+          code: messageData.code,
+        };
+      }
       if (messageData?.status === 'success') {
         const successMsg = messageData.message || 'Purchase Order submitted successfully';
         const lpoNo = messageData.lpo_no || poName;
@@ -1299,6 +1317,8 @@ const purchaseSlice = createSlice({
       })
       .addCase(submitPurchaseOrder.fulfilled, (state, action) => {
         state.isLoading = false;
+        // Waiting for a manager's approval: it is still a draft
+        if (action.payload.waitingForApproval) return;
         if (action.payload.purchase_order) {
           const index = state.purchases.findIndex(
             (p) => p.name === action.payload.purchase_order

@@ -150,6 +150,9 @@ const ROUTE_GROUPS = {
     '/settings/inventory-discounts/:id/edit',
     '/settings/loyalty-programs',
     '/settings/audit-trail',
+    '/settings/approvals',
+    '/settings/payment-matching',
+    '/settings/sales-people',
     '/settings/security',
   ],
   INDUSTRY: [
@@ -545,6 +548,10 @@ export const getAllowedRoutes = (roles) => {
 export const RESTRICTED_ROUTES = {
   '/sales/returns': ['Sales Manager', 'Accounts Manager'],
   '/settings/audit-trail': ['Accounts Manager', 'Auditor'],
+  // Money checks: who may decide, who may match the bank statement, who manages sales people
+  '/settings/approvals': ['Accounts Manager', 'Purchase Manager'],
+  '/settings/payment-matching': ['Accounts Manager'],
+  '/settings/sales-people': ['Sales Manager', 'Accounts Manager'],
 };
 
 const restrictedRolesFor = (routePath) => {

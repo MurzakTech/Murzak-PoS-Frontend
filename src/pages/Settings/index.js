@@ -14,6 +14,9 @@ const SETTINGS_PAGES = [
   '/settings/inventory-discounts',
   '/settings/loyalty-programs',
   '/settings/audit-trail',
+  '/settings/approvals',
+  '/settings/payment-matching',
+  '/settings/sales-people',
 ];
 
 const Settings = () => {

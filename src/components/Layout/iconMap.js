@@ -40,6 +40,9 @@ import {
   Security,
   CloudDownload,
   Star,
+  FactCheck,
+  CompareArrows,
+  Restaurant,
 } from '@mui/icons-material';
 
 // Maps the icon names used in routes.js to MUI icon components
@@ -85,6 +88,9 @@ const iconMap = {
   Security,
   CloudDownload,
   Star,
+  FactCheck,
+  CompareArrows,
+  Restaurant,
 };
 
 export default iconMap;

@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { isWaitingForApproval, waitingMessage } from '../api/approvalsApi';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
@@ -674,15 +675,18 @@ export const createSalesReturn = createAsyncThunk(
       const response = ensureSucceeded(await axiosInstance.post(ENDPOINTS.createSalesReturn, returnData));
       const data = extractResponseData(response);
       const successMessage = extractSuccessMessage(response) || 'Sales Return created successfully';
-      
+      // A refund above the business's limit is saved as a draft and waits for a manager
+      const waiting = isWaitingForApproval(data);
+
       dispatch(showNotification({
-        message: successMessage,
-        severity: 'success',
-        title: 'Success',
+        message: waiting ? waitingMessage(data) : successMessage,
+        severity: waiting ? 'info' : 'success',
+        title: waiting ? 'Sent for approval' : 'Success',
       }));
       
       return {
         salesReturn: data?.data || data,
+        waitingForApproval: waiting,
       };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);

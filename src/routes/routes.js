@@ -103,6 +103,9 @@ const BusinessSettings = lazy(() => import('../pages/Settings/BusinessSettings')
 const ETIMSSettings = lazy(() => import('../pages/Settings/ETIMSSettings'));
 const BankAccounts = lazy(() => import('../pages/Settings/BankAccounts'));
 const AuditTrail = lazy(() => import('../pages/Settings/AuditTrail'));
+const Approvals = lazy(() => import('../pages/Settings/Approvals'));
+const PaymentMatching = lazy(() => import('../pages/Settings/PaymentMatching'));
+const SalesPeople = lazy(() => import('../pages/Settings/SalesPeople'));
 const Security = lazy(() => import('../pages/Settings/Security'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
@@ -865,6 +868,9 @@ export const protectedRoutes = [
       { path: '/settings/inventory-discounts', label: 'Inventory Discounts', icon: 'LocalOffer' },
       { path: '/settings/loyalty-programs', label: 'Loyalty Programs', icon: 'Star' },
       { path: '/settings/audit-trail', label: 'Audit Trail', icon: 'History' },
+      { path: '/settings/approvals', label: 'Approvals', icon: 'FactCheck' },
+      { path: '/settings/payment-matching', label: 'Payment Matching', icon: 'CompareArrows' },
+      { path: '/settings/sales-people', label: 'Sales People', icon: 'People' },
       { path: '/settings/security', label: 'Security', icon: 'Security' },
     ],
     children: [
@@ -927,6 +933,24 @@ export const protectedRoutes = [
         element: AuditTrail,
         label: 'Audit Trail',
         icon: 'History',
+      },
+      {
+        path: '/settings/approvals',
+        element: Approvals,
+        label: 'Approvals',
+        icon: 'FactCheck',
+      },
+      {
+        path: '/settings/payment-matching',
+        element: PaymentMatching,
+        label: 'Payment Matching',
+        icon: 'CompareArrows',
+      },
+      {
+        path: '/settings/sales-people',
+        element: SalesPeople,
+        label: 'Sales People',
+        icon: 'People',
       },
       {
         path: '/settings/security',
