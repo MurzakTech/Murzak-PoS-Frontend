@@ -51,7 +51,19 @@ My recommendation: **A now, and C for shops with a receipt printer.** It follows
 | No. | Answer (12 Oct 2026, provisional until Section 4 is run) |
 |---|---|
 | 6 | Probably only a set-up matter. M-Pesa appears when the shop has saved its M-Pesa settings, which creates the "MPESA" mode and adds it to the shop's POS profiles. The choice and the "M-Pesa code" field are already built. Still to do: show the name as "M-Pesa" (rename map), and check the demo store's mode name and settings |
-| 8 | Yes, it opens the browser's print window after every completed sale unless auto-print is switched off, and the page is frozen while that window is open. Recommend option A, with C for shops that have a printer. The owner decides the default for shops without a printer |
+| 8 | Yes, it opens the browser's print window after every completed sale unless auto-print is switched off, and the page is frozen while that window is open. Recommend option A, with C for shops that have a printer. The owner decides the default for shops without a printer. **Decision (owner, 12 Oct 2026): Option A.** Keep today's behaviour and add a shop-wide switch in Settings, Till and payments. The owner has chosen this regardless of the live test |
+
+## 3a. Decision on printing: Option A (owner, 12 October 2026)
+
+Keep today's behaviour, and add a **shop-wide switch** in Settings, Till and payments: "Print the receipt automatically". The till menu's Auto-print toggle stays.
+
+Nothing has been built for this yet. It is not part of the P0-6 testing ticket; it belongs with the Settings work, so it is recorded here to be picked up by ticket **P5-3** (Settings page, section "Till and payments"). Notes for whoever builds it:
+
+- **Behaviour for shops that have a printer must not change.** The new shop switch starts **on**, which is today's behaviour. A receipt prints by itself only when the shop switch is on **and** the device's own Auto-print toggle is not off. So an owner can turn it off for the whole shop, and a cashier can still turn it off for one device, as today.
+- It is a **shop setting on the server**, so it needs a new back-end call (an addition, like the New look switch), which means another back-end pull request and a per-shop install. A shop whose back end does not have it yet keeps today's behaviour.
+- It covers the sale receipt's automatic print. Kitchen tickets already have their own setting (Kitchen settings), so they are not changed.
+- The page should say in plain words why a shop might turn it off ("Turn this off if this till has no receipt printer, otherwise the print window can stop the till until you close it").
+- For shops with a receipt printer, silent printing (Option C, a browser start-up setting) is a separate set-up step and needs no code.
 
 ## 4. The live test on the demo store (still to do)
 
