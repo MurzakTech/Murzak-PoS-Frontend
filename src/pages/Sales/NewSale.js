@@ -35,6 +35,7 @@ import PosHeader from './pos/PosHeader';
 import ProductPanel from './pos/ProductPanel';
 import OrderPanel from './pos/OrderPanel';
 import PaymentPanel from './pos/PaymentPanel';
+import SalesPersonPicker from '../../components/Sales/SalesPersonPicker';
 import OpenTill from './pos/OpenTill';
 import CustomerDialog from './pos/CustomerDialog';
 import ReceiptDialog from './pos/ReceiptDialog';
@@ -195,6 +196,8 @@ const NewSale = () => {
   // How each method is collected: { [mode]: { gateway: 'mpesa' | 'pesapal' | 'paypal' | 'bank', ... } }
   const [paymentOptions, setPaymentOptions] = useState({});
   const [saleReference, setSaleReference] = useState(newSaleReference);
+  // Sales person the commission goes to ('' means the cashier's own, if they have one)
+  const [salesPerson, setSalesPerson] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -1087,6 +1090,8 @@ const NewSale = () => {
       invoice_type: "POS Invoice",
       // Same id on a retry, so a sale whose reply was lost is not recorded twice
       client_reference: saleReference,
+      // Who the commission goes to; left out, the server uses the cashier's own sales person if there is one
+      ...(salesPerson ? { sales_person: salesPerson } : {}),
       // The dispensing record, for a sale that includes prescription-only medicines
       ...(rxNames.length > 0 && isDispensingComplete(dispensing) ? { dispensing } : {}),
       // is_pos: creditUsed > 0 ? 0 : 1,
@@ -2056,7 +2061,9 @@ const NewSale = () => {
                 hasCustomer={!!customerId}
                 customerName={customer}
                 loyaltySlot={
-                  customerId ? (
+                  <>
+                    <SalesPersonPicker company={userCompany} value={salesPerson} onChange={setSalesPerson} disabled={isCreatingInvoice} />
+                  {customerId ? (
                     <Box sx={{ mb: 2.5 }}>
                       <LoyaltyRedemption
                         customerId={customerId}
@@ -2069,7 +2076,8 @@ const NewSale = () => {
                         company={userCompany}
                       />
                     </Box>
-                  ) : null
+                  ) : null}
+                  </>
                 }
                 canComplete={canComplete}
                 onComplete={handleCheckout}
