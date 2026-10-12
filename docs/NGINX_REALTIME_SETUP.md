@@ -116,9 +116,8 @@ Checked on the server (against a made-up shop name, since the guard decides befo
 
 ### Port 9000 (checked 11 October 2026)
 
-The Frappe live-connection program listens on all network addresses (`*:9000`), but the firewall (`sudo ufw status verbose`) shows `Default: deny (incoming)` with only ports 22, 80, 443 and 8010 allowed, so port 9000 cannot be reached from outside. The tills reach it only through Nginx on 443.
+The Frappe live-connection program listens on all network addresses (`*:9000`), but the server firewall blocks everything it is not told to allow (`sudo ufw status verbose` shows `Default: deny (incoming)`), and port 9000 is not allowed. So it cannot be reached directly from outside. The tills reach it only through Nginx on 443.
 
 ### Still to do
 
-- **Docker ports and the firewall.** Port 8010 is published by a Docker container (`docker-proxy`) and is allowed through the firewall. Docker adds its own network rules in front of `ufw`, so any other port a container publishes is reachable from outside even if `ufw` does not list it. List the containers (`sudo docker ps`) and the outward-facing ports (`sudo ss -ltn | grep -v '127.0.0'`) and confirm each is expected.
 - **Real-shop test.** Once a shop exists, repeat the two checks above against it, then do the two-till test in step 5.
