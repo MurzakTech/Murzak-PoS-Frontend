@@ -1,0 +1,35 @@
+import React from 'react';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
+import { Card, EmptyState } from '../components';
+import { PageHeader } from '../shell';
+import { NEW_PAGES } from './redirectTable';
+import { NEW_LOOK_PREFIX, oldAddressFor } from './engine';
+
+/**
+ * The page a new address shows until its real screen is built. It names the page and sends the person back to the
+ * current screen that does the same job, so nobody is stranded. Each ticket that builds a page replaces this
+ * placeholder with the real screen and adds the page to BUILT_PAGES (live.js).
+ */
+const PagePlaceholder = () => {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const page = NEW_PAGES.find((p) => matchPath({ path: `${NEW_LOOK_PREFIX}${p.path === '/' ? '' : p.path}`, end: true }, pathname));
+  const title = page ? page.title : 'This page';
+  const old = page ? oldAddressFor(page.path) : null;
+
+  return (
+    <div>
+      <PageHeader title={title} subtitle="This page is being rebuilt in the New look." />
+      <Card>
+        <EmptyState
+          icon="info"
+          title="Not built yet"
+          description="It will open here in the New look. Until then, the current screen does the same job."
+          action={old ? { label: 'Open the current screen', onClick: () => navigate(old) } : undefined}
+        />
+      </Card>
+    </div>
+  );
+};
+
+export default PagePlaceholder;

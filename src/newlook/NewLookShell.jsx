@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import './tokens.css';
 import { ToastProvider, useToast } from './components';
-import { AppShell, NAVIGATION, PageHeader } from './shell';
+import { AppShell, NAVIGATION, PageHeader, resolveNavigation } from './shell';
+import { newMenuItems, searchActionsFor } from './shell/newMenu';
+import { isPageLive, usePreviewRedirects } from './redirects/live';
+import { toNewAddress } from './redirects/engine';
 import { useThemeMode } from '../theme/ThemeProvider';
 
 /**
@@ -11,10 +14,9 @@ import { useThemeMode } from '../theme/ThemeProvider';
  *
  * It is plain: the person's name and what Sign out does are passed in (NewLookShellConnected supplies them from
  * the app's sign-in), so it can be shown and tested alone. Pieces whose data belongs to later tickets are not
- * wired yet and stay out of the way: the Till open pill and the store switcher (till and locations, P3-6), the
- * + New menu (P1-7). The component page can switch sample versions of them on to show how they look.
+ * wired yet and stay out of the way: the Till open pill and the store switcher (till and locations, P3-6). The component page can switch sample versions of them on to show how they look.
  */
-const PREVIEW_DEFAULT = { till: 'unknown', stores: 'one', store: 'main', newMenu: 'hidden' };
+const PREVIEW_DEFAULT = { till: 'unknown', stores: 'one', store: 'main', newMenu: 'role' };
 const ShellPreviewContext = createContext([PREVIEW_DEFAULT, () => {}]);
 
 /** [preview, setPreview]: sample states of the parts that are not wired yet, for the component page */
@@ -25,44 +27,56 @@ const SAMPLE_STORES = [
   { id: 'branch', name: 'Westlands branch' },
 ];
 
-const Inner = ({ user, onSignOut, children }) => {
+const Inner = ({ user, onSignOut, hasAccess, children }) => {
+  const navigate = useNavigate();
   const toast = useToast();
+  const previewRedirects = usePreviewRedirects();
   const { mode, toggleColorMode } = useThemeMode();
   const [preview, setPreview] = useContext(ShellPreviewContext);
 
+  // Where each menu item goes now: the new page once it is live, otherwise the current screen (see redirects/live.js)
+  const open = (address) => address && navigate(address);
+  const destination = (item) => (isPageLive(item.page, previewRedirects) ? toNewAddress(item.page) : item.old);
+  const navigation = useMemo(
+    () => resolveNavigation(NAVIGATION, { isLive: (page) => isPageLive(page, previewRedirects), toNew: toNewAddress }),
+    [previewRedirects]
+  );
+  const searchActions = useMemo(
+    () => searchActionsFor({ hasAccess, open: (a) => navigate(a), destination }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hasAccess, previewRedirects]
+  );
+
   const topBar = useMemo(
     () => ({
-      homeTo: NAVIGATION.home.to,
-      tillTo: '/sales/pos', // today's till; the redesigned till replaces it (P3)
+      homeTo: navigation.home.to,
+      tillTo: isPageLive('/till', previewRedirects) ? toNewAddress('/till') : '/sales/pos', // today's till until the redesigned one exists (P3)
       till: preview.till === 'open' ? { open: true, since: '08:15' } : preview.till === 'closed' ? { open: false } : undefined,
       onTillPill: () => toast.info('The Till open panel is built with the till (ticket P3-6).'),
       stores: preview.stores === 'two' ? { list: SAMPLE_STORES, currentId: preview.store, onChange: (id) => setPreview({ ...preview, store: id }) } : undefined,
-      newItems:
-        preview.newMenu === 'sample'
-          ? ['Sale', 'Product', 'Customer', 'Expense', 'Purchase'].map((label) => ({ label, onClick: () => toast.info(`New ${label.toLowerCase()} (sample item; the real menu is ticket P1-7)`) }))
-          : [],
+      newItems: newMenuItems({ hasAccess, open, destination, showAll: preview.newMenu === 'all' }),
       theme: mode,
       onToggleTheme: toggleColorMode,
       user,
       userItems: onSignOut ? [{ label: 'Sign out', onClick: onSignOut }] : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [preview, mode, user, onSignOut]
+    [preview, mode, user, onSignOut, hasAccess, previewRedirects, navigation]
   );
 
   return (
-    <AppShell navigation={NAVIGATION} topBar={topBar} searchActions={[]}>
+    <AppShell navigation={navigation} topBar={topBar} searchActions={searchActions}>
       {children}
     </AppShell>
   );
 };
 
-const NewLookShell = ({ user, onSignOut, children }) => {
+const NewLookShell = ({ user, onSignOut, hasAccess = () => true, children }) => {
   const state = useState(PREVIEW_DEFAULT);
   return (
     <ToastProvider>
       <ShellPreviewContext.Provider value={state}>
-        <Inner user={user} onSignOut={onSignOut}>
+        <Inner user={user} onSignOut={onSignOut} hasAccess={hasAccess}>
           {children}
         </Inner>
       </ShellPreviewContext.Provider>

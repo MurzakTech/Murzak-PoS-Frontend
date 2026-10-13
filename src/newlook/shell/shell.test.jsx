@@ -15,8 +15,10 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { Button, ToastProvider } from '../components';
 import NewLookShell from '../NewLookShell';
-import { AppShell, NAVIGATION, PageHeader, Sidebar, TopBar, bandFor, flatItems, isActive, search, RECENT_KEY, SIDEBAR_KEY } from './index';
+import { AppShell, NAVIGATION, PageHeader, Sidebar, TopBar, bandFor, flatItems, isActive, resolveNavigation, search, RECENT_KEY, SIDEBAR_KEY } from './index';
 
+// The menu as it opens today: each item goes to the current screen until its new page is built (ticket P1-7)
+const CURRENT = resolveNavigation(NAVIGATION, { isLive: () => false, toNew: (page) => page });
 const css = fs.readFileSync(path.join(__dirname, 'shell.css'), 'utf8');
 const tokens = fs.readFileSync(path.join(__dirname, '..', 'tokens.css'), 'utf8');
 const block = (selector) => {
@@ -44,7 +46,7 @@ const shell = (props = {}, entry = '/sales/history', width = 1280) => {
     <ThemeProvider>
       <MemoryRouter initialEntries={[entry]}>
         <ToastProvider>
-          <AppShell navigation={NAVIGATION} topBar={{ tillTo: '/sales/pos', homeTo: '/dashboard', ...props.topBar }} searchActions={props.searchActions || []}>
+          <AppShell navigation={CURRENT} topBar={{ tillTo: '/sales/pos', homeTo: '/dashboard', ...props.topBar }} searchActions={props.searchActions || []}>
             <PageHeader title="Sales" subtitle="Every sale, newest first." actions={<Button>Export</Button>} />
           </AppShell>
         </ToastProvider>
@@ -93,7 +95,7 @@ describe('Sidebar', () => {
   const side = (props = {}, entry = '/customers') =>
     render(
       <MemoryRouter initialEntries={[entry]}>
-        <Sidebar navigation={NAVIGATION} {...props} />
+        <Sidebar navigation={CURRENT} {...props} />
       </MemoryRouter>
     );
 
@@ -153,7 +155,7 @@ describe('Sidebar', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
     rerender(
       <MemoryRouter>
-        <Sidebar navigation={NAVIGATION} canCollapse collapsed onToggle={onToggle} />
+        <Sidebar navigation={CURRENT} canCollapse collapsed onToggle={onToggle} />
       </MemoryRouter>
     );
     expect(screen.getByRole('button', { name: 'Expand menu' })).toHaveAttribute('aria-pressed', 'true');
@@ -413,7 +415,7 @@ describe('Page area and keyboard', () => {
       <ThemeProvider>
         <MemoryRouter>
           <ToastProvider>
-            <AppShell navigation={NAVIGATION} topBar={{}}>
+            <AppShell navigation={CURRENT} topBar={{}}>
               <label>
                 Note
                 <input />
@@ -595,10 +597,11 @@ describe('NewLookShell', () => {
     expect(screen.getByRole('heading', { name: 'New look', level: 1 })).toBeInTheDocument();
   });
 
-  test('parts waiting on other tickets stay out until switched on', () => {
+  test('parts waiting on other tickets stay out until switched on; + New is there', () => {
     inShell();
     expect(screen.queryByRole('button', { name: /Till open/ })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'New' })).toBeNull();
+    userEvent.click(screen.getByRole('banner').querySelector('[aria-haspopup="menu"][aria-label="New"]'));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Sale', 'Product', 'Customer', 'Expense (coming soon)', 'Purchase']);
   });
 
   test('the theme button switches the theme and says what it will do', () => {

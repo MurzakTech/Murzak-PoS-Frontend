@@ -16,7 +16,7 @@ const ShellDemo = () => {
   const set = (patch) => setPreview({ ...preview, ...patch });
 
   return (
-    <Card title="App shell" subtitle="Top bar 64px, sidebar 240px or 72px or a drawer, page header. Sample versions of the parts that wait for other tickets">
+    <Card title="App shell" subtitle="Top bar 64px, sidebar 240px or 72px or a drawer, page header. Sample versions of the parts that wait for other tickets, and a switch for the redirects">
       <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
         <div style={row}>
           <span style={label}>Till</span>
@@ -49,12 +49,12 @@ const ShellDemo = () => {
           <span style={label}>+ New menu</span>
           <Segmented
             size="small"
-            label="Sample + New menu"
+            label="+ New menu"
             value={preview.newMenu}
             onChange={(newMenu) => set({ newMenu })}
             options={[
-              { value: 'hidden', label: 'Not wired' },
-              { value: 'sample', label: 'Sample items' },
+              { value: 'role', label: 'For my role' },
+              { value: 'all', label: 'All five' },
             ]}
           />
         </div>

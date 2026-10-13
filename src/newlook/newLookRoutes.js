@@ -1,5 +1,10 @@
 import { NewLookEmptyPage } from './NewLookShell';
 import ComponentPage from './ComponentPage';
+import RedirectsPage from './redirects/RedirectsPage';
+import PagePlaceholder from './redirects/PagePlaceholder';
+import { NEW_PAGES } from './redirects/redirectTable';
+import { NEW_LOOK_PREFIX } from './redirects/engine';
+import { BUILT_PAGES } from './redirects/live';
 
 /**
  * The redesigned screens built so far. Each opens inside the New look shell, and only while the shop's
@@ -12,4 +17,9 @@ export const newLookRoutes = [
   { path: '/new-look', element: NewLookEmptyPage },
   // Every shared component in every state, in both themes (the Phase 1 gate)
   { path: '/new-look/components', element: ComponentPage },
+  // Every old address and where it goes (acceptance check AC-06)
+  { path: '/new-look/redirects', element: RedirectsPage },
+  // Each new page until its real screen is built: a notice that names the page and links to the current screen.
+  // A ticket that builds a page adds its own route above, and adds the page to BUILT_PAGES (redirects/live.js).
+  ...NEW_PAGES.filter((page) => page.path !== '/' && !BUILT_PAGES.includes(page.path)).map((page) => ({ path: `${NEW_LOOK_PREFIX}${page.path}`, element: PagePlaceholder })),
 ];

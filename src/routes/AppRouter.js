@@ -8,6 +8,7 @@ import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Commo
 import NewLookGate from '../newlook/NewLookGate';
 import NewLookShell from '../newlook/NewLookShellConnected';
 import { newLookRoutes } from '../newlook/newLookRoutes';
+import LegacyRedirects from '../newlook/redirects/LegacyRedirects';
 
 // Branded splash for public pages; layout-shaped skeleton inside the app shell
 const LoadingFallback = FullPageLoader;
@@ -66,6 +67,8 @@ const AppRouter = () => {
     <ErrorBoundary>
     <BrowserRouter>
       <IdleSignOut />
+      {/* With the New look on, an old address whose new page is live goes to the new page (src/newlook/redirects) */}
+      <LegacyRedirects>
       <Routes>
           {/* Public routes (without Layout) */}
           {publicRoutes.map((route) => {
@@ -202,6 +205,7 @@ const AppRouter = () => {
               );
             })}
         </Routes>
+      </LegacyRedirects>
     </BrowserRouter>
     </ErrorBoundary>
   );
