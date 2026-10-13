@@ -52,7 +52,8 @@ test('while the answer is still unknown, a placeholder shows instead of a flash 
 
 test('the registry holds the empty page, the component page, the old-addresses page and a placeholder for every new page', () => {
   const paths = newLookRoutes.map((r) => r.path);
-  expect(paths.slice(0, 4)).toEqual(['/new-look', '/new-look/components', '/new-look/charts', '/new-look/redirects']);
+  expect(paths.slice(0, 2)).toEqual(['/new-look', '/new-look/components']);
+  expect(paths).toEqual(expect.arrayContaining(['/new-look/charts', '/new-look/redirects', '/new-look/settings/till', '/new-look/sales']));
   expect(paths).toEqual(expect.arrayContaining(['/new-look/sales', '/new-look/stock', '/new-look/settings/team']));
   expect(new Set(paths).size).toBe(paths.length); // no address is claimed twice
 });

@@ -100,8 +100,8 @@ describe('whenLabel', () => {
 
 describe('differenceInfo', () => {
   test('short, over and matches each have an icon and a word', () => {
-    expect(differenceInfo(-200)).toMatchObject({ kind: 'short', icon: 'alert', words: 'Short KES 200' });
-    expect(differenceInfo(150.5)).toMatchObject({ kind: 'over', icon: 'arrowUp', words: 'Over KES 150.50' });
+    expect(differenceInfo(-200)).toMatchObject({ kind: 'short', icon: 'alert', words: 'Short by KES 200' });
+    expect(differenceInfo(150.5)).toMatchObject({ kind: 'over', icon: 'arrowUp', words: 'Over by KES 150.50' });
     expect(differenceInfo(0)).toMatchObject({ kind: 'matches', icon: 'check', words: 'Matches' });
   });
   test('an open session has no difference, only a dash', () => {

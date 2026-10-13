@@ -18,6 +18,15 @@ import { getMyAccess } from '../../api/accessApi';
 import { saveTextFile } from '../../utils/saveTextFile';
 
 jest.mock('../../api/salesListApi', () => ({ listSales: jest.fn(), getSale: jest.fn(), takePayment: jest.fn() }));
+// Taking a payment from this page is switched off until its server call exists (TAKE_PAYMENT_READY); these tests switch it on to check the dialog itself
+const mockPay = { ready: false };
+jest.mock('./salesModel', () => ({
+  __esModule: true,
+  ...jest.requireActual('./salesModel'),
+  get TAKE_PAYMENT_READY() {
+    return mockPay.ready;
+  },
+}));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
 jest.mock('../../utils/saveTextFile', () => ({ saveTextFile: jest.fn() }));
 jest.mock('../../store/hooks', () => ({
@@ -126,7 +135,12 @@ const renderPage = async (url = '/new-look/sales', tier = 'owner') => {
 const where = () => screen.getByTestId('where').textContent;
 const rowOf = (receipt) => screen.getByRole('row', { name: new RegExp(`${receipt}\\b`) });
 
+afterEach(() => {
+  mockPay.ready = false;
+});
+
 beforeEach(() => {
+  mockPay.ready = false;
   jest.resetAllMocks();
   listSales.mockImplementation(async (query) => answer(query));
   getSale.mockImplementation(async (id) => saleFor(ALL_ROWS.find((r) => r.id === id) || ALL_ROWS[0]));
@@ -158,6 +172,15 @@ describe('the list (AC-24, AC-25)', () => {
     const order = screen.getAllByRole('row').slice(1, 3).map((r) => within(r).getAllByRole('cell')[0].textContent);
     expect(order).toEqual(['#0045', '#0044']);
     expect(screen.queryByText(/ACC-/)).not.toBeInTheDocument();
+  });
+
+  test('a sale made when a till was closed says Till closing under its receipt number', async () => {
+    const rows = answer().rows.map((r, i) => (i === 0 ? { ...r, doctype: 'Sales Invoice', receipt: '#S0045', consolidated: true } : r));
+    listSales.mockResolvedValue({ ...answer(), rows });
+    await renderPage();
+    const row = await screen.findByRole('row', { name: /#S0045/ });
+    expect(within(row).getByText('Till closing')).toBeInTheDocument();
+    expect(within(rowOf('#0044')).queryByText('Till closing')).not.toBeInTheDocument();
   });
 
   test('has the columns Receipt, Date and time, Customer, Payment, Amount and Status', async () => {
@@ -328,7 +351,16 @@ describe('the receipt panel', () => {
     expect(screen.getByText('Wanjiru Kamau', { selector: 'dd' })).toBeInTheDocument();
   });
 
+  test('while taking a payment is not switched on, an unpaid sale shows no Take payment button and says it is coming', async () => {
+    mockPay.ready = false;
+    await renderPage();
+    userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
+    expect(await screen.findByText(/Taking a payment from this page is coming soon/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Take payment' })).not.toBeInTheDocument();
+  });
+
   test('an unpaid sale offers Take payment, Print, Send on WhatsApp and Return items', async () => {
+    mockPay.ready = true;
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
     await screen.findByText('Milk 500ml');
@@ -411,6 +443,7 @@ describe('the receipt panel', () => {
   });
 
   test('Take payment asks for the amount and how it was paid, saves it, and refreshes the receipt and the list', async () => {
+    mockPay.ready = true;
     takePayment.mockResolvedValue({ outstanding: 0 });
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
@@ -433,6 +466,7 @@ describe('the receipt panel', () => {
   });
 
   test('a payment the server refuses stays open and says why', async () => {
+    mockPay.ready = true;
     takePayment.mockRejectedValue(new Error('That is more than is owed.'));
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
@@ -460,10 +494,10 @@ describe('Till sessions', () => {
     await screen.findByRole('row', { name: /Otieno Odhiambo.*Still open/ });
     expect(listSales).toHaveBeenCalledWith(expect.objectContaining({ tab: 'sessions' }));
     expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Cashier', 'Opened', 'Closed', 'Sales', 'Expected cash', 'Counted cash', 'Cash difference']);
-    const short = screen.getByText('Short KES 200');
+    const short = screen.getByText('Short by KES 200');
     expect(short.closest('[data-difference]')).toHaveAttribute('data-difference', 'short');
     expect(short.parentElement.querySelector('svg')).not.toBeNull();
-    expect(screen.getByText('Over KES 150').parentElement.querySelector('svg')).not.toBeNull();
+    expect(screen.getByText('Over by KES 150').parentElement.querySelector('svg')).not.toBeNull();
     expect(screen.getByText('Matches').parentElement.querySelector('svg')).not.toBeNull();
   });
 

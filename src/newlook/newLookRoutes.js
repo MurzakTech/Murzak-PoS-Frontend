@@ -16,6 +16,9 @@ import { BUILT_PAGES } from './redirects/live';
  * Add a screen by adding a row: { path, element }. For now these open for owners only (the access rules for
  * each role arrive with the Roles ticket, P1-8).
  */
+// Pages that have their own route above, so they get no placeholder (add a page here when you add its route)
+const OWN_ROUTES = ['/', '/sales', '/settings/till'];
+
 export const newLookRoutes = [
   // Home (Phase 2): the greeting and hero band, four tiles, charts and Needs attention
   { path: '/new-look', element: HomePage },
@@ -31,5 +34,5 @@ export const newLookRoutes = [
   { path: '/new-look/redirects', element: RedirectsPage },
   // Each new page until its real screen is built: a notice that names the page and links to the current screen.
   // A ticket that builds a page adds its own route above, and adds the page to BUILT_PAGES (redirects/live.js).
-  ...NEW_PAGES.filter((page) => page.path !== '/' && !BUILT_PAGES.includes(page.path)).map((page) => ({ path: `${NEW_LOOK_PREFIX}${page.path}`, element: PagePlaceholder })),
+  ...NEW_PAGES.filter((page) => !OWN_ROUTES.includes(page.path) && !BUILT_PAGES.includes(page.path)).map((page) => ({ path: `${NEW_LOOK_PREFIX}${page.path}`, element: PagePlaceholder })),
 ];

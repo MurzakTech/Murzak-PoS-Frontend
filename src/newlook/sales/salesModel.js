@@ -198,3 +198,10 @@ export const emptyKind = (tab, hasFilters) => {
   if (hasFilters) return 'noMatch';
   return tab;
 };
+
+/**
+ * Taking a payment on an unpaid sale from this page needs a server call that does not exist yet (the Payment Entry that
+ * records the money). Until it is built and approved, the Take payment button is not offered; the panel says so instead of
+ * showing a button that cannot work. Switch this on when `sales_list_api.take_payment` is deployed.
+ */
+export const TAKE_PAYMENT_READY = false;

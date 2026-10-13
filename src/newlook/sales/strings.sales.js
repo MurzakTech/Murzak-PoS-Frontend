@@ -81,11 +81,12 @@ const sales = {
   noValue: '–',
   walkIn: 'Walk-in customer',
   noPayment: 'No payment yet',
+  tillClosing: 'Till closing',
 
   difference: {
     matches: 'Matches',
-    short: 'Short {amount}',
-    over: 'Over {amount}',
+    short: 'Short by {amount}',
+    over: 'Over by {amount}',
     none: 'Not counted yet',
   },
 
@@ -140,6 +141,7 @@ const sales = {
     errorText: 'Check your connection and try again.',
     retry: 'Try again',
     takePayment: 'Take payment',
+    paymentComing: 'This sale still has {amount} to pay. Taking a payment from this page is coming soon.',
     print: 'Print',
     whatsapp: 'Send on WhatsApp',
     returnItems: 'Return items',

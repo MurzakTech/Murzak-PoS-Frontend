@@ -43,6 +43,13 @@ const Methods = ({ row }) => {
   );
 };
 
+const ReceiptCell = ({ row }) => (
+  <>
+    <strong>{row.receipt}</strong>
+    {row.consolidated ? <span className="nl-sales-sub">{T.tillClosing}</span> : null}
+  </>
+);
+
 const Status = ({ status }) => {
   const view = statusView(status);
   return <StatusLabel status={view.status}>{view.words}</StatusLabel>;
@@ -138,7 +145,7 @@ const SalesPage = () => {
 
   // ---------- Table columns ----------
   const salesColumns = [
-    { key: 'receipt', header: T.columns.receipt, nowrap: true, render: (r) => <strong>{r.receipt}</strong> },
+    { key: 'receipt', header: T.columns.receipt, nowrap: true, render: (r) => <ReceiptCell row={r} /> },
     { key: 'when', header: T.columns.when, nowrap: true, render: (r) => whenLabel(r.date, r.time) },
     { key: 'customer', header: T.columns.customer, render: (r) => customerName(r) },
     { key: 'payment', header: T.columns.payment, render: (r) => <Methods row={r} /> },
@@ -171,7 +178,7 @@ const SalesPage = () => {
     key: r.id,
     head: r.receipt,
     aside: formatMoney(r.total),
-    lines: [customerName(r), whenLabel(r.date, r.time), <Methods key="m" row={r} />],
+    lines: [customerName(r), whenLabel(r.date, r.time), <Methods key="m" row={r} />, ...(r.consolidated ? [T.tillClosing] : [])],
     foot: <Status status={r.status} />,
   }));
   const sessionCards = rows.map((r) => ({

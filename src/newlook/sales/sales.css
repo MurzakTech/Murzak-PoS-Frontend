@@ -21,6 +21,12 @@
   gap: var(--space-1);
 }
 
+.nl-sales-sub {
+  display: block;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
 .nl-sales-form {
   display: grid;
   gap: var(--space-4);
