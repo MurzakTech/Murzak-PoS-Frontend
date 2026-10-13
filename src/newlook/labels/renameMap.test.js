@@ -95,7 +95,7 @@ describe('RENAMES against the Spec table', () => {
   });
 
   test('has exactly the rows above and no invented renames', () => {
-    const expected = SPEC_VISIBLE.length + SPEC_HIDDEN.length + 2; // the receipt pattern and Account Provisioning
+    const expected = SPEC_VISIBLE.length + SPEC_HIDDEN.length + 3; // the receipt pattern, Account Provisioning, and MPESA (added in P1-10, not in the Spec's table)
     expect(RENAMES).toHaveLength(expected);
     const olds = RENAMES.map((entry) => entry.old);
     expect(new Set(olds).size).toBe(olds.length);
@@ -357,5 +357,17 @@ describe('formatReceiptNumber', () => {
 describe('re-exports', () => {
   test('formatMoney is the shared helper, not a copy', () => {
     expect(formatMoney(2350)).toBe('KES 2,350');
+  });
+});
+
+describe('MPESA (added in P1-10)', () => {
+  test('shows as M-Pesa, in any case, and is found by its old spelling', () => {
+    expect(displayName('MPESA')).toBe('M-Pesa');
+    expect(displayName('mpesa')).toBe('M-Pesa');
+    expect(searchAliases('M-Pesa')).toEqual(['MPESA']);
+  });
+
+  test('is left out of the old terms, because "mpesa" is also the internal key of the method', () => {
+    expect(OLD_TERMS).not.toContain('mpesa');
   });
 });

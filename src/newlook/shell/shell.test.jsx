@@ -247,13 +247,13 @@ describe('Widths: the Responsive behaviour table', () => {
   });
 
   test('the collapsed choice is remembered, and applies from 1024px up', () => {
-    const first = shell({}, '/sales/history', 1280);
+    const view = shell({}, '/sales/history', 1280);
     userEvent.click(screen.getByRole('button', { name: 'Collapse menu' }));
-    expect(first.container.querySelector('.nl-shell')).toHaveClass('is-collapsed');
+    expect(view.container.querySelector('.nl-shell')).toHaveClass('is-collapsed');
     expect(localStorage.getItem(SIDEBAR_KEY)).toBe('collapsed');
-    first.unmount();
-    const second = shell({}, '/sales/history', 1280);
-    expect(second.container.querySelector('.nl-shell')).toHaveClass('is-collapsed');
+    view.unmount();
+    const { container: second } = shell({}, '/sales/history', 1280);
+    expect(second.querySelector('.nl-shell')).toHaveClass('is-collapsed');
     userEvent.click(screen.getByRole('button', { name: 'Expand menu' }));
     expect(localStorage.getItem(SIDEBAR_KEY)).toBe('expanded');
   });
@@ -312,9 +312,9 @@ describe('Top bar', () => {
 
   test('the store switcher appears only when the shop has more than one location', () => {
     const onChange = jest.fn();
-    const one = shell({ topBar: { stores: { list: [{ id: 'a', name: 'Main shop' }], currentId: 'a', onChange } } });
+    const view = shell({ topBar: { stores: { list: [{ id: 'a', name: 'Main shop' }], currentId: 'a', onChange } } });
     expect(screen.queryByRole('button', { name: /Change store/ })).toBeNull();
-    one.unmount();
+    view.unmount();
     shell({ topBar: { stores: { list: [{ id: 'a', name: 'Main shop' }, { id: 'b', name: 'Westlands' }], currentId: 'a', onChange } } });
     userEvent.click(screen.getByRole('button', { name: 'Store: Main shop. Change store' }));
     expect(screen.getByRole('menuitemradio', { name: 'Main shop' })).toHaveAttribute('aria-checked', 'true');
@@ -324,9 +324,9 @@ describe('Top bar', () => {
 
   test('+ New lists the quick actions it is given, and is left out when there are none', () => {
     const open = jest.fn();
-    const none = shell();
+    const view = shell();
     expect(screen.queryByRole('button', { name: 'New' })).toBeNull();
-    none.unmount();
+    view.unmount();
     shell({ topBar: { newItems: [{ label: 'Sale', onClick: open }, { label: 'Product' }] } });
     userEvent.click(screen.getByRole('button', { name: 'New' }));
     expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Sale', 'Product']);

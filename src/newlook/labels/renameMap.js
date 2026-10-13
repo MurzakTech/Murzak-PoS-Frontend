@@ -13,6 +13,7 @@
  *   note                 optional explanation of a rule
  *   pattern              true when the entry describes a format, not a plain string
  *   needsConfirmation    true when the owner must confirm something before the label is final
+ *   internalToo          true when the old name is also an internal key, so the label scan must not flag it
  */
 
 export { formatMoney, formatCount, formatShowing } from '../components/format';
@@ -111,6 +112,18 @@ export const RENAMES = [
     needsConfirmation: true,
     note: 'The Spec says: a plain description, or moved to Advanced. The owner must confirm what it does first, so no display name is set yet.',
   },
+
+  // Not in the Spec's table: found in the Phase 0 review of the pay screen, which showed the payment method as MPESA.
+  // The Spec writes M-Pesa everywhere. "mpesa" is also the internal key of the method, so this old name is left out of
+  // OLD_TERMS (internalToo): the label scan must not flag the key.
+  {
+    old: 'MPESA',
+    show: 'M-Pesa',
+    where: 'Till and Settings',
+    hidden: false,
+    internalToo: true,
+    note: 'Added in P1-10 from the Phase 0 review; the Spec spells it M-Pesa.',
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -164,7 +177,7 @@ export const matchesSearch = (show, query) => {
  * Every old name that must not appear as visible text in the shell and shared
  * components after renaming: lowercased, de-duplicated, and without patterns.
  */
-export const OLD_TERMS = Array.from(new Set(RENAMES.filter((entry) => !entry.pattern).map((entry) => norm(entry.old))));
+export const OLD_TERMS = Array.from(new Set(RENAMES.filter((entry) => !entry.pattern && !entry.internalToo).map((entry) => norm(entry.old))));
 
 /* ------------------------------------------------------------------ */
 /* Format helpers (Part 1, Language and formats, format table)         */

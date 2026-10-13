@@ -46,7 +46,7 @@ const DetailPanel = ({ title, status, subtitle, onClose, onPrevious, onNext, pos
   };
 
   return (
-    <section className={`nl-detail ${className}`.trim()} role="region" aria-labelledby={headingId} onKeyDown={onKeyDown}>
+    <section className={`nl-detail ${className}`.trim()} aria-labelledby={headingId} onKeyDown={onKeyDown}>
       <div className="nl-detail__header">
         <div className="nl-detail__heading">
           <h2 id={headingId} ref={heading} tabIndex={-1} className="nl-detail__title">

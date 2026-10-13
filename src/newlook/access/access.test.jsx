@@ -94,10 +94,10 @@ describe('AccessProvider', () => {
 
   test('the last answer is kept for each person, and used when the server cannot be asked', async () => {
     axiosInstance.get.mockResolvedValue(OWNER);
-    const first = show('a@shop.test');
+    const view = show('a@shop.test');
     await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('ready|owner|Owner'));
     expect(localStorage.getItem(accessCacheKey('a@shop.test'))).toContain('owner');
-    first.unmount();
+    view.unmount();
     axiosInstance.get.mockRejectedValue(new Error('offline'));
     show('a@shop.test');
     await waitFor(() => expect(axiosInstance.get).toHaveBeenCalledTimes(2));

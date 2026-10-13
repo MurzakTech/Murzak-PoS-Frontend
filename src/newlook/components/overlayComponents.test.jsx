@@ -67,9 +67,9 @@ describe('Dialog', () => {
   });
 
   test('focus moves in: to the first control, or to the control marked data-autofocus', () => {
-    const first = render(form(true, () => {}));
+    const view = render(form(true, () => {}));
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
-    first.unmount();
+    view.unmount();
     render(
       <Dialog open onClose={() => {}} title="Pick">
         <Button>One</Button>

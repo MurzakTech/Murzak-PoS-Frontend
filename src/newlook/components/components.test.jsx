@@ -412,7 +412,6 @@ describe('Chip, badge, status label and payment chip', () => {
 
   test.each([
     ['M-Pesa', 'mpesa', 'series-1'],
-    ['MPESA', 'mpesa', 'series-1'],
     ['Cash', 'cash', 'series-2'],
     ['Card', 'card', 'series-3'],
     ['On credit', 'credit', 'series-4'],
@@ -607,6 +606,7 @@ describe('Payment chip and the rename map', () => {
     ['Cheque', 'Other', 'other'],
     ['Bank Draft', 'Other', 'other'],
     ['Wire Transfer', 'Other', 'other'],
+    ['MPESA', 'M-Pesa', 'mpesa'],
   ])('%s shows as %s with the %s colour group', (method, shown, key) => {
     const { container } = render(<PaymentChip method={method} />);
     expect(screen.getByText(shown)).toBeInTheDocument();

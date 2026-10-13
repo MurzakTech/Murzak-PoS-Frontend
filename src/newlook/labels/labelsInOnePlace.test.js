@@ -4,7 +4,7 @@
  * from the rename map in any text, fails here.
  */
 import fs from 'fs';
-import { filesToScan, oldTermsIn, strayWords, textsIn } from './scanLabels';
+import { filesToScan, oldTermsIn, strayWords } from './scanLabels';
 
 const files = filesToScan();
 const read = (f) => fs.readFileSync(f.full, 'utf8');
@@ -59,7 +59,7 @@ describe('No old term appears (the rename map applied)', () => {
   });
 
   test('and not in the strings file either', () => {
-    const strings = './strings';
+    const strings = '../strings';
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const { default: S } = require(strings);
     const all = [];
