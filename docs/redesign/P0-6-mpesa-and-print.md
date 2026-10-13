@@ -67,6 +67,8 @@ Nothing has been built for this yet. It is not part of the P0-6 testing ticket; 
 
 ## 4. The live test on the demo store (still to do)
 
+**Update, 13 Oct 2026:** the owner named the demo store, **White African Physiotherapy**, and shared a login in the chat. It has **not** been used yet: this session cannot reach the server (the network policy blocks `pos.murzaktech.tech`; see the owner's action below), and the address of the store is not yet confirmed. The login is deliberately not written in any file or note. The owner also asked that **M-Pesa must show on the demo store**, which is a set-up step on that store (Section 1 explains what makes the M-Pesa choice appear); it is waiting on the same access.
+
 **What I need first** (never a real shop, never production passwords):
 
 1. The **demo store's name** (Open question 11).

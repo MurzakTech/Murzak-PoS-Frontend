@@ -1,62 +1,102 @@
 import React from 'react';
-import { Box, Button, Chip, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import './tokens.css';
 
 /**
  * The shell every redesigned screen will sit inside: a top bar, a menu column and a page area.
  *
- * It is EMPTY on purpose. This ticket (P0-5) only proves the switch: with the New look on, this loads;
- * with it off, nothing in the app changes. The real top bar, menu and page header are built in the
- * foundation phase (P1-6) from the design tokens (P1-1), so nothing here invents a colour, size or
- * component: it uses only what the app's current theme already provides.
+ * It is EMPTY on purpose. Ticket P0-5 proved the switch; this is its first use of the design tokens
+ * (P1-1): every colour, size, radius and space below comes from tokens.css, none is written here. The real
+ * top bar, menu and page header are built in P1-6 from the shared components (P1-3 to P1-5).
  */
-const NewLookShell = ({ children }) => (
-  <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
-    <Box
-      component="header"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        px: 3,
-        height: 64,
-        borderBottom: 1,
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Typography component="span" sx={{ fontWeight: 700 }}>
-        Murzak POS
-      </Typography>
-      <Chip size="small" label="New look" />
-    </Box>
+const shell = {
+  minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  background: 'var(--bg)',
+  color: 'var(--ink)',
+  fontFamily: 'var(--font-family)',
+  fontSize: 'var(--body-size)',
+  lineHeight: 'var(--body-line)',
+  fontVariantNumeric: 'tabular-nums',
+};
 
-    <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
-      <Box
-        component="nav"
+const topBar = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--space-3)',
+  padding: '0 var(--page-gutter)',
+  height: 64,
+  background: 'var(--surface)',
+  borderBottom: 'var(--card-border)',
+};
+
+const chip = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  height: 'var(--control-height-small)',
+  padding: '0 var(--space-3)',
+  borderRadius: 'var(--radius-pill)',
+  background: 'var(--soft)',
+  color: 'var(--brand-text)',
+  fontWeight: 'var(--font-weight-semibold)',
+  fontSize: 'var(--caption-size)',
+};
+
+const NewLookShell = ({ children }) => (
+  <div style={shell}>
+    <header style={topBar}>
+      <span style={{ fontWeight: 'var(--font-weight-bold)' }}>Murzak POS</span>
+      <span style={chip}>New look</span>
+    </header>
+
+    <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <nav
         aria-label="Main menu"
-        sx={{ width: 240, flexShrink: 0, borderRight: 1, borderColor: 'divider', bgcolor: 'background.paper', display: { xs: 'none', md: 'block' } }}
+        className="newlook-menu"
+        style={{ width: 240, flexShrink: 0, background: 'var(--surface)', borderRight: 'var(--card-border)' }}
       />
-      <Box component="main" sx={{ flex: 1, p: 3, minWidth: 0 }}>
-        {children}
-      </Box>
-    </Box>
-  </Box>
+      <main style={{ flex: 1, minWidth: 0, padding: 'var(--page-gutter)' }}>{children}</main>
+    </div>
+    {/* The menu column hides below 768px, where the real shell uses a drawer (P1-6) */}
+    <style>{'@media (max-width: 767px) { .newlook-menu { display: none; } }'}</style>
+  </div>
 );
 
 /** The page shown inside the empty shell. Replaced by real screens as they are built. */
 export const NewLookEmptyPage = () => (
-  <Box>
-    <Typography variant="h1" sx={{ fontSize: 28, fontWeight: 700, mb: 0.5 }}>
+  <div>
+    <h1
+      style={{
+        margin: '0 0 var(--space-1)',
+        fontSize: 'var(--page-title-size)',
+        fontWeight: 'var(--page-title-weight)',
+        letterSpacing: 'var(--page-title-spacing)',
+      }}
+    >
       New look
-    </Typography>
-    <Typography color="text.secondary" sx={{ mb: 3 }}>
+    </h1>
+    <p style={{ margin: '0 0 var(--space-6)', color: 'var(--muted)', fontSize: 'var(--body-size)' }}>
       The New look is on for this shop. No redesigned screens are ready yet; the rest of the app is unchanged.
-    </Typography>
-    <Button component={RouterLink} to="/dashboard" variant="outlined">
+    </p>
+    <RouterLink
+      to="/dashboard"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        height: 'var(--control-height)',
+        padding: '0 var(--space-4)',
+        background: 'var(--surface)',
+        color: 'var(--ink)',
+        border: 'var(--card-border)',
+        borderRadius: 'var(--radius-button)',
+        fontWeight: 'var(--font-weight-semibold)',
+        textDecoration: 'none',
+      }}
+    >
       Back to the current screens
-    </Button>
-  </Box>
+    </RouterLink>
+  </div>
 );
 
 export default NewLookShell;
