@@ -19,7 +19,7 @@ import { KEEPOUT_ATTRIBUTE } from '../components/Toast';
  *   tillTo      where Go to till goes
  *   stores      { list: [{ id, name }], currentId, onChange(id) }
  *   newItems    the + New menu: [{ label, icon?, onClick }]
- *   user        { name, email }
+ *   user        { name, email, role? }  role is Owner, Manager or Cashier, shown in the user menu
  *   userItems   [{ label, onClick, icon?, destructive? }] after the line that says who is signed in
  */
 const keep = { [KEEPOUT_ATTRIBUTE]: '' };
@@ -98,7 +98,7 @@ const TopBar = ({
         <Button variant="ghost" icon="help" aria-label="Help and shortcuts" aria-haspopup="dialog" onClick={onHelp} />
       </div>
 
-      <Menu label={`Account menu for ${who}`} variant="ghost" size="default" className="nl-topbar__avatar" items={[{ label: `Signed in as ${who}`, disabled: true }, ...userItems]}>
+      <Menu label={`Account menu for ${who}`} variant="ghost" size="default" className="nl-topbar__avatar" items={[{ label: `Signed in as ${who}${user && user.role ? `, ${user.role}` : ''}`, disabled: true }, ...userItems]}>
         {initial}
       </Menu>
     </header>
