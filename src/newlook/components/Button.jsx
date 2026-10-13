@@ -6,7 +6,7 @@ import Icon, { Spinner } from './Icon';
  *
  *   variant  primary (brand fill), secondary (surface with a line border), danger (red text), ghost (no border)
  *   size     default 40px, till 44px, small 32px
- *   icon     the name of an icon shown before the label (see Icon.jsx)
+ *   icon     the name of an icon shown before the label (see Icon.jsx); iconEnd puts it after the label instead
  *   loading  the spinner replaces the icon and the label stays; the button does nothing while it is loading
  *
  * States: hover, pressed, focus ring (2px brand-text, 2px offset), disabled (track fill, muted text), loading.
@@ -14,7 +14,7 @@ import Icon, { Spinner } from './Icon';
  * screen reader.
  */
 const Button = forwardRef(function Button(
-  { variant = 'primary', size = 'default', icon, loading = false, disabled = false, type = 'button', onClick, className = '', children, ...rest },
+  { variant = 'primary', size = 'default', icon, iconEnd = false, loading = false, disabled = false, type = 'button', onClick, className = '', children, ...rest },
   ref
 ) {
   const iconOnly = !children;
@@ -54,8 +54,9 @@ const Button = forwardRef(function Button(
       onClick={handleClick}
       {...rest}
     >
-      {loading ? <Spinner /> : icon ? <Icon name={icon} /> : null}
+      {loading ? <Spinner /> : icon && !iconEnd ? <Icon name={icon} /> : null}
       {children ? <span className="nl-btn__label">{children}</span> : null}
+      {icon && iconEnd && !loading ? <Icon name={icon} /> : null}
     </button>
   );
 });

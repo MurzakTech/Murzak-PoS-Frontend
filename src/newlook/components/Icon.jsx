@@ -39,6 +39,20 @@ const SHAPES = {
   chevronDown: <path d="M4.5 7l4.5 4.5L13.5 7" />,
   x: <path d="M5 5l8 8M13 5l-8 8" />,
   plus: <path d="M9 4v10M4 9h10" />,
+  search: (
+    <>
+      <circle cx="8" cy="8" r="4.8" />
+      <path d="M11.6 11.6L15 15" />
+    </>
+  ),
+  inbox: (
+    <>
+      <path d="M2.5 10.5h4l1 2h3l1-2h4" />
+      <path d="M2.5 10.5l1.8-6h9.4l1.8 6V14a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1v-3.5z" />
+    </>
+  ),
+  chevronLeft: <path d="M11 4.5L6.5 9l4.5 4.5" />,
+  chevronRight: <path d="M7 4.5L11.5 9 7 13.5" />,
 };
 
 export const ICON_NAMES = Object.keys(SHAPES);

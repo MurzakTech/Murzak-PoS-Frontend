@@ -23,6 +23,7 @@ const Field = ({
   onChange,
   disabled = false,
   readOnly = false,
+  icon, // an icon shown inside the box before the text, such as "search"
   id,
   className = '',
   forceState, // 'hover' | 'focus': used only by the component page to show a state at rest
@@ -71,6 +72,11 @@ const Field = ({
         {label}
       </label>
       <div className={wrapClasses}>
+        {icon ? (
+          <span className="nl-input-icon">
+            <Icon name={icon} />
+          </span>
+        ) : null}
         {kind === 'money' ? <span className="nl-affix">KES</span> : null}
         <input
           id={inputId}

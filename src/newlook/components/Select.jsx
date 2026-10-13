@@ -23,6 +23,8 @@ const Select = ({
   disabled = false,
   id,
   className = '',
+  size = 'default', // 'small' is 32px, for toolbars such as the rows-per-page choice
+  inline = false, // the label sits beside the box instead of above it
   forceState, // 'hover' | 'focus' | 'open': used only by the component page to show a state at rest
 }) => {
   const autoId = useId();
@@ -144,7 +146,7 @@ const Select = ({
   };
 
   const note = error || helper;
-  const classes = ['nl-field', 'nl-select', error && 'is-error', disabled && 'is-disabled', forceState === 'hover' && 'is-hover', className].filter(Boolean).join(' ');
+  const classes = ['nl-field', 'nl-select', size === 'small' && 'nl-select--small', inline && 'nl-select--inline', error && 'is-error', disabled && 'is-disabled', forceState === 'hover' && 'is-hover', className].filter(Boolean).join(' ');
 
   return (
     <div className={classes} ref={root}>
