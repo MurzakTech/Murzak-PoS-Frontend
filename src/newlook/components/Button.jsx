@@ -9,12 +9,15 @@ import Icon, { Spinner } from './Icon';
  *   icon     the name of an icon shown before the label (see Icon.jsx); iconEnd puts it after the label instead
  *   loading  the spinner replaces the icon and the label stays; the button does nothing while it is loading
  *
+ * as       renders something else with the same look, for example a router Link: <Button as={Link} to="/sales/pos">.
+ *          Use it for a button that goes to another address; a button that does something stays a button.
+ *
  * States: hover, pressed, focus ring (2px brand-text, 2px offset), disabled (track fill, muted text), loading.
  * A button with an icon and no label must be given an aria-label, because the icon alone says nothing to a
  * screen reader.
  */
 const Button = forwardRef(function Button(
-  { variant = 'primary', size = 'default', icon, iconEnd = false, loading = false, disabled = false, type = 'button', onClick, className = '', children, ...rest },
+  { variant = 'primary', size = 'default', icon, iconEnd = false, loading = false, disabled = false, type = 'button', as: Tag = 'button', onClick, className = '', children, ...rest },
   ref
 ) {
   const iconOnly = !children;
@@ -44,11 +47,10 @@ const Button = forwardRef(function Button(
   };
 
   return (
-    <button
+    <Tag
       ref={ref}
-      type={type}
+      {...(Tag === 'button' ? { type, disabled } : {})}
       className={classes}
-      disabled={disabled}
       aria-busy={loading || undefined}
       aria-disabled={loading || undefined}
       onClick={handleClick}
@@ -57,7 +59,7 @@ const Button = forwardRef(function Button(
       {loading ? <Spinner /> : icon && !iconEnd ? <Icon name={icon} /> : null}
       {children ? <span className="nl-btn__label">{children}</span> : null}
       {icon && iconEnd && !loading ? <Icon name={icon} /> : null}
-    </button>
+    </Tag>
   );
 });
 

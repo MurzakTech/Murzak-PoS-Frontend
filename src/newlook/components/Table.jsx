@@ -59,7 +59,7 @@ const Table = ({ columns, rows = [], rowKey = 'id', caption, onRowOpen, selected
     if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
   }, [selectedKey]);
 
-  const rowHeight = '(var(--space-6) * 2 + 1px)';
+  const rowHeight = '(var(--space-3) * 2 + var(--control-height-small) + 1px)';
   const reserved = `calc(${skeletonRows + 1} * ${rowHeight})`; // the rows and a header's worth
 
   let content;

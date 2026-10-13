@@ -6,7 +6,7 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import IdleSignOut from '../components/IdleSignOut';
 import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Common';
 import NewLookGate from '../newlook/NewLookGate';
-import NewLookShell from '../newlook/NewLookShell';
+import NewLookShell from '../newlook/NewLookShellConnected';
 import { newLookRoutes } from '../newlook/newLookRoutes';
 
 // Branded splash for public pages; layout-shaped skeleton inside the app shell

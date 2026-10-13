@@ -126,6 +126,9 @@
 .nl-menu__item.is-destructive {
   color: var(--bad);
 }
+.nl-menu__label {
+  flex: 1;
+}
 .nl-menu__divider {
   height: 1px;
   margin: var(--space-1) 0;

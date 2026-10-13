@@ -78,6 +78,9 @@
   --card-gap: 16px;
   --page-gutter: 24px;
   --content-max: 1240px;
+  --topbar-height: 64px; /* App shell: top bar */
+  --sidebar-width: 240px; /* App shell: sidebar */
+  --sidebar-width-collapsed: 72px; /* App shell: sidebar with icons only */
 
   /* Radius */
   --radius-card: 14px;

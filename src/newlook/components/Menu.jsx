@@ -8,7 +8,8 @@ import Icon from './Icon';
  *
  *   label    the button's name for screen readers ("More actions for sale 0134"); needed when the button has no words
  *   children the button's visible words, if any ("New"); without them the button is the three dots
- *   items    [{ label, onClick, icon?, destructive?, disabled? }]
+ *   items    [{ label, onClick, icon?, destructive?, disabled?, selected? }]
+ *            selected (true or false) makes it a choice among several, such as the current store: it shows a check and is read as selected
  *
  * Keyboard: Enter, Space or the Down arrow opens it and focuses the first action (the Up arrow, the last); the
  * arrow keys move, Home and End jump, typing a letter jumps to a match, Escape closes and puts focus back on the
@@ -202,14 +203,16 @@ const Menu = ({ label, items, children, icon, variant = 'ghost', size = 'small',
                       itemRefs.current[i] = el;
                     }}
                     type="button"
-                    role="menuitem"
+                    role={item.selected === undefined ? 'menuitem' : 'menuitemradio'}
+                    aria-checked={item.selected === undefined ? undefined : item.selected}
                     tabIndex={-1}
                     disabled={item.disabled}
                     className={['nl-menu__item', item.destructive && 'is-destructive'].filter(Boolean).join(' ')}
                     onClick={() => choose(item)}
                   >
                     {item.icon ? <Icon name={item.icon} /> : null}
-                    <span>{item.label}</span>
+                    <span className="nl-menu__label">{item.label}</span>
+                    {item.selected ? <Icon name="check" /> : null}
                   </button>
                 </React.Fragment>
               ))}

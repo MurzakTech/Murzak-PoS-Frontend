@@ -3,6 +3,8 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useThemeMode } from '../theme/ThemeProvider';
 import DataDemo from './DataDemo';
 import OverlayDemo from './OverlayDemo';
+import ShellDemo from './ShellDemo';
+import { PageHeader } from './shell';
 import { Badge, Button, Card, Checkbox, Chip, Field, ICON_NAMES, Icon, PaymentChip, Select, StatusLabel, Switch } from './components';
 
 /**
@@ -68,19 +70,19 @@ const ComponentPage = () => {
   return (
     <div style={page}>
       <div>
-        <h1 style={{ margin: '0 0 var(--space-1)', fontSize: 'var(--page-title-size)', fontWeight: 'var(--page-title-weight)', letterSpacing: 'var(--page-title-spacing)' }}>
-          Components
-        </h1>
-        <p style={{ margin: 0, color: 'var(--muted)' }}>
-          Every shared component in every state. Hover, pressed and focus are shown at rest; the real ones appear when you point, press and use the Tab key.
-        </p>
-        <div style={{ ...row, marginTop: 'var(--space-4)' }}>
+        <PageHeader
+          title="Components"
+          subtitle="Every shared component in every state. Hover, pressed and focus are shown at rest."
+        />
+        <div style={{ ...row, marginTop: 'calc(var(--space-2) * -1)' }}>
           <span style={{ color: 'var(--muted)' }}>Theme now: {mode}</span>
           <Button variant="secondary" size="small" onClick={() => mode !== 'light' && toggleColorMode()}>Light</Button>
           <Button variant="secondary" size="small" onClick={() => mode !== 'dark' && toggleColorMode()}>Dark</Button>
           <RouterLink to="/new-look" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>Back to the New look</RouterLink>
         </div>
       </div>
+
+      <ShellDemo />
 
       <Card title="Button" subtitle="Primary, secondary, danger and ghost, in three heights">
         <div style={{ display: 'grid', gap: 'var(--space-5)' }}>

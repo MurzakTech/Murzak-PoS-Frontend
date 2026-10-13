@@ -248,6 +248,10 @@ describe('Table', () => {
     { id: '0001', customer: 'Njeri', amount: 12000 },
   ];
 
+  test('hidden helper text inside the table stays inside it (it must not widen the page on a phone)', () => {
+    expect(block('.nl-table-wrap')).toMatch(/position:\s*relative/);
+  });
+
   test('has a header in label style, scoped column headers, and money right-aligned as KES', () => {
     render(<Table caption="Sales" columns={columns} rows={rows} />);
     expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Sale', 'Customer', 'Amount']);

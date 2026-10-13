@@ -1,0 +1,475 @@
+/*
+ * Styles of the app shell (ticket P1-6): top bar, sidebar, page area, page header, search and shortcuts. Every
+ * colour, size, radius and space is a design token from ../tokens.css; the test in tokens.test.js fails if a
+ * colour is written here. Hover is the 8% ink overlay and pressed 16%, as in the shared components.
+ *
+ * Widths (Part 1, Responsive): 1024px and up, sidebar 240px (or 72px if collapsed); 768 to 1023px, 72px with
+ * icons; below 768px, no sidebar in the page (a drawer opens from a menu button). Below 1100px the search box
+ * loses its Ctrl K hint and shrinks first; below 768px it is an icon.
+ */
+
+.nl-shell {
+  --sticky-top: var(--topbar-height); /* a table's header sticks just under the top bar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-family);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Focus ring for the shell's own keyboard targets ---------- */
+.nl-topbar__logo:focus-visible,
+.nl-topbar__search:focus-visible,
+.nl-pill:focus-visible,
+.nl-skip:focus-visible,
+.nl-search__item:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-nav__item:focus-visible,
+.nl-shell__main:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+
+/* ---------- Skip link: the first stop for the Tab key ---------- */
+.nl-skip {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-2);
+  z-index: 2000;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-button);
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transform: translateY(-300%);
+}
+.nl-skip:focus {
+  transform: none;
+}
+
+/* ---------- Top bar ---------- */
+.nl-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--topbar-height);
+  padding: 0 var(--page-gutter);
+  background: var(--surface);
+  border-bottom: var(--card-border);
+}
+.nl-topbar__logo {
+  flex: none;
+  margin-right: var(--space-2);
+  color: var(--ink);
+  font-size: var(--card-title-size);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nl-topbar__search {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 360px;
+  min-width: var(--control-height);
+  max-width: 360px;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  background: var(--field);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-input);
+  color: var(--muted);
+  font: var(--font-weight-regular) var(--body-size) / 1 var(--font-family);
+  text-align: left;
+  cursor: text;
+}
+.nl-topbar__search:hover {
+  border-color: var(--ink-2);
+}
+.nl-topbar__search-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nl-topbar__kbd,
+.nl-shortcuts kbd {
+  padding: 2px var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button-small);
+  color: var(--muted);
+  font: var(--font-weight-semibold) var(--caption-size) / 1.4 var(--font-family);
+  white-space: nowrap;
+}
+.nl-topbar__spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.nl-topbar__optional,
+.nl-topbar__tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+}
+.nl-topbar__till {
+  flex: none;
+  min-width: 128px;
+  white-space: nowrap; /* Go to till never wraps */
+}
+.nl-topbar .nl-btn {
+  flex: none;
+}
+.nl-btn.nl-topbar__avatar {
+  flex: none;
+  width: var(--control-height);
+  padding: 0;
+  background-color: var(--soft);
+  border-radius: var(--radius-pill);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.nl-pill {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height-small);
+  padding: 0 var(--space-3);
+  background-color: var(--soft);
+  background-image: none;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--brand-text);
+  font: var(--font-weight-semibold) var(--caption-size) / 1 var(--font-family);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nl-pill:hover {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));
+}
+.nl-pill:active {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.16), rgb(var(--ink-rgb) / 0.16));
+}
+
+/* ---------- Body: sidebar and page ---------- */
+.nl-shell__body {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  min-width: 0;
+}
+.nl-shell__side {
+  position: sticky;
+  top: var(--topbar-height);
+  flex: none;
+  box-sizing: border-box;
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--topbar-height));
+  background: var(--surface);
+  border-right: var(--card-border);
+}
+.nl-shell.is-collapsed .nl-shell__side {
+  width: var(--sidebar-width-collapsed);
+}
+.nl-shell__main {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--page-gutter);
+}
+.nl-shell__content {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+/* ---------- Sidebar ---------- */
+.nl-sidebar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.nl-sidebar__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+.nl-sidebar__foot {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-top: var(--card-border);
+}
+.nl-nav__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-nav__group {
+  margin-top: var(--space-4);
+}
+.nl-nav__heading {
+  margin: 0 0 var(--space-1);
+  padding: 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.nl-nav__item {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-button);
+  background-color: transparent;
+  background-image: none;
+  color: var(--ink-2);
+  font: var(--font-weight-medium) var(--body-size) / 1 var(--font-family);
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nl-nav__item:hover:not(.is-soon) {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));
+}
+.nl-nav__item:active:not(.is-soon) {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.16), rgb(var(--ink-rgb) / 0.16));
+}
+/* The open page: soft fill, brand-text, and a bar on its left edge so the fill is never the only sign */
+.nl-nav__item.is-active {
+  background-color: var(--soft);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-nav__item.is-soon {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.nl-nav__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nl-nav__soon {
+  padding: 2px var(--space-2);
+  background: var(--track);
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: var(--label-size);
+  font-weight: var(--font-weight-bold);
+}
+.nl-sidebar.is-collapsed .nl-sidebar__scroll,
+.nl-sidebar.is-collapsed .nl-sidebar__foot {
+  padding: var(--space-3) var(--space-2);
+}
+.nl-sidebar.is-collapsed .nl-nav__item {
+  justify-content: center;
+  padding: 0;
+}
+.nl-sidebar.is-collapsed .nl-nav__group {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+.nl-tooltip {
+  position: fixed;
+  z-index: 1300;
+  padding: var(--space-1) var(--space-2);
+  background: var(--ink);
+  border-radius: var(--radius-button-small);
+  color: var(--surface);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+/* ---------- Page header ---------- */
+.nl-page-header {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.nl-page-header__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+}
+.nl-page-header__text {
+  min-width: 0;
+}
+.nl-page-header__title {
+  margin: 0;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
+  letter-spacing: var(--page-title-spacing);
+  line-height: 1.2;
+}
+.nl-page-header__subtitle {
+  max-width: 72ch;
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+}
+.nl-page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- Search ---------- */
+.nl-search__heading {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.nl-search__list {
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.nl-search__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-height-small);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-button-small);
+  cursor: pointer;
+}
+.nl-search__item.is-active {
+  background: var(--selected-row);
+}
+.nl-search__item[aria-selected='true'] {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-search__hint {
+  color: var(--muted);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-regular);
+}
+.nl-search__empty {
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-search__empty-title {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-search__empty-text {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Help: the shortcuts list ---------- */
+.nl-shortcuts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.nl-shortcuts__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.nl-shortcuts dt {
+  flex: none;
+  min-width: 120px;
+}
+.nl-shortcuts dd {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+/* ---------- Narrower than 1100px: the search box shrinks first and loses its hint ---------- */
+@media (max-width: 1099px) {
+  .nl-topbar__kbd {
+    display: none;
+  }
+}
+
+/* ---------- Below 1024px: the store switcher and + New show only their icons, the pill drops the time ---------- */
+@media (max-width: 1023px) {
+  .nl-btn.nl-topbar__collapsible {
+    width: var(--control-height);
+    padding: 0;
+  }
+  .nl-topbar__collapsible .nl-btn__label,
+  .nl-pill__since {
+    display: none;
+  }
+}
+
+/* ---------- Below 768px: menu button, search, Go to till and the user menu stay ---------- */
+@media (max-width: 767px) {
+  .nl-topbar {
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+  }
+  .nl-topbar__optional,
+  .nl-topbar__logo,
+  .nl-topbar__search-text,
+  .nl-topbar__kbd {
+    display: none;
+  }
+  .nl-topbar__search {
+    flex: 0 0 var(--control-height-till);
+    justify-content: center;
+    height: var(--control-height-till);
+    padding: 0;
+  }
+  .nl-btn.nl-topbar__avatar {
+    width: var(--control-height-till);
+  }
+  .nl-shell__main {
+    padding: var(--space-4);
+  }
+  .nl-nav__item {
+    min-height: var(--control-height-till);
+  }
+  .nl-search__item {
+    min-height: var(--control-height-till);
+  }
+}

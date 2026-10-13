@@ -98,7 +98,7 @@
   align-items: center;
   gap: var(--space-4);
   box-sizing: border-box;
-  height: calc(var(--space-6) * 2 + 1px);
+  height: calc(var(--space-3) * 2 + var(--control-height-small) + 1px);
   padding: 0 var(--space-4);
   border-bottom: 1px solid var(--line);
 }
@@ -236,6 +236,7 @@
 
 /* ---------- Table ---------- */
 .nl-table-wrap {
+  position: relative; /* so hidden helper text inside the table scrolls with it instead of widening the page */
   box-sizing: border-box;
   min-width: 0;
   background: var(--surface);
@@ -275,8 +276,8 @@
   white-space: nowrap;
 }
 .nl-table td {
-  /* 12px above and below a 24px chip, plus the 1px line: the height of the tallest ordinary row */
-  height: calc(var(--space-6) * 2 + 1px);
+  /* 12px above and below a 32px small button (a row's menu), plus the 1px line: every row is this tall */
+  height: calc(var(--space-3) * 2 + var(--control-height-small) + 1px);
   box-sizing: border-box;
   padding: var(--space-3);
   border-bottom: 1px solid var(--line);
