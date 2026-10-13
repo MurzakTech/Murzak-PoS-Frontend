@@ -1,4 +1,4 @@
-import { NewLookEmptyPage } from './NewLookShell';
+import HomePage from './home/HomePage';
 import ComponentPage from './ComponentPage';
 import ChartsPage from './charts/ChartsPage';
 import RedirectsPage from './redirects/RedirectsPage';
@@ -15,7 +15,8 @@ import { BUILT_PAGES } from './redirects/live';
  * each role arrive with the Roles ticket, P1-8).
  */
 export const newLookRoutes = [
-  { path: '/new-look', element: NewLookEmptyPage },
+  // Home (Phase 2): the greeting and hero band, four tiles, charts and Needs attention
+  { path: '/new-look', element: HomePage },
   // Every shared component in every state, in both themes (the Phase 1 gate)
   { path: '/new-look/components', element: ComponentPage },
   // Every chart with made-up numbers (Phase 2, P2-2)

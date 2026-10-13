@@ -188,8 +188,9 @@
 
 /* Sparkline and month progress */
 .nl-spark {
-  display: inline-block;
-  flex: none;
+  display: block;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .nl-meter {

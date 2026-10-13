@@ -17,10 +17,11 @@ import { topProductRows } from './chartData';
  *
  *   rows       the contract's charts.top_products: [{ name, revenue, quantity? }]
  *   onSeeAll   opens the full product list
+ *   onSelect   a bar was clicked: called with that product's row (so a screen can open the product)
  */
 const axisTick = { fill: 'var(--ink-2)', fontSize: 12 };
 
-const TopProductsChart = ({ rows, rangeLabel, onSeeAll, state = 'ready', onRetry, width, height = 240 }) => {
+const TopProductsChart = ({ rows, rangeLabel, onSeeAll, onSelect, state = 'ready', onRetry, width, height = 240 }) => {
   const top = topProductRows(rows).map((r) => ({ ...r, short: ellipsize(r.name, 24) }));
   const first = top[0];
   const summary = first ? fill(S.charts.topProducts.summary, { range: rangeLabel, first: first.name, value: fullMoney(first.revenue) }) : fill(S.charts.topProducts.emptySummary, { range: rangeLabel });
@@ -59,7 +60,7 @@ const TopProductsChart = ({ rows, rangeLabel, onSeeAll, state = 'ready', onRetry
             <XAxis type="number" tickFormatter={shortNumber} tick={{ fill: 'var(--muted)', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
             <YAxis type="category" dataKey="short" width={176} tick={axisTick} axisLine={false} tickLine={false} />
             <Tooltip content={<ChartTooltip describe={describe} />} cursor={{ fill: COLOUR.soft }} isAnimationActive={false} />
-            <Bar dataKey="revenue" fill={COLOUR.series[0]} maxBarSize={MARKS.barMaxWidth} radius={[0, MARKS.barRadius, MARKS.barRadius, 0]} isAnimationActive={animate} animationDuration={MARKS.drawInMs}>
+            <Bar dataKey="revenue" fill={COLOUR.series[0]} maxBarSize={MARKS.barMaxWidth} radius={[0, MARKS.barRadius, MARKS.barRadius, 0]} isAnimationActive={animate} animationDuration={MARKS.drawInMs} onClick={onSelect ? (row) => onSelect(row) : undefined} cursor={onSelect ? 'pointer' : undefined}>
               <LabelList content={topLabel} />
             </Bar>
           </BarChart>

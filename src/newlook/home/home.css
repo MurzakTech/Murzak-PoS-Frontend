@@ -1,0 +1,429 @@
+/*
+ * Home (Phase 2). Layout A, "Daily Command": a 12-column grid with 16px gaps. Order from the top: greeting and hero band,
+ * filter row, four stat tiles, the Sales chart (8 columns) beside Needs attention (4 columns), then three cards of 4 columns.
+ * Every colour, size and space is a design token.
+ */
+.nl-home {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+
+/* Skeleton shapes stay invisible for the first 200ms, so a quick answer never flashes them; their space is reserved */
+.nl-home.is-waiting .nl-skeleton {
+  visibility: hidden;
+}
+
+.nl-home__updated {
+  margin-left: var(--space-3);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--base);
+}
+
+.nl-link {
+  color: var(--brand-text);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nl-link:hover {
+  text-decoration: underline;
+}
+.nl-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-button-small);
+}
+
+/* ---------- Hero band ---------- */
+.nl-hero {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-hero__stale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-input);
+  background: var(--soft);
+  color: var(--ink);
+}
+.nl-hero__stale .nl-icon {
+  color: var(--warn);
+  flex: none;
+}
+.nl-hero__stale > div {
+  flex: 1;
+  min-width: 0;
+}
+.nl-hero__stale-title {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-hero__stale-text {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-hero__main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.nl-hero__total-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-hero__total-value {
+  margin: var(--space-1) 0;
+  font-size: var(--hero-size);
+  font-weight: var(--hero-weight);
+  line-height: 1.1;
+  letter-spacing: var(--page-title-spacing);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.nl-hero__figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.nl-hero__figure {
+  min-width: 0;
+}
+.nl-hero__label {
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-hero__value {
+  margin: var(--space-1) 0 0;
+  font-size: var(--kpi-size);
+  font-weight: var(--kpi-weight);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.nl-hero__note {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* A change figure: arrow and words, and green or red only beside both */
+.nl-change {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-change.is-good {
+  color: var(--good);
+}
+.nl-change.is-bad {
+  color: var(--bad);
+}
+
+/* A card that failed shows its own retry; the rest of the page stays usable */
+.nl-card-error {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-card-error .nl-icon {
+  color: var(--bad);
+}
+.nl-card-error p {
+  margin: 0;
+}
+
+/* ---------- Filters ---------- */
+.nl-home__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-home__filters .nl-filters {
+  flex: 1 1 auto;
+}
+
+/* ---------- Stat tiles ---------- */
+.nl-home__tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--tiles, 4), minmax(0, 1fr));
+  gap: var(--card-gap);
+}
+.nl-tile {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.nl-tile__label {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+}
+/* The link covers the whole tile; anything else in the tile sits above it and keeps working on its own */
+.nl-tile__link {
+  color: inherit;
+  text-decoration: none;
+}
+.nl-tile__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+.nl-tile__link:focus-visible {
+  outline: none;
+}
+.nl-tile__link:focus-visible::after {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-tile:hover {
+  background: var(--selected-row);
+}
+.nl-tile__value {
+  margin: 0;
+  font-size: var(--kpi-size);
+  font-weight: var(--kpi-weight);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.nl-tile__detail {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-tile__footer {
+  position: relative;
+  z-index: 1;
+}
+.nl-missing-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+.nl-missing-cost__line {
+  margin: 0;
+  color: var(--warn);
+  font-size: var(--caption-size);
+}
+.nl-missing-cost__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+  max-height: 50vh;
+  overflow: auto;
+}
+.nl-missing-cost__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.nl-missing-cost__name {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-missing-cost__sold {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Sales chart beside Needs attention, then three cards ---------- */
+.nl-home__row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--card-gap);
+}
+.nl-home__sales {
+  grid-column: span 8;
+  min-width: 0;
+}
+.nl-home__attention {
+  grid-column: span 4;
+  min-width: 0;
+}
+.nl-home__charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-gap);
+}
+.nl-home__charts > * {
+  min-width: 0;
+}
+
+/* ---------- Needs attention ---------- */
+.nl-attention {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.nl-attention__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.nl-attention__item:first-child {
+  padding-top: 0;
+}
+.nl-attention__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.nl-attention__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-button-small);
+  background: var(--soft);
+  color: var(--brand-text);
+}
+.nl-attention__text {
+  flex: 1;
+  min-width: 0;
+}
+.nl-attention__type {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.nl-attention__name {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+.nl-attention__detail {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-attention__skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-attention__empty {
+  padding: var(--space-5) 0;
+}
+
+/* ---------- First-time panel ---------- */
+.nl-first-time__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-first-time__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+.nl-first-time__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-button-small);
+  background: var(--soft);
+  color: var(--brand-text);
+}
+.nl-first-time__text {
+  flex: 1;
+  min-width: 0;
+}
+.nl-first-time__label {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-first-time__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Responsive ---------- */
+/* Below 1100px the Sales chart takes the full width and Needs attention moves below it */
+@media (max-width: 1099px) {
+  .nl-home__sales,
+  .nl-home__attention {
+    grid-column: 1 / -1;
+  }
+  .nl-home__tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nl-home__charts {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+/* Below 768px everything is one column: hero, tiles two by two, Needs attention, Sales chart, then the three cards */
+@media (max-width: 767px) {
+  .nl-home__attention {
+    order: -1;
+  }
+  .nl-home__row {
+    display: flex;
+    flex-direction: column;
+  }
+  .nl-home__charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nl-hero__figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nl-hero__total-value {
+    font-size: var(--kpi-size);
+  }
+  .nl-hero__till {
+    width: 100%;
+  }
+  .nl-hero__stale {
+    flex-wrap: wrap;
+  }
+  .nl-home__updated {
+    display: block;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+}

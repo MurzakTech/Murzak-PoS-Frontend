@@ -44,7 +44,7 @@ const TECHNICAL_ATTRIBUTES = new Set([
   'aria-labelledby', 'aria-describedby', 'aria-selected', 'aria-checked', 'aria-pressed', 'aria-busy', 'aria-invalid', 'aria-activedescendant', 'aria-hidden',
   'aria-disabled', 'xmlns', 'min', 'max', 'minLength', 'maxLength', 'pattern', 'step', 'disabled', 'checked', 'open', 'hidden', 'onClick',
   // Settings of the chart kit (Recharts): how to draw, not words to read
-  'dataKey', 'layout', 'stackId', 'textAnchor', 'dominantBaseline', 'ifOverflow', 'radius', 'barCategoryGap',
+  'dataKey', 'layout', 'goodWhen', 'stackId', 'textAnchor', 'dominantBaseline', 'ifOverflow', 'radius', 'barCategoryGap',
 ]);
 
 const VISIBLE_KEYS = new Set([
