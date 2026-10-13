@@ -1,6 +1,7 @@
 import React, { useId, useState, useEffect } from 'react';
 import Icon from './Icon';
 import { formatDate, maskDate, parseDate } from './dates';
+import S from '../strings';
 
 /**
  * The one text field of the redesign (Part 1, Components): a label above, a 40px input, a helper caption, and
@@ -59,7 +60,7 @@ const Field = ({
     kind === 'money'
       ? { inputMode: 'numeric', autoComplete: 'off' }
       : kind === 'date'
-      ? { inputMode: 'numeric', autoComplete: 'off', placeholder: 'dd/mm/yyyy', maxLength: 10 }
+      ? { inputMode: 'numeric', autoComplete: 'off', placeholder: S.components.field.datePlaceholder, maxLength: 10 }
       : {};
 
   const classes = ['nl-field', error && 'is-error', disabled && 'is-disabled', readOnly && 'is-readonly', forceState === 'hover' && 'is-hover', className].filter(Boolean).join(' ');
@@ -77,7 +78,7 @@ const Field = ({
             <Icon name={icon} />
           </span>
         ) : null}
-        {kind === 'money' ? <span className="nl-affix">KES</span> : null}
+        {kind === 'money' ? <span className="nl-affix">{S.components.format.currency}</span> : null}
         <input
           id={inputId}
           className="nl-input"

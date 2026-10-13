@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
 import Button from './Button';
 import { LoadingGate, SkeletonText } from './Skeleton';
+import S from '../strings';
 
 /**
  * The detail panel (Part 1, Components and Page patterns): the right-hand card (4 of 12 columns) that opens when
@@ -20,6 +21,8 @@ import { LoadingGate, SkeletonText } from './Skeleton';
  * Put DetailFacts and the line items in as children.
  */
 export const MAX_SECONDARY_ACTIONS = 3;
+const T = S.components.detailPanel;
+const SKELETON_SPACE = 'calc(var(--space-8) * 4)';
 
 const DetailPanel = ({ title, status, subtitle, onClose, onPrevious, onNext, position, primary, secondary = [], details = [], loading = false, children, className = '' }) => {
   const heading = useRef(null);
@@ -55,21 +58,21 @@ const DetailPanel = ({ title, status, subtitle, onClose, onPrevious, onNext, pos
         <div className="nl-detail__nav">
           {onPrevious || onNext ? (
             <>
-              <Button variant="ghost" size="small" icon="chevronLeft" aria-label="Previous item" disabled={!onPrevious} onClick={onPrevious} />
-              <Button variant="ghost" size="small" icon="chevronRight" aria-label="Next item" disabled={!onNext} onClick={onNext} />
+              <Button variant="ghost" size="small" icon="chevronLeft" aria-label={T.previous} disabled={!onPrevious} onClick={onPrevious} />
+              <Button variant="ghost" size="small" icon="chevronRight" aria-label={T.next} disabled={!onNext} onClick={onNext} />
             </>
           ) : null}
-          {onClose ? <Button variant="ghost" size="small" icon="x" aria-label="Close details" onClick={onClose} /> : null}
+          {onClose ? <Button variant="ghost" size="small" icon="x" aria-label={T.close} onClick={onClose} /> : null}
         </div>
       </div>
       {position ? <p className="nl-detail__position">{position}</p> : null}
 
       <div className="nl-detail__body">
-        <LoadingGate loading={loading} skeleton={<SkeletonText lines={5} />} minHeight="calc(var(--space-8) * 4)" label="Loading the details">
+        <LoadingGate loading={loading} skeleton={<SkeletonText lines={5} />} minHeight={SKELETON_SPACE} label={T.loading}>
           {children}
           {details.length ? (
             <details className="nl-detail__fold">
-              <summary>Details</summary>
+              <summary>{T.details}</summary>
               <DetailFacts facts={details} />
             </details>
           ) : null}
@@ -100,7 +103,7 @@ export const DetailFacts = ({ facts }) => (
     {facts.map((fact) => (
       <div className="nl-facts__row" key={fact.label}>
         <dt className="nl-label">{fact.label}</dt>
-        <dd>{fact.value === undefined || fact.value === null || fact.value === '' ? '–' : fact.value}</dd>
+        <dd>{fact.value === undefined || fact.value === null || fact.value === '' ? T.noValue : fact.value}</dd>
       </div>
     ))}
   </dl>

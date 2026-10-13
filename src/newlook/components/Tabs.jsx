@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from './Chip';
+import S from '../strings';
 
 /**
  * Tabs (Part 1, Components): the sub-pages inside a page, such as All sales, Unpaid, Returns, Till sessions.
@@ -51,7 +52,7 @@ const Tabs = ({ tabs, value, label, className = '' }) => {
             <span className="nl-tab__label" data-label={tab.label}>
               {tab.label}
             </span>
-            {tab.count !== undefined && tab.count !== null ? <Badge count={tab.count} label="items" /> : null}
+            {tab.count !== undefined && tab.count !== null ? <Badge count={tab.count} label={S.components.tabs.countLabel} /> : null}
           </Link>
         );
       })}

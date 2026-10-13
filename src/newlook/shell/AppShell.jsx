@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Dialog from '../components/Dialog';
 import Drawer from '../components/Drawer';
 import Button from '../components/Button';
+import S from '../strings';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import SearchPalette from './SearchPalette';
@@ -24,14 +25,6 @@ const isTyping = (target) => {
   const tag = target && target.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (target && target.isContentEditable);
 };
-
-const SHORTCUTS = [
-  ['Ctrl K or /', 'Search pages and actions'],
-  ['Tab', 'Move to the next control'],
-  ['Shift Tab', 'Move to the previous control'],
-  ['Enter or Space', 'Press the chosen button'],
-  ['Esc', 'Close a dialog, menu or the side menu'],
-];
 
 const AppShell = ({ navigation, topBar = {}, searchActions = [], children }) => {
   const band = useViewportBand();
@@ -66,8 +59,8 @@ const AppShell = ({ navigation, topBar = {}, searchActions = [], children }) => 
     () => [
       ...flatItems(navigation)
         .filter((i) => i.to)
-        .map((i) => ({ key: `page-${i.key}`, label: i.label, hint: 'Page', to: i.to })),
-      ...searchActions.map((a, n) => ({ key: `action-${n}-${a.label}`, hint: 'Action', ...a })),
+        .map((i) => ({ key: `page-${i.key}`, label: i.label, hint: S.shell.shell.hintPage, to: i.to })),
+      ...searchActions.map((a, n) => ({ key: `action-${n}-${a.label}`, hint: S.shell.shell.hintAction, ...a })),
     ],
     [navigation, searchActions]
   );
@@ -77,7 +70,7 @@ const AppShell = ({ navigation, topBar = {}, searchActions = [], children }) => 
   return (
     <div className={['nl-shell', `is-${band}`, collapsed && 'is-collapsed'].filter(Boolean).join(' ')}>
       <a href="#main-content" className="nl-skip">
-        Skip to the page
+        {S.shell.shell.skipLink}
       </a>
 
       <TopBar
@@ -97,8 +90,8 @@ const AppShell = ({ navigation, topBar = {}, searchActions = [], children }) => 
         </main>
       </div>
 
-      <Drawer open={band === 'narrow' && drawer} onClose={() => setDrawer(false)} label="Main menu" closeAtWidth={DRAWER_BELOW}>
-        {sidebar({ collapsed: false, label: 'Menu', onNavigate: () => setDrawer(false) })}
+      <Drawer open={band === 'narrow' && drawer} onClose={() => setDrawer(false)} label={S.shell.nav.mainMenu} closeAtWidth={DRAWER_BELOW}>
+        {sidebar({ collapsed: false, label: S.shell.nav.menu, onNavigate: () => setDrawer(false) })}
       </Drawer>
 
       <SearchPalette open={searching} onClose={() => setSearching(false)} items={items} />
@@ -106,12 +99,12 @@ const AppShell = ({ navigation, topBar = {}, searchActions = [], children }) => 
       <Dialog
         open={helping}
         onClose={() => setHelping(false)}
-        title="Help and shortcuts"
-        description="These keys work on every page."
-        footer={<Button onClick={() => setHelping(false)}>Done</Button>}
+        title={S.shell.help.title}
+        description={S.shell.help.description}
+        footer={<Button onClick={() => setHelping(false)}>{S.shell.help.done}</Button>}
       >
         <dl className="nl-shortcuts">
-          {SHORTCUTS.map(([keys, what]) => (
+          {S.shell.help.shortcuts.map(({ keys, what }) => (
             <div key={keys} className="nl-shortcuts__row">
               <dt>
                 <kbd>{keys}</kbd>

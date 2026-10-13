@@ -2,6 +2,7 @@ import React, { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Button from './Button';
 import { useOverlay } from './overlay';
+import S from '../strings';
 
 /**
  * Dialog and confirm (Part 1, Components): a surface with a 14px corner, the dialog shadow, a 16px 700 title.
@@ -16,7 +17,7 @@ import { useOverlay } from './overlay';
  *
  * Put data-autofocus on the control that should have focus first. If none has it, the first control does.
  */
-const Dialog = ({ open, onClose, title, description, children, footer, busy = false, role = 'dialog', closeLabel = 'Close', className = '' }) => {
+const Dialog = ({ open, onClose, title, description, children, footer, busy = false, role = 'dialog', closeLabel = S.components.dialog.close, className = '' }) => {
   if (!open) return null;
   return (
     <DialogBox onClose={onClose} title={title} description={description} footer={footer} busy={busy} role={role} closeLabel={closeLabel} className={className}>
@@ -67,7 +68,7 @@ const DialogBox = ({ onClose, title, description, children, footer, busy, role, 
  * Say in the message what will be lost. For three or more choices (the Leave-the-till dialog) use Dialog
  * with your own buttons and put data-autofocus on the safe one.
  */
-export const ConfirmDialog = ({ open, title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', destructive = false, loading = false, onConfirm, onCancel }) => (
+export const ConfirmDialog = ({ open, title, message, confirmLabel = S.components.confirmDialog.confirm, cancelLabel = S.components.confirmDialog.cancel, destructive = false, loading = false, onConfirm, onCancel }) => (
   <Dialog
     open={open}
     onClose={onCancel}

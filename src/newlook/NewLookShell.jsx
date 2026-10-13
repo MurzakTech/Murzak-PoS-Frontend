@@ -7,6 +7,7 @@ import { newMenuItems, searchActionsFor } from './shell/newMenu';
 import { isPageLive, usePreviewRedirects } from './redirects/live';
 import { toNewAddress } from './redirects/engine';
 import { useThemeMode } from '../theme/ThemeProvider';
+import S from './strings';
 
 /**
  * The shell every redesigned screen sits inside (ticket P1-6): the top bar, the sidebar in its three states and
@@ -23,8 +24,8 @@ const ShellPreviewContext = createContext([PREVIEW_DEFAULT, () => {}]);
 export const useShellPreview = () => useContext(ShellPreviewContext);
 
 const SAMPLE_STORES = [
-  { id: 'main', name: 'Main shop' },
-  { id: 'branch', name: 'Westlands branch' },
+  { id: 'main', name: S.shell.newLookShell.sampleMainShop },
+  { id: 'branch', name: S.shell.newLookShell.sampleBranch },
 ];
 
 const Inner = ({ user, onSignOut, hasAccess, children }) => {
@@ -52,13 +53,13 @@ const Inner = ({ user, onSignOut, hasAccess, children }) => {
       homeTo: navigation.home.to,
       tillTo: isPageLive('/till', previewRedirects) ? toNewAddress('/till') : '/sales/pos', // today's till until the redesigned one exists (P3)
       till: preview.till === 'open' ? { open: true, since: '08:15' } : preview.till === 'closed' ? { open: false } : undefined,
-      onTillPill: () => toast.info('The Till open panel is built with the till (ticket P3-6).'),
+      onTillPill: () => toast.info(S.shell.newLookShell.tillPanelNotice),
       stores: preview.stores === 'two' ? { list: SAMPLE_STORES, currentId: preview.store, onChange: (id) => setPreview({ ...preview, store: id }) } : undefined,
       newItems: newMenuItems({ hasAccess, open, destination, showAll: preview.newMenu === 'all' }),
       theme: mode,
       onToggleTheme: toggleColorMode,
       user,
-      userItems: onSignOut ? [{ label: 'Sign out', onClick: onSignOut }] : [],
+      userItems: onSignOut ? [{ label: S.shell.newLookShell.signOut, onClick: onSignOut }] : [],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [preview, mode, user, onSignOut, hasAccess, previewRedirects, navigation]
@@ -87,7 +88,7 @@ const NewLookShell = ({ user, onSignOut, hasAccess = () => true, children }) => 
 /** The page shown inside the shell at /new-look. Replaced by real screens as they are built. */
 export const NewLookEmptyPage = () => (
     <div>
-      <PageHeader title="New look" subtitle="The New look is on for this shop. No redesigned screens are ready yet; the rest of the app is unchanged." />
+      <PageHeader title={S.shell.newLookShell.emptyTitle} subtitle={S.shell.newLookShell.emptySubtitle} />
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--space-3)' }}>
         <RouterLink
           to="/dashboard"
@@ -104,10 +105,10 @@ export const NewLookEmptyPage = () => (
             textDecoration: 'none',
           }}
         >
-          Back to the current screens
+          {S.shell.newLookShell.backToCurrent}
         </RouterLink>
         <RouterLink to="/new-look/components" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>
-          See the components
+          {S.shell.newLookShell.seeComponents}
         </RouterLink>
       </div>
     </div>

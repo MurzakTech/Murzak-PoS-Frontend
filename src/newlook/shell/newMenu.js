@@ -1,3 +1,6 @@
+import S from '../strings';
+import fill from '../labels/fill';
+
 /**
  * The + New menu (Part 1, App shell and navigation): sale, product, customer, expense and purchase. Each item
  * shows only if the person may open the screen it leads to ("Items depend on the user's permissions").
@@ -10,11 +13,11 @@
  * Customer has no screen of its own today (the list is where customers are added), so it opens the list.
  */
 export const NEW_MENU = [
-  { key: 'sale', label: 'Sale', action: 'New sale', icon: 'receipt', old: '/sales/pos', page: '/till' },
-  { key: 'product', label: 'Product', action: 'Add product', icon: 'box', old: '/products/new', page: '/products/new' },
-  { key: 'customer', label: 'Customer', action: 'Add customer', icon: 'users', old: '/customers', page: '/customers/new' },
-  { key: 'expense', label: 'Expense', action: 'Add expense', icon: 'wallet', old: null, gate: '/products/new', page: '/expenses?action=add', soon: true },
-  { key: 'purchase', label: 'Purchase', action: 'New purchase', icon: 'truck', old: '/purchases/new', page: '/purchases/new' },
+  { key: 'sale', label: S.shell.newMenu.items.sale.label, action: S.shell.newMenu.items.sale.action, icon: 'receipt', old: '/sales/pos', page: '/till' },
+  { key: 'product', label: S.shell.newMenu.items.product.label, action: S.shell.newMenu.items.product.action, icon: 'box', old: '/products/new', page: '/products/new' },
+  { key: 'customer', label: S.shell.newMenu.items.customer.label, action: S.shell.newMenu.items.customer.action, icon: 'users', old: '/customers', page: '/customers/new' },
+  { key: 'expense', label: S.shell.newMenu.items.expense.label, action: S.shell.newMenu.items.expense.action, icon: 'wallet', old: null, gate: '/products/new', page: '/expenses?action=add', soon: true },
+  { key: 'purchase', label: S.shell.newMenu.items.purchase.label, action: S.shell.newMenu.items.purchase.action, icon: 'truck', old: '/purchases/new', page: '/purchases/new' },
 ];
 
 /**
@@ -25,7 +28,7 @@ export const NEW_MENU = [
  */
 export const newMenuItems = ({ hasAccess, open, destination, showAll = false }) =>
   NEW_MENU.filter((item) => showAll || hasAccess(item.old || item.gate)).map((item) => ({
-    label: item.soon ? `${item.label} (coming soon)` : item.label,
+    label: item.soon ? fill(S.shell.nav.comingSoonItem, { label: item.label }) : item.label,
     icon: item.icon,
     disabled: item.soon ? true : undefined,
     onClick: () => open(destination(item)),
@@ -35,6 +38,6 @@ export const newMenuItems = ({ hasAccess, open, destination, showAll = false }) 
 export const searchActionsFor = ({ hasAccess, open, destination }) =>
   NEW_MENU.filter((item) => !item.soon && item.old && hasAccess(item.old)).map((item) => ({
     label: item.action,
-    keywords: `new add create ${item.label.toLowerCase()}`,
+    keywords: fill(S.shell.newMenu.keywords, { name: item.label.toLowerCase() }),
     onSelect: () => open(destination(item)),
   }));

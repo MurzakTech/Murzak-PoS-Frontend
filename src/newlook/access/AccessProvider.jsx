@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getMyAccess } from '../../api/accessApi';
+import S from '../strings';
 
 /**
  * Owner, manager or cashier for the signed-in person (ticket P1-8). Screens ask `useAccess().can('profit')` to
@@ -10,7 +11,7 @@ import { getMyAccess } from '../../api/accessApi';
  * showing too little is safer than showing too much. The last answer is kept on this device for each person, so a
  * till that starts without a connection draws what it drew last time; a fresh answer always replaces it.
  */
-export const TIER_LABELS = { owner: 'Owner', manager: 'Manager', cashier: 'Cashier' };
+export const TIER_LABELS = { owner: S.shell.access.owner, manager: S.shell.access.manager, cashier: S.shell.access.cashier };
 export const accessCacheKey = (userKey) => `murzak_new_look:access:${userKey}`;
 
 const AccessContext = createContext({ tier: null, status: 'idle', can: () => false });

@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Button from './Button';
 import { useOverlay } from './overlay';
+import S from '../strings';
 
 /**
  * The drawer (Part 1, Components): the sidebar on screens narrower than 768px. It opens from a menu button,
@@ -15,7 +16,7 @@ import { useOverlay } from './overlay';
  */
 export const DRAWER_BREAKPOINT = 768;
 
-const Drawer = ({ open, onClose, label, children, closeLabel = 'Close menu', closeAtWidth, className = '' }) => {
+const Drawer = ({ open, onClose, label, children, closeLabel = S.components.drawer.close, closeAtWidth, className = '' }) => {
   if (!open) return null;
   return (
     <DrawerBox onClose={onClose} label={label} closeLabel={closeLabel} closeAtWidth={closeAtWidth} className={className}>

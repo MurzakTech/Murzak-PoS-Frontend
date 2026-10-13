@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo
 import { createPortal } from 'react-dom';
 import Button from './Button';
 import Icon from './Icon';
+import S from '../strings';
 
 /**
  * Toast (Part 1, Components and Accessibility rules, "Messages"): a short message at the top centre.
@@ -30,7 +31,12 @@ export const useToast = () => {
   return context;
 };
 
-const ICONS = { success: 'check', info: 'info', error: 'alert' };
+// The icon of each kind of message (a technical icon name, not a visible word)
+const ICONS = new Map([
+  ['success', 'check'],
+  ['info', 'info'],
+  ['error', 'alert'],
+]);
 
 const ToastItem = ({ toast, onDismiss, duration }) => {
   const timer = useRef(null);
@@ -85,9 +91,9 @@ const ToastItem = ({ toast, onDismiss, duration }) => {
         resumeIfIdle();
       }}
     >
-      <Icon name={ICONS[toast.kind]} />
+      <Icon name={ICONS.get(toast.kind)} />
       <p className="nl-toast__message">{toast.message}</p>
-      <Button variant="ghost" size="small" icon="x" aria-label="Close message" onClick={() => onDismiss(toast.id)} />
+      <Button variant="ghost" size="small" icon="x" aria-label={S.components.toast.close} onClick={() => onDismiss(toast.id)} />
     </div>
   );
 };

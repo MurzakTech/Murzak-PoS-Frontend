@@ -3,6 +3,9 @@ import Button from './Button';
 import Field from './Field';
 import Segmented from './Segmented';
 import Select from './Select';
+import S from '../strings';
+
+const T = S.components.filterRow;
 
 /**
  * The filter row above a list (Part 1, Components and Page patterns): period presets, a search box and up to
@@ -17,10 +20,10 @@ import Select from './Select';
  *   hasFilters, onClear          show "Clear filters"
  */
 export const PERIODS = [
-  { value: 'today', label: 'Today' },
-  { value: '7d', label: '7 days' },
-  { value: '30d', label: '30 days' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'today', label: T.periods.today },
+  { value: '7d', label: T.periods.sevenDays },
+  { value: '30d', label: T.periods.thirtyDays },
+  { value: 'custom', label: T.periods.custom },
 ];
 export const SEARCH_PAUSE_MS = 300;
 export const MAX_DROPDOWNS = 2;
@@ -34,8 +37,8 @@ const FilterRow = ({
   onRange,
   search = '',
   onSearch,
-  searchLabel = 'Search',
-  searchPlaceholder = 'Search',
+  searchLabel = T.search,
+  searchPlaceholder = T.searchPlaceholder,
   dropdowns = [],
   hasFilters = false,
   onClear,
@@ -62,23 +65,23 @@ const FilterRow = ({
     }
   };
 
-  const rangeError = from && to && to < from ? 'The end date is before the start date' : undefined;
+  const rangeError = from && to && to < from ? T.rangeError : undefined;
 
   return (
-    <div className={`nl-filters ${className}`.trim()} role="search" aria-label="Filter the list">
+    <div className={`nl-filters ${className}`.trim()} role="search" aria-label={T.navigation}>
       {onPeriod ? (
         <div className="nl-filters__group">
           <span className="nl-label" aria-hidden="true">
-            Period
+            {T.period}
           </span>
-          <Segmented label="Period" options={periods} value={period} onChange={onPeriod} />
+          <Segmented label={T.period} options={periods} value={period} onChange={onPeriod} />
         </div>
       ) : null}
 
       {onPeriod && period === 'custom' ? (
         <>
-          <Field kind="date" label="From" value={from} onChange={(value) => onRange && onRange({ from: value, to })} className="nl-filters__date" />
-          <Field kind="date" label="To" value={to} error={rangeError} onChange={(value) => onRange && onRange({ from, to: value })} className="nl-filters__date" />
+          <Field kind="date" label={T.from} value={from} onChange={(value) => onRange && onRange({ from: value, to })} className="nl-filters__date" />
+          <Field kind="date" label={T.to} value={to} error={rangeError} onChange={(value) => onRange && onRange({ from, to: value })} className="nl-filters__date" />
         </>
       ) : null}
 
@@ -101,7 +104,7 @@ const FilterRow = ({
 
       {hasFilters && onClear ? (
         <Button variant="ghost" size="small" onClick={onClear} className="nl-filters__clear">
-          Clear filters
+          {T.clearFilters}
         </Button>
       ) : null}
     </div>

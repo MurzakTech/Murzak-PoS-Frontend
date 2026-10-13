@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Icon from '../components/Icon';
+import S from '../strings';
+import fill from '../labels/fill';
 import { isActive } from './navigation';
 
 /**
@@ -17,16 +19,16 @@ const Item = ({ item, collapsed, pathname, onNavigate }) => {
     <>
       <Icon name={item.icon} />
       <span className={collapsed ? 'nl-visually-hidden' : 'nl-nav__label'}>{item.label}</span>
-      {item.soon && !collapsed ? <span className="nl-nav__soon">Soon</span> : null}
+      {item.soon && !collapsed ? <span className="nl-nav__soon">{S.shell.nav.soon}</span> : null}
     </>
   );
   const common = { className: ['nl-nav__item', active && 'is-active', item.soon && 'is-soon'].filter(Boolean).join(' '), 'data-tooltip': collapsed ? item.label : undefined };
 
   if (item.soon || !item.to) {
     return (
-      <span {...common} aria-disabled="true" title={collapsed ? `${item.label} (coming soon)` : undefined}>
+      <span {...common} aria-disabled="true" title={collapsed ? fill(S.shell.nav.comingSoonItem, { label: item.label }) : undefined}>
         {body}
-        {collapsed ? <span className="nl-visually-hidden"> (coming soon)</span> : null}
+        {collapsed ? <span className="nl-visually-hidden">{' '}{S.shell.nav.comingSoon}</span> : null}
       </span>
     );
   }
@@ -37,7 +39,7 @@ const Item = ({ item, collapsed, pathname, onNavigate }) => {
   );
 };
 
-const Sidebar = ({ navigation, collapsed = false, onToggle, canCollapse = false, onNavigate, label = 'Main menu', className = '' }) => {
+const Sidebar = ({ navigation, collapsed = false, onToggle, canCollapse = false, onNavigate, label = S.shell.nav.mainMenu, className = '' }) => {
   const { pathname } = useLocation();
   const props = { collapsed, pathname, onNavigate };
 
@@ -97,9 +99,9 @@ const Sidebar = ({ navigation, collapsed = false, onToggle, canCollapse = false,
           </li>
         </ul>
         {canCollapse ? (
-          <button type="button" className="nl-nav__item nl-nav__toggle" aria-pressed={collapsed} onClick={onToggle} data-tooltip={collapsed ? 'Expand menu' : undefined}>
+          <button type="button" className="nl-nav__item nl-nav__toggle" aria-pressed={collapsed} onClick={onToggle} data-tooltip={collapsed ? S.shell.nav.expand : undefined}>
             <Icon name={collapsed ? 'chevronsRight' : 'chevronsLeft'} />
-            <span className={collapsed ? 'nl-visually-hidden' : 'nl-nav__label'}>{collapsed ? 'Expand menu' : 'Collapse menu'}</span>
+            <span className={collapsed ? 'nl-visually-hidden' : 'nl-nav__label'}>{collapsed ? S.shell.nav.expand : S.shell.nav.collapse}</span>
           </button>
         ) : null}
       </div>

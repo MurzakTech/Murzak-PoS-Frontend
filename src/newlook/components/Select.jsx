@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import Icon from './Icon';
+import S from '../strings';
 
 /**
  * The one choice box of the redesign (Part 1, Components): a closed 40px box with a chevron that opens a menu
@@ -17,7 +18,7 @@ const Select = ({
   options = [],
   value,
   onChange,
-  placeholder = 'Choose',
+  placeholder = S.components.select.placeholder,
   helper,
   error,
   disabled = false,

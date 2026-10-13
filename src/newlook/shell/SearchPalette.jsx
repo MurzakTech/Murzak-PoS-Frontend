@@ -2,6 +2,8 @@ import React, { useEffect, useId, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dialog from '../components/Dialog';
 import Field from '../components/Field';
+import S from '../strings';
+import fill from '../labels/fill';
 
 /**
  * Search (Part 1, Components): one search box in the top bar, opened with Ctrl K or /. It finds pages and actions
@@ -93,11 +95,11 @@ const SearchPalette = ({ open, onClose, items }) => {
   const typed = query.trim();
   const listId = `${base}-results`;
   return (
-    <Dialog open={open} onClose={onClose} title="Search" className="nl-search">
+    <Dialog open={open} onClose={onClose} title={S.shell.search.title} className="nl-search">
       <Field
-        label="Search"
+        label={S.shell.search.fieldLabel}
         icon="search"
-        placeholder="Pages and actions"
+        placeholder={S.shell.search.placeholder}
         value={query}
         onChange={setQuery}
         onKeyDown={onKeyDown}
@@ -110,9 +112,9 @@ const SearchPalette = ({ open, onClose, items }) => {
         data-autofocus=""
       />
 
-      {!typed && results.length > 0 ? <p className="nl-search__heading">Recent searches</p> : null}
+      {!typed && results.length > 0 ? <p className="nl-search__heading">{S.shell.search.recent}</p> : null}
       {results.length > 0 ? (
-        <ul id={listId} role="listbox" aria-label={typed ? 'Results' : 'Recent searches'} className="nl-search__list">
+        <ul id={listId} role="listbox" aria-label={typed ? S.shell.search.results : S.shell.search.recent} className="nl-search__list">
           {results.map((item, i) => (
             <li
               key={item.key}
@@ -130,11 +132,11 @@ const SearchPalette = ({ open, onClose, items }) => {
         </ul>
       ) : typed ? (
         <div role="status" className="nl-search__empty">
-          <p className="nl-search__empty-title">Nothing matches &ldquo;{typed}&rdquo;</p>
-          <p className="nl-search__empty-text">Try a page name such as Sales or Products, or an action such as add product.</p>
+          <p className="nl-search__empty-title">{fill(S.shell.search.nothingMatches, { query: typed })}</p>
+          <p className="nl-search__empty-text">{S.shell.search.nothingMatchesHelp}</p>
         </div>
       ) : (
-        <p className="nl-search__empty-text">Type a page or an action, such as Sales or add product.</p>
+        <p className="nl-search__empty-text">{S.shell.search.emptyHelp}</p>
       )}
     </Dialog>
   );

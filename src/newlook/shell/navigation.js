@@ -1,3 +1,5 @@
+import S from '../strings';
+
 /**
  * The sidebar menu (Part 1, App shell and navigation): Home plus nine items in four groups, Settings at the
  * bottom. The till is the top-bar button, not a menu item.
@@ -12,44 +14,44 @@
  * Items are plain data, so a page's permissions can hide an item (ticket P1-8) without changing the shell.
  */
 export const NAVIGATION = {
-  home: { key: 'home', label: 'Home', icon: 'home', page: '/', old: '/dashboard', match: [], matchExact: ['/dashboard', '/new-look', '/new-look/components', '/new-look/redirects'] },
+  home: { key: 'home', label: S.shell.nav.home, icon: 'home', page: '/', old: '/dashboard', match: [], matchExact: ['/dashboard', '/new-look', '/new-look/components', '/new-look/redirects'] },
   groups: [
     {
       key: 'sell',
-      label: 'Sell',
+      label: S.shell.nav.groups.sell,
       items: [
-        { key: 'sales', label: 'Sales', icon: 'receipt', page: '/sales', old: '/sales/history', match: ['/sales', '/new-look/sales'] },
-        { key: 'customers', label: 'Customers', icon: 'users', page: '/customers', old: '/customers', match: ['/customers', '/new-look/customers'] },
+        { key: 'sales', label: S.shell.nav.items.sales, icon: 'receipt', page: '/sales', old: '/sales/history', match: ['/sales', '/new-look/sales'] },
+        { key: 'customers', label: S.shell.nav.items.customers, icon: 'users', page: '/customers', old: '/customers', match: ['/customers', '/new-look/customers'] },
       ],
     },
     {
       key: 'stock',
-      label: 'Stock',
+      label: S.shell.nav.groups.stock,
       items: [
-        { key: 'products', label: 'Products', icon: 'box', page: '/products', old: '/products', match: ['/products', '/new-look/products'] },
+        { key: 'products', label: S.shell.nav.items.products, icon: 'box', page: '/products', old: '/products', match: ['/products', '/new-look/products'] },
         // Stores and Stock transfers are tabs under Stock levels (only with a second location), so they keep it highlighted
-        { key: 'stock-levels', label: 'Stock levels', icon: 'layers', page: '/stock', old: '/inventory', match: ['/inventory', '/warehouses', '/stock-transfers', '/new-look/stock'] },
+        { key: 'stock-levels', label: S.shell.nav.items.stockLevels, icon: 'layers', page: '/stock', old: '/inventory', match: ['/inventory', '/warehouses', '/stock-transfers', '/new-look/stock'] },
       ],
     },
     {
       key: 'buy',
-      label: 'Buy',
+      label: S.shell.nav.groups.buy,
       items: [
-        { key: 'purchases', label: 'Purchases', icon: 'truck', page: '/purchases', old: '/purchases', match: ['/purchases', '/new-look/purchases'] },
-        { key: 'suppliers', label: 'Suppliers', icon: 'store', page: '/suppliers', old: '/suppliers', match: ['/suppliers', '/new-look/suppliers'] },
+        { key: 'purchases', label: S.shell.nav.items.purchases, icon: 'truck', page: '/purchases', old: '/purchases', match: ['/purchases', '/new-look/purchases'] },
+        { key: 'suppliers', label: S.shell.nav.items.suppliers, icon: 'store', page: '/suppliers', old: '/suppliers', match: ['/suppliers', '/new-look/suppliers'] },
       ],
     },
     {
       key: 'money',
-      label: 'Money',
+      label: S.shell.nav.groups.money,
       items: [
-        { key: 'expenses', label: 'Expenses', icon: 'wallet', page: '/expenses', soon: true, match: ['/new-look/expenses'] },
-        { key: 'reports', label: 'Reports', icon: 'chart', page: '/reports', old: '/reports', match: ['/reports', '/new-look/reports'] },
+        { key: 'expenses', label: S.shell.nav.items.expenses, icon: 'wallet', page: '/expenses', soon: true, match: ['/new-look/expenses'] },
+        { key: 'reports', label: S.shell.nav.items.reports, icon: 'chart', page: '/reports', old: '/reports', match: ['/reports', '/new-look/reports'] },
       ],
     },
   ],
   // Staff and Roles are reached only through Settings, under Team, so they keep Settings highlighted
-  settings: { key: 'settings', label: 'Settings', icon: 'settings', page: '/settings/business', old: '/settings', match: ['/settings', '/staff', '/roles', '/new-look/settings'] },
+  settings: { key: 'settings', label: S.shell.nav.settings, icon: 'settings', page: '/settings/business', old: '/settings', match: ['/settings', '/staff', '/roles', '/new-look/settings'] },
 };
 
 /**

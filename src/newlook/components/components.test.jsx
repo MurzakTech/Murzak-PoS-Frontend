@@ -415,7 +415,6 @@ describe('Chip, badge, status label and payment chip', () => {
     ['MPESA', 'mpesa', 'series-1'],
     ['Cash', 'cash', 'series-2'],
     ['Card', 'card', 'series-3'],
-    ['Credit Card', 'card', 'series-3'],
     ['On credit', 'credit', 'series-4'],
     ['Bank transfer', 'other', 'compare'],
   ])('payment method %s uses the %s colour (%s)', (method, key, token) => {
@@ -598,5 +597,31 @@ describe('the component page', () => {
     show();
     userEvent.click(screen.getByRole('switch', { name: 'M-Pesa' }));
     await waitFor(() => expect(screen.getAllByText('Saved').length).toBeGreaterThan(0));
+  });
+});
+
+describe('Payment chip and the rename map', () => {
+  test.each([
+    ['Credit Card', 'Card', 'card'],
+    ['credit card', 'Card', 'card'],
+    ['Cheque', 'Other', 'other'],
+    ['Bank Draft', 'Other', 'other'],
+    ['Wire Transfer', 'Other', 'other'],
+  ])('%s shows as %s with the %s colour group', (method, shown, key) => {
+    const { container } = render(<PaymentChip method={method} />);
+    expect(screen.getByText(shown)).toBeInTheDocument();
+    expect(screen.queryByText(method)).not.toBeInTheDocument();
+    expect(container.querySelector('.nl-pay')).toHaveAttribute('data-method', key);
+  });
+
+  test('a method with no rename shows as it is', () => {
+    const { container } = render(<PaymentChip method="M-Pesa" />);
+    expect(screen.getByText('M-Pesa')).toBeInTheDocument();
+    expect(container.querySelector('.nl-pay')).toHaveAttribute('data-method', 'mpesa');
+  });
+
+  test('a hidden name draws nothing', () => {
+    const { container } = render(<PaymentChip method="Territory" />);
+    expect(container.querySelector('.nl-pay')).toBeNull();
   });
 });

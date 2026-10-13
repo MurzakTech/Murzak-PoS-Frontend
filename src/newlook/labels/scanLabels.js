@@ -21,7 +21,7 @@ const SKIP = [
   /\.test\./,
   /^labels\//,
   /^redirects\/redirectTable\.js$/,
-  /^strings\.js$/,
+  /^strings(\.[a-z]+)?\.js$/,
   /^(ComponentPage|DataDemo|OverlayDemo|ShellDemo)\.jsx$/,
   /^newLookRoutes\.js$/,
 ];

@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import EmptyState from './EmptyState';
 import { LoadingGate, SkeletonRows } from './Skeleton';
 import { formatMoney } from './format';
+import S from '../strings';
+import fill from '../labels/fill';
+
+const T = S.components.table;
 
 /**
  * The one table of the redesign (Part 1, Components and Page patterns). A list page is configuration: give it
@@ -68,13 +72,13 @@ const Table = ({ columns, rows = [], rowKey = 'id', caption, onRowOpen, selected
       <EmptyState
         icon="alert"
         tone="error"
-        title="We could not load this list"
-        description="Check your connection and try again. Nothing was changed."
-        action={onRetry ? { label: 'Try again', onClick: onRetry } : undefined}
+        title={T.errorTitle}
+        description={T.errorDescription}
+        action={onRetry ? { label: T.retry, onClick: onRetry } : undefined}
       />
     );
   } else if (!loading && rows.length === 0) {
-    content = <EmptyState {...(empty || { title: 'Nothing here yet', description: 'There is nothing to show.' })} />;
+    content = <EmptyState {...(empty || { title: T.emptyTitle, description: T.emptyDescription })} />;
   } else {
     const onKeyDown = (event, row) => {
       if (event.target !== event.currentTarget) return;
@@ -92,15 +96,14 @@ const Table = ({ columns, rows = [], rowKey = 'id', caption, onRowOpen, selected
       <LoadingGate
         loading={loading}
         minHeight={reserved}
-        label="Loading the list"
+        label={T.loading}
         skeleton={
           <SkeletonRows rows={skeletonRows} columns={columns.length} />
         }
       >
         <table className="nl-table">
           <caption className="nl-visually-hidden">
-            {caption}
-            {onRowOpen ? '. Press Enter on a row to open its details.' : ''}
+            {onRowOpen ? fill(T.captionWithHint, { caption: caption === undefined || caption === null ? '' : caption }) : caption}
           </caption>
           <thead>
             <tr>

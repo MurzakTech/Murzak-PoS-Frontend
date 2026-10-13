@@ -3,6 +3,10 @@ import Button from './Button';
 import Select from './Select';
 import { PAGE_SIZES, DEFAULT_PAGE_SIZE } from './useListParams';
 import { formatShowing } from './format';
+import S from '../strings';
+import fill from '../labels/fill';
+
+const T = S.components.pagination;
 
 /**
  * Pagination (Part 1, Components): "Showing 20 of 135" on the left; rows per page, Previous and Next on the right.
@@ -21,7 +25,7 @@ const Pagination = ({ page = 1, size = DEFAULT_PAGE_SIZE, total, shown, onPage, 
   const onThisPage = shown !== undefined ? shown : Math.min(rowsPerPage, total - (current - 1) * rowsPerPage);
 
   return (
-    <nav className={`nl-pagination ${className}`.trim()} aria-label="Pagination">
+    <nav className={`nl-pagination ${className}`.trim()} aria-label={T.navigation}>
       <p className="nl-pagination__showing" role="status">
         {formatShowing(onThisPage, total)}
       </p>
@@ -29,19 +33,19 @@ const Pagination = ({ page = 1, size = DEFAULT_PAGE_SIZE, total, shown, onPage, 
         <Select
           inline
           size="small"
-          label="Rows per page"
+          label={T.rowsPerPage}
           options={sizes.map((n) => ({ value: n, label: String(n) }))}
           value={rowsPerPage}
           onChange={(value) => onSize && onSize(Number(value))}
         />
         <span className="nl-pagination__page">
-          Page {current} of {pages}
+          {fill(T.page, { current, pages })}
         </span>
         <Button variant="secondary" size="small" icon="chevronLeft" disabled={current <= 1} onClick={() => onPage && onPage(current - 1)}>
-          Previous
+          {T.previous}
         </Button>
         <Button variant="secondary" size="small" icon="chevronRight" iconEnd disabled={current >= pages} onClick={() => onPage && onPage(current + 1)}>
-          Next
+          {T.next}
         </Button>
       </div>
     </nav>

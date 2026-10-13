@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import S from '../strings';
 
 /**
  * Skeletons: grey shapes where content will be (Part 1, Components). Shown only after 200ms of loading, so a
@@ -53,7 +54,7 @@ export const SkeletonRows = ({ rows = 8, columns = 5 }) => (
  * Wraps content that is loading. While `loading` is true the region is marked busy and reserves `minHeight`;
  * after 200ms it shows `skeleton`. When loading ends it shows `children`.
  */
-export const LoadingGate = ({ loading, skeleton, minHeight, children, label = 'Loading' }) => {
+export const LoadingGate = ({ loading, skeleton, minHeight, children, label = S.components.skeleton.loading }) => {
   const showSkeleton = useDelayedFlag(loading);
   if (!loading) return children;
   return (

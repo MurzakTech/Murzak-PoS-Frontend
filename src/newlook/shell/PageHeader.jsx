@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import Tabs from '../components/Tabs';
+import S from '../strings';
+import fill from '../labels/fill';
 
 /**
  * The page header (Part 1, App shell and navigation): the title (28px, one per page), an optional one-line
@@ -11,7 +13,7 @@ import Tabs from '../components/Tabs';
  *   tabs     { label, tabs: [{ key, label, to, count? }], value } shown under the title
  */
 export const MAX_HEADER_ACTIONS = 2;
-export const SITE_NAME = 'Murzak POS';
+export const SITE_NAME = S.shell.shell.siteName;
 
 const PageHeader = ({ title, subtitle, actions, tabs }) => {
   const count = React.Children.toArray(actions).length;
@@ -22,7 +24,7 @@ const PageHeader = ({ title, subtitle, actions, tabs }) => {
 
   useEffect(() => {
     const before = document.title;
-    document.title = `${title} | ${SITE_NAME}`;
+    document.title = fill(S.shell.pageHeader.documentTitle, { title, site: SITE_NAME });
     return () => {
       document.title = before;
     };
@@ -37,7 +39,7 @@ const PageHeader = ({ title, subtitle, actions, tabs }) => {
         </div>
         {count ? <div className="nl-page-header__actions">{actions}</div> : null}
       </div>
-      {tabs ? <Tabs label={tabs.label || `${title} views`} tabs={tabs.tabs} value={tabs.value} /> : null}
+      {tabs ? <Tabs label={tabs.label || fill(S.shell.pageHeader.tabsLabel, { title })} tabs={tabs.tabs} value={tabs.value} /> : null}
     </div>
   );
 };

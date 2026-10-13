@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
+import S from '../strings';
 
 /**
  * The switch of the redesign: 36 by 20px, for a setting that is on or off (Part 1, Components).
@@ -35,7 +36,7 @@ const Switch = ({ label, checked = false, onChange, disabled = false, id, classN
       flashSaved();
     } catch (e) {
       setOn(!next);
-      setStatus({ error: (e && e.message) || 'That did not save. Try again.' });
+      setStatus({ error: (e && e.message) || S.components.switch.failed });
     }
   };
 
@@ -49,7 +50,7 @@ const Switch = ({ label, checked = false, onChange, disabled = false, id, classN
         <span>{label}</span>
       </label>
       <span className={['nl-switch__status', status && status.error && 'is-error'].filter(Boolean).join(' ')} role="status" aria-live="polite">
-        {status === 'saved' ? 'Saved' : status && status.error ? status.error : ''}
+        {status === 'saved' ? S.components.switch.saved : status && status.error ? status.error : ''}
       </span>
     </span>
   );
