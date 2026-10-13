@@ -21,9 +21,10 @@ const tillState = (over = {}) => ({
   state: 'open',
   session,
   expected: [
-    { mode: 'Cash', key: 'cash', label: 'Cash', opening: 2000, sales: 3500, refunds: 0, expected: 5500 },
-    { mode: 'M-Pesa', key: 'mpesa', label: 'M-Pesa', opening: 0, sales: 4200, refunds: 0, expected: 4200 },
-    { mode: 'Credit Card', key: 'card', label: 'Card', opening: 0, sales: 900, refunds: 0, expected: 900 },
+    { mode: 'Cash', key: 'cash', label: 'Cash', opening: 2000, sales: 3500, paid_in: 0, refunds: 0, paid_out: 0, expected: 5500, counts_cash: true },
+    { mode: 'M-Pesa', key: 'mpesa', label: 'M-Pesa', opening: 0, sales: 4200, paid_in: 0, refunds: 0, paid_out: 0, expected: 4200, counts_cash: true },
+    { mode: 'Credit Card', key: 'card', label: 'Card', opening: 0, sales: 900, paid_in: 0, refunds: 0, paid_out: 0, expected: 900, counts_cash: true },
+    { mode: 'On credit', key: 'credit', label: 'On credit', opening: 0, sales: 1200, paid_in: 0, refunds: 0, paid_out: 0, expected: 0, counts_cash: false },
   ],
   held_count: 3,
   recent_sales: [],
@@ -34,9 +35,14 @@ const previewFor = (counted, over = {}) => {
   const difference = counted - 5500;
   return {
     closed: false,
-    lines: [{ mode: 'Cash', label: 'Cash', expected: 5500, counted, difference }],
-    total_expected: 5500,
-    total_counted: counted,
+    // As the server sends it: every money line is listed, and a line that was not counted by hand counts as expected
+    lines: [
+      { mode: 'Cash', key: 'cash', label: 'Cash', expected: 5500, counted, difference },
+      { mode: 'M-Pesa', key: 'mpesa', label: 'M-Pesa', expected: 4200, counted: 4200, difference: 0 },
+      { mode: 'Credit Card', key: 'card', label: 'Card', expected: 900, counted: 900, difference: 0 },
+    ],
+    total_expected: 10600,
+    total_counted: 5100 + counted,
     difference,
     word: difference === 0 ? 'matches' : difference < 0 ? 'short' : 'over',
     ...over,
@@ -86,12 +92,14 @@ describe('the difference helper', () => {
   test('picks out the cash row, the other rows, the float and the counted list', async () => {
     const state = tillState();
     expect(cashRow(state).mode).toBe('Cash');
-    expect(otherRows(state).map((r) => r.key)).toEqual(['mpesa', 'card']);
+    expect(otherRows(state).map((r) => r.key)).toEqual(['mpesa', 'card']); // not cash, and not the On credit line
+    expect(cashRow({ expected: [{ key: 'mpesa', counts_cash: true }] })).toBeNull(); // counts_cash is on M-Pesa too
     expect(openingFloat(session, state)).toBe(2000);
     expect(openingFloat(session, null)).toBe(2000);
     expect(openingFloat(null, null)).toBe(0);
     expect(countedFor(state, '5400')).toEqual([{ mode: 'Cash', amount: 5400 }]);
     expect(countedFor(null, '0')).toEqual([{ mode: 'Cash', amount: 0 }]);
+    expect(countedFor({ expected: [{ key: 'mpesa', mode: 'M-Pesa' }] }, '10')).toEqual([]); // a till with no cash method
   });
 
   test('a typed zero counts as a count; blank does not', async () => {
@@ -340,6 +348,49 @@ describe('the shift-end count dialog', () => {
     await screen.findByRole('dialog', { name: 'Till closed' });
     expect(close).toHaveBeenCalledTimes(2);
     expect(onClosed).toHaveBeenCalledTimes(1);
+  });
+
+  test('paid in and paid out show as parts of the expected cash when there are some', async () => {
+    const row = { mode: 'Cash', key: 'cash', label: 'Cash', opening: 2000, sales: 3500, paid_in: 400, refunds: 0, paid_out: 150, expected: 5750, counts_cash: true };
+    await setup({ load: jest.fn().mockResolvedValue(tillState({ expected: [row] })) });
+    await count('5750');
+    expect(await screen.findByRole('rowheader', { name: 'Paid in by customers' })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: 'Money paid out' }).closest('tr')).toHaveTextContent('-KES 150');
+  });
+
+  test('the On credit line is not shown, and M-Pesa is never taken for cash', async () => {
+    await setup();
+    await count('5500');
+    await screen.findByText('Matches');
+    expect(screen.queryByText(/On credit/)).toBeNull();
+    expect(screen.getAllByRole('rowheader', { name: /Expected cash/ })).toHaveLength(1);
+    expect(screen.getByText('M-Pesa received KES 4,200, nothing to count')).toBeInTheDocument();
+  });
+
+  test('without the loaded figures the other methods still show from the server lines', async () => {
+    await setup({ load: jest.fn().mockRejectedValue(new Error('offline')) });
+    await screen.findByRole('alert');
+    await count('5500');
+    expect(await screen.findByText('M-Pesa received KES 4,200, nothing to count')).toBeInTheDocument();
+    expect(screen.getByText('Card received KES 900, nothing to count')).toBeInTheDocument();
+  });
+
+  test('a till with no cash method sends no counted list', async () => {
+    const load = jest.fn().mockResolvedValue(tillState({ expected: [{ mode: 'M-Pesa', key: 'mpesa', label: 'M-Pesa', opening: 0, sales: 100, paid_in: 0, refunds: 0, paid_out: 0, expected: 100, counts_cash: true }] }));
+    const preview = jest.fn().mockResolvedValue({ closed: false, lines: [{ mode: 'M-Pesa', key: 'mpesa', label: 'M-Pesa', expected: 100, counted: 100, difference: 0 }], total_expected: 100, total_counted: 100, difference: 0, word: 'matches' });
+    await setup({ load, preview });
+    await count('0');
+    await screen.findByRole('dialog', { name: 'Check and end shift' });
+    expect(preview).toHaveBeenCalledWith({ session: 'POS-OPE-7', counted: [] });
+  });
+
+  test('a close that finishes in the background says so', async () => {
+    const close = jest.fn().mockResolvedValue({ ...previewFor(5500), closed: true, outcome: 'closing' });
+    await setup({ close });
+    await count('5500');
+    await screen.findByText('Matches');
+    await press('Close till');
+    expect(await screen.findByText(/finish in the background/)).toBeInTheDocument();
   });
 
   test('Escape closes the dialog', async () => {

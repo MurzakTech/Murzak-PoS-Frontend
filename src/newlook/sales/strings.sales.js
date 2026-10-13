@@ -106,9 +106,6 @@ const sales = {
     showAll: 'Show all sales',
     sessionsTitle: 'No till sessions yet',
     sessionsText: 'A till session is added here each time a cashier opens the till.',
-    errorTitle: 'We could not load the sales',
-    errorText: 'Check your connection and try again. Nothing was changed.',
-    retry: 'Try again',
   },
 
   panel: {

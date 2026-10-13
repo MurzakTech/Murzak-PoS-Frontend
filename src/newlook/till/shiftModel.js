@@ -35,13 +35,18 @@ export const differenceView = (difference, serverWord) => {
 /** The hint under the difference, in words */
 export const differenceHint = (word) => T.close[`${word}Hint`] || '';
 
-const isCashRow = (row) => row && (row.key === 'cash' || row.counts_cash === true);
+// counts_cash on the server means "a money line" (M-Pesa has it too), so cash is found by its key
+const isCashRow = (row) => Boolean(row) && row.key === 'cash';
+const isInfoRow = (row) => Boolean(row) && row.key !== 'cash' && row.key !== 'credit' && row.counts_cash !== false;
 
 /** The expected row of the payment method that is counted by hand (cash), or null */
 export const cashRow = (state) => (state && Array.isArray(state.expected) ? state.expected.find(isCashRow) || null : null);
 
 /** The expected rows that are only information: M-Pesa, card and so on */
-export const otherRows = (state) => (state && Array.isArray(state.expected) ? state.expected.filter((row) => !isCashRow(row)) : []);
+export const otherRows = (state) => (state && Array.isArray(state.expected) ? state.expected.filter(isInfoRow) : []);
+
+/** For a preview line without the loaded figures: the same test */
+export const isInfoLine = isInfoRow;
 
 /** The opening float: the cash row's opening, else the cash part of the session's opening, else all of it */
 export const openingFloat = (session, state) => {
@@ -56,7 +61,12 @@ export const openingFloat = (session, state) => {
 export const sessionName = (session) => (typeof session === 'string' ? session : (session && session.name) || '');
 
 /** The count as the server wants it: only Cash is counted by hand */
-export const countedFor = (state, digits) => [{ mode: (cashRow(state) || {}).mode || 'Cash', amount: Number(digits) }];
+export const countedFor = (state, digits) => {
+  const row = cashRow(state);
+  // A till with no cash method has nothing to count by hand; before the figures load the method is called Cash
+  if (!row && state && Array.isArray(state.expected)) return [];
+  return [{ mode: row ? row.mode : 'Cash', amount: Number(digits) }];
+};
 
 /** True when something was typed (0 counts) */
 export const hasCount = (digits) => /^\d+$/.test(String(digits ?? ''));

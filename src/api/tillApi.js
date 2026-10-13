@@ -38,10 +38,13 @@ const normalizeState = (data) => ({
     ...row,
     opening: number(row.opening),
     sales: number(row.sales),
+    paid_in: number(row.paid_in),
     refunds: number(row.refunds),
+    paid_out: number(row.paid_out),
     expected: number(row.expected),
   })),
-  held_count: number(data.held_count),
+  // null means the server could not count the held sales: the panel then shows what the till itself knows
+  held_count: data.held_count === null ? null : number(data.held_count),
   recent_sales: list(data.recent_sales),
 });
 
@@ -58,6 +61,8 @@ const normalizeClose = (data) => ({
   difference: number(data.difference),
   word: data.word,
   closing_entry: data.closing_entry || null,
+  // 'closed', or 'closing' when the server is finishing the close in the background
+  outcome: data.outcome || null,
 });
 
 /** The state of the till: { state, session, expected, held_count, recent_sales }. Both parameters are optional. */

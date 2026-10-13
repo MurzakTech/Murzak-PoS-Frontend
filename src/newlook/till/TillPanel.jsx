@@ -60,7 +60,7 @@ const PanelBody = ({ session, heldCount, onOpenHeld, onCloseTill, onOpenSale, lo
 
   const data = view.data;
   const known = (data && data.session) || (session && typeof session === 'object' ? session : null);
-  const held = typeof heldCount === 'number' ? heldCount : data ? data.held_count : 0;
+  const held = typeof heldCount === 'number' ? heldCount : (data && data.held_count) || 0;
 
   const skeleton = (
     <div className="nl-till-panel__skeleton">

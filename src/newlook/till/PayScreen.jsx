@@ -100,6 +100,8 @@ const PayScreen = ({
   const activeGroup = groups.find((g) => g.key === choice) || groups[0];
   const isCash = choice === 'cash' && !splitPayments;
   const given = changeState(total, amountGiven);
+  // What the Customer gives box shows: what was typed, or the amount the till already holds
+  const shownGiven = buffer !== '' ? formatBuffer(buffer) : Number(amountGiven) > 0 ? formatBuffer(String(amountGiven)) : '';
 
   // The payment lines the screen is working on: the split rows, or one line for the whole total
   const lines = splitPayments ? payments : [{ mode: paymentMode, amount: total, gateway: payments[0] && payments[0].gateway }];
@@ -201,16 +203,19 @@ const PayScreen = ({
     }
     const message = state.problem ? T.mpesa[state.problem] : null;
     return (
-      <Field
-        id={codeId(index)}
-        label={T.mpesa.codeName}
-        helper={T.mpesa.codeHelp}
-        error={message ? <span role="alert">{message}</span> : undefined}
-        value={typedCodes[index] || ''}
-        autoComplete="off"
-        spellCheck={false}
-        onChange={(typed) => setCode(index, typed)}
-      />
+      <div className="nlp-code">
+        <Field
+          id={codeId(index)}
+          label={T.mpesa.codeName}
+          helper={T.mpesa.codeHelp}
+          error={message ? <span role="alert">{message}</span> : undefined}
+          value={typedCodes[index] || ''}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(typed) => setCode(index, typed)}
+        />
+        {message ? <p className="nlp-hint">{T.mpesa.codeHelp}</p> : null}
+      </div>
     );
   };
 
@@ -266,7 +271,7 @@ const PayScreen = ({
                   </span>
                   <div className="nlp-given" role="status" aria-labelledby="nlp-gives-label">
                     <span className="nlp-given__currency">{currency || 'KES'}</span>
-                    <span className={buffer === '' ? 'nlp-given__value is-empty' : 'nlp-given__value'}>{buffer === '' ? T.cash.givesNothing : formatBuffer(buffer)}</span>
+                    <span className={shownGiven === '' ? 'nlp-given__value is-empty' : 'nlp-given__value'}>{shownGiven === '' ? T.cash.givesNothing : shownGiven}</span>
                   </div>
                 </div>
                 <div className="nlp-quick" role="group" aria-label={T.cash.quickGroup}>

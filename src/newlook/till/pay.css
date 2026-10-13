@@ -205,6 +205,15 @@
 }
 
 /* M-Pesa, credit, split */
+.nlp-code {
+  display: grid;
+  gap: var(--space-1);
+}
+.nlp-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
 .nlp-subhead {
   margin: var(--space-2) 0 0;
   color: var(--ink-2);

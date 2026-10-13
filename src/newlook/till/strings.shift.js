@@ -31,7 +31,9 @@ const shift = {
     expectedParts: 'Opening float and cash sales',
     partOpening: 'Opening float',
     partSales: 'Cash sales',
+    partPaidIn: 'Paid in by customers',
     partRefunds: 'Cash refunds',
+    partPaidOut: 'Money paid out',
     countedCash: 'Counted cash',
     difference: 'Difference',
     short: 'Short by {amount}',
@@ -43,6 +45,7 @@ const shift = {
     otherMethods: 'Other payments',
     noCount: '{method} received {amount}, nothing to count',
     success: 'Till closed. Counted {counted}, expected {expected}.',
+    closingInBackground: 'The last steps finish in the background and can take a minute.',
     successDifference: 'Difference: {difference}',
   },
   panel: {

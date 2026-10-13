@@ -5,7 +5,7 @@ import Field from '../components/Field';
 import Icon from '../components/Icon';
 import { formatMoney } from '../components/format';
 import { getTillState, previewClose, closeTill } from '../../api/tillApi';
-import { cashRow, countedFor, differenceHint, differenceView, hasCount, openedLine, openingFloat, otherRows, sessionName } from './shiftModel';
+import { cashRow, countedFor, differenceHint, differenceView, hasCount, isInfoLine, openedLine, openingFloat, otherRows, sessionName } from './shiftModel';
 import T from './strings.shift';
 import fill from '../labels/fill';
 import './till.css';
@@ -122,13 +122,12 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
   };
 
   const cash = cashRow(state);
-  const cashMode = (cash || {}).mode || 'Cash';
   const lines = (result && result.lines) || [];
-  const cashLine = lines.find((l) => l.mode === cashMode) || lines.find((l) => l.counted !== null && l.counted !== undefined) || null;
+  const cashLine = lines.find((l) => l.key === 'cash') || null;
   const expected = cashLine ? cashLine.expected : result ? result.total_expected : 0;
   const counted = cashLine && cashLine.counted !== null ? cashLine.counted : result ? result.total_counted : 0;
   const view = result ? differenceView(result.difference, result.word) : null;
-  const infoRows = state ? otherRows(state) : lines.filter((l) => l !== cashLine && (l.counted === null || l.counted === undefined));
+  const infoRows = state ? otherRows(state) : lines.filter((l) => l !== cashLine && isInfoLine(l));
   const floatAmount = openingFloat(record, state);
   const who = openedLine(record);
 
@@ -226,10 +225,22 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
                   <th scope="row">{C.partSales}</th>
                   <td>{formatMoney(cash.sales)}</td>
                 </tr>
+                {cash.paid_in > 0 ? (
+                  <tr className="nl-shift__part">
+                    <th scope="row">{C.partPaidIn}</th>
+                    <td>{formatMoney(cash.paid_in)}</td>
+                  </tr>
+                ) : null}
                 {cash.refunds > 0 ? (
                   <tr className="nl-shift__part">
                     <th scope="row">{C.partRefunds}</th>
                     <td>{formatMoney(-cash.refunds)}</td>
+                  </tr>
+                ) : null}
+                {cash.paid_out > 0 ? (
+                  <tr className="nl-shift__part">
+                    <th scope="row">{C.partPaidOut}</th>
+                    <td>{formatMoney(-cash.paid_out)}</td>
                   </tr>
                 ) : null}
               </>
@@ -278,6 +289,7 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
           <span>{fill(C.success, { counted: formatMoney(counted), expected: formatMoney(expected) })}</span>
         </p>
         <p className="nl-shift__word-line">{fill(C.successDifference, { difference: view.text })}</p>
+        {result.outcome === 'closing' ? <p className="nl-shift__muted">{C.closingInBackground}</p> : null}
       </div>
     );
   }

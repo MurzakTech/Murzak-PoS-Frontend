@@ -86,7 +86,6 @@ const pay = {
 
   complete: 'Complete sale',
   processing: 'Processing...',
-  blockedMpesa: 'Complete sale needs the M-Pesa confirmation code first.',
 };
 
 export default pay;

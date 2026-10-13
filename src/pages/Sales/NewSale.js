@@ -44,6 +44,12 @@ import fillText from '../../newlook/labels/fill';
 import PosHeader from './pos/PosHeader';
 import ProductPanel from './pos/ProductPanel';
 import OrderPanel from './pos/OrderPanel';
+import '../../newlook/till/till-controls.css';
+import PayScreen from '../../newlook/till/PayScreen';
+import TillPanel from '../../newlook/till/TillPanel';
+import ShiftCloseDialog from '../../newlook/till/ShiftCloseDialog';
+import { getPreview, isPageLive } from '../../newlook/redirects/live';
+import { toNewAddress } from '../../newlook/redirects/engine';
 import PaymentPanel from './pos/PaymentPanel';
 import OpenTill from './pos/OpenTill';
 import CustomerDialog from './pos/CustomerDialog';
@@ -272,6 +278,8 @@ const NewSale = () => {
   const { enabled: newLook } = useNewLook(); // the redesigned till pieces show only while the shop's New look is on
   const [pendingLeave, setPendingLeave] = useState('/dashboard'); // where the cashier is going when the leave dialog opens
   const [leaveHolding, setLeaveHolding] = useState(false);
+  const [tillPanelOpen, setTillPanelOpen] = useState(false); // New look: the Till open pill's panel (Recent sales)
+  const [shiftCloseOpen, setShiftCloseOpen] = useState(false); // New look: the shift-end count
   const [leaveError, setLeaveError] = useState('');
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -2019,6 +2027,9 @@ const NewSale = () => {
   };
   const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
 
+  // The pay screen: the redesigned one while the New look is on (same props, so nothing the old one did is lost)
+  const PayPanel = newLook ? PayScreen : PaymentPanel;
+
   const orderPanel = (
     <OrderPanel
       cart={cart}
@@ -2055,7 +2066,7 @@ const NewSale = () => {
   );
 
   return (
-    <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
+    <Box className={newLook ? 'nl-till-root' : undefined} sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
       <PosHeader
         storeName={storeName}
         warehouses={warehouses}
@@ -2063,11 +2074,11 @@ const NewSale = () => {
         onChangeStore={(w) => dispatch(setActiveWarehouse(w))}
         cashierName={cashierName}
         sessionOpen={isPOSSessionOpen}
-        onSessionDetails={handleViewSessionDetails}
+        onSessionDetails={newLook ? () => setTillPanelOpen(true) : handleViewSessionDetails}
         heldCount={heldSales.length}
         onOpenHeld={() => setHeldDialogOpen(true)}
         onExit={requestExit}
-        onCloseSession={handleCloseSession}
+        onCloseSession={newLook ? () => setShiftCloseOpen(true) : handleCloseSession}
         onGoHistory={() => (newLook ? leaveTo('/sales/history') : navigate('/sales/history'))}
         themeMode={themeMode}
         onToggleTheme={toggleColorMode}
@@ -2114,7 +2125,7 @@ const NewSale = () => {
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
           <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {isCheckoutMode ? (
-              <PaymentPanel
+              <PayPanel
                 currency={currency}
                 total={grandTotal}
                 paymentModes={payModes}
@@ -2267,6 +2278,41 @@ const NewSale = () => {
         loading={isClosingPOSOpening}
         entry={posOpeningEntry}
       />
+
+      {newLook && (
+        <>
+          <TillPanel
+            open={tillPanelOpen}
+            onClose={() => setTillPanelOpen(false)}
+            session={posOpeningEntry}
+            currency={currency}
+            heldCount={heldSales.length}
+            onOpenHeld={() => {
+              setTillPanelOpen(false);
+              setHeldDialogOpen(true);
+            }}
+            onCloseTill={() => {
+              setTillPanelOpen(false);
+              setShiftCloseOpen(true);
+            }}
+            onOpenSale={(id) => {
+              setTillPanelOpen(false);
+              leaveTo(isPageLive('/sales', getPreview()) ? `${toNewAddress('/sales')}?sale=${encodeURIComponent(id)}` : '/sales/history');
+            }}
+          />
+          <ShiftCloseDialog
+            open={shiftCloseOpen}
+            onClose={() => setShiftCloseOpen(false)}
+            session={posOpeningEntry}
+            currency={currency}
+            onClosed={(result) => {
+              // The server has closed the session: tell the till, so it shows the "open the till" screen as it does after a close today
+              const name = posOpeningEntry?.name;
+              dispatch(closePOSOpeningEntry.fulfilled({ requestedName: name, openingEntry: null, outcome: result?.outcome === 'closing' ? 'closing' : 'closed' }, 'new-look-close', { pos_opening_entry: name }));
+            }}
+          />
+        </>
+      )}
 
       <HeldSalesDialog
         open={heldDialogOpen}

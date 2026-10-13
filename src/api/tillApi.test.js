@@ -40,6 +40,13 @@ describe('getTillState', () => {
     await expect(getTillState()).resolves.toEqual({ state: 'closed', session: null, expected: [], held_count: 0, recent_sales: [] });
   });
 
+  test('keeps paid in and paid out as numbers, and a held count the server could not work out as null', async () => {
+    axiosInstance.get.mockResolvedValue(reply({ state: 'open', expected: [{ mode: 'Cash', key: 'cash', paid_in: '400', paid_out: '150' }], held_count: null }));
+    const state = await getTillState();
+    expect(state.expected[0]).toMatchObject({ paid_in: 400, paid_out: 150 });
+    expect(state.held_count).toBeNull();
+  });
+
   test('turns a refusal, an empty answer and a network failure into plain messages', async () => {
     axiosInstance.get.mockResolvedValue(refusal('You do not have access to the till.'));
     await expect(getTillState()).rejects.toThrow('You do not have access to the till.');
@@ -80,6 +87,11 @@ describe('previewClose', () => {
     expect(axiosInstance.post.mock.calls[0][1].counted).toEqual([{ mode: 'Cash', amount: 0 }]);
   });
 
+  test('uses the words of a refusal such as "Please count the cash in the till first."', async () => {
+    axiosInstance.post.mockResolvedValue({ data: { message: { success: false, message: 'Please count the cash in the till first.', error_type: 'cash_count_required' } } });
+    await expect(previewClose({ session: 'S', counted: [] })).rejects.toThrow('Please count the cash in the till first.');
+  });
+
   test('turns a refusal into a plain message', async () => {
     axiosInstance.post.mockResolvedValue(refusal('Count the cash first.'));
     await expect(previewClose({ session: 'S', counted: [] })).rejects.toThrow('Count the cash first.');
@@ -92,6 +104,11 @@ describe('closeTill', () => {
     const result = await closeTill({ session: 'POS-OPE-1', counted: [{ mode: 'Cash', amount: 5500 }] });
     expect(axiosInstance.post).toHaveBeenCalledWith('murzak_pos.api.till_api.close_till', { session: 'POS-OPE-1', counted: [{ mode: 'Cash', amount: 5500 }], confirm: true }, { allowRefusal: true });
     expect(result).toMatchObject({ closed: true, closing_entry: 'POS-CLO-1', word: 'matches' });
+  });
+
+  test('passes on the outcome when the close finishes in the background', async () => {
+    axiosInstance.post.mockResolvedValue(reply({ closed: true, outcome: 'closing', lines: [], closing_entry: 'POS-CLO-2', word: 'matches' }));
+    await expect(closeTill({ session: 'S', counted: [{ mode: 'Cash', amount: 1 }] })).resolves.toMatchObject({ closed: true, outcome: 'closing' });
   });
 
   test('a failure while closing is a plain message and not a closed session', async () => {
