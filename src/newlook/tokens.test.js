@@ -211,18 +211,24 @@ describe('AC-02: contrast rules hold in both themes', () => {
 });
 
 describe('no redesigned file hard-codes a colour', () => {
-  const COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/;
-  const files = fs
-    .readdirSync(NEWLOOK)
-    .filter((f) => /\.(js|jsx|css)$/.test(f) && !/\.test\.(js|jsx)$/.test(f) && f !== 'tokens.css');
+  // A colour written out (hex, rgb(), hsl()). rgb(var(--ink-rgb) / 0.1) is built from a token, so it is allowed.
+  const COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\((?!\s*var\()|\bhsla?\(/;
+  const walk = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      return entry.isDirectory() ? walk(full) : [full];
+    });
+  const files = walk(NEWLOOK)
+    .filter((f) => /\.(js|jsx|css)$/.test(f) && !/\.test\.(js|jsx)$/.test(f) && path.basename(f) !== 'tokens.css')
+    .map((f) => path.relative(NEWLOOK, f));
 
-  test('the redesigned files are found', () => {
-    expect(files).toEqual(expect.arrayContaining(['NewLookShell.jsx', 'NewLookGate.jsx', 'NewLookProvider.jsx']));
+  test('the redesigned files, including the components folder, are found', () => {
+    expect(files).toEqual(expect.arrayContaining(['NewLookShell.jsx', 'NewLookGate.jsx', 'NewLookProvider.jsx', 'ComponentPage.jsx', 'components/components.css', 'components/Button.jsx']));
   });
 
   test.each(files)('%s uses only tokens', (file) => {
     const lines = fs.readFileSync(path.join(NEWLOOK, file), 'utf8').split('\n');
-    const offenders = lines.filter((l) => COLOUR.test(l) && !l.trim().startsWith('//') && !l.trim().startsWith('*'));
+    const offenders = lines.filter((l) => COLOUR.test(l) && !l.trim().startsWith('//') && !l.trim().startsWith('*') && !l.trim().startsWith('/*'));
     expect(offenders).toEqual([]);
   });
 });

@@ -95,6 +95,9 @@ export const NewLookEmptyPage = () => (
       }}
     >
       Back to the current screens
+    </RouterLink>{' '}
+    <RouterLink to="/new-look/components" style={{ marginLeft: 'var(--space-3)', color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>
+      See the components
     </RouterLink>
   </div>
 );

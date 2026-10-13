@@ -50,6 +50,6 @@ test('while the answer is still unknown, a placeholder shows instead of a flash 
   expect(screen.queryByText(/page not found/i)).not.toBeInTheDocument();
 });
 
-test('the registry holds only the empty page for now', () => {
-  expect(newLookRoutes.map((r) => r.path)).toEqual(['/new-look']);
+test('the registry holds the empty page and the component page for now', () => {
+  expect(newLookRoutes.map((r) => r.path)).toEqual(['/new-look', '/new-look/components']);
 });
