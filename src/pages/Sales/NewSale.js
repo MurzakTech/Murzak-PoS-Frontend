@@ -37,6 +37,8 @@ import useKeptCart from '../../newlook/till/useKeptCart';
 import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
 import { sellingLocations } from '../../newlook/till/sellingLocations';
 import { stockNote } from '../../newlook/till/stockNote';
+import { getTillPaymentModes } from '../../api/paymentMethodsApi';
+import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
 import tillText from '../../newlook/till/strings.till';
 import fillText from '../../newlook/labels/fill';
 import PosHeader from './pos/PosHeader';
@@ -354,6 +356,26 @@ const NewSale = () => {
       }));
     }
   }, [userCompany, dispatch]);
+
+  // New look: the ways of paying the owner has switched on in Settings (kept on this device, so the till still has them offline)
+  const [tillModes, setTillModes] = useState(() => readSavedModes(userCompany));
+  useEffect(() => {
+    if (!newLook || !userCompany) return undefined;
+    let cancelled = false;
+    setTillModes(readSavedModes(userCompany));
+    getTillPaymentModes(userCompany)
+      .then((modes) => {
+        if (cancelled) return;
+        saveModes(userCompany, modes);
+        setTillModes(modes);
+      })
+      .catch(() => {
+        // Offline or not reachable: the last known list stays in use
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [newLook, userCompany]);
 
   // Which methods go through a gateway (configured per business under Settings > Payment Gateways)
   useEffect(() => {
@@ -1320,6 +1342,16 @@ const NewSale = () => {
     return ['Cash', 'Card', 'Mobile Money', 'Bank Transfer'];
   }, [paymentMethods]);
 
+  // What the pay screen offers: with the New look, only what Settings has switched on, in the order Cash, M-Pesa, Card, On credit, Other
+  const payModes = useMemo(() => (newLook ? offeredModes(paymentModes, tillModes) : paymentModes), [newLook, paymentModes, tillModes]);
+  useEffect(() => {
+    // If the method in use was switched off, move to the first one that is still on
+    if (newLook && payModes.length > 0 && !payModes.includes(paymentMode)) {
+      setPaymentMode(payModes[0]);
+      setPayments((rows) => rows.map((row) => (payModes.includes(row.mode) ? row : { ...row, mode: payModes[0] })));
+    }
+  }, [newLook, payModes, paymentMode]);
+
   // Credit info helper - use selectedCustomerObj directly (more reliable than searching)
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
   const creditInfo = useMemo(() => {
@@ -2085,7 +2117,7 @@ const NewSale = () => {
               <PaymentPanel
                 currency={currency}
                 total={grandTotal}
-                paymentModes={paymentModes}
+                paymentModes={payModes}
                 paymentMode={paymentMode}
                 onPaymentModeChange={handlePaymentModeChange}
                 splitPayments={splitPayments}

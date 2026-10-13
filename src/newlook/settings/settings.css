@@ -1,0 +1,35 @@
+.nl-settings {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+}
+.nl-settings-switches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.nl-settings-switch {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.nl-settings-switch:last-child {
+  border-bottom: 0;
+}
+.nl-settings-hint,
+.nl-settings-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-settings-note {
+  margin-bottom: var(--space-3);
+}
+.nl-settings-subtitle {
+  margin: var(--space-5) 0 var(--space-1);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}

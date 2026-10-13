@@ -83,8 +83,10 @@ export const quickCash = (total) => {
   };
   if (t > 0) add(t);
   add(TOP_NOTE);
-  NOTES.filter((n) => n >= t).forEach(add);
-  if (t > 0) roundUps(t).forEach(add);
+  if (t > 0) {
+    NOTES.filter((n) => n >= t).forEach(add);
+    roundUps(t).forEach(add);
+  }
   const exact = t > 0 ? [{ kind: 'exact', value: t }] : [];
   const rest = picked
     .filter((v) => !(t > 0 && v === t))

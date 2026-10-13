@@ -15,7 +15,7 @@ const useFetched = (key, load, enabled = true) => {
   const run = useCallback(() => {
     ticket.current += 1;
     const mine = ticket.current;
-    setState((prev) => ({ status: 'loading', data: prev.data, error: '' }));
+    setState({ status: 'loading', data: null, error: '' });
     loader
       .current()
       .then((data) => {

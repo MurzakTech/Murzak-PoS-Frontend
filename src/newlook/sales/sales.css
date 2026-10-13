@@ -1,0 +1,215 @@
+/*
+ * The Sales page (ticket P3-8). Every colour, size and space is a design token. The list and the receipt panel use the
+ * shared list-with-detail layout; below 768px the rows become cards and the filters sit behind one Filters button.
+ */
+.nl-sales {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-sales__list {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+
+.nl-sales-methods {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.nl-sales-form {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-sales-form__method {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* ---------- The receipt in the panel ---------- */
+.nl-receipt__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-receipt__lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--table-size);
+}
+.nl-receipt__lines th {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-align: left;
+  text-transform: uppercase;
+}
+.nl-receipt__lines td {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.nl-receipt__lines .is-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-left: var(--space-3);
+}
+.nl-receipt__totals {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--body-size);
+}
+.nl-receipt__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-receipt__total dt,
+.nl-receipt__total dd {
+  margin: 0;
+}
+.nl-receipt__total dd {
+  font-variant-numeric: tabular-nums;
+}
+.nl-receipt__total.is-strong {
+  font-weight: var(--font-weight-bold);
+}
+.nl-receipt__section {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-receipt__section h3 {
+  margin: 0;
+}
+.nl-receipt__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--table-size);
+}
+.nl-receipt__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.nl-receipt__amount {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.nl-receipt__ref {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Cards (below 768px) ---------- */
+.nl-sales-cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-sales-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-till);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--table-size);
+  text-align: left;
+}
+.nl-sales-card.is-button {
+  cursor: pointer;
+}
+.nl-sales-card.is-button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-sales-card.is-selected {
+  background: var(--selected-row);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+.nl-sales-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-sales-card__head {
+  font-size: var(--body-size);
+}
+.nl-sales-card__aside {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nl-sales-card__line {
+  color: var(--ink-2);
+}
+
+.nl-sales__filters-toggle {
+  justify-self: start;
+  min-height: var(--control-height-till);
+}
+
+@media (max-width: 767px) {
+  .nl-sales .nl-detail__nav .nl-btn,
+  .nl-sales .nl-detail__actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+  .nl-sales .nl-detail__actions {
+    gap: var(--space-2);
+  }
+}
+
+/* ---------- Printing a receipt ---------- */
+.nl-receipt-print {
+  display: none;
+}
+@media print {
+  body.nl-printing-receipt > *:not(.nl-receipt-print) {
+    display: none !important;
+  }
+  body.nl-printing-receipt > .nl-receipt-print {
+    display: block;
+    box-sizing: border-box;
+    max-width: 80mm;
+    margin: 0 auto;
+    padding: var(--space-4);
+    background: Canvas;
+    color: CanvasText;
+    color-scheme: light;
+    font-family: var(--font-family);
+    font-size: var(--table-size);
+  }
+  .nl-receipt-print h1 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--card-title-size);
+  }
+  .nl-receipt-print p {
+    margin: 0 0 var(--space-1);
+  }
+  .nl-receipt-print .nl-receipt__lines th,
+  .nl-receipt-print .nl-receipt__list,
+  .nl-receipt-print .nl-receipt__ref {
+    color: CanvasText;
+  }
+}

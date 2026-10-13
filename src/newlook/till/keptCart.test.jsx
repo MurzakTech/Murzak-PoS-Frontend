@@ -206,3 +206,31 @@ describe('the over-stock note on a cart line (AC-22: "Only 13 left")', () => {
     expect(stockNote(3, 'x')).toBeNull();
   });
 });
+
+describe('the ways of paying the till offers (P3-1, AC-19)', () => {
+  const { offeredModes, readSavedModes, saveModes, modesKey } = require('./offeredModes');
+
+  test('shows only what Settings has switched on, in the server order', () => {
+    expect(offeredModes(['Card', 'Cash', 'Mpesa', 'Credit'], ['Cash', 'Mpesa', 'Credit'])).toEqual(['Cash', 'Mpesa', 'Credit']);
+  });
+
+  test('switching M-Pesa off removes it, and the rest keep their order', () => {
+    expect(offeredModes(['Cash', 'Mpesa', 'Credit Card'], ['Cash', 'Credit Card'])).toEqual(['Cash', 'Credit Card']);
+  });
+
+  test('with no answer, an empty answer or one that matches nothing, the till keeps its own list so selling never stops', () => {
+    const own = ['Cash', 'Card'];
+    expect(offeredModes(own, [])).toEqual(own);
+    expect(offeredModes(own, undefined)).toEqual(own);
+    expect(offeredModes(own, ['Bank Draft'])).toEqual(own);
+    expect(offeredModes([], ['Cash'])).toEqual([]);
+  });
+
+  test('keeps the last answer on this device for each business, and survives bad data', () => {
+    saveModes('Shop A', ['Cash', 'Mpesa']);
+    expect(readSavedModes('Shop A')).toEqual(['Cash', 'Mpesa']);
+    expect(readSavedModes('Shop B')).toEqual([]);
+    localStorage.setItem(modesKey('Shop C'), '{oops');
+    expect(readSavedModes('Shop C')).toEqual([]);
+  });
+});

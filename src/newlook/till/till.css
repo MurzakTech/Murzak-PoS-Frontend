@@ -1,0 +1,229 @@
+/*
+ * The shift-end count and the Till open panel (ticket P3-6). Every colour, size and space is a design token.
+ */
+
+/* ---------- Shift-end count ---------- */
+.nl-dialog.nl-shift {
+  max-width: 480px;
+}
+.nl-shift__session {
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-shift__session p,
+.nl-shift__step p,
+.nl-shift__done p {
+  margin: 0;
+}
+.nl-shift__strong {
+  font-weight: var(--font-weight-semibold);
+}
+.nl-shift__muted {
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-shift__step {
+  display: grid;
+  gap: var(--space-3);
+  outline: none;
+}
+.nl-shift__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--body-size);
+}
+.nl-shift__table th,
+.nl-shift__table td {
+  padding: var(--space-2) 0;
+  border-bottom: var(--card-border);
+  text-align: left;
+  font-weight: var(--font-weight-regular);
+  vertical-align: top;
+}
+.nl-shift__table th {
+  font-weight: var(--font-weight-semibold);
+}
+.nl-shift__table td {
+  text-align: right;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.nl-shift__table .nl-shift__part th,
+.nl-shift__table .nl-shift__part td {
+  padding-left: var(--space-4);
+  color: var(--ink-2);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--caption-size);
+}
+.nl-shift__table .nl-shift__part th {
+  padding-left: var(--space-4);
+}
+.nl-shift__table .nl-shift__part td {
+  padding-left: 0;
+}
+.nl-shift__sub {
+  display: block;
+  color: var(--muted);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-regular);
+}
+.nl-shift__word {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-bold);
+}
+.nl-shift__word.is-bad {
+  color: var(--bad);
+}
+.nl-shift__word.is-warn {
+  color: var(--warn);
+}
+.nl-shift__word.is-good {
+  color: var(--good);
+}
+.nl-shift__small-heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nl-shift__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+  color: var(--ink-2);
+}
+.nl-shift__alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--bad);
+  font-size: var(--caption-size);
+}
+.nl-shift__done {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-shift__success {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--good);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-shift__word-line {
+  color: var(--ink-2);
+}
+
+/* ---------- Till open panel ---------- */
+.nl-drawer.nl-till-panel {
+  width: 380px;
+  margin-left: auto;
+  border-right: none;
+  border-left: var(--card-border);
+  animation-name: nl-till-panel-in;
+}
+@keyframes nl-till-panel-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.nl-till-panel__content {
+  display: grid;
+  gap: var(--space-5);
+}
+.nl-till-panel__who {
+  margin: 0 0 var(--space-2);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-till-panel__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+.nl-till-panel__list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-till-panel__list dt {
+  color: var(--ink-2);
+}
+.nl-till-panel__list dd {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-till-panel__heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--card-title-size-small);
+  font-weight: var(--card-title-weight);
+}
+.nl-till-panel__sales {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-till-panel__sales .nl-till-sale {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  height: auto;
+  min-height: var(--control-height-till);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  border: var(--card-border);
+}
+.nl-till-sale .nl-btn__label {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+}
+.nl-till-sale__main {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-till-sale__receipt,
+.nl-till-sale__amount {
+  font-weight: var(--font-weight-semibold);
+}
+.nl-till-sale__time,
+.nl-till-sale__customer {
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-till-panel__actions {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-till-panel__skeleton {
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-till-panel__empty {
+  padding: var(--space-3) 0;
+}
+
+@media (max-width: 767px) {
+  .nl-drawer.nl-till-panel {
+    width: 100%;
+    max-width: 100vw;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nl-drawer.nl-till-panel {
+    animation: none;
+  }
+}

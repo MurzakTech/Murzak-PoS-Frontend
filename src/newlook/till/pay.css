@@ -1,0 +1,270 @@
+/*
+ * The pay screen (P3-2, P3-3). Every colour, size and space is a design token. The screen is a container, so it lays
+ * itself out by the room it is given, not by the window: two columns (amount, choices, cash and change on the left,
+ * the number pad on the right) from 560px wide, one column below that.
+ *
+ * Height: with the pad and Change showing, the screen needs about 540px (top row 44, amount 70, choices 44, Customer
+ * gives 74, quick cash 96, Change 56, gaps, then the 68px Complete sale bar), so they show without scrolling in a
+ * window 755px high. The scroll area only scrolls for the longer screens (split rows, gateways).
+ */
+.nlp {
+  container-type: inline-size;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-family);
+  font-size: var(--body-size);
+}
+.nlp__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3) var(--space-4);
+}
+.nlp__footer {
+  flex: none;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.nlp-complete {
+  width: 100%;
+}
+
+.nlp__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+/* Till sizes: controls are 44px here (the shared components are 40px, or 44px on small screens) */
+.nlp .nl-input-wrap,
+.nlp .nl-select__button {
+  min-height: var(--control-height-till);
+}
+.nlp .nl-check {
+  min-height: var(--control-height-till);
+}
+.nlp .nl-segmented {
+  display: flex;
+  width: 100%;
+}
+.nlp .nl-segmented__item {
+  flex: 1 1 0;
+  min-height: calc(var(--control-height-till) - var(--space-2) - 2px);
+}
+
+.nlp__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+.nlp__main,
+.nlp-cash,
+.nlp-stack {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.nlp__main {
+  gap: var(--space-3);
+}
+.nlp-choices {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Amount due */
+.nlp-label {
+  display: block;
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.nlp-due {
+  display: grid;
+  gap: var(--space-1);
+}
+.nlp-due__amount {
+  font-size: var(--hero-size);
+  font-weight: var(--hero-weight);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--page-title-spacing);
+}
+
+/* Customer gives */
+.nlp-given {
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  min-height: calc(var(--control-height-till) + var(--space-3));
+  margin-top: var(--space-1);
+  padding: 0 var(--space-4);
+  background: var(--field);
+  border: 2px solid var(--brand);
+  border-radius: var(--radius-input);
+  align-items: center;
+}
+.nlp-given__currency {
+  margin-right: auto;
+  color: var(--ink-2);
+  font-weight: var(--font-weight-semibold);
+}
+.nlp-given__value {
+  font-size: var(--kpi-size);
+  font-weight: var(--kpi-weight);
+  font-variant-numeric: tabular-nums;
+}
+.nlp-given__value.is-empty {
+  color: var(--muted);
+}
+
+/* Quick cash */
+.nlp-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.nlp-quick__button {
+  flex: 1 1 calc(25% - var(--space-2));
+  min-width: calc(var(--control-height-till) + var(--space-5));
+  font-variant-numeric: tabular-nums;
+}
+.nlp-quick__button.is-on {
+  background-color: var(--soft);
+  border-color: var(--brand);
+  color: var(--brand-text);
+}
+
+/* Change: an icon and a word beside the amount, in a coloured tone that is never the only signal */
+.nlp-change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-height-till);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  color: var(--muted);
+}
+.nlp-change__word {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+}
+.nlp-change__value {
+  font-size: var(--card-title-size);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+.nlp-change.is-short {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.nlp-change.is-give,
+.nlp-change.is-exact {
+  border-color: var(--good);
+  color: var(--good);
+}
+
+/* Number pad: the keys are 52px, the till size plus 8px */
+.nlp-pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.nlp .nlp-key {
+  min-height: calc(var(--control-height-till) + var(--space-2));
+  font-size: var(--card-title-size);
+  font-variant-numeric: tabular-nums;
+}
+.nlp .nlp-key--back {
+  aspect-ratio: auto;
+  padding: 0 var(--space-2);
+}
+.nlp .nlp-key--clear {
+  grid-column: span 2;
+  font-size: var(--body-size);
+  color: var(--ink-2);
+}
+
+/* M-Pesa, credit, split */
+.nlp-subhead {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-2);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}
+.nlp-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  color: var(--ink);
+}
+.nlp-notice .nl-icon {
+  margin-top: 2px;
+}
+.nlp-notice__body {
+  flex: 1;
+  min-width: 0;
+}
+.nlp-notice.is-good .nl-icon {
+  color: var(--good);
+}
+.nlp-notice.is-warn {
+  border-color: var(--warn);
+}
+.nlp-notice.is-warn .nl-icon {
+  color: var(--warn);
+}
+.nlp-notice.is-bad {
+  border-color: var(--bad);
+}
+.nlp-notice.is-bad .nl-icon {
+  color: var(--bad);
+}
+.nlp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: end;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+.nlp-row__wide {
+  grid-column: 1 / -1;
+}
+.nlp-received {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Two columns once the screen is 560px wide */
+@container (min-width: 560px) {
+  .nlp__grid.has-pad {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  }
+}

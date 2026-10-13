@@ -55,7 +55,6 @@ const shift = {
     cashInTill: 'Cash in the till',
     recentName: 'Recent sales',
     walkIn: 'Walk-in customer',
-    saleOpen: 'Open sale {receipt}',
     emptyName: 'No sales yet in this session',
     emptyHelp: 'Sales you make now will show here.',
     heldName: 'Held sales',

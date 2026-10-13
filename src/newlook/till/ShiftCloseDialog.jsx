@@ -42,6 +42,7 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const gone = useRef(false);
+  const working = useRef(false); // set at once, so a double press cannot start two calls before the screen redraws
   const stepBox = useRef(null);
   const doneButton = useRef(null);
   const name = sessionName(session);
@@ -59,7 +60,7 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
     Promise.resolve()
       .then(() => load({ pos_profile: record ? record.pos_profile : undefined }))
       .then((data) => !gone.current && setState(data))
-      .catch((e) => !gone.current && setLoadError(messageOf(e, C.loadFailed)));
+      .catch(() => !gone.current && setLoadError(C.loadFailed));
     // The session record is read once, when the dialog opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
@@ -84,7 +85,8 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
   }, [step]);
 
   const seeDifference = async () => {
-    if (!hasCount(digits) || busy) return;
+    if (!hasCount(digits) || working.current) return;
+    working.current = true;
     setBusy('preview');
     setError('');
     try {
@@ -95,12 +97,14 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
     } catch (e) {
       if (!gone.current) setError(messageOf(e, C.previewFailed));
     } finally {
+      working.current = false;
       if (!gone.current) setBusy('');
     }
   };
 
   const closeIt = async () => {
-    if (busy) return;
+    if (working.current) return;
+    working.current = true;
     setBusy('close');
     setError('');
     try {
@@ -112,6 +116,7 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
     } catch (e) {
       if (!gone.current) setError(messageOf(e, C.closeFailed));
     } finally {
+      working.current = false;
       if (!gone.current) setBusy('');
     }
   };

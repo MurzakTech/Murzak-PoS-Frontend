@@ -1,4 +1,6 @@
 import HomePage from './home/HomePage';
+import TillSettingsPage from './settings/TillSettingsPage';
+import SalesPage from './sales/SalesPage';
 import ComponentPage from './ComponentPage';
 import ChartsPage from './charts/ChartsPage';
 import RedirectsPage from './redirects/RedirectsPage';
@@ -21,6 +23,10 @@ export const newLookRoutes = [
   { path: '/new-look/components', element: ComponentPage },
   // Every chart with made-up numbers (Phase 2, P2-2)
   { path: '/new-look/charts', element: ChartsPage },
+  // Settings, Till and payments: the payment method switches (P3-1); the rest of the section comes with Settings (P5)
+  { path: '/new-look/settings/till', element: TillSettingsPage },
+  // Sales (P3-8): one list with the tabs All sales, Unpaid, Returns and Till sessions, and the receipt panel
+  { path: '/new-look/sales', element: SalesPage },
   // Every old address and where it goes (acceptance check AC-06)
   { path: '/new-look/redirects', element: RedirectsPage },
   // Each new page until its real screen is built: a notice that names the page and links to the current screen.
