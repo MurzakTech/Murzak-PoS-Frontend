@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/Button';
 import DetailPanel, { DetailFacts } from '../components/DetailPanel';
 import EmptyState from '../components/EmptyState';
 import { PaymentChip, StatusLabel } from '../components/Chip';

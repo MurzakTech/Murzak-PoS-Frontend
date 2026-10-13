@@ -12,6 +12,7 @@ import './till.css';
 
 const P = T.panel;
 export const MAX_RECENT_SALES = 5;
+const PANEL_MIN_HEIGHT = 'calc(var(--space-8) * 6)';
 
 /**
  * The Till open panel (Spec: top bar, "The Till open pill opens a small panel"): who opened the till and when, the
@@ -76,7 +77,7 @@ const PanelBody = ({ session, heldCount, onOpenHeld, onCloseTill, onOpenSale, lo
   }
 
   return (
-    <LoadingGate loading={view.status === 'loading'} skeleton={skeleton} minHeight="240px" label={P.loading}>
+    <LoadingGate loading={view.status === 'loading'} skeleton={skeleton} minHeight={PANEL_MIN_HEIGHT} label={P.loading}>
       {data && data.state === 'closed' ? (
         <EmptyState icon="till" level={2} title={P.closedName} description={P.closedHelp} />
       ) : (

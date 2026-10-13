@@ -1,6 +1,7 @@
-/* eslint-disable testing-library/no-node-access, testing-library/no-container --
-   Two checks need structure no role query can express: that skeleton shapes appear only after 200ms, and that the
-   focus ring target is the count input (found by its label, then compared with document.activeElement). */
+/* eslint-disable testing-library/no-node-access, testing-library/no-container, testing-library/no-unnecessary-act --
+   A few checks need structure no role query can express: that the difference icon is the right one and that skeleton
+   shapes appear only after 200ms. The act wrappers flush answers of the injected server functions, which arrive
+   after a click and before the next query would start waiting. */
 /**
  * Ticket P3-6 (front end): the difference words, the shift-end count dialog (AC-23) and the Till open panel.
  * All server calls are replaced by jest functions; the data is made up.
@@ -8,11 +9,11 @@
 import React from 'react';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-jest.mock('../../api/axiosInstance', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }));
-
 import ShiftCloseDialog from './ShiftCloseDialog';
 import TillPanel, { MAX_RECENT_SALES } from './TillPanel';
 import { cashRow, countedFor, differenceView, hasCount, openedLine, openingFloat, otherRows, sessionName, wordFor } from './shiftModel';
+
+jest.mock('../../api/axiosInstance', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }));
 
 const session = { name: 'POS-OPE-7', cashier: 'wanjiru@shop.test', cashier_name: 'Wanjiru', opened_at: '08:15', pos_profile: 'Main till', opening: [{ mode: 'Cash', amount: 2000 }] };
 
@@ -140,7 +141,7 @@ describe('the shift-end count dialog', () => {
     expect(screen.getByText('Session POS-OPE-7')).toBeInTheDocument();
     expect(screen.getByText('Opened by Wanjiru at 08:15')).toBeInTheDocument();
     expect(screen.getByText('Opening float: KES 2,000')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText('Cash you counted')).toBeInTheDocument());
+    expect(await screen.findByLabelText('Cash you counted')).toBeInTheDocument();
   });
 
   test('the first focus lands on the counted cash field', async () => {

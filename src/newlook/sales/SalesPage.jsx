@@ -95,7 +95,7 @@ const SalesPage = () => {
   const { status, data, error, reload } = useSalesList(query);
   const loading = status === 'loading';
   const ready = status === 'ready' && data;
-  const rows = ready ? data.rows : [];
+  const rows = useMemo(() => (ready ? data.rows : []), [ready, data]);
   const total = ready ? data.total : 0;
 
   // A link to a page past the last one (the list got shorter) goes to the last page
