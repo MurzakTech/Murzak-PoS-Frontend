@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useThemeMode } from '../theme/ThemeProvider';
 import DataDemo from './DataDemo';
+import OverlayDemo from './OverlayDemo';
 import { Badge, Button, Card, Checkbox, Chip, Field, ICON_NAMES, Icon, PaymentChip, Select, StatusLabel, Switch } from './components';
 
 /**
@@ -179,6 +180,8 @@ const ComponentPage = () => {
       </Card>
 
       <DataDemo />
+
+      <OverlayDemo />
 
       <Card title="Icons" subtitle="18px, 1.8px stroke, round ends, the current text colour. Words always sit beside them">
         <div style={row}>

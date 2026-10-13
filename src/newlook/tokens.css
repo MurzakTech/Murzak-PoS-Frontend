@@ -50,6 +50,7 @@
   --card-title-size: 17px; /* Card headings */
   --card-title-size-small: 15px; /* Card headings in small cards */
   --card-title-weight: 600;
+  --dialog-title-size: 16px; /* Dialog titles, at 700 */
   --body-size: 14px; /* Paragraphs and form text */
   --body-line: 1.5;
   --table-size: 13.5px; /* Rows and cells */

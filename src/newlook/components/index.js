@@ -1,11 +1,12 @@
 /**
  * The shared components of the redesign. Build a screen from these; do not write another button, field,
  * select, checkbox, switch, chip, card, table, pagination, filter row, tabs, detail panel, empty state or
- * skeleton. (Dialog, Menu, Toast and Drawer arrive with ticket P1-5.)
+ * skeleton, dialog, menu, toast or drawer.
  */
 import '../tokens.css';
 import './components.css';
 import './data-components.css';
+import './overlay-components.css';
 
 export { default as Button } from './Button';
 export { default as Field } from './Field';
@@ -27,3 +28,7 @@ export { default as FilterRow, PERIODS, SEARCH_PAUSE_MS, MAX_DROPDOWNS } from '.
 export { default as DetailPanel, DetailFacts, ListWithDetail, MAX_SECONDARY_ACTIONS } from './DetailPanel';
 export { default as useListParams, PAGE_SIZES, DEFAULT_PAGE_SIZE } from './useListParams';
 export { formatMoney, formatCount, formatShowing } from './format';
+export { default as Dialog, ConfirmDialog } from './Dialog';
+export { default as Menu } from './Menu';
+export { default as Drawer, DRAWER_BREAKPOINT } from './Drawer';
+export { ToastProvider, useToast, TOAST_MS, KEEPOUT_ATTRIBUTE } from './Toast';

@@ -51,6 +51,14 @@ const SHAPES = {
       <path d="M2.5 10.5l1.8-6h9.4l1.8 6V14a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1v-3.5z" />
     </>
   ),
+  more: (
+    <>
+      <circle cx="9" cy="3.8" r="0.9" />
+      <circle cx="9" cy="9" r="0.9" />
+      <circle cx="9" cy="14.2" r="0.9" />
+    </>
+  ),
+  menu: <path d="M3 5h12M3 9h12M3 13h12" />,
   chevronLeft: <path d="M11 4.5L6.5 9l4.5 4.5" />,
   chevronRight: <path d="M7 4.5L11.5 9 7 13.5" />,
 };

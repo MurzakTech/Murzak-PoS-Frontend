@@ -14,7 +14,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import ComponentPage from '../ComponentPage';
-import { Badge, Button, Card, Checkbox, Chip, Field, Icon, ICON_NAMES, PaymentChip, Select, StatusLabel, Switch, formatDate, maskDate, parseDate, paymentKey } from './index';
+import { Badge, Button, Card, Checkbox, Chip, Field, Icon, ICON_NAMES, PaymentChip, Select, StatusLabel, Switch, ToastProvider, formatDate, maskDate, parseDate, paymentKey } from './index';
 
 const css = fs.readFileSync(path.join(__dirname, 'components.css'), 'utf8');
 const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -552,7 +552,9 @@ describe('the component page', () => {
     render(
       <ThemeProvider>
         <MemoryRouter>
-          <ComponentPage />
+          <ToastProvider>
+            <ComponentPage />
+          </ToastProvider>
         </MemoryRouter>
       </ThemeProvider>
     );

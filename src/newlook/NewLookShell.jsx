@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import './tokens.css';
+import { ToastProvider } from './components';
 
 /**
  * The shell every redesigned screen will sit inside: a top bar, a menu column and a page area.
@@ -44,23 +45,25 @@ const chip = {
 };
 
 const NewLookShell = ({ children }) => (
-  <div style={shell}>
-    <header style={topBar}>
-      <span style={{ fontWeight: 'var(--font-weight-bold)' }}>Murzak POS</span>
-      <span style={chip}>New look</span>
-    </header>
+  <ToastProvider>
+    <div style={shell}>
+      <header style={topBar}>
+        <span style={{ fontWeight: 'var(--font-weight-bold)' }}>Murzak POS</span>
+        <span style={chip}>New look</span>
+      </header>
 
-    <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-      <nav
-        aria-label="Main menu"
-        className="newlook-menu"
-        style={{ width: 240, flexShrink: 0, background: 'var(--surface)', borderRight: 'var(--card-border)' }}
-      />
-      <main style={{ flex: 1, minWidth: 0, padding: 'var(--page-gutter)' }}>{children}</main>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <nav
+          aria-label="Main menu"
+          className="newlook-menu"
+          style={{ width: 240, flexShrink: 0, background: 'var(--surface)', borderRight: 'var(--card-border)' }}
+        />
+        <main style={{ flex: 1, minWidth: 0, padding: 'var(--page-gutter)' }}>{children}</main>
+      </div>
+      {/* The menu column hides below 768px, where the real shell uses a drawer (P1-6) */}
+      <style>{'@media (max-width: 767px) { .newlook-menu { display: none; } }'}</style>
     </div>
-    {/* The menu column hides below 768px, where the real shell uses a drawer (P1-6) */}
-    <style>{'@media (max-width: 767px) { .newlook-menu { display: none; } }'}</style>
-  </div>
+  </ToastProvider>
 );
 
 /** The page shown inside the empty shell. Replaced by real screens as they are built. */

@@ -28,6 +28,7 @@ import {
   SummaryRow,
   Table,
   Tabs,
+  ToastProvider,
   formatCount,
   formatMoney,
   formatShowing,
@@ -714,7 +715,9 @@ describe('The sample-data page', () => {
     render(
       <ThemeProvider>
         <MemoryRouter initialEntries={[entry]}>
-          <ComponentPage />
+          <ToastProvider>
+            <ComponentPage />
+          </ToastProvider>
           <Where />
         </MemoryRouter>
       </ThemeProvider>

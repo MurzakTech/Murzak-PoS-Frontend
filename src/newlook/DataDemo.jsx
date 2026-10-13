@@ -2,10 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Card,
+  ConfirmDialog,
   DetailFacts,
   DetailPanel,
   FilterRow,
   ListWithDetail,
+  Menu,
   PaymentChip,
   Pagination,
   Segmented,
@@ -18,6 +20,7 @@ import {
   formatCount,
   formatMoney,
   useListParams,
+  useToast,
 } from './components';
 
 /**
@@ -71,6 +74,8 @@ const STATE_KEYS = ['open', 'view'];
 const BASE = '/new-look/components';
 
 const SalesDemo = () => {
+  const toast = useToast();
+  const [voiding, setVoiding] = useState(null);
   const location = useLocation();
   const params = useListParams({ defaultPeriod: '30d', filterKeys: FILTER_KEYS, stateKeys: STATE_KEYS });
   const { page, size, q, period, from, to, filters, state } = params;
@@ -115,6 +120,20 @@ const SalesDemo = () => {
     { key: 'method', header: 'Method', render: (s) => <PaymentChip method={s.method} /> },
     { key: 'status', header: 'Status', render: (s) => <StatusLabel status={s.status} /> },
     { key: 'amount', header: 'Amount', money: true, nowrap: true },
+    {
+      key: 'actions',
+      header: <span className="nl-visually-hidden">Actions</span>,
+      render: (s) => (
+        <Menu
+          label={`More actions for sale ${s.id}`}
+          items={[
+            { label: 'Open details', onClick: () => openSale(s.id) },
+            { label: 'Print receipt', onClick: () => toast.success(`Receipt for sale ${s.id} sent to the printer (demo)`) },
+            { label: 'Void sale', destructive: true, onClick: () => setVoiding(s) },
+          ]}
+        />
+      ),
+    },
   ];
 
   const emptyState = params.hasFilters || tabKey !== 'all'
@@ -203,6 +222,18 @@ const SalesDemo = () => {
         <Segmented size="small" label="Show the list as" options={VIEWS} value={view} onChange={(value) => params.set({ view: value, page: current })} />
       </div>
       <ListWithDetail list={list} detail={detail} />
+      <ConfirmDialog
+        open={Boolean(voiding)}
+        title={voiding ? `Void sale ${voiding.id}?` : ''}
+        message="In a real shop this cancels the sale and cannot be undone. Here it is a demo and nothing is saved."
+        confirmLabel="Void sale"
+        destructive
+        onCancel={() => setVoiding(null)}
+        onConfirm={() => {
+          toast.success(`Sale ${voiding.id} voided (demo, nothing was changed)`);
+          setVoiding(null);
+        }}
+      />
     </div>
   );
 };
