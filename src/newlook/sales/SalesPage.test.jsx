@@ -264,7 +264,6 @@ describe('tabs and filters live in the address', () => {
     expect(where()).not.toContain('page=2');
     await waitFor(() => expect(listSales).toHaveBeenLastCalledWith(expect.objectContaining({ search: 'wanjiru', page: 1 })));
     expect(listSales).toHaveBeenCalledTimes(1);
-    await act(async () => {});
   });
 
   test('an owner can filter by cashier; a cashier is not offered the choice', async () => {
