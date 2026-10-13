@@ -23,6 +23,7 @@ const SKIP = [
   /^redirects\/redirectTable\.js$/,
   /^strings(\.[a-z]+)?\.js$/,
   /^(ComponentPage|DataDemo|OverlayDemo|ShellDemo)\.jsx$/,
+  /^charts\/(ChartsPage\.jsx|sampleData\.js)$/,
   /^newLookRoutes\.js$/,
 ];
 
@@ -42,6 +43,8 @@ const TECHNICAL_ATTRIBUTES = new Set([
   'aria-live', 'aria-haspopup', 'aria-expanded', 'aria-current', 'aria-atomic', 'aria-modal', 'aria-autocomplete', 'aria-keyshortcuts', 'aria-controls',
   'aria-labelledby', 'aria-describedby', 'aria-selected', 'aria-checked', 'aria-pressed', 'aria-busy', 'aria-invalid', 'aria-activedescendant', 'aria-hidden',
   'aria-disabled', 'xmlns', 'min', 'max', 'minLength', 'maxLength', 'pattern', 'step', 'disabled', 'checked', 'open', 'hidden', 'onClick',
+  // Settings of the chart kit (Recharts): how to draw, not words to read
+  'dataKey', 'layout', 'stackId', 'textAnchor', 'dominantBaseline', 'ifOverflow', 'radius', 'barCategoryGap',
 ]);
 
 const VISIBLE_KEYS = new Set([

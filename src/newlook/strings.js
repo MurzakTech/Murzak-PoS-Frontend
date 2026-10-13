@@ -284,6 +284,75 @@ const components = {
   },
 };
 
-const S = { shell, components };
+// ---------- The chart kit ----------
+const charts = {
+  toggle: { label: 'View', chart: 'Chart', table: 'Table' },
+  metrics: { revenue: 'Revenue', profit: 'Profit', count: 'Sales count' },
+  metricSwitch: 'Show',
+  previousPeriod: 'Previous period',
+  thisPeriod: 'This period',
+  soFar: 'so far',
+  today: 'Today',
+  noSale: 'No sales',
+  state: {
+    loading: 'Loading the chart',
+    emptyTitle: 'No sales to show yet',
+    emptyText: 'Sales appear here as soon as you make one.',
+    errorTitle: 'We could not load this chart',
+    errorText: 'Check your connection and try again. Nothing was changed.',
+    retry: 'Try again',
+  },
+  sales: {
+    titleRevenue: 'Daily revenue (KES)',
+    titleProfit: 'Daily profit (KES)',
+    titleCount: 'Daily sales (number of sales)',
+    summary: '{title}, {range}, peak {peakDate} at {peakValue}',
+    summaryOneDay: '{title}, {date}: {value}',
+    peakLabel: '{date}, {value}',
+    latestLabel: '{value}',
+    tableDate: 'Date',
+    tablePrevious: 'Previous period',
+    tableSalesCount: 'Number of sales',
+    tooltipCount: '{count} sales',
+    tooltipOneSale: '1 sale',
+    soFarTooltip: '{date} (so far)',
+    emptySummary: '{title}, {range}: no sales',
+  },
+  payments: {
+    title: 'How customers paid (KES)',
+    summary: 'How customers paid, {range}: {parts}',
+    part: '{name} {amount} ({percent}%)',
+    tableMethod: 'Payment method',
+    tableAmount: 'Amount (KES)',
+    tableShare: 'Share',
+    other: 'Other',
+    totalLabel: 'Total',
+    emptySummary: 'How customers paid, {range}: no payments',
+  },
+  topProducts: {
+    title: 'Top products by revenue (KES)',
+    summary: 'Top products by revenue, {range}: {first} first at {value}',
+    tableProduct: 'Product',
+    tableRevenue: 'Revenue (KES)',
+    seeAll: 'See all products',
+    emptySummary: 'Top products by revenue, {range}: no sales',
+  },
+  hours: {
+    title: 'Busiest hours (average sales per hour)',
+    summary: 'Busiest hours, {range}: the peak is {hour}, with {value} sales on average',
+    tableHour: 'Hour',
+    tableAverage: 'Average sales',
+    tip: 'Consider a second cashier from {from} to {to}',
+    am: '{hour}am',
+    pm: '{hour}pm',
+    emptySummary: 'Busiest hours, {range}: no sales',
+  },
+  sparkline: { label: 'Trend over the period' },
+  monthProgress: { label: 'Day {day} of {days}', short: 'Month progress' },
+  months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+};
+
+const S = { shell, components, charts };
 
 export default S;

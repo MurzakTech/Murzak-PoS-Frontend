@@ -1,0 +1,235 @@
+/*
+ * The chart kit (Spec: Charts). Colours come only from the tokens, so every chart follows the theme.
+ * Gridlines are 1px, solid and pale; text is ink, ink-2 or muted and never a series colour.
+ */
+.nl-chart-card__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.nl-chart {
+  margin: 0;
+  position: relative;
+}
+
+.nl-chart__frame {
+  width: 100%;
+  min-width: 0;
+}
+
+.nl-chart__frame .recharts-wrapper:focus,
+.nl-chart__frame .recharts-surface:focus {
+  outline: none;
+}
+
+.nl-chart__frame .recharts-wrapper:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-input);
+}
+
+.nl-chart__note {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+  line-height: var(--body-line);
+}
+
+.nl-chart__tip {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--soft);
+  border-radius: var(--radius-button-small);
+  color: var(--ink);
+  font-size: var(--caption-size);
+}
+
+.nl-chart__label {
+  font-family: inherit;
+}
+
+.nl-chart .recharts-cartesian-axis-tick-value {
+  font-family: inherit;
+}
+
+/* Tooltip: value first in bold, then the name */
+.nl-tooltip-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-menu);
+  padding: var(--space-2) var(--space-3);
+  min-width: 140px;
+  max-width: 260px;
+  color: var(--ink);
+  font-size: var(--caption-size);
+}
+
+.nl-tooltip-card__heading {
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+}
+
+.nl-tooltip-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 2px 0;
+}
+
+.nl-tooltip-card__row strong {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+}
+
+.nl-tooltip-card__row span:not(.nl-tooltip-card__swatch) {
+  color: var(--ink-2);
+}
+
+.nl-tooltip-card__swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+
+/* Legend */
+.nl-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+
+.nl-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.nl-legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.nl-legend__swatch.is-line {
+  height: 2px;
+  width: 16px;
+  border-radius: 1px;
+}
+
+.nl-legend__value {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+}
+
+.nl-legend__percent {
+  color: var(--muted);
+}
+
+/* Table view */
+.nl-chart-table-wrap {
+  overflow: auto;
+  max-height: 320px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+
+.nl-chart-table-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.nl-chart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--body-size);
+  color: var(--ink);
+}
+
+.nl-chart-table th,
+.nl-chart-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.nl-chart-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--caption-size);
+}
+
+.nl-chart-table .is-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.nl-chart-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.nl-chart-table tfoot td {
+  font-weight: var(--font-weight-semibold);
+  border-top: 1px solid var(--line);
+}
+
+/* Sparkline and month progress */
+.nl-spark {
+  display: inline-block;
+  flex: none;
+}
+
+.nl-meter {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.nl-meter__track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--track);
+  overflow: hidden;
+}
+
+.nl-meter__fill {
+  height: 100%;
+  background: var(--series-1);
+  border-radius: var(--radius-pill);
+}
+
+.nl-meter__label {
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nl-chart *,
+  .nl-meter__fill {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* A chart card's title and its controls wrap rather than push the page wider on a phone */
+.nl-chart-card .nl-card__header {
+  flex-wrap: wrap;
+}
+
+.nl-chart-card .nl-card__actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  max-width: 100%;
+}

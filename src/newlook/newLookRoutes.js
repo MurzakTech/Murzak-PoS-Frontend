@@ -1,5 +1,6 @@
 import { NewLookEmptyPage } from './NewLookShell';
 import ComponentPage from './ComponentPage';
+import ChartsPage from './charts/ChartsPage';
 import RedirectsPage from './redirects/RedirectsPage';
 import PagePlaceholder from './redirects/PagePlaceholder';
 import { NEW_PAGES } from './redirects/redirectTable';
@@ -17,6 +18,8 @@ export const newLookRoutes = [
   { path: '/new-look', element: NewLookEmptyPage },
   // Every shared component in every state, in both themes (the Phase 1 gate)
   { path: '/new-look/components', element: ComponentPage },
+  // Every chart with made-up numbers (Phase 2, P2-2)
+  { path: '/new-look/charts', element: ChartsPage },
   // Every old address and where it goes (acceptance check AC-06)
   { path: '/new-look/redirects', element: RedirectsPage },
   // Each new page until its real screen is built: a notice that names the page and links to the current screen.
