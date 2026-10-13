@@ -86,8 +86,9 @@ describe('resolveRedirect', () => {
 });
 
 describe('Live pages and the preview switch', () => {
-  test('no page is live yet, so the old screens keep working', () => {
-    expect(BUILT_PAGES).toEqual([]);
+  test('only Home is live so far, so every other old screen keeps working', () => {
+    expect(BUILT_PAGES).toEqual(['/']);
+    expect(isPageLive('/')).toBe(true);
     expect(isPageLive('/sales')).toBe(false);
   });
 

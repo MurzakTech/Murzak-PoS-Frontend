@@ -48,3 +48,9 @@ Unit tests: `src/newlook/home/home.test.jsx` (31) and `src/api/overviewApi.test.
 
 - Deploy back-end pull request 33 to the demo store and compare the Revenue tile with the Sales list total for the same period (AC-08), and confirm the unmerged-POS-invoice profit (P1-9) there.
 - The owner's demo and sign-off of Phase 2.
+
+## Owner decisions on Phase 2 (recorded)
+
+- **Revenue is shown without VAT**, with the figure with VAT in small print under it. Accepted.
+- **A cashier's Home is limited to their own sales.** Accepted.
+- **The redirect is switched on.** With the New look on for a shop, the old Dashboard address opens the new Home (`BUILT_PAGES` now lists `/`). Shops with the New look off see no change. Home reads the back end's `get_overview` call, so the back-end pull request 33 must be merged and deployed before a shop turns the New look on; until then Home shows "We could not load Home" with a Try again button.

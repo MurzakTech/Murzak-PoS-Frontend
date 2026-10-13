@@ -12,7 +12,8 @@ import { useSyncExternalStore } from 'react';
  * its new page, and a page that is not finished yet shows a "being rebuilt" notice with a way back to the
  * current screen. It is stored on this device only and never changes anything for other people.
  */
-export const BUILT_PAGES = [];
+// Home (P2-3 to P2-7) is finished: with the New look on, the old Dashboard opens it
+export const BUILT_PAGES = ['/'];
 export const PREVIEW_KEY = 'murzak_new_look:preview-redirects';
 
 const listeners = new Set();
