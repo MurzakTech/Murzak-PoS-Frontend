@@ -54,6 +54,6 @@ test('the registry holds the empty page, the component page, the old-addresses p
   const paths = newLookRoutes.map((r) => r.path);
   expect(paths.slice(0, 2)).toEqual(['/new-look', '/new-look/components']);
   expect(paths).toEqual(expect.arrayContaining(['/new-look/charts', '/new-look/redirects', '/new-look/settings/till', '/new-look/sales']));
-  expect(paths).toEqual(expect.arrayContaining(['/new-look/sales', '/new-look/stock', '/new-look/settings/team']));
+  expect(paths).toEqual(expect.arrayContaining(['/new-look/sales', '/new-look/stock/*', '/new-look/settings/team']));
   expect(new Set(paths).size).toBe(paths.length); // no address is claimed twice
 });

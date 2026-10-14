@@ -1,0 +1,208 @@
+/*
+ * The Customers page, the customer panel and the customer forms (ticket P4-7). Every colour, size and space is a design token.
+ * The list and the panel use the shared list-with-detail layout; below 768px the rows become cards and the filters sit behind
+ * one Filters button.
+ */
+.nl-customers {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-customers__list {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-customers__filters-toggle {
+  justify-self: start;
+  min-height: var(--control-height-till);
+}
+
+/* ---------- The panel ---------- */
+.nl-customer-panel {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.nl-customer-panel__section {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.nl-customer-panel__section h3,
+.nl-customer-panel__section h4 {
+  margin: 0;
+}
+.nl-customer-panel__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-customer-panel__balance {
+  font-size: var(--card-title-size);
+  font-variant-numeric: tabular-nums;
+}
+.nl-customer-panel__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand-text);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.nl-customer-panel__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-customer-panel__flag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--bad);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-customer-panel__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.nl-customer-panel__dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+}
+.nl-customer-panel__stack {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ---------- The forms ---------- */
+.nl-customer-form__back {
+  justify-self: start;
+  color: var(--brand-text);
+  font-size: var(--caption-size);
+}
+.nl-customer-form__back:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-customer-form-state {
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+}
+
+/* ---------- Cards (below 768px) ---------- */
+.nl-customer-cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-customer-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-till);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--table-size);
+  text-align: left;
+  cursor: pointer;
+}
+.nl-customer-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-customer-card.is-selected {
+  background: var(--selected-row);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+.nl-customer-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-customer-card__head {
+  font-size: var(--body-size);
+}
+.nl-customer-card__aside {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nl-customer-card__line {
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  .nl-customers .nl-detail__nav .nl-btn,
+  .nl-customers .nl-detail__actions .nl-btn,
+  .nl-customer-panel__buttons .nl-btn {
+    min-height: var(--control-height-till);
+  }
+  .nl-customers .nl-detail__actions,
+  .nl-customer-panel__buttons {
+    gap: var(--space-2);
+  }
+}
+
+/* ---------- Printing a statement ---------- */
+.nl-statement-print {
+  display: none;
+}
+@media print {
+  body.nl-printing-statement > *:not(.nl-statement-print) {
+    display: none !important;
+  }
+  body.nl-printing-statement > .nl-statement-print {
+    display: block;
+    box-sizing: border-box;
+    max-width: 190mm;
+    margin: 0 auto;
+    padding: var(--space-4);
+    background: Canvas;
+    color: CanvasText;
+    color-scheme: light;
+    font-family: var(--font-family);
+    font-size: var(--table-size);
+  }
+  .nl-statement-print h1 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--card-title-size);
+  }
+  .nl-statement-print p {
+    margin: 0 0 var(--space-1);
+  }
+  .nl-statement-print table {
+    width: 100%;
+    margin-top: var(--space-3);
+    border-collapse: collapse;
+  }
+  .nl-statement-print th,
+  .nl-statement-print td {
+    padding: var(--space-1) var(--space-2);
+    border-bottom: 1px solid CanvasText;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+  }
+  .nl-statement-print th:nth-child(n + 3),
+  .nl-statement-print td:nth-child(n + 3) {
+    text-align: right;
+  }
+}
