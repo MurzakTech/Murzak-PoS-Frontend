@@ -68,9 +68,10 @@ export const listSales = async ({ tab = 'all', period = '30d', from, to, search,
 export const getSale = (id, doctype) => call('get_sale', (url) => axiosInstance.get(url, { params: compact({ id, doctype }) }));
 
 /**
- * Takes a payment on an unpaid invoice. mode is cash, mpesa or card; reference is the M-Pesa code when there is one.
- * NOTE: this call is not in the first contract proposal; the receipt panel offers Take payment only when the
- * server says can.take_payment, so it stays hidden until the server supports it.
+ * Takes a payment on an unpaid sale (server: sales_list_api.take_payment). mode is cash, mpesa or card; reference is the
+ * M-Pesa code (required for M-Pesa). requestId is made once per payment dialog and sent with every try, so a double tap or
+ * a retry can never record the money twice. Resolves to { payment, sale }; a refusal comes back as an Error with the
+ * server's plain sentence.
  */
-export const takePayment = ({ id, doctype, amount, mode, reference }) =>
-  call('take_payment', (url) => axiosInstance.post(url, compact({ id, doctype, amount, mode, reference })));
+export const takePayment = ({ id, doctype, amount, mode, reference, requestId }) =>
+  call('take_payment', (url) => axiosInstance.post(url, compact({ id, doctype, amount, mode, reference, request_id: requestId }), { allowRefusal: true }));

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Button from '../components/Button';
 import Dialog from '../components/Dialog';
 import Field from '../components/Field';
@@ -9,6 +9,8 @@ import Icon from '../components/Icon';
 import { takePayment } from '../../api/salesListApi';
 import { PAYMENT_MODES, paymentAmount, paymentProblems } from './salesModel';
 import T from './strings.sales';
+
+const newRequestId = () => `pay-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
 /**
  * Take payment on an unpaid invoice: the amount (filled with what is still to pay), how it was paid and, for
@@ -22,6 +24,8 @@ const PaymentDialog = ({ sale, onClose, onSaved }) => {
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState('');
+  // One id for this dialog: every try sends it, so the server records the money only once
+  const requestId = useRef(newRequestId());
 
   const problems = tried ? paymentProblems({ amount, mode, reference, outstanding }) : {};
   const save = async () => {
@@ -30,7 +34,7 @@ const PaymentDialog = ({ sale, onClose, onSaved }) => {
     setBusy(true);
     setFailure('');
     try {
-      await takePayment({ id: sale.id, doctype: sale.doctype, amount: paymentAmount(amount), mode, reference: mode === 'mpesa' ? reference.trim() : undefined });
+      await takePayment({ id: sale.id, doctype: sale.doctype, amount: paymentAmount(amount), mode, reference: mode === 'mpesa' ? reference.trim() : undefined, requestId: requestId.current });
       onSaved(paymentAmount(amount));
     } catch (error) {
       setFailure(fill(T.payment.failed, { reason: error.message }));

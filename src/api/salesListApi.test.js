@@ -59,10 +59,10 @@ describe('getSale', () => {
 });
 
 describe('takePayment', () => {
-  test('sends the amount, the way it was paid and the M-Pesa code', async () => {
+  test('sends the amount, the way it was paid, the M-Pesa code and the request id that stops a double entry', async () => {
     axiosInstance.post.mockResolvedValue(reply({ outstanding: 0 }));
-    await expect(takePayment({ id: 'S1', doctype: 'Sales Invoice', amount: 500, mode: 'mpesa', reference: 'SJK4D9X2LM' })).resolves.toEqual({ outstanding: 0 });
-    expect(axiosInstance.post).toHaveBeenCalledWith(`${URL}.take_payment`, { id: 'S1', doctype: 'Sales Invoice', amount: 500, mode: 'mpesa', reference: 'SJK4D9X2LM' });
+    await expect(takePayment({ id: 'S1', doctype: 'Sales Invoice', amount: 500, mode: 'mpesa', reference: 'SJK4D9X2LM', requestId: 'pay-abc' })).resolves.toEqual({ outstanding: 0 });
+    expect(axiosInstance.post).toHaveBeenCalledWith(`${URL}.take_payment`, { id: 'S1', doctype: 'Sales Invoice', amount: 500, mode: 'mpesa', reference: 'SJK4D9X2LM', request_id: 'pay-abc' }, { allowRefusal: true });
   });
 
   test('a refusal becomes a plain message', async () => {

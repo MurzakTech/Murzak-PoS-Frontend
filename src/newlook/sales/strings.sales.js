@@ -141,7 +141,7 @@ const sales = {
     errorText: 'Check your connection and try again.',
     retry: 'Try again',
     takePayment: 'Take payment',
-    paymentComing: 'This sale still has {amount} to pay. Taking a payment from this page is coming soon.',
+    payAfterClose: 'This sale still has {amount} to pay. It is on the till\u2019s open shift. Close the shift, then take the payment.',
     print: 'Print',
     whatsapp: 'Send on WhatsApp',
     returnItems: 'Return items',

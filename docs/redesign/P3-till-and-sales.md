@@ -40,9 +40,16 @@ Unit tests: 1,717 pass in all (about 400 new in this phase). Browser checks (Chr
 
 ## Decisions for the owner
 
-1. **Take payment on an unpaid sale.** There is no server call to record a payment on an unpaid invoice anywhere in the app today. The button is therefore not offered; the receipt says "This sale still has KES x to pay. Taking a payment from this page is coming soon." The page code and dialog for it exist behind one switch (`TAKE_PAYMENT_READY` in `src/newlook/sales/salesModel.js`). Building the server call records money against an invoice (a Payment Entry), so it needs your approval. Shall I build it?
+1. **Take payment on an unpaid sale.** Built after your approval (back end PR 36): records a Payment Entry against the invoice, capped at what is owed, with a request id so a double tap records the money once. A sale still on an open shift must wait until the shift is closed.
 2. **Closing-entry figures** (PR 35): the shift end overwrites `expected_amount` and `difference` on the new closing entry so it matches what the cashier was shown. I recommend keeping this.
 3. **Closed shifts in the Sales list** (PR 36): ERPNext merges a closed shift's receipts into one Sales Invoice; the list then shows that one invoice labelled "Till closing" instead of each receipt (each receipt can still be opened by its id). Do you want every receipt to stay visible after a close?
 4. **Short receipt numbers.** The till prints the full invoice name today. The new short number is the last digits padded to four (`#0033`), with an S for a Sales Invoice (`#S0033`). ERPNext restarts its numbers each year, so the date is shown beside it.
 5. **The Sales redirect** (old Sales History to the new Sales page) is not switched on. It should wait until PR 36 is deployed.
 6. **Return items** links to the current returns screen with the invoice filled in; a redesigned Returns page is not in this phase.
+
+## Owner decisions on Phase 3 (recorded, 14 October)
+
+- **Take payment: build it.** Done in back end PR 36 (`take_payment`). It supports a Sales Invoice, and a POS Invoice already merged at till close (the payment goes against the consolidated invoice, capped by what that invoice owes). A POS Invoice still on an open shift is refused with "Close the shift, then take the payment", because ERPNext cannot take a Payment Entry against a POS Invoice and no other way would reduce what is owed. The Sales page shows that sentence in place of the button.
+- **Closing-entry figures (PR 35): keep** overwriting `expected_amount` and `difference`.
+- **Receipts stay visible after a close.** The list shows every individual POS receipt and hides the consolidated shift invoice, so nothing is counted twice (PR 36).
+- **PR 33 (Home) merged.**

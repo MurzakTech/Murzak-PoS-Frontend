@@ -9,7 +9,7 @@ import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import PaymentDialog from './PaymentDialog';
 import { useSale } from './useSalesData';
-import { TAKE_PAYMENT_READY, customerName, detailsFor, statusView, whatsappLink, whenLabel } from './salesModel';
+import { customerName, detailsFor, statusView, whatsappLink, whenLabel } from './salesModel';
 import T from './strings.sales';
 
 const PRINT_CLASS = 'nl-printing-receipt';
@@ -160,8 +160,9 @@ const ReceiptPanel = ({ id, doctype, summary, position, onClose, onPrevious, onN
   const noMobile = Boolean(shown && can.whatsapp && !link);
 
   const actions = [];
-  const canTakePayment = TAKE_PAYMENT_READY && Boolean(shown && can.take_payment);
-  const paymentComing = !TAKE_PAYMENT_READY && Boolean(shown && can.take_payment);
+  const canTakePayment = Boolean(shown && can.take_payment);
+  // A sale still on an open shift cannot take a payment until the shift is closed (the server says so with this reason)
+  const payAfterClose = Boolean(shown && !can.take_payment && can.take_payment_blocked === 'pay_after_close');
   if (canTakePayment) actions.push({ key: 'pay', label: T.panel.takePayment, icon: 'wallet', onClick: () => setPaying(true) });
   if (shown && can.print !== false) actions.push({ key: 'print', label: T.panel.print, icon: 'receipt', onClick: () => setPrinting(true) });
   if (shown && can.whatsapp && link) actions.push({ key: 'whatsapp', label: T.panel.whatsapp, onClick: () => window.open(link, '_blank', 'noopener,noreferrer') });
@@ -196,7 +197,7 @@ const ReceiptPanel = ({ id, doctype, summary, position, onClose, onPrevious, onN
             />
             <ReceiptBody sale={shown} />
             {noMobile ? <p className="nl-receipt__note">{T.panel.noMobile}</p> : null}
-            {paymentComing ? <p className="nl-receipt__note">{fill(T.panel.paymentComing, { amount: formatMoney(shown.totals && shown.totals.outstanding) })}</p> : null}
+            {payAfterClose ? <p className="nl-receipt__note">{fill(T.panel.payAfterClose, { amount: formatMoney(shown.totals && shown.totals.outstanding) })}</p> : null}
           </>
         ) : null}
       </DetailPanel>

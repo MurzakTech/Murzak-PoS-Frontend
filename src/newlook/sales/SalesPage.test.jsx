@@ -18,15 +18,6 @@ import { getMyAccess } from '../../api/accessApi';
 import { saveTextFile } from '../../utils/saveTextFile';
 
 jest.mock('../../api/salesListApi', () => ({ listSales: jest.fn(), getSale: jest.fn(), takePayment: jest.fn() }));
-// Taking a payment from this page is switched off until its server call exists (TAKE_PAYMENT_READY); these tests switch it on to check the dialog itself
-const mockPay = { ready: false };
-jest.mock('./salesModel', () => ({
-  __esModule: true,
-  ...jest.requireActual('./salesModel'),
-  get TAKE_PAYMENT_READY() {
-    return mockPay.ready;
-  },
-}));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
 jest.mock('../../utils/saveTextFile', () => ({ saveTextFile: jest.fn() }));
 jest.mock('../../store/hooks', () => ({
@@ -135,12 +126,7 @@ const renderPage = async (url = '/new-look/sales', tier = 'owner') => {
 const where = () => screen.getByTestId('where').textContent;
 const rowOf = (receipt) => screen.getByRole('row', { name: new RegExp(`${receipt}\\b`) });
 
-afterEach(() => {
-  mockPay.ready = false;
-});
-
 beforeEach(() => {
-  mockPay.ready = false;
   jest.resetAllMocks();
   listSales.mockImplementation(async (query) => answer(query));
   getSale.mockImplementation(async (id) => saleFor(ALL_ROWS.find((r) => r.id === id) || ALL_ROWS[0]));
@@ -351,16 +337,15 @@ describe('the receipt panel', () => {
     expect(screen.getByText('Wanjiru Kamau', { selector: 'dd' })).toBeInTheDocument();
   });
 
-  test('while taking a payment is not switched on, an unpaid sale shows no Take payment button and says it is coming', async () => {
-    mockPay.ready = false;
+  test('a sale still on the till\u2019s open shift cannot take a payment yet, and says why', async () => {
+    getSale.mockImplementation(async (id) => saleFor(ALL_ROWS.find((r) => r.id === id), { can: { take_payment: false, take_payment_blocked: 'pay_after_close', return_items: true, print: true, whatsapp: true } }));
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
-    expect(await screen.findByText(/Taking a payment from this page is coming soon/)).toBeInTheDocument();
+    expect(await screen.findByText(/Close the shift, then take the payment/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Take payment' })).not.toBeInTheDocument();
   });
 
   test('an unpaid sale offers Take payment, Print, Send on WhatsApp and Return items', async () => {
-    mockPay.ready = true;
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
     await screen.findByText('Milk 500ml');
@@ -443,7 +428,6 @@ describe('the receipt panel', () => {
   });
 
   test('Take payment asks for the amount and how it was paid, saves it, and refreshes the receipt and the list', async () => {
-    mockPay.ready = true;
     takePayment.mockResolvedValue({ outstanding: 0 });
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
@@ -458,7 +442,7 @@ describe('the receipt panel', () => {
     const listCalls = listSales.mock.calls.length;
     const saleCalls = getSale.mock.calls.length;
     userEvent.click(within(dialog).getByRole('button', { name: 'Save payment' }));
-    await waitFor(() => expect(takePayment).toHaveBeenCalledWith({ id: 'ACC-PSINV-2026-00044', doctype: 'POS Invoice', amount: 4500, mode: 'mpesa', reference: 'SJK4D9X2LM' }));
+    await waitFor(() => expect(takePayment).toHaveBeenCalledWith({ id: 'ACC-PSINV-2026-00044', doctype: 'POS Invoice', amount: 4500, mode: 'mpesa', reference: 'SJK4D9X2LM', requestId: expect.stringMatching(/^pay-/) }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await waitFor(() => expect(listSales.mock.calls.length).toBeGreaterThan(listCalls));
     await waitFor(() => expect(getSale.mock.calls.length).toBeGreaterThan(saleCalls));
@@ -466,7 +450,6 @@ describe('the receipt panel', () => {
   });
 
   test('a payment the server refuses stays open and says why', async () => {
-    mockPay.ready = true;
     takePayment.mockRejectedValue(new Error('That is more than is owed.'));
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
@@ -475,6 +458,20 @@ describe('the receipt panel', () => {
     userEvent.click(within(dialog).getByRole('button', { name: 'Save payment' }));
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('The payment was not saved. That is more than is owed.');
     expect(screen.getByRole('dialog', { name: 'Take payment' })).toBeInTheDocument();
+  });
+
+  test('a retry sends the same request id, so the money is never recorded twice', async () => {
+    takePayment.mockRejectedValueOnce(new Error('The server did not answer.')).mockResolvedValue({ outstanding: 0 });
+    await renderPage();
+    userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
+    userEvent.click(await screen.findByRole('button', { name: 'Take payment' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Take payment' });
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save payment' }));
+    await within(dialog).findByRole('alert');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save payment' }));
+    await waitFor(() => expect(takePayment).toHaveBeenCalledTimes(2));
+    expect(takePayment.mock.calls[0][0].requestId).toBeTruthy();
+    expect(takePayment.mock.calls[1][0].requestId).toBe(takePayment.mock.calls[0][0].requestId);
   });
 
   test('a receipt that fails to load has its own Try again, and the list stays', async () => {
