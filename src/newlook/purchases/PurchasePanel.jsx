@@ -36,6 +36,7 @@ const PurchaseBody = ({ purchase, printing = false }) => {
   return (
     <>
       {lines.length ? (
+        <div className="nl-purchase__lines-wrap" role="region" aria-label={T.panel.itemsLabel} tabIndex={0}>
         <table className="nl-purchase__lines">
           <caption className="nl-visually-hidden">{T.panel.itemsLabel}</caption>
           <thead>
@@ -82,6 +83,7 @@ const PurchaseBody = ({ purchase, printing = false }) => {
             ))}
           </tbody>
         </table>
+        </div>
       ) : null}
 
       <dl className="nl-purchase__totals" aria-label={T.panel.totalsLabel}>

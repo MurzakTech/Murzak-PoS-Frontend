@@ -304,7 +304,7 @@ const StockLevelsPage = () => {
         key: r.id,
         head: r.item_name,
         aside: changeText(r.qty_change),
-        lines: [whenWords(r), `${movementKindWords(r.kind)}${r.reason ? `: ${T.reasons[r.reason]}` : ''}`, r.entry ? <Link key="l" to={entryAddress(r.entry)}>{fill(T.openEntryFor, { reference: r.entry })}</Link> : r.reference || T.noReference],
+        lines: [whenWords(r), `${movementKindWords(r.kind)}${r.reason ? `: ${T.reasons[r.reason]}` : ''}`, r.entry ? <Link key="l" className="nl-stock-link" to={entryAddress(r.entry)}>{fill(T.openEntryFor, { reference: r.entry })}</Link> : r.reference || T.noReference],
         foot: <EntryStatus status={r.status} />,
       }));
     }

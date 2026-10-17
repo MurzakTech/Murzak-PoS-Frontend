@@ -193,6 +193,7 @@
   max-width: var(--content-max);
   margin: 0 auto;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--card-gap);
 }
 .nl-receive-steps {
@@ -432,4 +433,36 @@
   .nl-purchase-print .nl-purchase__list {
     color: CanvasText;
   }
+}
+
+/* A link inside a form is the brand text colour, underlined on hover; on a phone it is a 44px tap target */
+.nl-purchases-link {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+.nl-purchases-link:hover {
+  text-decoration: underline;
+}
+.nl-purchases-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-button-small);
+}
+@media (max-width: 767px) {
+  .nl-purchases-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}
+
+/* The lines of a purchase scroll sideways inside a narrow panel rather than widening the page */
+.nl-purchase__lines-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.nl-purchase__lines-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }

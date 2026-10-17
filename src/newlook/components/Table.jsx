@@ -29,7 +29,7 @@ const T = S.components.table;
  */
 const INTERACTIVE = 'button, a, input, select, textarea, label, summary';
 
-const cellClass = (column) => [(column.money || column.align === 'right') && 'is-right', column.nowrap && 'is-nowrap'].filter(Boolean).join(' ') || undefined;
+const cellClass = (column) => [(column.money || column.align === 'right') && 'is-right', column.nowrap && 'is-nowrap', column.hideOnPhone && 'hide-on-phone'].filter(Boolean).join(' ') || undefined;
 
 const cellValue = (column, row) => {
   if (column.render) return column.render(row);

@@ -323,7 +323,7 @@ const NewPurchasePage = () => {
           ) : null}
           <PurchaseProductPicker onAdd={addProduct} />
           <p className="nl-helper">
-            <Link to={PRODUCT_NEW_PATH}>{F.newProduct}</Link>
+            <Link className="nl-purchases-link" to={PRODUCT_NEW_PATH}>{F.newProduct}</Link>
           </p>
           <p className="nl-newpurchase__total" role="status">
             <span>{F.total}</span> <strong>{formatMoney(total)}</strong>

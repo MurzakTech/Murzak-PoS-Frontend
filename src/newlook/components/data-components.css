@@ -144,6 +144,8 @@
 
 /* ---------- Segmented control ---------- */
 .nl-segmented {
+  max-width: 100%;
+  overflow-x: auto;
   display: inline-flex;
   gap: var(--space-1);
   padding: var(--space-1);
@@ -467,6 +469,7 @@
 }
 .nl-detail__body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   margin-top: var(--space-4);
 }
@@ -514,6 +517,10 @@
   .nl-tab {
     min-height: var(--control-height-till);
   }
+  /* Tighter gaps so more of the tab strip is in view; the rest scrolls sideways */
+  .nl-tabs {
+    gap: var(--space-4);
+  }
   .nl-segmented--small .nl-segmented__item {
     min-height: var(--control-height-till);
   }
@@ -529,6 +536,13 @@
   }
   .nl-table {
     min-width: 560px;
+  }
+  /* A column marked hideOnPhone gives way on a phone, and a table with few columns left no longer needs the wide minimum */
+  .nl-table .hide-on-phone {
+    display: none;
+  }
+  .nl-table-wrap.is-compact .nl-table {
+    min-width: 0;
   }
   .nl-summary {
     grid-template-columns: minmax(0, 1fr);

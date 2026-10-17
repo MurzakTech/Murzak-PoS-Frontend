@@ -23,11 +23,13 @@
 /* ---------- The panel ---------- */
 .nl-customer-panel {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   min-width: 0;
 }
 .nl-customer-panel__section {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   min-width: 0;
   padding-top: var(--space-4);
@@ -205,4 +207,20 @@
   .nl-statement-print td:nth-child(n + 3) {
     text-align: right;
   }
+}
+
+
+/* On a phone these stand-alone links are tap targets: at least 44px high */
+@media (max-width: 767px) {
+  .nl-customer-form__back {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}
+
+/* The statement periods wrap onto a second row in a narrow panel instead of running past its edge */
+.nl-customer-panel__section .nl-segmented {
+  flex-wrap: wrap;
+  overflow-x: visible;
 }

@@ -281,3 +281,13 @@
     justify-content: stretch;
   }
 }
+
+
+/* On a phone these stand-alone links are tap targets: at least 44px high */
+@media (max-width: 767px) {
+  .nl-stock-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}

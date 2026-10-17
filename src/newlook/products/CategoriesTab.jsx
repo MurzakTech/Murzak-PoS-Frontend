@@ -50,9 +50,9 @@ const CategoriesTab = ({ state, adding, onAddingChange, onChanged, canChange = t
     {
       key: 'name',
       header: C.columns.name,
-      render: (c) => (isRootCategory(c.name) ? categoryLabel(c.name) : <Link to={categoryAddress(c.name)} aria-label={fill(C.viewProducts, { name: c.name })}>{c.name}</Link>),
+      render: (c) => (isRootCategory(c.name) ? categoryLabel(c.name) : <Link className="nl-products-link" to={categoryAddress(c.name)} aria-label={fill(C.viewProducts, { name: c.name })}>{c.name}</Link>),
     },
-    { key: 'parent', header: C.columns.parent, render: (c) => (c.parent && !isRootCategory(c.parent) ? c.parent : C.topLevel) },
+    { key: 'parent', header: C.columns.parent, hideOnPhone: true, render: (c) => (c.parent && !isRootCategory(c.parent) ? c.parent : C.topLevel) },
     { key: 'product_count', header: C.columns.products, align: 'right', render: (c) => fill(C.count, { count: Number(c.product_count).toLocaleString('en-US') }) },
     {
       key: 'actions',
@@ -81,6 +81,7 @@ const CategoriesTab = ({ state, adding, onAddingChange, onChanged, canChange = t
         columns={columns}
         rows={categories}
         rowKey={KEY}
+        className="is-compact"
         loading={state.status === 'loading'}
         error={state.status === 'error'}
         onRetry={state.reload}
