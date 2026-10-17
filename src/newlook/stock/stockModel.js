@@ -2,6 +2,7 @@ import { formatMoney } from '../components/format';
 import fill from '../labels/fill';
 import { isoDay, whenLabel } from '../sales/salesModel';
 import T from './strings.stock';
+import { oldScreen } from '../redirects/engine';
 
 /**
  * The decisions of the Stock levels page and its forms, as plain functions (tickets P4-3 and P4-4): the tabs and
@@ -117,7 +118,7 @@ export const changeText = (change) => {
 };
 
 /** The address of a stock change on the current screen, where it can still be edited, submitted, cancelled and printed */
-export const entryAddress = (entry) => `/inventory/stock-entries/${encodeURIComponent(entry)}`;
+export const entryAddress = (entry) => oldScreen(`/inventory/stock-entries/${encodeURIComponent(entry)}`);
 
 export const whenWords = (row, now) => whenLabel(row.date, row.time, now);
 

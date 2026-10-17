@@ -80,8 +80,8 @@ export const showFromParam = (value) => (['low', 'out', 'disabled', 'all'].inclu
 /** The address of the list with a category chosen */
 export const categoryAddress = (name) => `${PRODUCTS_PATH}?category=${encodeURIComponent(name)}`;
 
-/** Where Edit goes: there is no redesigned edit screen yet, so it is the current Products screen */
-export const EDIT_FALLBACK = '/products';
+/** The Edit product form for one product */
+export const editAddress = (code) => `${PRODUCTS_PATH}/${encodeURIComponent(code)}/edit`;
 
 // ---------- Export ----------
 
@@ -211,3 +211,33 @@ export const parentOptions = (categories = [], self = '') => [
 
 /** Can this category be deleted from here? Not the top one, and not while products sit in it. */
 export const canDeleteCategory = (category) => !isRootCategory(category.name) && !Number(category.product_count);
+
+// ---------- The Edit product form ----------
+
+const EDIT_KEYS = ['name', 'price', 'cost', 'unit', 'category', 'enabled'];
+
+/** The form's starting values from a row of the list. The cost is there only when the person may see it. */
+export const formFromProduct = (product, { canSeeCost = false } = {}) => ({
+  name: product.item_name || '',
+  price: product.price === null || product.price === undefined ? '' : String(product.price),
+  cost: canSeeCost && hasCost(product) && product.cost_price !== null && product.cost_price !== undefined ? String(product.cost_price) : '',
+  unit: product.unit || T.defaultUnit,
+  category: isRootCategory(product.category) ? '' : product.category || '',
+  barcode: product.barcode || '',
+  enabled: product.status !== 'disabled',
+});
+
+/** Has anything on the Edit form been changed? */
+export const isEdited = (values, baseline) => EDIT_KEYS.some((key) => String(values[key]) !== String(baseline[key]));
+
+/** Only what changed goes to the server, so nothing else on the product is touched */
+export const changesFrom = (values, baseline, { canSeeCost = false } = {}) => {
+  const out = {};
+  if (String(values.name).trim() !== String(baseline.name).trim()) out.name = String(values.name).trim();
+  if (String(values.price) !== String(baseline.price)) out.price = values.price;
+  if (canSeeCost && String(values.cost) !== String(baseline.cost) && String(values.cost).trim() !== '') out.cost = values.cost;
+  if (values.unit !== baseline.unit) out.unit = values.unit;
+  if (values.category !== baseline.category && values.category) out.category = values.category;
+  if (values.enabled !== baseline.enabled) out.disabled = !values.enabled;
+  return out;
+};

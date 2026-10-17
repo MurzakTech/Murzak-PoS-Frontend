@@ -20,7 +20,7 @@ import CategoriesTab from './CategoriesTab';
 import ProductCards from './ProductCards';
 import ProductPanel from './ProductPanel';
 import { useCategories, useProductByCode, useProductList } from './useProductsData';
-import { categoryLabel, categoryOptions, csvFor, csvName, EDIT_FALLBACK, hasCost, isoDay, NEW_PRODUCT_PATH, productsTabs, showFromParam, showOptions, statusView, stockText, tabFromPath } from './productsModel';
+import { categoryLabel, categoryOptions, csvFor, csvName, editAddress, hasCost, isoDay, NEW_PRODUCT_PATH, productsTabs, showFromParam, showOptions, statusView, stockText, tabFromPath } from './productsModel';
 import T from './strings.products';
 
 const KEY = 'item_code';
@@ -199,7 +199,7 @@ const ProductsPage = () => {
         onPrevious={openIndex > 0 ? () => open(rows[openIndex - 1].item_code) : undefined}
         onNext={openIndex >= 0 && openIndex < rows.length - 1 ? () => open(rows[openIndex + 1].item_code) : undefined}
         onAddStock={() => navigate(go(`/stock?action=in&item=${encodeURIComponent(openProduct.item_code)}`, '/inventory/material-receipt'))}
-        onEdit={() => navigate(EDIT_FALLBACK)}
+        onEdit={() => navigate(editAddress(openProduct.item_code))}
       />
     ) : null;
 

@@ -1,6 +1,7 @@
 import HomePage from './home/HomePage';
 import TillSettingsPage from './settings/TillSettingsPage';
 import SalesPage from './sales/SalesPage';
+import { UnpaidRedirect, ReturnsRedirect as SalesReturnsRedirect, SessionsRedirect } from './sales/SalesTabRedirect';
 import CustomersPage from './customers/CustomersPage';
 import NewCustomerPage from './customers/NewCustomerPage';
 import EditCustomerPage from './customers/EditCustomerPage';
@@ -8,6 +9,14 @@ import OwingRedirect from './customers/OwingRedirect';
 import StockLevelsPage from './stock/StockLevelsPage';
 import ProductsPage from './products/ProductsPage';
 import NewProductPage from './products/NewProductPage';
+import EditProductPage from './products/EditProductPage';
+import SuppliersPage from './suppliers/SuppliersPage';
+import NewSupplierPage from './suppliers/NewSupplierPage';
+import EditSupplierPage from './suppliers/EditSupplierPage';
+import PurchasesPage from './purchases/PurchasesPage';
+import NewPurchasePage from './purchases/NewPurchasePage';
+import ReceiveGoodsPage from './purchases/ReceiveGoodsPage';
+import { OrdersRedirect, ReturnsRedirect } from './purchases/TabRedirect';
 import ComponentPage from './ComponentPage';
 import ChartsPage from './charts/ChartsPage';
 import RedirectsPage from './redirects/RedirectsPage';
@@ -24,7 +33,7 @@ import { BUILT_PAGES } from './redirects/live';
  * each role arrive with the Roles ticket, P1-8).
  */
 // Pages that have their own route above, so they get no placeholder (add a page here when you add its route)
-const OWN_ROUTES = ['/', '/sales', '/settings/till', '/customers', '/customers/owing', '/customers/new', '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry', '/products', '/products/categories', '/products/new'];
+const OWN_ROUTES = ['/', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions', '/settings/till', '/customers', '/customers/owing', '/customers/new', '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry', '/products', '/products/categories', '/products/new', '/suppliers', '/suppliers/new', '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns'];
 
 export const newLookRoutes = [
   // Home (Phase 2): the greeting and hero band, four tiles, charts and Needs attention
@@ -37,6 +46,10 @@ export const newLookRoutes = [
   { path: '/new-look/settings/till', element: TillSettingsPage },
   // Sales (P3-8): one list with the tabs All sales, Unpaid, Returns and Till sessions, and the receipt panel
   { path: '/new-look/sales', element: SalesPage },
+  // The old Returns and Opening Entries addresses, and the Unpaid link on Home, open the matching tab
+  { path: '/new-look/sales/unpaid', element: UnpaidRedirect },
+  { path: '/new-look/sales/returns', element: SalesReturnsRedirect },
+  { path: '/new-look/sales/sessions', element: SessionsRedirect },
   // Customers (P4-7): the list with the tabs All customers and Owing, the customer panel, and the New and Edit forms. The old
   // Customer Credit address (/customers/owing) opens the Owing tab.
   { path: '/new-look/customers', element: CustomersPage },
@@ -51,6 +64,20 @@ export const newLookRoutes = [
   // more specific and win.
   { path: '/new-look/products/*', element: ProductsPage },
   { path: '/new-look/products/new', element: NewProductPage },
+  { path: '/new-look/products/:code/edit', element: EditProductPage },
+  // Suppliers (P4-6): one list with an Owed filter, the supplier panel (what the shop owes and the next bill due), and the Add and Edit
+  // forms. Supplier groups stay on the current screen (/suppliers/groups) until Settings, Advanced is built in Phase 5.
+  { path: '/new-look/suppliers', element: SuppliersPage },
+  { path: '/new-look/suppliers/new', element: NewSupplierPage },
+  { path: '/new-look/suppliers/:id/edit', element: EditSupplierPage },
+  // Purchases (P4-5): the list with the tabs All purchases, Orders and Returns and the purchase panel, the guided Receive goods steps (goods
+  // received note, stock and supplier bill together), and the New purchase form. The old Submit Order and Purchase Returns addresses open the
+  // Orders and Returns tabs. Goods received notes and stock-only receipts open in the panel with ?open=; their current screens stay linked.
+  { path: '/new-look/purchases', element: PurchasesPage },
+  { path: '/new-look/purchases/new', element: NewPurchasePage },
+  { path: '/new-look/purchases/receive', element: ReceiveGoodsPage },
+  { path: '/new-look/purchases/orders', element: OrdersRedirect },
+  { path: '/new-look/purchases/returns', element: ReturnsRedirect },
   // Every old address and where it goes (acceptance check AC-06)
   { path: '/new-look/redirects', element: RedirectsPage },
   // Each new page until its real screen is built: a notice that names the page and links to the current screen.

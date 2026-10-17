@@ -424,7 +424,7 @@ describe('the receipt panel', () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));
     userEvent.click(await screen.findByRole('button', { name: 'Return items' }));
-    expect(where()).toBe('/sales/returns?invoice=ACC-PSINV-2026-00044');
+    expect(where()).toBe('/sales/returns?invoice=ACC-PSINV-2026-00044&legacy=1');
   });
 
   test('Take payment asks for the amount and how it was paid, saves it, and refreshes the receipt and the list', async () => {

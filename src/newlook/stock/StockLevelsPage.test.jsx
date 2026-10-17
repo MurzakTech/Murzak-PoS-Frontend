@@ -435,11 +435,11 @@ describe('Low stock', () => {
     expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Product', 'Category', 'In stock', 'Level', 'Reorder']);
   });
 
-  test('Reorder opens a new purchase on the current screen while the new one is not live', async () => {
+  test('Reorder opens a new purchase with the product filled in', async () => {
     await renderPage('/new-look/stock/low');
     const first = (await screen.findAllByRole('button', { name: /^Reorder / }))[0];
     userEvent.click(first);
-    await waitFor(() => expect(where()).toBe('/purchases/new'));
+    await waitFor(() => expect(where()).toBe('/new-look/purchases/new?item=P005'));
   });
 
   test('Reorder opens the new purchase with the product filled in once that page is live', async () => {
@@ -497,7 +497,7 @@ describe('Movements', () => {
     await renderPage('/new-look/stock/movements');
     await screen.findByRole('row', { name: /Sukari 1kg/ });
     const link = within(row('Unga wa Ngano')).getByRole('link', { name: 'Open stock change MAT-STE-2026-00002' });
-    expect(link).toHaveAttribute('href', '/inventory/stock-entries/MAT-STE-2026-00002');
+    expect(link).toHaveAttribute('href', '/inventory/stock-entries/MAT-STE-2026-00002?legacy=1');
     expect(within(row('Sukari 1kg')).queryByRole('link')).not.toBeInTheDocument();
   });
 
@@ -672,7 +672,7 @@ describe('the header buttons and the row menu', () => {
     await screen.findByRole('row', { name: /Zawadi 10/ });
     userEvent.click(screen.getByRole('button', { name: 'More actions for Maziwa 500ml' }));
     userEvent.click(screen.getByRole('menuitem', { name: 'Edit price, unit, expiry and batch' }));
-    await waitFor(() => expect(where()).toBe('/inventory/item-details'));
+    await waitFor(() => expect(where()).toBe('/inventory/item-details?legacy=1'));
   });
 
   test('Stock out from the row menu starts with that product chosen', async () => {

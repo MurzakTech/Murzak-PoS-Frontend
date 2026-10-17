@@ -47,6 +47,7 @@ import {
   whenWords,
 } from './stockModel';
 import T from './strings.stock';
+import { oldScreen } from '../redirects/engine';
 
 const FILTER_KEYS = ['category', 'store', 'status', 'kind', 'within'];
 const STATE_KEYS = ['action', 'item'];
@@ -197,7 +198,7 @@ const StockLevelsPage = () => {
         { label: T.rowMenu.stockIn, onClick: () => openForm('in', { item_code: row.item_code, item_name: row.item_name, unit: row.unit, qty: row.qty }) },
         { label: T.rowMenu.stockOut, onClick: () => openForm('out', { item_code: row.item_code, item_name: row.item_name, unit: row.unit, qty: row.qty }) },
         { label: T.rowMenu.count, onClick: () => navigate(`${tabAddress(root, 'count')}?item=${encodeURIComponent(row.item_code)}`) },
-        { label: T.rowMenu.details, onClick: () => navigate('/inventory/item-details') },
+        { label: T.rowMenu.details, onClick: () => navigate(oldScreen('/inventory/item-details')) },
         { label: T.rowMenu.discount, onClick: () => navigate(`/settings/inventory-discounts/new?item_code=${encodeURIComponent(row.item_code)}`) }
       );
     }

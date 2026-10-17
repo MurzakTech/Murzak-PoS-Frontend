@@ -464,11 +464,11 @@ describe('the product panel', () => {
     expect(listProducts).toHaveBeenCalledWith(expect.objectContaining({ search: 'PRD-003', status: 'all' }));
   });
 
-  test('Add stock goes to the screen that adds stock', async () => {
+  test('Add stock opens the Stock page with the product filled in', async () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     userEvent.click(await screen.findByRole('button', { name: 'Add stock' }));
-    await waitFor(() => expect(where()).toBe('/inventory/material-receipt'));
+    await waitFor(() => expect(where()).toBe('/new-look/stock?action=in&item=PRD-040'));
   });
 
   test('once the redesigned Stock page is live, Add stock opens it with the product', async () => {
@@ -487,11 +487,11 @@ describe('the product panel', () => {
     expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  test('Edit goes to the current Products screen', async () => {
+  test('Edit opens the Edit product form for that product', async () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
-    await waitFor(() => expect(where()).toBe('/products'));
+    await waitFor(() => expect(where()).toBe('/new-look/products/PRD-040/edit'));
   });
 });
 

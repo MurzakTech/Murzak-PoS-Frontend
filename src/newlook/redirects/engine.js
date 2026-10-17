@@ -16,6 +16,14 @@ import { isPageLive } from './live';
  */
 export const NEW_LOOK_PREFIX = '/new-look';
 
+/**
+ * Some jobs have no redesigned screen yet (a stock-only receipt, a sales return, the supplier groups). A link to the
+ * current screen for one of them carries `legacy=1`, so the redirect leaves it alone and it does not bounce back to
+ * the new page. `oldScreen('/sales/returns?invoice=X')` gives '/sales/returns?invoice=X&legacy=1'.
+ */
+export const LEGACY_KEY = 'legacy';
+export const oldScreen = (address) => `${address}${address.includes('?') ? '&' : '?'}${LEGACY_KEY}=1`;
+
 /** '/sales?open=1' gives '/new-look/sales?open=1'; '/' gives '/new-look' */
 export const toNewAddress = (page) => {
   const [path, query] = page.split('?');
@@ -52,6 +60,7 @@ export const findEntry = (pathname, table = REDIRECTS) => {
 };
 
 export const resolveRedirect = (pathname, search = '', hash = '', { table = REDIRECTS, isLive = isPageLive } = {}) => {
+  if (new URLSearchParams(search).get(LEGACY_KEY) === '1') return null;
   const found = findEntry(pathname, table);
   if (!found || found.entry.status === 'keep' || !found.entry.to) return null;
   const { entry, params } = found;

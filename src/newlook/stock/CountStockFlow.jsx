@@ -14,6 +14,7 @@ import { CountDifference } from './Labels';
 import { countPayload, countTotals, countedInvalid, countedLines, countedValue, formatQty, netWords, qtyWithUnit } from './stockModel';
 import { useCountSheet } from './useStockData';
 import T from './strings.stock';
+import { oldScreen } from '../redirects/engine';
 
 const C = T.count;
 const STEPS = ['choose', 'count', 'review'];
@@ -177,7 +178,7 @@ const CountStockFlow = ({ stores = [], categories = [], itemCode = '', rootPath 
               <Button onClick={start}>{C.start}</Button>
             </div>
             <div className="nl-count-role">
-              <Button as={Link} to={C.byRoleAddress} variant="ghost" size="small">
+              <Button as={Link} to={oldScreen(C.byRoleAddress)} variant="ghost" size="small">
                 {C.byRole}
               </Button>
               <p className="nl-stock-sub">{C.byRoleHint}</p>

@@ -8,7 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { findEntry, oldAddressFor, resolveRedirect, toNewAddress, NEW_LOOK_PREFIX } from './engine';
-import { BUILT_PAGES, PREVIEW_KEY, getPreview, isPageLive, resyncPreview, setPreview } from './live';
+import { PREVIEW_KEY, getPreview, isPageLive, resyncPreview, setPreview } from './live';
 import { REDIRECTS, NEW_PAGES } from './redirectTable';
 import LegacyRedirects from './LegacyRedirects';
 import PagePlaceholder from './PagePlaceholder';
@@ -86,10 +86,9 @@ describe('resolveRedirect', () => {
 });
 
 describe('Live pages and the preview switch', () => {
-  test('only Home is live so far, so every other old screen keeps working', () => {
-    expect(BUILT_PAGES).toEqual(['/']);
-    expect(isPageLive('/')).toBe(true);
-    expect(isPageLive('/sales')).toBe(false);
+  test('the finished pages are live; the till, New invoice, Import, Stores, Transfers and Settings are not', () => {
+    ['/', '/sales', '/customers', '/products', '/stock', '/purchases', '/suppliers'].forEach((page) => expect(isPageLive(page)).toBe(true));
+    ['/till', '/sales/new', '/products/import', '/stock/locations', '/stock/transfers', '/settings/till', '/reports'].forEach((page) => expect(isPageLive(page)).toBe(false));
   });
 
   test('a built page is live, with or without a query', () => {
@@ -162,8 +161,8 @@ describe('LegacyRedirects (in the app)', () => {
   });
 
   test('with the New look on but the new page not built, the old screen stays', () => {
-    app('/sales/history');
-    expect(screen.getByTestId('where')).toHaveTextContent('/sales/history');
+    app('/sales/pos');
+    expect(screen.getByTestId('where')).toHaveTextContent('/sales/pos');
   });
 
   test('with the New look on and the preview on, the old address goes to its new page, keeping the record and page', () => {

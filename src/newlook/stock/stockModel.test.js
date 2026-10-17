@@ -150,7 +150,7 @@ describe('movements', () => {
   });
 
   test('a stock change is opened on the current screen', () => {
-    expect(entryAddress('MAT-STE-2026-00004')).toBe('/inventory/stock-entries/MAT-STE-2026-00004');
+    expect(entryAddress('MAT-STE-2026-00004')).toBe('/inventory/stock-entries/MAT-STE-2026-00004?legacy=1');
   });
 
   test('periods become dates, today included', () => {

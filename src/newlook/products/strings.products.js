@@ -125,6 +125,26 @@ const products = {
   },
   defaultUnit: 'Nos',
 
+  // ---------- The Edit product form ----------
+  edit: {
+    title: 'Edit product',
+    subtitle: 'Change what you need, then save.',
+    saved: '{name} saved',
+    enabled: 'Sell this product',
+    enabledHelper: 'Untick to stop selling it. Its history stays.',
+    barcodeHelper: 'To change the barcode, use the current Products screen.',
+    otherDetails: 'Description, brand, photo, price lists and prescription settings are on the current Products screen.',
+    otherLink: 'Open the current Products screen',
+    loading: 'Opening the product',
+    loadFailed: 'We could not open this product. Please try again.',
+    notFound: 'We could not find this product. It may have been removed.',
+    retry: 'Try again',
+    back: 'Back to Products',
+    needStore: 'Choose your default store before changing the cost price.',
+    nothingChanged: 'Nothing has changed yet.',
+    saveFailed: 'We could not save the product. Please try again.',
+  },
+
   // ---------- Categories ----------
   categories: {
     intro: 'Group your products so they are easy to find at the till and in reports.',

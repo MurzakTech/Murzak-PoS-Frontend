@@ -13,7 +13,7 @@ import { useToast } from '../components/Toast';
 import { PageHeader, useViewportBand } from '../shell';
 import { useAccess } from '../access/AccessProvider';
 import { usePreviewRedirects, isPageLive } from '../redirects/live';
-import { toNewAddress } from '../redirects/engine';
+import { oldScreen, toNewAddress } from '../redirects/engine';
 import fill from '../labels/fill';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
@@ -260,7 +260,7 @@ const SalesPage = () => {
         onClose={close}
         onPrevious={openIndex > 0 ? () => open(rows[openIndex - 1].id) : undefined}
         onNext={openIndex >= 0 && openIndex < rows.length - 1 ? () => open(rows[openIndex + 1].id) : undefined}
-        returnAddress={(sale) => go(`/sales/returns?invoice=${encodeURIComponent(sale.id)}`, `/sales/returns?invoice=${encodeURIComponent(sale.id)}`)}
+        returnAddress={(sale) => oldScreen(`/sales/returns?invoice=${encodeURIComponent(sale.id)}`)}
         onChanged={reload}
       />
     ) : null;

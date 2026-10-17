@@ -1,0 +1,537 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Button from '../components/Button';
+import Checkbox from '../components/Checkbox';
+import { ConfirmDialog } from '../components/Dialog';
+import Field from '../components/Field';
+import Icon from '../components/Icon';
+import Select from '../components/Select';
+import Table from '../components/Table';
+import { formatMoney } from '../components/format';
+import { FormPage } from '../forms';
+import FT from '../forms/strings.forms';
+import { PageHeader } from '../shell';
+import fill from '../labels/fill';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { listWarehouses } from '../../store/warehouseSlice';
+import { getPurchase, receiveGoods } from '../../api/purchasesListApi';
+import './purchases.css';
+import PurchaseStatus from './PurchaseStatus';
+import { usePurchasesList, useSuppliers } from './usePurchasesData';
+import {
+  dateCell,
+  duplicateCodes,
+  isoDay,
+  leftAfter,
+  NEW_PATH,
+  newRequestId,
+  openAddress,
+  parseQty,
+  PURCHASES_PATH,
+  qtyText,
+  receiveAddress,
+  receiveItems,
+  receiveLines,
+  receiveProblems,
+  reviewFieldProblems,
+  reviewLines,
+  reviewTotal,
+  stockLine,
+} from './purchasesModel';
+import T from './strings.purchases';
+import { oldScreen } from '../redirects/engine';
+
+const R = T.receive;
+const STEPS = ['choose', 'items', 'review'];
+const MAX_ORDERS = 100;
+const ITEM_KEY = 'item_code';
+
+/** The three steps, with the one you are on marked in words and with aria-current */
+const Steps = ({ step }) => (
+  <ol className="nl-receive-steps" aria-label={R.stepsLabel}>
+    {STEPS.map((key, i) => (
+      <li
+        key={key}
+        className={['nl-receive-steps__item', step === key && 'is-current', STEPS.indexOf(step) > i && 'is-done'].filter(Boolean).join(' ')}
+        aria-current={step === key ? 'step' : undefined}
+      >
+        <span className="nl-receive-steps__number">{STEPS.indexOf(step) > i ? <Icon name="check" /> : i + 1}</span>
+        <span>{R.steps[key]}</span>
+      </li>
+    ))}
+  </ol>
+);
+
+/**
+ * Receive goods (ticket P4-5, acceptance check AC-29): the guided step. Choose the order, tick what arrived and enter the
+ * quantity received, check and confirm. Confirming makes ONE server call that creates the goods received note, raises the
+ * stock and creates the supplier bill together, or changes nothing. Built on the Form page pattern (errors beside the field
+ * and in the summary, a question before leaving with typed changes).
+ *
+ * Over-receipt is not allowed: a quantity can be anything above 0 up to what is still to arrive on that line. An order
+ * partly delivered stays open for the rest.
+ */
+const ReceiveGoodsPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { warehouses } = useAppSelector((s) => s.warehouse);
+  const user = useAppSelector((s) => s.auth.user);
+  const company = user && user.company;
+  const startOrder = new URLSearchParams(location.search).get('order') || '';
+
+  const [step, setStep] = useState(startOrder ? 'loading' : 'choose');
+  const [chosen, setChosen] = useState(startOrder);
+  const [supplier, setSupplier] = useState('');
+  const [purchase, setPurchase] = useState(null);
+  const [lines, setLines] = useState([]);
+  const [billNo, setBillNo] = useState('');
+  const [billDate, setBillDate] = useState(isoDay(new Date()));
+  const [dueDate, setDueDate] = useState('');
+  const [store, setStore] = useState('');
+  const [problems, setProblems] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [failure, setFailure] = useState('');
+  const [loadFailure, setLoadFailure] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [askCancel, setAskCancel] = useState(false);
+  const [result, setResult] = useState(null);
+  const requestId = useRef(newRequestId('recv'));
+  const sending = useRef(false);
+  const heading = useRef(null);
+
+  const suppliers = useSuppliers();
+  const orders = usePurchasesList({ tab: 'orders', openOnly: true, supplier, pageSize: MAX_ORDERS, period: '30d' }, step === 'choose');
+
+  useEffect(() => {
+    if (company) dispatch(listWarehouses({ company, limit: 1000 }));
+  }, [dispatch, company]);
+
+  const loadOrder = async (id) => {
+    setStep('loading');
+    setLoadFailure('');
+    try {
+      const data = await getPurchase(id, 'Purchase Order');
+      if (!data.can || !data.can.receive_goods) {
+        setLoadFailure(R.orderNotReceivable);
+        setStep('choose');
+        return;
+      }
+      setPurchase(data);
+      setLines(receiveLines(data));
+      setProblems({});
+      setFailure('');
+      setStep('items');
+    } catch (error) {
+      setLoadFailure(fill(R.orderFailed, { reason: error.message }));
+      setStep('choose');
+    }
+  };
+
+  // Arrived from the panel with an order already chosen: go straight to the items
+  useEffect(() => {
+    if (startOrder) loadOrder(startOrder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The keyboard goes to the step's heading when the step changes
+  useEffect(() => {
+    if (heading.current && step !== 'loading') heading.current.focus();
+  }, [step, result]);
+
+  const startOver = (order) => {
+    requestId.current = newRequestId('recv');
+    sending.current = false;
+    setResult(null);
+    setPurchase(null);
+    setLines([]);
+    setBillNo('');
+    setBillDate(isoDay(new Date()));
+    setDueDate('');
+    setStore('');
+    setFailure('');
+    setProblems({});
+    setTouched(false);
+    setChosen(order || '');
+    navigate(receiveAddress(order), { replace: true });
+    if (order) loadOrder(order);
+    else setStep('choose');
+  };
+
+  const changeLine = (code, patch) => {
+    setTouched(true);
+    setFailure('');
+    setLines((prev) => prev.map((l) => (l.item_code === code ? { ...l, ...patch } : l)));
+    setProblems((prev) => {
+      if (!prev[code] && !prev.general) return prev;
+      const next = { ...prev };
+      delete next[code];
+      delete next.general;
+      return next;
+    });
+  };
+  const tickAll = (on) => {
+    setTouched(true);
+    setLines((prev) => prev.map((l) => (l.toArrive > 0 ? { ...l, ticked: on, qty: on && !parseQty(l.qty) ? qtyText(l.toArrive) : l.qty } : l)));
+    setProblems({});
+  };
+
+  const show = (found) => {
+    setProblems(found);
+    const first = Object.keys(found).find((k) => k !== 'general') || (found.general ? 'general' : '');
+    const id = first === 'general' ? 'rc-items' : `rc-qty-${first}`;
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el && el.focus) el.focus();
+    }, 0);
+  };
+
+  const summaryErrors = useMemo(() => {
+    const list = [];
+    if (problems.general) list.push({ id: 'rc-items', message: problems.general });
+    lines.forEach((l) => {
+      if (problems[l.item_code]) list.push({ id: `rc-qty-${l.item_code}`, message: problems[l.item_code] });
+    });
+    if (problems.dueDate) list.push({ id: 'rc-due-date', message: problems.dueDate });
+    if (failure) list.push({ id: 'rc-bill-no', message: failure });
+    return list;
+  }, [problems, lines, failure]);
+
+  // ---------- Steps ----------
+  const goNext = () => {
+    if (step === 'choose') {
+      if (!chosen) {
+        setProblems({ choose: R.noOrderChosen });
+        return;
+      }
+      setProblems({});
+      loadOrder(chosen);
+      return;
+    }
+    if (step === 'items') {
+      const found = receiveProblems(lines);
+      if (Object.keys(found).length) {
+        show(found);
+        return;
+      }
+      setProblems({});
+      setTouched(true);
+      setStep('review');
+      return;
+    }
+    confirm();
+  };
+
+  const confirm = async () => {
+    const found = { ...receiveProblems(lines), ...reviewFieldProblems({ billDate, dueDate }) };
+    if (Object.keys(found).length) {
+      setProblems(found);
+      if (Object.keys(receiveProblems(lines)).length) setStep('items');
+      return;
+    }
+    if (sending.current) return;
+    sending.current = true;
+    setSaving(true);
+    setFailure('');
+    try {
+      const data = await receiveGoods({
+        order: purchase.id,
+        items: receiveItems(lines),
+        billNo: billNo.trim() || undefined,
+        billDate: billDate || undefined,
+        dueDate: dueDate || undefined,
+        warehouse: store || undefined,
+        requestId: requestId.current,
+      });
+      setResult(data);
+    } catch (error) {
+      setFailure(fill(R.failed, { reason: error.message }));
+      sending.current = false;
+    }
+    setSaving(false);
+  };
+
+  const back = () => {
+    setProblems({});
+    setFailure('');
+    setStep(step === 'review' ? 'items' : 'choose');
+  };
+
+  // ---------- The finished page ----------
+  if (result) {
+    const names = {};
+    lines.forEach((l) => {
+      names[l.item_code] = l.name;
+    });
+    return (
+      <div className="nl-receive">
+        <PageHeader title={R.title} subtitle={R.subtitle} />
+        <section className="nl-receive-done" role="status" aria-live="polite">
+          <h2 className="nl-receive-done__title" tabIndex={-1} ref={heading}>
+            <Icon name="check" />
+            <span>{R.successTitle}</span>
+          </h2>
+          <p>{fill(R.successText, { supplier: purchase.supplier.name })}</p>
+          {result.repeat ? <p className="nl-receive-note">{R.successRepeat}</p> : null}
+          {(result.stock || []).length ? (
+            <>
+              <h3 className="nl-label">{R.stockTitle}</h3>
+              <ul className="nl-receive-done__stock">
+                {result.stock.map((s) => (
+                  <li key={s.item_code}>{stockLine(s, names)}</li>
+                ))}
+              </ul>
+              {result.stock_ok === false ? (
+                <p className="nl-error" role="alert">
+                  <Icon name="alert" />
+                  <span>{R.stockCheck}</span>
+                </p>
+              ) : null}
+            </>
+          ) : null}
+          {result.order && result.order.open ? <p className="nl-receive-note">{R.stillOpen}</p> : null}
+          <ul className="nl-receive-done__links">
+            <li>
+              <Link to={openAddress(result.invoice)}>{fill(R.openBill, { number: result.invoice_number })}</Link>
+            </li>
+            <li>
+              <Link to={openAddress(result.receipt)}>{fill(R.openReceipt, { number: result.receipt_number })}</Link>
+            </li>
+            <li>
+              <Link to={openAddress(purchase.id)}>{R.openOrder}</Link>
+            </li>
+          </ul>
+          <div className="nl-receive-done__actions">
+            {result.order && result.order.open ? <Button onClick={() => startOver(purchase.id)}>{R.receiveRest}</Button> : null}
+            <Button variant="secondary" onClick={() => startOver('')}>
+              {R.receiveAnother}
+            </Button>
+            <Button variant="ghost" onClick={() => navigate(PURCHASES_PATH)}>
+              {R.backToList}
+            </Button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // ---------- Step 1: choose the order ----------
+  const supplierChoices = suppliers.status === 'ready' ? suppliers.data.map((s) => ({ value: s.id, label: s.name })) : [];
+  const orderRows = orders.status === 'ready' ? orders.data.rows : [];
+  const orderColumns = [
+    { key: 'number', header: R.orderColumns.order, nowrap: true, render: (r) => <strong>{r.number}</strong> },
+    { key: 'supplier', header: R.orderColumns.supplier },
+    { key: 'date', header: R.orderColumns.date, nowrap: true, render: (r) => dateCell(r.date) },
+    { key: 'total', header: R.orderColumns.total, money: true, nowrap: true },
+    { key: 'progress', header: R.orderColumns.progress, render: (r) => (r.part_received ? T.partReceived : R.progressNone) },
+  ];
+
+  const chooseStep = (
+    <>
+      <h2 className="nl-receive__heading" tabIndex={-1} ref={heading}>
+        {R.chooseOrder}
+      </h2>
+      <p className="nl-helper">{R.chooseHint}</p>
+      {loadFailure ? (
+        <p className="nl-error" role="alert">
+          <Icon name="alert" />
+          <span>{loadFailure}</span>
+        </p>
+      ) : null}
+      {supplierChoices.length > 0 ? (
+        <Select
+          label={R.supplier}
+          options={[{ value: '', label: R.allSuppliers }, ...supplierChoices]}
+          value={supplier}
+          onChange={(v) => {
+            setSupplier(v);
+            setChosen('');
+          }}
+        />
+      ) : null}
+      <div id="rc-orders" tabIndex={-1}>
+        <Table
+          caption={R.ordersCaption}
+          columns={orderColumns}
+          rows={orderRows}
+          loading={orders.status === 'loading'}
+          error={orders.status === 'error'}
+          onRetry={orders.reload}
+          selectedKey={chosen || undefined}
+          onRowOpen={(row) => {
+            setChosen(row.id);
+            setProblems({});
+            setTouched(true);
+          }}
+          empty={
+            supplier
+              ? { icon: 'search', title: R.noOrdersFiltered, description: '' }
+              : { title: R.noOrdersTitle, description: R.noOrdersText, action: { label: R.noOrdersAction, icon: 'plus', onClick: () => navigate(NEW_PATH) } }
+          }
+        />
+      </div>
+      {orders.status === 'ready' && orders.data.total > MAX_ORDERS ? <p className="nl-helper">{fill(R.tooMany, { count: MAX_ORDERS })}</p> : null}
+      {problems.choose ? (
+        <p className="nl-error" role="alert">
+          <Icon name="alert" />
+          <span>{problems.choose}</span>
+        </p>
+      ) : null}
+    </>
+  );
+
+  // ---------- Step 2: tick what arrived ----------
+  const dupes = duplicateCodes(lines);
+  const lineColumns = [
+    {
+      key: 'arrived',
+      header: R.columns.arrived,
+      render: (l) => (
+        <Checkbox label={l.name} checked={l.ticked} disabled={l.toArrive <= 0} onChange={(on) => changeLine(l.item_code, { ticked: on, qty: on && !parseQty(l.qty) ? qtyText(l.toArrive) : l.qty })} />
+      ),
+    },
+    { key: 'ordered', header: R.columns.ordered, align: 'right', render: (l) => qtyText(l.ordered) },
+    { key: 'received', header: R.columns.received, align: 'right', render: (l) => qtyText(l.received) },
+    { key: 'toArrive', header: R.columns.toArrive, align: 'right', render: (l) => (l.toArrive > 0 ? qtyText(l.toArrive) : R.nothingLeft) },
+    {
+      key: 'qty',
+      header: R.columns.quantity,
+      render: (l) =>
+        l.toArrive > 0 ? (
+          <div className="nl-receive-qty">
+            <Field
+              id={`rc-qty-${l.item_code}`}
+              label={fill(R.quantityLabel, { name: l.name })}
+              inputMode="decimal"
+              value={l.qty}
+              disabled={!l.ticked}
+              error={problems[l.item_code]}
+              autoComplete="off"
+              onChange={(v) => changeLine(l.item_code, { qty: v.replace(/[^\d.]/g, '') })}
+            />
+          </div>
+        ) : null,
+    },
+  ];
+  const itemsStep = purchase ? (
+    <>
+      <h2 className="nl-receive__heading" tabIndex={-1} ref={heading}>
+        {R.itemsTitle}
+      </h2>
+      <p className="nl-receive__chosen">{fill(R.chosen, { number: purchase.number, supplier: purchase.supplier.name, date: dateCell(purchase.date) })}</p>
+      <p className="nl-helper">{R.itemsHelp}</p>
+      {dupes.length > 0 ? (
+        <p className="nl-receive-note">
+          {fill(R.duplicateNote, { name: (lines.find((l) => l.item_code === dupes[0]) || {}).name })} <a href={oldScreen(T.links.receiveByHand)}>{R.duplicateLink}</a>
+        </p>
+      ) : null}
+      <div className="nl-receive__tools">
+        <Button variant="ghost" size="small" onClick={() => tickAll(true)}>
+          {R.tickAll}
+        </Button>
+        <Button variant="ghost" size="small" onClick={() => tickAll(false)}>
+          {R.untickAll}
+        </Button>
+      </div>
+      <div id="rc-items" tabIndex={-1}>
+        <Table caption={R.itemsCaption} columns={lineColumns} rows={lines} rowKey={ITEM_KEY} />
+      </div>
+      {problems.general ? (
+        <p className="nl-error">
+          <Icon name="alert" />
+          <span>{problems.general}</span>
+        </p>
+      ) : null}
+    </>
+  ) : null;
+
+  // ---------- Step 3: check and confirm ----------
+  const review = purchase ? reviewLines(lines) : [];
+  const left = purchase ? leftAfter(lines) : '';
+  const storeChoices = (warehouses || []).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
+  const reviewColumns = [
+    { key: 'name', header: R.reviewColumns.item },
+    { key: 'qty', header: R.reviewColumns.quantity, align: 'right', render: (l) => qtyText(l.qty) },
+    { key: 'rate', header: R.reviewColumns.cost, money: true },
+    { key: 'amount', header: R.reviewColumns.amount, money: true },
+  ];
+  const reviewStep = purchase ? (
+    <>
+      <h2 className="nl-receive__heading" tabIndex={-1} ref={heading}>
+        {R.reviewTitle}
+      </h2>
+      <p className="nl-helper">{R.reviewIntro}</p>
+      <dl className="nl-receive-facts">
+        <div>
+          <dt className="nl-label">{R.reviewSupplier}</dt>
+          <dd>{purchase.supplier.name}</dd>
+        </div>
+        <div>
+          <dt className="nl-label">{R.reviewOrder}</dt>
+          <dd>
+            {purchase.number} <PurchaseStatus status={purchase.status} />
+          </dd>
+        </div>
+      </dl>
+      <Table caption={R.reviewCaption} columns={reviewColumns} rows={review} rowKey={ITEM_KEY} />
+      <p className="nl-receive-total">
+        <span>{R.reviewTotal}</span> <strong>{formatMoney(reviewTotal(lines))}</strong>
+      </p>
+      <p className="nl-helper">{R.reviewTaxNote}</p>
+      <p className="nl-receive-note">{left ? fill(R.leftNote, { items: left }) : R.leftNone}</p>
+      <Field id="rc-bill-no" label={R.billNo} helper={R.billNoHelper} value={billNo} onChange={(v) => setBillNo(v.slice(0, 60))} autoComplete="off" />
+      <Field id="rc-bill-date" kind="date" label={R.billDate} helper={R.billDateHelper} value={billDate} onChange={setBillDate} />
+      <Field id="rc-due-date" kind="date" label={R.dueDate} helper={R.dueHelper} value={dueDate} error={problems.dueDate} onChange={setDueDate} />
+      {storeChoices.length >= 2 ? <Select label={R.store} options={[{ value: '', label: R.storeAsOrdered }, ...storeChoices]} value={store} onChange={setStore} /> : null}
+    </>
+  ) : null;
+
+  const bodies = { choose: chooseStep, items: itemsStep, review: reviewStep };
+  const current = step === 'loading' ? 'items' : step;
+
+  return (
+    <>
+      <FormPage
+        title={R.title}
+        subtitle={R.subtitle}
+        dirty={touched && !saving}
+        saving={saving}
+        errors={summaryErrors}
+        onSave={goNext}
+        onCancel={() => (touched ? setAskCancel(true) : navigate(PURCHASES_PATH))}
+        saveLabel={step === 'review' ? R.confirm : R.next}
+      >
+        <Steps step={current} />
+        {step === 'loading' ? (
+          <p className="nl-helper" role="status">
+            {R.loadingOrder}
+          </p>
+        ) : (
+          <>
+            {step !== 'choose' ? (
+              <div>
+                <Button variant="ghost" size="small" icon="chevronLeft" onClick={back}>
+                  {R.back}
+                </Button>
+              </div>
+            ) : null}
+            {bodies[step]}
+            {step === 'choose' && orders.status === 'error' ? <p className="nl-visually-hidden">{fill(R.ordersFailed, { reason: orders.error })}</p> : null}
+          </>
+        )}
+      </FormPage>
+      <ConfirmDialog
+        open={askCancel}
+        title={FT.leave.title}
+        message={FT.leave.message}
+        confirmLabel={FT.leave.leave}
+        cancelLabel={FT.leave.stay}
+        destructive
+        onConfirm={() => navigate(PURCHASES_PATH)}
+        onCancel={() => setAskCancel(false)}
+      />
+    </>
+  );
+};
+
+export default ReceiveGoodsPage;

@@ -84,7 +84,7 @@ const HomePage = () => {
   const attentionLinks = {
     close: links.closeTill,
     reorder: (item) => go(`/purchases/new?item=${encodeURIComponent(item.item_code || '')}`, '/purchases/new'),
-    pay: () => go('/purchases', '/purchases/invoices'),
+    pay: (item) => go(`/purchases?open=${encodeURIComponent((item && item.invoice) || '')}`, '/purchases/invoices'),
     all: links.lowStock,
   };
 

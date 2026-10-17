@@ -120,6 +120,41 @@ export const createProduct = async (values) => {
   return { ...(reply.data || {}), notes: Array.isArray(reply.data?.notes) ? reply.data.notes : [] };
 };
 
+/**
+ * Saves changes to one product with the current update call, which leaves anything not sent as it was.
+ * changes: { name?, price?, cost?, unit?, category?, disabled? }. A cost needs a store to belong to.
+ * Resolves to the server's product; rejects with a ProductSaveError.
+ */
+export const updateProduct = async ({ code, changes, warehouse, company }) => {
+  const params = { item_code: code };
+  if (changes.name !== undefined) params.item_name = changes.name;
+  if (changes.price !== undefined) params.standard_rate = Number(changes.price);
+  if (changes.category !== undefined) params.item_group = changes.category;
+  if (changes.unit !== undefined) params.stock_uom = changes.unit;
+  if (changes.disabled !== undefined) params.disabled = changes.disabled;
+  if (changes.cost !== undefined) {
+    params.buying_price = Number(changes.cost);
+    params.warehouse = warehouse;
+    if (company) params.company = company;
+  }
+  let response;
+  try {
+    response = await axiosInstance.post(`${CATALOGUE}.update_product`, params);
+  } catch (error) {
+    throw new ProductSaveError(friendlyErrorMessage(error, 'We could not save the product. Please try again.'));
+  }
+  const reply = body(response);
+  if (!reply || !reply.product) throw new ProductSaveError(humanizeMessage(reply?.message, 'We could not save the product. Please try again.'));
+  return reply.product;
+};
+
+/** One product by its code, as a row of the list (or null when there is none). Uses the list call with the code as the search. */
+export const findProduct = async (code) => {
+  const { rows, canSeeCost } = await listProducts({ search: code, status: 'all', pageSize: 20 });
+  const row = rows.find((r) => r.item_code === code);
+  return row ? { row, canSeeCost } : null;
+};
+
 /** The units the shop can choose from, as { name, uom_name }. Uses the current call; the screen writes them in plain words. */
 export const listUnits = async () => {
   let response;

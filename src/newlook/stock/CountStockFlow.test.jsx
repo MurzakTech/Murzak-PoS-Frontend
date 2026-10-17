@@ -87,7 +87,7 @@ describe('step 1: what to count', () => {
   test('offers the longer count by role, as a link to the current screen', () => {
     renderFlow();
     const link = screen.getByRole('link', { name: 'Count in three steps by role' });
-    expect(link).toHaveAttribute('href', '/inventory/multi-level-reconciliation');
+    expect(link).toHaveAttribute('href', '/inventory/multi-level-reconciliation?legacy=1');
   });
 
   test('counting the whole store asks the server for the whole store', async () => {
