@@ -18,6 +18,7 @@ import T from './strings.reports';
  *   rows       [{ key, label, full, value, soFar }] oldest first; label is the short words under a column, full is for the tooltip
  *   valueName  the words for the amount ("Net profit")
  */
+const TICK_INTERVAL = 'preserveStartEnd';
 const axisTick = { fill: 'var(--muted)', fontSize: 12 };
 
 const ColumnsChart = ({ title, summary, rows, valueName, tableHeader, emptyTitle, emptyText, state = 'ready', onRetry, width, height = 240 }) => {
@@ -54,7 +55,7 @@ const ColumnsChart = ({ title, summary, rows, valueName, tableHeader, emptyTitle
         {({ animate, ...size }) => (
           <BarChart {...size} data={data} margin={{ top: 24, right: 8, bottom: 0, left: 0 }} barCategoryGap="30%">
             <CartesianGrid vertical={false} stroke={COLOUR.grid} strokeWidth={MARKS.gridWidth} />
-            <XAxis dataKey="label" interval={Math.max(0, Math.ceil(data.length / 7) - 1)} tick={axisTick} axisLine={false} tickLine={false} />
+            <XAxis dataKey="label" interval={TICK_INTERVAL} minTickGap={28} tick={axisTick} axisLine={false} tickLine={false} />
             <YAxis tickFormatter={shortNumber} tick={axisTick} axisLine={false} tickLine={false} width={46} allowDecimals={false} />
             <Tooltip content={<ChartTooltip describe={describe} />} cursor={{ fill: COLOUR.soft, opacity: 0.5 }} isAnimationActive={false} />
             <Bar dataKey="value" maxBarSize={MARKS.barMaxWidth} radius={[MARKS.barRadius, MARKS.barRadius, 0, 0]} minPointSize={2} isAnimationActive={animate} animationDuration={MARKS.drawInMs} label={peakLabel}>

@@ -17,6 +17,13 @@
   gap: var(--card-gap);
   min-width: 0;
 }
+/* On the dark card the light end of the scale would vanish, so the scale starts pale and deepens toward the older bands */
+:root[data-theme='dark'] .nl-reports {
+  --age-1: color-mix(in srgb, var(--series-1) 45%, var(--ink));
+  --age-2: color-mix(in srgb, var(--series-1) 72%, var(--ink));
+  --age-3: var(--series-1);
+  --age-4: color-mix(in srgb, var(--series-1) 80%, var(--surface));
+}
 
 .nl-reports__back {
   justify-self: start;

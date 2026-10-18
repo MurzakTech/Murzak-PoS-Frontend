@@ -210,3 +210,9 @@
     gap: var(--space-4);
   }
 }
+
+@media (max-width: 767px) {
+  .nl-auth__brand {
+    min-height: var(--control-height-till);
+  }
+}

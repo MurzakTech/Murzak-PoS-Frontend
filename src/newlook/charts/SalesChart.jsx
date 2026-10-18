@@ -68,7 +68,7 @@ const SalesChart = ({ points, daysOfData, rangeLabel, metrics = METRICS, metric:
   const axes = (
     <>
       <CartesianGrid vertical={false} stroke={COLOUR.grid} strokeWidth={MARKS.gridWidth} />
-      <XAxis dataKey="date" tickFormatter={columns ? (d, i) => axisDayLabel(d, i, rows[i - 1] && rows[i - 1].date) : dayMonth} tick={axisTick} axisLine={false} tickLine={false} interval={columns ? 0 : Math.max(0, Math.ceil(rows.length / 7) - 1)} />
+      <XAxis dataKey="date" tickFormatter={columns ? (d, i) => axisDayLabel(d, i, rows[i - 1] && rows[i - 1].date) : dayMonth} tick={axisTick} axisLine={false} tickLine={false} interval={columns ? 0 : 'preserveStartEnd'} minTickGap={28} />
       <YAxis tickFormatter={short} tick={axisTick} axisLine={false} tickLine={false} width={46} allowDecimals={false} />
     </>
   );

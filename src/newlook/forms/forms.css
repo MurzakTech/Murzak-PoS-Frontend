@@ -120,3 +120,8 @@
     flex: 1 1 auto;
   }
 }
+
+/* The More options button keeps its own width instead of stretching across the form */
+.nl-more > .nl-btn {
+  justify-self: start;
+}

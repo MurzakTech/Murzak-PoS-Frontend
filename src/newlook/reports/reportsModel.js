@@ -152,11 +152,11 @@ export const columnsFor = (name, data) => {
         col('name', C.customer, 'text'),
         col('amount', C.amount, 'money'),
         col('oldest_days', C.oldest, 'days'),
-        col('band1', C.band1, 'money', { get: (r) => (r.bands || {})['0_7'] }),
-        col('band2', C.band2, 'money', { get: (r) => (r.bands || {})['8_14'] }),
-        col('band3', C.band3, 'money', { get: (r) => (r.bands || {})['15_30'] }),
-        col('band4', C.band4, 'money', { get: (r) => (r.bands || {}).over_30 }),
-        col('mobile', C.phone, 'text'),
+        col('band1', C.band1, 'money', { get: (r) => (r.bands || {})['0_7'], phoneHide: true }),
+        col('band2', C.band2, 'money', { get: (r) => (r.bands || {})['8_14'], phoneHide: true }),
+        col('band3', C.band3, 'money', { get: (r) => (r.bands || {})['15_30'], phoneHide: true }),
+        col('band4', C.band4, 'money', { get: (r) => (r.bands || {}).over_30, phoneHide: true }),
+        col('mobile', C.phone, 'text', { phoneHide: true }),
       ];
     }
     case 'running-costs': {
@@ -165,15 +165,15 @@ export const columnsFor = (name, data) => {
     }
     case 'stock-summary': {
       const C = T.stock.columnsStore;
-      return [col('store', C.store, 'text'), col('quantity', C.quantity, 'number'), col('value', C.value, 'money'), col('share_pct', C.share, 'percent')];
+      return [col('store', C.store, 'text'), col('quantity', C.quantity, 'number', { phoneHide: true }), col('value', C.value, 'money'), col('share_pct', C.share, 'percent', { phoneHide: true })];
     }
     case 'stock-value': {
       const C = T.stock.columnsCategory;
-      return [col('category', C.category, 'text'), col('items', C.items, 'number'), col('quantity', C.quantity, 'number'), col('value', C.value, 'money'), col('share_pct', C.share, 'percent')];
+      return [col('category', C.category, 'text'), col('items', C.items, 'number', { phoneHide: true }), col('quantity', C.quantity, 'number', { phoneHide: true }), col('value', C.value, 'money'), col('share_pct', C.share, 'percent', { phoneHide: true })];
     }
     case 'aging-stock': {
       const C = T.aging.columns;
-      return [col('name', C.name, 'text'), col('quantity', C.quantity, 'number'), col('value', C.value, 'money'), col('age_days', C.age, 'number'), col('stores', C.stores, 'number')];
+      return [col('name', C.name, 'text'), col('quantity', C.quantity, 'number'), col('value', C.value, 'money'), col('age_days', C.age, 'number'), col('stores', C.stores, 'number', { phoneHide: true })];
     }
     default:
       return [];
@@ -188,6 +188,7 @@ export const tableColumns = (columns) =>
     money: column.kind === 'money',
     align: RIGHT.has(column.kind) && column.kind !== 'money' ? 'right' : undefined,
     nowrap: column.kind === 'date' || column.kind === 'days' || undefined,
+    hideOnPhone: column.phoneHide || undefined,
     render: (row) => formatCell(column, row),
   }));
 

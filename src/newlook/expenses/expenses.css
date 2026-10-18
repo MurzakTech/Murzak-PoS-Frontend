@@ -166,3 +166,11 @@
     min-height: var(--control-height-till);
   }
 }
+
+@media (max-width: 767px) {
+  .nl-expense-form__back {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}

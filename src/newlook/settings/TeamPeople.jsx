@@ -115,16 +115,17 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
         </span>
       ),
     },
-    { key: 'tier', header: P.columns.role, hideOnPhone: true, render: (m) => <Chip tone={m.tier === 'owner' ? 'brand' : 'neutral'}>{T.team.roles[m.tier]}</Chip> },
+    { key: 'tier', header: P.columns.role, hideOnPhone: true, hideOnTablet: true, render: (m) => <Chip tone={m.tier === 'owner' ? 'brand' : 'neutral'}>{T.team.roles[m.tier]}</Chip> },
     {
       key: 'till',
       header: P.columns.till,
       hideOnPhone: true,
+      hideOnTablet: true,
       render: (m) => (
         <Chip icon={canUseTill(m.roles) ? 'check' : 'x'}>{canUseTill(m.roles) ? P.tillYes : P.tillNo}</Chip>
       ),
     },
-    { key: 'status', header: P.columns.status, hideOnPhone: true, render: (m) => <Chip icon={m.enabled ? 'check' : 'x'}>{m.enabled ? P.active : P.deactivated}</Chip> },
+    { key: 'status', header: P.columns.status, hideOnPhone: true, hideOnTablet: true, render: (m) => <Chip icon={m.enabled ? 'check' : 'x'}>{m.enabled ? P.active : P.deactivated}</Chip> },
   ];
   if (owner) columns.push({ key: 'actions', header: P.columns.actions, align: 'right', render: (m) => menu(m) });
 
@@ -154,6 +155,7 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
           columns={columns}
           rows={data ? data.members : []}
           rowKey={ROW_KEY}
+          className="is-compact"
           loading={state.status === 'loading'}
           empty={{ icon: 'user', title: P.emptyTitle, description: P.emptyText, action: owner ? { label: P.add, onClick: () => setDialog({ member: null }) } : undefined }}
         />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../shell';
 import { SECTIONS, sectionAddress } from './settingsModel';
@@ -16,11 +16,17 @@ const W = T.shell;
  */
 const SettingsShell = ({ section, children }) => {
   const meta = W.sections[section] || W.sections.business;
+  const nav = useRef(null);
+  // On a phone the sections are a row that scrolls sideways: bring the open one into view
+  useEffect(() => {
+    const current = nav.current && nav.current.querySelector('[aria-current="page"]');
+    if (current && current.scrollIntoView) current.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, [section]);
   return (
     <div className="nl-settings-page">
       <PageHeader title={meta.title} subtitle={meta.subtitle} />
       <div className="nl-settings-layout">
-        <nav className="nl-settings-nav" aria-label={W.listLabel}>
+        <nav ref={nav} className="nl-settings-nav" aria-label={W.listLabel}>
           <p className="nl-settings-nav__title">{W.listTitle}</p>
           <ul>
             {SECTIONS.map((key) => (

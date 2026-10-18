@@ -86,7 +86,8 @@ const ExpensesList = () => {
   }, [ready, rows.length, total, page, size]);
 
   const openKey = state.open;
-  const openIndex = rows.findIndex((r) => r.key === openKey);
+  // A link may carry the plain document number (ACC-JV-...) instead of the row's own key (kind:number:account)
+  const openIndex = rows.findIndex((r) => r.key === openKey || String(r.key).split(':')[1] === openKey);
   const open = (key) => params.set({ open: key, page });
   const close = () => {
     refocus.current = openKey;

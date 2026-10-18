@@ -226,6 +226,7 @@ const ReportView = ({ name }) => {
                 <Table
                   caption={(CAPTION[name] || (() => ''))(data)}
                   columns={tableCols}
+                  className="is-compact"
                   rows={pageRows}
                   loading={loading}
                   empty={{ title: emptyWords[0], description: emptyWords[1] }}

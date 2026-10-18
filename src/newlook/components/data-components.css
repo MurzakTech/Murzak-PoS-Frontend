@@ -511,6 +511,13 @@
   overflow-wrap: anywhere;
 }
 
+/* A column marked hideOnTablet gives way below 1100px, where a detail panel or a side list takes part of the width */
+@media (max-width: 1100px) {
+  .nl-table .hide-on-tablet {
+    display: none;
+  }
+}
+
 /* ---------- Small screens ---------- */
 @media (max-width: 767px) {
   .nl-segmented__item,

@@ -17,6 +17,22 @@ import T from './strings.reports';
  *   steps  [{ key: sales | cost_of_goods | running_costs | net_profit, label, amount }]
  */
 const axisTick = { fill: 'var(--ink-2)', fontSize: 12 };
+
+// A name of two or more words goes on two lines, so neighbouring bars on a phone do not run into each other
+const WrappedTick = ({ x, y, payload }) => {
+  const words = String(payload.value).split(' ');
+  const half = Math.ceil(words.length / 2);
+  const lines = words.length > 1 ? [words.slice(0, half).join(' '), words.slice(half).join(' ')] : words;
+  return (
+    <text x={x} y={y + 12} textAnchor="middle" fill={axisTick.fill} fontSize={axisTick.fontSize}>
+      {lines.map((line, i) => (
+        <tspan key={line} x={x} dy={i === 0 ? 0 : 14}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  );
+};
 const KIND = { sales: 'start', cost_of_goods: 'take', running_costs: 'take', net_profit: 'end' };
 
 /** The floating ranges: sales from 0 up, each cost down from where the last one stopped, the result from the line */
@@ -73,7 +89,7 @@ const WaterfallChart = ({ title, summary, steps, tableHeaders, emptyTitle, empty
         {({ animate, ...size }) => (
           <BarChart {...size} data={data} margin={{ top: 28, right: 8, bottom: 8, left: 0 }} barCategoryGap="30%">
             <CartesianGrid vertical={false} stroke={COLOUR.grid} strokeWidth={MARKS.gridWidth} />
-            <XAxis dataKey="label" tick={axisTick} axisLine={false} tickLine={false} interval={0} />
+            <XAxis dataKey="label" tick={<WrappedTick />} axisLine={false} tickLine={false} interval={0} height={44} />
             <YAxis tickFormatter={shortNumber} tick={{ fill: 'var(--muted)', fontSize: 12 }} axisLine={false} tickLine={false} width={46} allowDecimals={false} />
             <ReferenceLine y={0} stroke={COLOUR.grid} strokeWidth={MARKS.gridWidth} />
             <Tooltip content={<ChartTooltip describe={describe} />} cursor={{ fill: COLOUR.soft, opacity: 0.5 }} isAnimationActive={false} />
