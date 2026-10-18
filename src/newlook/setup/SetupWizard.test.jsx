@@ -285,11 +285,11 @@ describe('step 5, the first products', () => {
 describe('step 6, your team, and finishing', () => {
   const open = () => show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'cash', 'payments', 'products'], nextStep: 'staff' }));
 
-  test('links to the current Staff screen until Settings, Team is live', async () => {
+  test('links to Settings, Team and Settings, Tax', async () => {
     open();
     await heading('Add your team');
-    expect(screen.getByRole('link', { name: 'Add your team' })).toHaveAttribute('href', '/staff?legacy=1');
-    expect(screen.getByRole('link', { name: 'Tax and eTIMS' })).toHaveAttribute('href', '/settings/etims?legacy=1');
+    expect(screen.getByRole('link', { name: 'Add your team' })).toHaveAttribute('href', '/new-look/settings/team');
+    expect(screen.getByRole('link', { name: 'Tax and eTIMS' })).toHaveAttribute('href', '/new-look/settings/tax');
   });
 
   test('Finish marks the step and the whole set-up done, and returns to Home', async () => {

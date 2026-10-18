@@ -5,12 +5,12 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { findEntry, oldAddressFor, resolveRedirect, toNewAddress, NEW_LOOK_PREFIX } from './engine';
 import { PREVIEW_KEY, getPreview, isPageLive, resyncPreview, setPreview } from './live';
 import { REDIRECTS, NEW_PAGES } from './redirectTable';
-import LegacyRedirects from './LegacyRedirects';
+import LegacyRedirects, { resetLegacyStay } from './LegacyRedirects';
 import PagePlaceholder from './PagePlaceholder';
 import { NAVIGATION, flatItems, isActive, resolveNavigation } from '../shell/navigation';
 import { NEW_MENU, newMenuItems, searchActionsFor } from '../shell/newMenu';
@@ -86,9 +86,9 @@ describe('resolveRedirect', () => {
 });
 
 describe('Live pages and the preview switch', () => {
-  test('the finished pages are live; the till, New invoice, Import, Stores, Transfers and Settings are not', () => {
+  test('the finished pages are live; the till, New invoice, Import, Stores, Transfers and two reports are not', () => {
     ['/', '/sales', '/customers', '/products', '/stock', '/purchases', '/suppliers'].forEach((page) => expect(isPageLive(page)).toBe(true));
-    ['/till', '/sales/new', '/products/import', '/stock/locations', '/stock/transfers', '/settings/till', '/reports'].forEach((page) => expect(isPageLive(page)).toBe(false));
+    ['/till', '/sales/new', '/products/import', '/stock/locations', '/stock/transfers', '/reports/stock-movement', '/reports/performance'].forEach((page) => expect(isPageLive(page)).toBe(false));
   });
 
   test('a built page is live, with or without a query', () => {
@@ -172,6 +172,40 @@ describe('LegacyRedirects (in the app)', () => {
     expect(where).toMatch(/^\/new-look\/sales\?/);
     expect(where).toContain('open=INV-7');
     expect(where).toContain('page=3');
+  });
+
+  test('after a current screen is opened on purpose, the screens reached from it stay as they are until the New look is entered again', () => {
+    resetLegacyStay();
+    const Go = () => {
+      const navigate = useNavigate();
+      return (
+        <>
+          <button type="button" onClick={() => navigate('/sales/history')}>
+            to old
+          </button>
+          <button type="button" onClick={() => navigate('/new-look/sales')}>
+            to new
+          </button>
+        </>
+      );
+    };
+    useNewLook.mockReturnValue({ enabled: true, status: 'ready' });
+    act(() => setPreview(true));
+    render(
+      <MemoryRouter initialEntries={['/sales/pos?legacy=1']}>
+        <LegacyRedirects>
+          <Go />
+        </LegacyRedirects>
+        <Where />
+      </MemoryRouter>
+    );
+    userEvent.click(screen.getByRole('button', { name: 'to old' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/sales/history');
+    userEvent.click(screen.getByRole('button', { name: 'to new' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/sales');
+    userEvent.click(screen.getByRole('button', { name: 'to old' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/sales');
+    resetLegacyStay();
   });
 
   test('New look pages are left alone', () => {

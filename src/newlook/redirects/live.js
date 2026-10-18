@@ -17,7 +17,7 @@ import { useSyncExternalStore } from 'react';
 //   /sales/new                   the New invoice form is not redesigned yet
 //   /products/import             Import is not redesigned yet
 //   /stock/locations, /transfers they only link to the current Stores and Stock transfers screens, so redirecting those would loop
-//   /settings/*                  Settings arrives in Phase 5 (Till and payments alone would hide POS profile, gateways and banks)
+//   /reports/stock-movement, /reports/performance  they only link to the current screens
 export const BUILT_PAGES = [
   '/',
   // Sales (P3-8)
@@ -46,6 +46,23 @@ export const BUILT_PAGES = [
   '/purchases/new',
   // Suppliers (P4-6)
   '/suppliers',
+  // Expenses (P5-1)
+  '/expenses',
+  // Reports (P5-2); Stock movement and Performance only link to the current screens, so they stay out
+  '/reports',
+  '/reports/sales',
+  '/reports/profit',
+  '/reports/owed',
+  '/reports/running-costs',
+  '/reports/stock-summary',
+  '/reports/stock-value',
+  '/reports/aging-stock',
+  // Settings (P5-3): the five sections
+  '/settings/business',
+  '/settings/till',
+  '/settings/tax',
+  '/settings/team',
+  '/settings/advanced',
 ];
 export const PREVIEW_KEY = 'murzak_new_look:preview-redirects';
 

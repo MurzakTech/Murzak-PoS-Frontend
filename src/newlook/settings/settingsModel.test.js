@@ -57,11 +57,17 @@ describe('the old Settings, Staff and Roles addresses', () => {
     names.forEach((name) => expect(ADVANCED_CARDS.map((c) => c.section)).toContain(name));
   });
 
-  test('the table is untouched by this page: Staff, Roles and Settings still resolve, and none is live yet', () => {
+  test('Staff, Roles and the old Settings addresses all resolve, and open the new Settings pages now they are live', () => {
     ['/staff', '/roles', '/roles/Sales%20Manager', '/settings', '/settings/security', '/settings/audit-trail', '/settings/etims', '/settings/bank-accounts'].forEach((from) => {
       expect(findEntry(from)).not.toBeNull();
-      // BUILT_PAGES does not list /settings/*, so the redirect is off until the lead switches it on
-      expect(resolveRedirect(from, '')).toBeNull();
+      expect(resolveRedirect(from, '').to).toMatch(/^\/new-look\/settings\//);
+    });
+  });
+
+  test('a link to a current Settings screen carries the marker, so it does not bounce back', () => {
+    ['/roles?legacy=1', '/settings/security?legacy=1', '/settings/etims?legacy=1', '/settings/bank-accounts?legacy=1'].forEach((from) => {
+      const [path, query] = from.split('?');
+      expect(resolveRedirect(path, `?${query}`)).toBeNull();
     });
   });
 

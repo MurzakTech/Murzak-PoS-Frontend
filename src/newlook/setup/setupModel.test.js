@@ -119,8 +119,9 @@ describe('where the links go', () => {
     expect(links.payments).toBe('/settings/payment-gateways?legacy=1');
   });
 
-  test('Team opens the current Staff screen until Settings, Team is live, and the new page after', () => {
-    expect(linksFor(false).team).toBe('/staff?legacy=1');
+  test('Team and Tax open the new Settings pages, which are finished', () => {
+    expect(linksFor(false).team).toBe('/new-look/settings/team');
     expect(linksFor(true).team).toBe('/new-look/settings/team');
+    expect(linksFor(false).tax).toBe('/new-look/settings/tax');
   });
 });

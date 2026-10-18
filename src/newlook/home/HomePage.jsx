@@ -77,6 +77,7 @@ const HomePage = () => {
     sales: go('/sales', '/sales/history'),
     unpaid: go('/sales/unpaid', '/sales/history'),
     report: go('/reports', '/reports'),
+    profitReport: go('/reports/profit', '/reports'),
     lowStock: go('/stock/low', '/inventory/low-stock'),
     openTill: go('/till', '/sales/pos'),
     closeTill: go('/till?action=close', '/sales/pos'),
@@ -164,7 +165,7 @@ const HomePage = () => {
           change={tileChange(np)}
           spark={sparkOf(np)}
           progress={progress}
-          to={links.report}
+          to={links.profitReport}
           linkLabel={T.tiles.openReport}
           footer={np && canProfit ? <MissingCostLine count={np.uncosted_products} onOpen={() => setCostsOpen(true)} /> : null}
         />

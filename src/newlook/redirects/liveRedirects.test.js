@@ -30,6 +30,10 @@ describe('Old addresses open the finished pages', () => {
     ['/inventory/low-stock', '/new-look/stock/low'],
     ['/purchases/invoices/PINV-1', '/new-look/purchases?open=PINV-1'],
     ['/suppliers/SUP-1', '/new-look/suppliers?open=SUP-1'],
+    ['/staff', '/new-look/settings/team'],
+    ['/settings/payment-methods', '/new-look/settings/till'],
+    ['/reports/sales-analytics', '/new-look/reports/sales'],
+    ['/reports/inventory-summary', '/new-look/reports/stock-summary'],
   ])('%s opens %s', (from, to) => {
     expect(go(from).to).toBe(to);
   });
@@ -48,7 +52,7 @@ describe('Old addresses open the finished pages', () => {
 });
 
 describe('Screens that are not redesigned yet stay where they are', () => {
-  test.each(['/sales/pos', '/sales/invoice/new', '/products/load-products', '/products/update-price', '/products/variations', '/inventory/stock-entry', '/warehouses', '/stock-transfers', '/stock-transfers/create', '/settings/payment-methods', '/reports/sales-summary'])('%s is not redirected', (address) => {
+  test.each(['/sales/pos', '/sales/invoice/new', '/products/load-products', '/products/update-price', '/products/variations', '/inventory/stock-entry', '/warehouses', '/stock-transfers', '/stock-transfers/create', '/reports/sales-summary', '/reports/stock-movement', '/reports/performance-metrics'])('%s is not redirected', (address) => {
     expect(go(address)).toBeNull();
   });
 });
@@ -59,7 +63,7 @@ describe('Links from a new page to a current screen', () => {
     expect(oldScreen('/sales/returns?invoice=X')).toBe('/sales/returns?invoice=X&legacy=1');
   });
 
-  test.each(['/sales/returns?invoice=X', '/purchases/returns?purchase=P1', '/purchases/new?draft=PO-1', '/purchases/receipts/new', '/purchases/create-grn', '/inventory/stock-entries/STE-1', '/inventory/multi-level-reconciliation', '/inventory/item-details', '/products'])('%s stays when it carries the marker', (address) => {
+  test.each(['/sales/returns?invoice=X', '/purchases/returns?purchase=P1', '/purchases/new?draft=PO-1', '/purchases/receipts/new', '/purchases/create-grn', '/inventory/stock-entries/STE-1', '/inventory/multi-level-reconciliation', '/inventory/item-details', '/products', '/roles', '/settings/payment-gateways', '/settings/etims', '/settings/bank-accounts', '/reports/inventory-valuation/value-trends'])('%s stays when it carries the marker', (address) => {
     expect(go(oldScreen(address))).toBeNull();
   });
 
@@ -67,8 +71,8 @@ describe('Links from a new page to a current screen', () => {
     expect(go(address)).not.toBeNull();
   });
 
-  test('the supplier groups screen is not redirected yet (Settings arrives in Phase 5), and stays so with the marker', () => {
-    expect(go('/suppliers/groups')).toBeNull();
+  test('the supplier groups address opens Advanced, and the current screen still opens with the marker', () => {
+    expect(go('/suppliers/groups').to).toBe('/new-look/settings/advanced?section=supplier-groups');
     expect(go(oldScreen('/suppliers/groups'))).toBeNull();
   });
 });
