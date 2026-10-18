@@ -70,6 +70,11 @@ const settings = {
       link: 'Open bank accounts',
       note: 'Bank details are kept on the current screen. They are never shown or typed here.',
     },
+    letterhead: {
+      title: 'Letterhead',
+      subtitle: 'The shop name, address and logo at the top of printed receipts and documents',
+      note: 'The letterhead is set on the current screen, under Business.',
+    },
   },
 
   // Settings, Till and payments
@@ -274,6 +279,11 @@ const settings = {
       'loyalty-programs': { title: 'Loyalty programmes', text: 'Points customers earn when they buy, and how they can spend them.' },
       'industry-products': { title: 'Industry starter products', text: 'Ready-made product lists for your kind of shop that you can pick from and add.' },
       'station-screen': { title: 'Station screen settings', text: 'The kitchen or bar screen that shows incoming orders on a tablet.' },
+      approvals: { title: 'Approvals', text: 'Who must approve money decisions, and who may decide.' },
+      'payment-matching': { title: 'Payment matching', text: 'Match money received in the bank or on M-Pesa to your sales.' },
+      'sales-people': { title: 'Sales people', text: 'The people who sell for you, so each sale can be credited to one.' },
+      recipes: { title: 'Recipes', text: 'What goes into each dish, so stock goes down as dishes are sold.' },
+      wastage: { title: 'Wastage', text: 'Record food or stock that was spoiled, spilled or thrown away.' },
       'new-look': { title: 'New look', text: 'Turn the redesigned screens on or off for the whole shop. Only the owner can change this.' },
     },
   },

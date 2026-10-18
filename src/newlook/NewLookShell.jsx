@@ -7,6 +7,8 @@ import { newMenuItems, searchActionsFor } from './shell/newMenu';
 import { isPageLive, usePreviewRedirects } from './redirects/live';
 import { toNewAddress } from './redirects/engine';
 import { useThemeMode } from '../theme/ThemeProvider';
+import LanguageDialog from './shell/LanguageDialog';
+import LT from './shell/strings.language';
 import S from './strings';
 
 /**
@@ -34,6 +36,7 @@ const Inner = ({ user, onSignOut, hasAccess, children }) => {
   const previewRedirects = usePreviewRedirects();
   const { mode, toggleColorMode } = useThemeMode();
   const [preview, setPreview] = useContext(ShellPreviewContext);
+  const [languageOpen, setLanguageOpen] = useState(false);
 
   // Where each menu item goes now: the new page once it is live, otherwise the current screen (see redirects/live.js)
   const open = (address) => address && navigate(address);
@@ -59,7 +62,7 @@ const Inner = ({ user, onSignOut, hasAccess, children }) => {
       theme: mode,
       onToggleTheme: toggleColorMode,
       user,
-      userItems: onSignOut ? [{ label: S.shell.newLookShell.signOut, onClick: onSignOut }] : [],
+      userItems: [{ label: LT.menu, onClick: () => setLanguageOpen(true) }, ...(onSignOut ? [{ label: S.shell.newLookShell.signOut, onClick: onSignOut }] : [])],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [preview, mode, user, onSignOut, hasAccess, previewRedirects, navigation]
@@ -68,6 +71,7 @@ const Inner = ({ user, onSignOut, hasAccess, children }) => {
   return (
     <AppShell navigation={navigation} topBar={topBar} searchActions={searchActions}>
       {children}
+      <LanguageDialog open={languageOpen} onClose={() => setLanguageOpen(false)} />
     </AppShell>
   );
 };

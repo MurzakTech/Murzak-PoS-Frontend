@@ -443,6 +443,14 @@ export const REDIRECTS = [
   { from: '/contact-us', to: null, status: 'keep' },
   { from: '/kitchen', to: null, status: 'keep', note: 'The Spec does not mention the kitchen station screen, so it stays as it is.' },
   { from: '/settings/new-look', to: null, status: 'keep', note: 'This is the New look switch itself.' },
+  // Screens added after the redesign was planned. They have no redesigned page, so they stay as they are; Settings, Advanced lists each one.
+  { from: '/settings/approvals', to: null, status: 'keep', note: 'Money approvals are not redesigned yet. Settings, Advanced links to the current screen.' },
+  { from: '/settings/payment-matching', to: null, status: 'keep', note: 'Payment matching is not redesigned yet. Settings, Advanced links to the current screen.' },
+  { from: '/settings/sales-people', to: null, status: 'keep', note: 'Sales people are not redesigned yet. Settings, Advanced links to the current screen.' },
+  { from: '/inventory/recipes', to: null, status: 'keep', note: 'Recipes are not redesigned yet. Settings, Advanced links to the current screen.' },
+  { from: '/inventory/recipes/new', to: null, status: 'keep', note: 'A new recipe stays on the current screen.' },
+  { from: '/inventory/recipes/:dish', to: null, status: 'keep', note: 'A recipe stays on the current screen.' },
+  { from: '/inventory/wastage', to: null, status: 'keep', note: 'Wastage is not redesigned yet. Settings, Advanced links to the current screen.' },
   { from: '*', to: null, status: 'keep', note: 'The not found page.' },
 ];
 

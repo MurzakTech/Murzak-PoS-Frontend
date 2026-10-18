@@ -46,6 +46,12 @@ export const OLD = {
   supplierGroups: '/suppliers/groups',
   kitchen: '/kitchen',
   newLook: '/settings/new-look',
+  business: '/settings/business',
+  approvals: '/settings/approvals',
+  paymentMatching: '/settings/payment-matching',
+  salesPeople: '/settings/sales-people',
+  recipes: '/inventory/recipes',
+  wastage: '/inventory/wastage',
 };
 
 export const legacy = (address) => oldScreen(address);
@@ -65,6 +71,11 @@ export const ADVANCED_CARDS = [
   { section: 'loyalty-programs', to: OLD.loyalty },
   { section: 'industry-products', to: null },
   { section: 'station-screen', to: OLD.kitchen },
+  { section: 'approvals', to: OLD.approvals },
+  { section: 'payment-matching', to: OLD.paymentMatching },
+  { section: 'sales-people', to: OLD.salesPeople },
+  { section: 'recipes', to: OLD.recipes },
+  { section: 'wastage', to: OLD.wastage },
   // The New look switch is not redirected, so its address is used as it is
   { section: 'new-look', to: OLD.newLook, plain: true },
 ];
