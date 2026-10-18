@@ -12,6 +12,7 @@ import { FormPage, MoreOptions } from '../forms';
 import FT from '../forms/strings.forms';
 import fill from '../labels/fill';
 import { createProduct, ProductSaveError } from '../../api/productsListApi';
+import useBusinessFeatures from '../setup/useBusinessFeatures';
 import './products.css';
 import CategoryDialog from './CategoryDialog';
 import { useCategories, useUnits } from './useProductsData';
@@ -31,6 +32,7 @@ const NewProductPage = () => {
   const canSeeCost = access.can('cost_of_goods');
   const categories = useCategories();
   const units = useUnits();
+  const business = useBusinessFeatures().features; // a retail shop ("What do you sell?") sees the barcode and the unit first
 
   const [values, setValues] = useState(EMPTY_FORM);
   const [baseline, setBaseline] = useState(EMPTY_FORM);
@@ -110,6 +112,9 @@ const NewProductPage = () => {
   const chips = chipCategories(allCategories, values.category, { showAll: showAllChips });
   const hiddenChips = allCategories.filter((c) => c.name !== T.rootCategory).length - chips.length;
 
+  const unitField = <Select id={FIELD_IDS.unit} label={F.unit} helper={units.status === 'error' ? F.unitsFailed : F.unitHelper} options={unitChoices} value={values.unit} error={problems.unit} onChange={set('unit')} />;
+  const barcodeField = <Field id={FIELD_IDS.barcode} label={F.barcode} helper={F.barcodeHelper} value={values.barcode} error={problems.barcode} autoComplete="off" onChange={set('barcode')} />;
+
   const cancel = () => (dirty ? setAskCancel(true) : navigate(PRODUCTS_PATH));
 
   return (
@@ -118,6 +123,8 @@ const NewProductPage = () => {
         <div id={FIELD_IDS.general} tabIndex={-1} className="nl-products-formtop" />
         <Field id={FIELD_IDS.name} label={F.name} placeholder={F.namePlaceholder} value={values.name} error={problems.name} aria-required={true} autoComplete="off" onChange={set('name')} />
         <Field id={FIELD_IDS.price} kind="money" label={F.price} helper={F.priceHelper} value={values.price} error={problems.price} aria-required={true} onChange={set('price')} />
+        {business.barcodesFirst ? barcodeField : null}
+        {business.unitsFirst ? unitField : null}
 
         <MoreOptions key={forceOpen ? 'open' : 'closed'} defaultOpen={forceOpen}>
           {canSeeCost ? (
@@ -133,7 +140,7 @@ const NewProductPage = () => {
           ) : null}
           <Field id={FIELD_IDS.stock} inputMode="decimal" label={F.stock} helper={F.stockHelper} value={values.stock} error={problems.stock} onChange={(v) => set('stock')(cleanQuantity(v))} />
           <Field id={FIELD_IDS.warning} inputMode="decimal" label={F.warning} helper={F.warningHelper} value={values.warning} error={problems.warning} onChange={(v) => set('warning')(cleanQuantity(v))} />
-          <Select id={FIELD_IDS.unit} label={F.unit} helper={units.status === 'error' ? F.unitsFailed : F.unitHelper} options={unitChoices} value={values.unit} error={problems.unit} onChange={set('unit')} />
+          {business.unitsFirst ? null : unitField}
 
           <div className="nl-products-chips" role="group" aria-labelledby="np-category-label" id={FIELD_IDS.category} tabIndex={-1}>
             <span id="np-category-label" className="nl-label">
@@ -182,7 +189,7 @@ const NewProductPage = () => {
             )}
           </div>
 
-          <Field id={FIELD_IDS.barcode} label={F.barcode} helper={F.barcodeHelper} value={values.barcode} error={problems.barcode} autoComplete="off" onChange={set('barcode')} />
+          {business.barcodesFirst ? null : barcodeField}
           <Field id="np-code" label={F.code} helper={F.codeHelper} value={F.codeAuto} readOnly />
         </MoreOptions>
       </FormPage>

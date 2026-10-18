@@ -38,7 +38,7 @@ export const filesToScan = (dir = NEWLOOK, base = NEWLOOK) =>
 
 const TECHNICAL_ATTRIBUTES = new Set([
   'className', 'key', 'ref', 'type', 'role', 'id', 'htmlFor', 'to', 'href', 'variant', 'size', 'tone', 'icon', 'name', 'kind', 'as', 'level',
-  'align', 'tabIndex', 'autoComplete', 'inputMode', 'target', 'rel', 'scope', 'method', 'status', 'forceState', 'value', 'status', 'mode',
+  'align', 'tabIndex', 'autoComplete', 'autoCapitalize', 'autoCorrect', 'inputMode', 'target', 'rel', 'scope', 'method', 'status', 'forceState', 'value', 'status', 'mode',
   'viewBox', 'fill', 'stroke', 'strokeLinecap', 'strokeLinejoin', 'focusable', 'd', 'cx', 'cy', 'r', 'x', 'y', 'width', 'height', 'rx', 'strokeDasharray',
   'aria-live', 'aria-haspopup', 'aria-expanded', 'aria-current', 'aria-atomic', 'aria-modal', 'aria-autocomplete', 'aria-keyshortcuts', 'aria-controls',
   'aria-labelledby', 'aria-describedby', 'aria-selected', 'aria-checked', 'aria-pressed', 'aria-busy', 'aria-invalid', 'aria-activedescendant', 'aria-hidden',

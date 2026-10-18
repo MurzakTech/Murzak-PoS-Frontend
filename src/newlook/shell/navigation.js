@@ -9,7 +9,10 @@ import S from '../strings';
  *   to      where it goes now, worked out by resolveNavigation: the new page once it is live, otherwise the old screen
  *   match   address beginnings that mean "you are in this item", so it stays highlighted on its pages (old and new);
  *           matchExact lists whole addresses (Home must not claim every New look page)
- *   soon    the page does not exist yet (Expenses is new, ticket P5-1): the item is shown but cannot be opened
+ *   soon    the page does not exist yet: the item is shown but cannot be opened (no item is marked so now: Expenses, the last one, is built)
+ *
+ * An item with no `old` screen (Expenses is new: nothing existed before) always opens its new page, live or not, because there is no
+ * current screen to fall back to.
  *
  * Items are plain data, so a page's permissions can hide an item (ticket P1-8) without changing the shell.
  */
@@ -45,7 +48,7 @@ export const NAVIGATION = {
       key: 'money',
       label: S.shell.nav.groups.money,
       items: [
-        { key: 'expenses', label: S.shell.nav.items.expenses, icon: 'wallet', page: '/expenses', soon: true, match: ['/new-look/expenses'] },
+        { key: 'expenses', label: S.shell.nav.items.expenses, icon: 'wallet', page: '/expenses', match: ['/new-look/expenses'] },
         { key: 'reports', label: S.shell.nav.items.reports, icon: 'chart', page: '/reports', old: '/reports', match: ['/reports', '/new-look/reports'] },
       ],
     },
@@ -59,7 +62,7 @@ export const NAVIGATION = {
  * job (see redirects/live.js). `toNew` turns an unprefixed page address into the real one.
  */
 export const resolveNavigation = (navigation, { isLive, toNew }) => {
-  const resolve = (item) => ({ ...item, to: item.soon ? undefined : item.page && isLive(item.page) ? toNew(item.page) : item.old });
+  const resolve = (item) => ({ ...item, to: item.soon ? undefined : item.page && (isLive(item.page) || !item.old) ? toNew(item.page) : item.old });
   return { home: resolve(navigation.home), groups: navigation.groups.map((g) => ({ ...g, items: g.items.map(resolve) })), settings: resolve(navigation.settings) };
 };
 

@@ -40,6 +40,7 @@ import {
 } from './purchasesModel';
 import T from './strings.purchases';
 import { oldScreen } from '../redirects/engine';
+import { sellingLocations } from '../till/sellingLocations';
 
 const R = T.receive;
 const STEPS = ['choose', 'items', 'review'];
@@ -448,7 +449,7 @@ const ReceiveGoodsPage = () => {
   // ---------- Step 3: check and confirm ----------
   const review = purchase ? reviewLines(lines) : [];
   const left = purchase ? leftAfter(lines) : '';
-  const storeChoices = (warehouses || []).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
+  const storeChoices = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const reviewColumns = [
     { key: 'name', header: R.reviewColumns.item },
     { key: 'qty', header: R.reviewColumns.quantity, align: 'right', render: (l) => qtyText(l.qty) },

@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { useAppSelector } from '../store/hooks';
 import { getNewLook, setNewLook } from '../api/newLookApi';
 import { getUserCompany } from '../utils/getUserCompany';
+import { writeDeviceFlag } from './auth/deviceFlag';
 
 /**
  * Whether this shop is using the redesigned screens (the "New look").
@@ -29,6 +30,8 @@ const readCache = (company) => {
 };
 
 const writeCache = (company, enabled) => {
+  // Also keep the answer for the sign-in page, which opens before anyone is signed in (see auth/deviceFlag.js)
+  writeDeviceFlag(enabled);
   try {
     localStorage.setItem(cacheKey(company), enabled ? '1' : '0');
   } catch (e) {

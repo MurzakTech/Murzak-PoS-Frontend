@@ -44,6 +44,7 @@ import {
 } from './purchasesModel';
 import T from './strings.purchases';
 import { oldScreen } from '../redirects/engine';
+import { sellingLocations } from '../till/sellingLocations';
 
 const F = T.form;
 const MAX_SEGMENTS = 4;
@@ -219,7 +220,7 @@ const NewPurchasePage = () => {
   const errors = useMemo(() => summaryOf(problems, lines), [problems, lines]);
   const total = linesTotal(lines);
   const supplierChoices = suppliers.status === 'ready' ? suppliers.data.map((s) => ({ value: s.id, label: s.name })) : [];
-  const storeChoices = (warehouses || []).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
+  const storeChoices = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const modeChoices = modes.map((m) => ({ value: m.name, label: m.name }));
   const cancel = () => (dirty ? setAskCancel(true) : navigate(PURCHASES_PATH));
 

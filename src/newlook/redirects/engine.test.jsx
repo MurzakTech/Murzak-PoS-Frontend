@@ -207,8 +207,22 @@ describe('The menu and its new pages (AC-05)', () => {
   const previewed = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: toNewAddress });
 
   test('until a page is built, an item opens the current screen', () => {
-    expect(flatItems(current).filter((i) => !i.soon).every((i) => i.to && !i.to.startsWith('/new-look'))).toBe(true);
+    // Expenses is new (there is no current screen to fall back to), so it is left out here and has its own test below
+    expect(flatItems(current).filter((i) => !i.soon && i.old).every((i) => i.to && !i.to.startsWith('/new-look'))).toBe(true);
     expect(current.groups[0].items[0].to).toBe('/sales/history');
+  });
+
+  test('Expenses is new, so its menu item opens its new page even before redirects are switched on', () => {
+    const expenses = flatItems(current).find((i) => i.key === 'expenses');
+    expect(expenses.old).toBeUndefined();
+    expect(expenses.soon).toBeUndefined();
+    expect(expenses.to).toBe('/new-look/expenses');
+    expect(flatItems(previewed).find((i) => i.key === 'expenses').to).toBe('/new-look/expenses');
+  });
+
+  test('every item that is not marked soon can be opened', () => {
+    expect(flatItems(current).filter((i) => !i.soon).every((i) => Boolean(i.to))).toBe(true);
+    expect(flatItems(current).filter((i) => i.soon)).toEqual([]);
   });
 
   test('with the preview, an item opens its new page', () => {
@@ -260,7 +274,7 @@ describe('The + New menu', () => {
 
   test('lists sale, product, customer, expense and purchase for a person who may use them all', () => {
     const { items } = run(() => true);
-    expect(items.map((i) => i.label)).toEqual(['Sale', 'Product', 'Customer', 'Expense (coming soon)', 'Purchase']);
+    expect(items.map((i) => i.label)).toEqual(['Sale', 'Product', 'Customer', 'Expense', 'Purchase']);
     expect(NEW_MENU).toHaveLength(5);
   });
 
@@ -269,8 +283,17 @@ describe('The + New menu', () => {
     expect(run(() => false).items).toEqual([]);
   });
 
-  test('Expense cannot be chosen until its page exists', () => {
-    expect(run(() => true).items.find((i) => i.label.startsWith('Expense')).disabled).toBe(true);
+  test('Expense can be chosen and opens the Add expense form, whatever the redirects say', () => {
+    const { items, open } = run(() => true);
+    const expense = items.find((i) => i.label === 'Expense');
+    expect(expense.disabled).toBeUndefined();
+    expense.onClick();
+    // it has no current screen, so the destination the shell works out for the others is not used
+    expect(open).toHaveBeenCalledWith('/new-look/expenses/new');
+  });
+
+  test('Expense is shown to the same people who can add products', () => {
+    expect(run((path) => path === '/products/new').items.map((i) => i.label)).toEqual(['Product', 'Expense']);
   });
 
   test('an item goes where it should', () => {
@@ -286,9 +309,11 @@ describe('The + New menu', () => {
   test('the same actions are findable by search, by the words a person uses', () => {
     const open = jest.fn();
     const actions = searchActionsFor({ hasAccess: () => true, open, destination: (i) => i.page });
-    expect(actions.map((a) => a.label)).toEqual(['New sale', 'Add product', 'Add customer', 'New purchase']);
+    expect(actions.map((a) => a.label)).toEqual(['New sale', 'Add product', 'Add customer', 'Add expense', 'New purchase']);
     actions[1].onSelect();
     expect(open).toHaveBeenCalledWith('/products/new');
     expect(actions[1].keywords).toContain('add');
+    actions[3].onSelect();
+    expect(open).toHaveBeenLastCalledWith('/new-look/expenses/new');
   });
 });

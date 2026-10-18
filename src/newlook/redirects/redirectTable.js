@@ -488,6 +488,9 @@ const PAGES = [
 
   { path: '/reports', title: 'Reports' },
   { path: '/reports/sales', title: 'Sales' },
+  { path: '/reports/profit', title: 'Profit' },
+  { path: '/reports/owed', title: 'Money owed' },
+  { path: '/reports/running-costs', title: 'Running costs' },
   { path: '/reports/stock-summary', title: 'Stock summary' },
   { path: '/reports/stock-value', title: 'Stock value' },
   { path: '/reports/stock-movement', title: 'Stock movement' },

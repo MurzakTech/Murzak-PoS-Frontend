@@ -91,7 +91,8 @@ test('a refusal comes back beside the switch and the switch moves back', async (
 test('nobody but the owner can change them', async () => {
   show('manager', { load: jest.fn().mockResolvedValue(list()) });
   expect(await screen.findByText('Only the business owner can change these.')).toBeInTheDocument();
-  screen.getAllByRole('switch').forEach((s) => expect(s).toBeDisabled());
+  // The payment method switches (the page also holds a switch kept on the device, which anyone may change)
+  screen.getAllByRole('switch', { name: /^(Cash|M-Pesa|Card|On credit|Cheque)$/ }).forEach((s) => expect(s).toBeDisabled());
 });
 
 test('a failed load says so and tries again', async () => {

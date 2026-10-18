@@ -19,6 +19,8 @@ import HomeFilters from './HomeFilters';
 import NeedsAttention from './NeedsAttention';
 import StatTile from './StatTile';
 import FirstTimePanel from './FirstTimePanel';
+import SetupBanner from '../setup/SetupBanner';
+import { sellingLocations } from '../till/sellingLocations';
 import { MissingCostDialog, MissingCostLine } from './MissingCostList';
 import useOverview from './useOverview';
 import { changeInfo, dateLine, greeting, hasNoSalesYet, money, monthProgress, overviewCsv, periodFromSearch, rangeWords, todayIso } from './homeModel';
@@ -110,7 +112,7 @@ const HomePage = () => {
   const salesPoints = charts.sales || [];
   const metrics = canProfit && salesPoints.some((p) => p.profit !== undefined && p.profit !== null) ? ['revenue', 'profit', 'count'] : ['revenue', 'count'];
 
-  const stores = (warehouses || []).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
+  const stores = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const staffList = access.tier === 'cashier' ? [] : (staffUsers || []).map((s) => ({ value: s.name || s.email, label: s.full_name || s.name || s.email }));
   const range = rangeWords(period, from, to);
   const firstName = user && (user.first_name || (user.full_name && user.full_name.split(' ')[0]) || '');
@@ -222,6 +224,8 @@ const HomePage = () => {
           </Button>
         }
       />
+
+      <SetupBanner />
 
       <HeroBand hero={data ? data.hero : null} today={todayIso()} loading={loading} failed={!loading && failed('hero', data && data.hero)} onRetry={reload} openTo={links.openTill} closeTo={links.closeTill} />
 

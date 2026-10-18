@@ -38,6 +38,7 @@ import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
 import { sellingLocations } from '../../newlook/till/sellingLocations';
 import { stockNote } from '../../newlook/till/stockNote';
 import { getTillPaymentModes } from '../../api/paymentMethodsApi';
+import useUsualOpening from '../../newlook/setup/useUsualOpening';
 import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
 import tillText from '../../newlook/till/strings.till';
 import fillText from '../../newlook/labels/fill';
@@ -299,6 +300,8 @@ const NewSale = () => {
     control: posOpeningFormControl,
     handleSubmit: handlePosOpeningSubmit,
     reset: resetPosOpeningForm,
+    getValues: getPosOpeningValues,
+    setValue: setPosOpeningValue,
     formState: { errors: posOpeningErrors },
   } = useForm({
     defaultValues: {
@@ -313,6 +316,9 @@ const NewSale = () => {
     control: posOpeningFormControl,
     name: 'balance_details',
   });
+
+  // New look: the usual opening cash the owner set in first-time set-up fills in a first amount that is still empty (see useUsualOpening)
+  useUsualOpening({ enabled: newLook, company: userCompany, sessionOpen: isPOSSessionOpen, rows: balanceFields.length, getValue: getPosOpeningValues, setValue: setPosOpeningValue });
 
   // Form for Customer Creation
   const {

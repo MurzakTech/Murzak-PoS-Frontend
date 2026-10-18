@@ -19,8 +19,9 @@ import Legend from './Legend';
  *   state     'ready' (default), 'loading', 'empty' or 'error'; onRetry for the error state
  *   controls  extra controls above the chart, such as the Revenue, Profit and Sales count switch
  *   height    the chart's height, reserved while loading so the page does not jump
+ *   emptyTitle, emptyText   the words of the empty state, for a chart that is not about sales (the defaults are the sales words)
  */
-const ChartCard = ({ title, subtitle, summary, table, legend = [], state = 'ready', onRetry, controls, actions, height = 260, emptyText, children, className = '' }) => {
+const ChartCard = ({ title, subtitle, summary, table, legend = [], state = 'ready', onRetry, controls, actions, height = 260, emptyTitle, emptyText, children, className = '' }) => {
   const [view, setView] = useState('chart');
   const base = useId();
 
@@ -41,7 +42,7 @@ const ChartCard = ({ title, subtitle, summary, table, legend = [], state = 'read
   if (state === 'error') {
     body = <EmptyState icon="alert" tone="error" title={S.charts.state.errorTitle} description={S.charts.state.errorText} action={onRetry ? { label: S.charts.state.retry, onClick: onRetry } : undefined} level={3} />;
   } else if (state === 'empty') {
-    body = <EmptyState title={S.charts.state.emptyTitle} description={emptyText || S.charts.state.emptyText} level={3} />;
+    body = <EmptyState title={emptyTitle || S.charts.state.emptyTitle} description={emptyText || S.charts.state.emptyText} level={3} />;
   } else {
     body = (
       <LoadingGate loading={state === 'loading'} minHeight={height} label={S.charts.state.loading} skeleton={<Skeleton width="100%" height={`${height}px`} radius="var(--radius-button)" />}>

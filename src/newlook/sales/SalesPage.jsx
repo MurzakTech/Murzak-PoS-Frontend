@@ -23,6 +23,7 @@ import './sales.css';
 import CardList from './CardList';
 import DifferenceLabel from './DifferenceLabel';
 import ReceiptPanel from './ReceiptPanel';
+import { sellingLocations } from '../till/sellingLocations';
 import { useSalesList } from './useSalesData';
 import { csvFor, csvName, customerName, doctypeOf, isoDay, isSessionsTab, methodsOf, salesTabs, sessionClosed, sessionOpened, statusView, tabAddress, tabFromParam, whenLabel } from './salesModel';
 import T from './strings.sales';
@@ -131,7 +132,7 @@ const SalesPage = () => {
   const tabs = salesTabs().map((t) => ({ ...t, to: tabAddress(location.pathname, t.key, search) }));
 
   const staffList = canPickCashier ? (staffUsers || []).map((s) => ({ value: s.name || s.email, label: s.full_name || s.name || s.email })) : [];
-  const stores = (warehouses || []).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
+  const stores = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const dropdowns = [];
   if (staffList.length > 0) dropdowns.push({ key: 'cashier', label: T.filters.cashier, options: [{ value: '', label: T.filters.allCashiers }, ...staffList], value: filters.cashier, onChange: (v) => params.set({ cashier: v }) });
   if (stores.length >= 2) dropdowns.push({ key: 'store', label: T.filters.store, options: [{ value: '', label: T.filters.allStores }, ...stores], value: filters.store, onChange: (v) => params.set({ store: v }) });

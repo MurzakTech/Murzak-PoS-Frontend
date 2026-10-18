@@ -1,0 +1,232 @@
+/* First-time set-up: the wizard steps and the Home banner. Tokens only. */
+.nl-setup-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.nl-setup-steps__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--card-border);
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-setup-steps__item.is-current {
+  background: var(--soft);
+  border-color: transparent;
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-setup-steps__item.is-done {
+  color: var(--good);
+}
+.nl-setup-steps__state {
+  color: var(--muted);
+}
+
+.nl-setup-heading {
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-setup-heading__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+}
+.nl-setup-heading__text,
+.nl-setup-text {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+
+.nl-setup-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nl-setup-tools__spacer {
+  flex: 1;
+}
+.nl-setup-skipall {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+/* What do you sell? */
+.nl-setup-kinds {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.nl-setup-kinds legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+}
+.nl-setup-kind {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  min-height: var(--control-height-till);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.nl-setup-kind:hover {
+  border-color: var(--input-border);
+}
+.nl-setup-kind.is-selected {
+  background: var(--soft);
+  border-color: var(--brand);
+}
+.nl-setup-kind__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+.nl-setup-kind__mark {
+  box-sizing: border-box;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-pill);
+  background: var(--field);
+}
+.nl-setup-kind.is-selected .nl-setup-kind__mark {
+  border: 5px solid var(--brand);
+  background: var(--on-brand);
+}
+.nl-setup-kind__input:focus-visible ~ .nl-setup-kind__mark {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-setup-kind__body {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.nl-setup-kind__label {
+  font-weight: var(--font-weight-semibold);
+}
+.nl-setup-kind__text,
+.nl-setup-kind__features {
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+  line-height: 1.4;
+}
+
+/* Product choices and links */
+.nl-setup-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-setup-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+}
+.nl-setup-option__text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  flex: 1 1 240px;
+}
+.nl-setup-option__title {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-setup-option__help {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-setup-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-setup-link {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-setup-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-setup-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* The Home banner */
+.nl-setup-banner__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.nl-setup-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-tile);
+  background: var(--soft);
+  color: var(--brand-text);
+}
+.nl-setup-banner__text {
+  display: grid;
+  gap: var(--space-1);
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.nl-setup-banner__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+}
+.nl-setup-banner__body {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--body-size);
+}
+.nl-setup-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}

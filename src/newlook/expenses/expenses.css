@@ -1,0 +1,168 @@
+/*
+ * The Expenses page, the expense panel and the Add expense form (ticket P5-1). Every colour, size and space is a design token.
+ * The list and the panel use the shared list-with-detail layout; below 768px the rows become cards and the filters sit behind
+ * one Filters button.
+ */
+.nl-expenses {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-expenses__list {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-expenses__filters-toggle {
+  justify-self: start;
+  min-height: var(--control-height-till);
+}
+.nl-expenses__note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nl-expenses__sub {
+  display: block;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Cards (below 768px) ---------- */
+.nl-expense-cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-expense-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-till);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--table-size);
+  text-align: left;
+  cursor: pointer;
+}
+.nl-expense-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-expense-card.is-selected {
+  background: var(--selected-row);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+.nl-expense-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-expense-card__head {
+  font-size: var(--body-size);
+}
+.nl-expense-card__aside {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nl-expense-card__line {
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  .nl-expenses .nl-detail__nav .nl-btn,
+  .nl-expenses .nl-detail__actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+}
+
+/* ---------- The panel ---------- */
+.nl-expense-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-expense-panel__section {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-expense-panel__section h3 {
+  margin: 0;
+}
+.nl-expense-panel__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-expense-panel__photo {
+  display: block;
+  max-width: 100%;
+  max-height: calc(var(--space-8) * 8);
+  object-fit: contain;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+.nl-expense-panel__link {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- The form ---------- */
+.nl-expense-form__back {
+  justify-self: start;
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-expense-form__notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink-2);
+  font-size: var(--table-size);
+}
+.nl-expense-form-state {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-expense-receipt {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-expense-receipt__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nl-expense-receipt__figure {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+.nl-expense-receipt__image {
+  display: block;
+  max-width: 100%;
+  max-height: calc(var(--space-8) * 6);
+  object-fit: contain;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+}
+@media (max-width: 767px) {
+  .nl-expense-receipt__row .nl-btn {
+    min-height: var(--control-height-till);
+  }
+}

@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance';
-import { friendlyErrorMessage } from '../utils/friendlyError';
+import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
 
 const REPORTS_API_BASE = 'murzak_pos.api.reports';
 
@@ -484,3 +484,76 @@ export const fetchGRNDetails = async (params) => {
   }
 };
 
+// ============================================================================
+// THE REPORTS OF THE NEW LOOK (ticket P5-2)
+// ============================================================================
+//
+// Two calls behind the Reports landing page and the report pages. The server decides what each person may open: a
+// cashier is offered the sales report only, and asking for any other one is refused. The exact shape of the answers is in
+// the back end's docs/redesign/P5-2-contract.md. The older calls above are not used by these pages.
+
+const REPORTS_RUN = 'murzak_pos.api.reports_api';
+
+// Frappe wraps return values in { message }; these calls answer { success, message, data }.
+const newBody = (response) => response.data?.message ?? response.data;
+const newFailure = (reply) => new Error(humanizeMessage(reply?.message, 'We could not load this report. Please try again.'));
+const compact = (params) => Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== ''));
+
+// A refusal keeps its meaning, so a page can say "this report is for owners and managers" rather than a general failure
+const callError = (error) => {
+  const failure = new Error(friendlyErrorMessage(error));
+  failure.forbidden = error?.response?.status === 403;
+  return failure;
+};
+
+/**
+ * The questions on the landing page that this person may open. With `preview` each cheap question also carries the few
+ * numbers for its one-line answer (null when they could not be worked out).
+ * Resolves to { role, questions: [{ key, opens, reports, as_of, preview? }] }.
+ */
+export const listReportQuestions = async ({ preview = false } = {}) => {
+  let response;
+  try {
+    response = await axiosInstance.get(`${REPORTS_RUN}.list_reports`, { params: preview ? { preview: 1 } : {} });
+  } catch (error) {
+    throw callError(error);
+  }
+  const reply = newBody(response);
+  if (!reply || reply.success === false || !reply.data) throw newFailure(reply);
+  return { role: reply.data.role, questions: Array.isArray(reply.data.questions) ? reply.data.questions : [] };
+};
+
+/**
+ * One report. name is sales, profit, owed, running-costs, stock-summary, stock-value or aging-stock; period is today, 7d,
+ * 30d, month or custom (from and to, as yyyy-mm-dd, are sent only for custom). The reports about the shop as it is now
+ * (owed and the three stock reports) ignore the period. groupBy (day or month) is for profit only.
+ * Resolves to { name, role, period, as_of, updated_at, cached, summary, series, rows, rows_total, errors, group_by? }.
+ */
+export const runReport = async ({ name, period = '30d', from, to, store, groupBy } = {}) => {
+  let response;
+  try {
+    response = await axiosInstance.get(`${REPORTS_RUN}.run_report`, {
+      params: compact({
+        name,
+        period,
+        from_date: period === 'custom' ? from : undefined,
+        to_date: period === 'custom' ? to : undefined,
+        store,
+        group_by: groupBy,
+      }),
+    });
+  } catch (error) {
+    throw callError(error);
+  }
+  const reply = newBody(response);
+  if (!reply || reply.success === false || !reply.data) throw newFailure(reply);
+  const data = reply.data;
+  return {
+    ...data,
+    summary: data.summary || {},
+    series: data.series || {},
+    rows: Array.isArray(data.rows) ? data.rows : [],
+    rows_total: Number.isFinite(Number(data.rows_total)) ? Number(data.rows_total) : Array.isArray(data.rows) ? data.rows.length : 0,
+    errors: data.errors || {},
+  };
+};

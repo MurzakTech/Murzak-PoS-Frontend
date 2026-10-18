@@ -48,6 +48,7 @@ import {
 } from './stockModel';
 import T from './strings.stock';
 import { oldScreen } from '../redirects/engine';
+import useBusinessFeatures from '../setup/useBusinessFeatures';
 
 const FILTER_KEYS = ['category', 'store', 'status', 'kind', 'within'];
 const STATE_KEYS = ['action', 'item'];
@@ -126,7 +127,9 @@ const StockLevelsPage = () => {
 
   const storeList = useMemo(() => sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name })), [warehouses]);
   const locationsShown = showsWarehouseMenu(warehouses) || (features ? features.locations >= 2 : false);
-  const expiryShown = Boolean(features && features.expiry);
+  // A pharmacy (it answered "What do you sell?") ADDS a reason to show Expiry; the shop's own expiry dates still show it as before
+  const business = useBusinessFeatures();
+  const expiryShown = Boolean(features && features.expiry) || business.features.expiry;
 
   const search = new URLSearchParams(location.search).toString();
   const tabs = visibleTabs({ locations: locationsShown, expiry: expiryShown, canChange, current: tab }).map((t) => ({ ...t, to: tabAddress(root, t.key, search) }));
@@ -134,10 +137,10 @@ const StockLevelsPage = () => {
   // A link to a tab this shop does not have goes to Overview
   useEffect(() => {
     const unknownLocations = (tab === 'locations' || tab === 'transfers') && !locationsShown && (warehouses.length > 0 || features);
-    const unknownExpiry = tab === 'expiry' && features && !features.expiry;
+    const unknownExpiry = tab === 'expiry' && features && !features.expiry && !business.features.expiry && business.status !== 'loading' && business.status !== 'stale';
     if (unknownLocations || unknownExpiry) navigate(tabAddress(root, 'overview', search), { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, locationsShown, features, warehouses.length]);
+  }, [tab, locationsShown, features, warehouses.length, business.features.expiry, business.status]);
 
   // A link to a page past the last one (the list got shorter) goes to the last page
   useEffect(() => {

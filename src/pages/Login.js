@@ -33,6 +33,8 @@ import posIcon from '../assets/pos-icon.png';
 import Photo from '../components/Common/Photo';
 import { classifyLoginId, looksLikePhone, LOGIN_ID_ERROR } from '../utils/phone';
 import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../config/deployment';
+import SignInPage from '../newlook/auth/SignInPage';
+import { readDeviceFlag } from '../newlook/auth/deviceFlag';
 
 const SUPPORT_EMAIL = 'murzaktechnologies@gmail.com';
 
@@ -45,7 +47,7 @@ const FEATURES = [
   'Real people on support when you need them',
 ];
 
-const Login = () => {
+const CurrentLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -388,6 +390,12 @@ const Login = () => {
       </Box>
     </Box>
   );
+};
+
+// The New look sign-in is used only when this device last learned that the shop's New look is on; otherwise the page above is shown
+const Login = () => {
+  const [newLook] = useState(readDeviceFlag);
+  return newLook ? <SignInPage /> : <CurrentLogin />;
 };
 
 export default Login;

@@ -1,5 +1,7 @@
 import HomePage from './home/HomePage';
+import SetupWizard from './setup/SetupWizard';
 import TillSettingsPage from './settings/TillSettingsPage';
+import SettingsPage from './settings/SettingsPage';
 import SalesPage from './sales/SalesPage';
 import { UnpaidRedirect, ReturnsRedirect as SalesReturnsRedirect, SessionsRedirect } from './sales/SalesTabRedirect';
 import CustomersPage from './customers/CustomersPage';
@@ -17,6 +19,10 @@ import PurchasesPage from './purchases/PurchasesPage';
 import NewPurchasePage from './purchases/NewPurchasePage';
 import ReceiveGoodsPage from './purchases/ReceiveGoodsPage';
 import { OrdersRedirect, ReturnsRedirect } from './purchases/TabRedirect';
+import ExpensesPage from './expenses/ExpensesPage';
+import AddExpensePage from './expenses/AddExpensePage';
+import ReportsPage from './reports/ReportsPage';
+import ReportPage from './reports/ReportPage';
 import ComponentPage from './ComponentPage';
 import ChartsPage from './charts/ChartsPage';
 import RedirectsPage from './redirects/RedirectsPage';
@@ -33,7 +39,7 @@ import { BUILT_PAGES } from './redirects/live';
  * each role arrive with the Roles ticket, P1-8).
  */
 // Pages that have their own route above, so they get no placeholder (add a page here when you add its route)
-const OWN_ROUTES = ['/', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions', '/settings/till', '/customers', '/customers/owing', '/customers/new', '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry', '/products', '/products/categories', '/products/new', '/suppliers', '/suppliers/new', '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns'];
+const OWN_ROUTES = ['/', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions', '/settings/till', '/settings/business', '/settings/tax', '/settings/team', '/settings/advanced', '/customers', '/customers/owing', '/customers/new', '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry', '/products', '/products/categories', '/products/new', '/suppliers', '/suppliers/new', '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns', '/reports', '/reports/sales', '/reports/profit', '/reports/owed', '/reports/running-costs', '/reports/stock-summary', '/reports/stock-value', '/reports/aging-stock', '/setup', '/expenses', '/expenses/new'];
 
 export const newLookRoutes = [
   // Home (Phase 2): the greeting and hero band, four tiles, charts and Needs attention
@@ -44,6 +50,12 @@ export const newLookRoutes = [
   { path: '/new-look/charts', element: ChartsPage },
   // Settings, Till and payments: the payment method switches (P3-1); the rest of the section comes with Settings (P5)
   { path: '/new-look/settings/till', element: TillSettingsPage },
+  // Settings (P5-3): the Settings page with its five sections. The bare address opens Business; Team replaces Staff.
+  { path: '/new-look/settings', element: SettingsPage },
+  { path: '/new-look/settings/business', element: SettingsPage },
+  { path: '/new-look/settings/tax', element: SettingsPage },
+  { path: '/new-look/settings/team', element: SettingsPage },
+  { path: '/new-look/settings/advanced', element: SettingsPage },
   // Sales (P3-8): one list with the tabs All sales, Unpaid, Returns and Till sessions, and the receipt panel
   { path: '/new-look/sales', element: SalesPage },
   // The old Returns and Opening Entries addresses, and the Unpaid link on Home, open the matching tab
@@ -78,6 +90,16 @@ export const newLookRoutes = [
   { path: '/new-look/purchases/receive', element: ReceiveGoodsPage },
   { path: '/new-look/purchases/orders', element: OrdersRedirect },
   { path: '/new-look/purchases/returns', element: ReturnsRedirect },
+  // First-time set-up (P5-4, AC-33): a short wizard, reached from the "Set up now" banner on Home. It is not an old address, so no redirect.
+  { path: '/new-look/setup', element: SetupWizard },
+  // Expenses (P5-1): the list of running costs with its panel, and the Add expense form. New pages: there is no current screen.
+  { path: '/new-look/expenses', element: ExpensesPage },
+  { path: '/new-look/expenses/new', element: AddExpensePage },
+  // Reports (P5-2): the landing page of six questions, and one report page for sales, profit, owed, running-costs, stock-summary,
+  // stock-value and aging-stock. Stock movement and Performance keep their placeholders (static routes beat :name) and link to the
+  // current screens, as do all the sub-reports (see "More reports").
+  { path: '/new-look/reports', element: ReportsPage },
+  { path: '/new-look/reports/:name', element: ReportPage },
   // Every old address and where it goes (acceptance check AC-06)
   { path: '/new-look/redirects', element: RedirectsPage },
   // Each new page until its real screen is built: a notice that names the page and links to the current screen.

@@ -139,13 +139,30 @@ describe('Sidebar', () => {
     expect(document.querySelector('.nl-tooltip')).toBeNull();
   });
 
-  test('a page that does not exist yet is shown, but cannot be opened', () => {
+  test('Expenses is built: it opens like any other item and is not marked Soon', () => {
     side();
-    const expenses = screen.getByText('Expenses').closest('.nl-nav__item');
-    expect(expenses).toHaveAttribute('aria-disabled', 'true');
-    expect(expenses.tagName).not.toBe('A');
-    expect(within(expenses).getByText('Soon')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Expenses/ })).toBeNull();
+    const expenses = screen.getByRole('link', { name: 'Expenses' });
+    expect(expenses).toHaveAttribute('href', '/expenses');
+    expect(expenses).not.toHaveAttribute('aria-disabled');
+    expect(within(expenses).queryByText('Soon')).toBeNull();
+    expect(screen.queryByText('Soon')).toBeNull();
+  });
+
+  test('an item marked soon is still shown, but cannot be opened (the mechanism stays for pages not built yet)', () => {
+    const later = {
+      ...CURRENT,
+      groups: CURRENT.groups.map((g) => ({ ...g, items: g.items.map((i) => (i.key === 'reports' ? { ...i, soon: true, to: undefined } : i)) })),
+    };
+    render(
+      <MemoryRouter>
+        <Sidebar navigation={later} />
+      </MemoryRouter>
+    );
+    const reports = screen.getByText('Reports').closest('.nl-nav__item');
+    expect(reports).toHaveAttribute('aria-disabled', 'true');
+    expect(reports.tagName).not.toBe('A');
+    expect(within(reports).getByText('Soon')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Reports/ })).toBeNull();
   });
 
   test('the collapse button says what it will do and reports the press', () => {
@@ -601,7 +618,7 @@ describe('NewLookShell', () => {
     inShell();
     expect(screen.queryByRole('button', { name: /Till open/ })).toBeNull();
     userEvent.click(screen.getByRole('banner').querySelector('[aria-haspopup="menu"][aria-label="New"]'));
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Sale', 'Product', 'Customer', 'Expense (coming soon)', 'Purchase']);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Sale', 'Product', 'Customer', 'Expense', 'Purchase']);
   });
 
   test('the theme button switches the theme and says what it will do', () => {
