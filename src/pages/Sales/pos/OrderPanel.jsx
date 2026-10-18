@@ -34,6 +34,7 @@ import {
   ChevronRight,
   EditNoteOutlined,
   RestaurantOutlined,
+  WarningAmberOutlined,
 } from '@mui/icons-material';
 import { fmt, money } from './money';
 import ProductImage from '../../../components/Common/ProductImage';
@@ -47,7 +48,7 @@ const StepperButton = ({ children, ...props }) => (
   </IconButton>
 );
 
-const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWarehouse, onInc, onDec, onSetQty, onRemove, onChangeWarehouse, kitchenEnabled, onEditNote }) => {
+const CartLine = React.memo(({ note, item, readOnly, currency, warehouses, defaultWarehouse, onInc, onDec, onSetQty, onRemove, onChangeWarehouse, kitchenEnabled, onEditNote }) => {
   const [anchor, setAnchor] = useState(null);
   const lineBase = item.rate * item.qty;
   const hasOffer = item.discount_amount > 0;
@@ -65,6 +66,12 @@ const CartLine = React.memo(({ item, readOnly, currency, warehouses, defaultWare
             {money(item.rate, currency)} each{hasOffer ? ' · offer applied' : ''}
             {store ? ` · from ${store.warehouse_name || store.name}` : ''}
           </Typography>
+          {note && (
+            <Typography variant="caption" role="status" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'warning.main', fontWeight: 700 }}>
+              <WarningAmberOutlined sx={{ fontSize: 16 }} aria-hidden="true" />
+              {note}
+            </Typography>
+          )}
           {item.prescription_only && <Chip size="small" color="warning" variant="outlined" label="Rx only" sx={{ height: 18, fontSize: '0.6875rem', ml: 0.75 }} />}
           {kitchenEnabled && (item.note || item.sentQty > 0) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.25 }}>
@@ -174,6 +181,7 @@ const OrderPanel = ({
   kitchenPending = 0,
   onSendKitchen,
   onEditNote,
+  stockNoteFor, // New look: (item) => words such as "Only 13 left", or null
 }) => {
   const [discountAnchor, setDiscountAnchor] = useState(null);
   const [draftType, setDraftType] = useState('percentage');
@@ -238,6 +246,7 @@ const OrderPanel = ({
               {i > 0 && <Divider />}
               <CartLine
                 item={item}
+                note={stockNoteFor ? stockNoteFor(item) : null}
                 readOnly={readOnly}
                 currency={currency}
                 warehouses={warehouses}

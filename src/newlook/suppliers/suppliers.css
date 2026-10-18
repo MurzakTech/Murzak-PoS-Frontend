@@ -1,0 +1,195 @@
+/*
+ * The Suppliers page, the supplier panel and the supplier forms (ticket P4-6). Every colour, size and space is a design token.
+ * The list and the panel use the shared list-with-detail layout; below 768px the rows become cards and the filters sit behind
+ * one Filters button.
+ */
+.nl-suppliers {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-suppliers__list {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-suppliers__owed {
+  justify-self: start;
+}
+.nl-suppliers__filters-toggle {
+  justify-self: start;
+  min-height: var(--control-height-till);
+}
+.nl-suppliers__due {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nl-suppliers__card-foot {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------- The panel ---------- */
+.nl-supplier-panel {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.nl-supplier-panel__section {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.nl-supplier-panel__section h3 {
+  margin: 0;
+}
+.nl-supplier-panel__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-supplier-panel__owed {
+  font-size: var(--card-title-size);
+  font-variant-numeric: tabular-nums;
+}
+.nl-supplier-panel__next {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nl-supplier-panel__bills {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-supplier-panel__bill {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.nl-supplier-panel__bill-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.nl-supplier-panel__bill-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.nl-supplier-panel__link {
+  color: var(--brand-text);
+  font: inherit;
+  text-decoration: underline;
+}
+.nl-supplier-panel__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ---------- The forms ---------- */
+.nl-supplier-form__back {
+  justify-self: start;
+  color: var(--brand-text);
+  font-size: var(--caption-size);
+}
+.nl-supplier-form__back:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-supplier-form-state {
+  max-width: 640px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+}
+
+/* ---------- Cards (below 768px) ---------- */
+.nl-supplier-cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-supplier-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-till);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--table-size);
+  text-align: left;
+  cursor: pointer;
+}
+.nl-supplier-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-supplier-card.is-selected {
+  background: var(--selected-row);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+.nl-supplier-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-supplier-card__head {
+  font-size: var(--body-size);
+}
+.nl-supplier-card__aside {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nl-supplier-card__line {
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  .nl-suppliers .nl-detail__nav .nl-btn,
+  .nl-suppliers .nl-detail__actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+  .nl-suppliers .nl-detail__actions {
+    gap: var(--space-2);
+  }
+  .nl-supplier-panel__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}
+
+
+/* On a phone these stand-alone links are tap targets: at least 44px high */
+@media (max-width: 767px) {
+  .nl-supplier-form__back {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}

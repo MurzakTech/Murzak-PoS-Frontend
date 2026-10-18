@@ -1,0 +1,23 @@
+/*
+ * The till's controls are 44px high with the New look on (Spec: Accessibility, Targets: "Controls are 40px high, and 44px at
+ * the till; below 768px every tap target is at least 44px"; ticket P3-9). The till itself keeps its layout; this only lifts
+ * the small controls of the current till (buttons, inputs, round icon buttons and clickable chips) to the till height. It
+ * applies under .nl-till-root, which the till carries only while the New look is on.
+ */
+.nl-till-root .MuiButtonBase-root:not(.MuiMenuItem-root):not(.MuiListItemButton-root),
+.nl-till-root .MuiInputBase-root:not(.MuiInputBase-multiline) {
+  min-height: var(--control-height-till);
+}
+
+.nl-till-root .MuiIconButton-root {
+  min-width: var(--control-height-till);
+}
+
+.nl-till-root .MuiChip-clickable {
+  height: var(--control-height-till);
+}
+
+.nl-till-root .MuiMenuItem-root,
+.nl-till-root .MuiListItemButton-root {
+  min-height: var(--control-height-till);
+}

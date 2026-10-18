@@ -1,0 +1,579 @@
+/*
+ * Styles of the shared components (ticket P1-3). Every colour, size, radius and space is a design token from
+ * ../tokens.css; the test in tokens.test.js fails if a colour is written here. A component has one set of
+ * styles, in this file; a screen may combine components but may not restyle them.
+ *
+ * Hover and pressed states are an overlay of the ink colour (8% and 16%) on the component's own fill, so they
+ * need no colours of their own and work the same in the light and the dark theme. Classes such as .is-hover
+ * and .is-focus force a state so the component page can show every state at once.
+ */
+
+/* ---------- Shared ---------- */
+.nl-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: none;
+  stroke-width: var(--icon-stroke);
+}
+
+.nl-spinner {
+  animation: nl-spin 0.8s linear infinite;
+}
+@keyframes nl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.nl-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The keyboard focus ring: 2px in brand-text, 2px away from the control. Never removed without a replacement. */
+.nl-btn:focus-visible,
+.nl-btn.is-focus,
+.nl-input-wrap:focus-within,
+.nl-input-wrap.is-focus,
+.nl-select__button:focus-visible,
+.nl-select__button.is-focus,
+.nl-check__input:focus-visible + .nl-check__box,
+.nl-check__box.is-focus,
+.nl-switch__input:focus-visible + .nl-switch__track,
+.nl-switch__track.is-focus {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ---------- Button ---------- */
+.nl-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+  background-color: var(--surface);
+  background-image: none;
+  color: var(--ink);
+  font: var(--font-weight-semibold) var(--body-size) / 1 var(--font-family);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+}
+.nl-btn--till {
+  min-height: var(--control-height-till);
+}
+.nl-btn--small {
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-button-small);
+}
+.nl-btn--icon-only {
+  padding: 0;
+  aspect-ratio: 1;
+}
+
+.nl-btn--primary {
+  background-color: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+.nl-btn--secondary {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.nl-btn--danger {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--bad);
+}
+.nl-btn--ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--brand-text);
+}
+
+.nl-btn:hover:not(:disabled):not(.is-loading),
+.nl-btn.is-hover {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));
+}
+.nl-btn:active:not(:disabled):not(.is-loading),
+.nl-btn.is-pressed {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.16), rgb(var(--ink-rgb) / 0.16));
+}
+
+/* Disabled: track fill, muted text. Loading: the spinner replaces the icon, the label stays. */
+.nl-btn:disabled,
+.nl-btn.is-disabled {
+  background-color: var(--track);
+  background-image: none;
+  border-color: transparent;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.nl-btn.is-loading {
+  cursor: progress;
+}
+
+/* ---------- Field ---------- */
+.nl-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.nl-label {
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.nl-input-wrap {
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  min-height: var(--control-height);
+  background: var(--field);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-input);
+  overflow: hidden;
+}
+.nl-input {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: var(--font-weight-regular) var(--body-size) / var(--body-line) var(--font-family);
+  outline: none;
+}
+.nl-input::placeholder {
+  color: var(--muted);
+}
+.nl-affix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  border-right: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+  user-select: none;
+}
+.nl-helper,
+.nl-error {
+  margin: 0;
+  font-size: var(--caption-size);
+  line-height: 1.4;
+}
+.nl-helper {
+  color: var(--muted);
+}
+.nl-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  color: var(--bad);
+  font-weight: var(--font-weight-medium);
+}
+.nl-error .nl-icon {
+  margin-top: 1px;
+}
+.nl-field.is-error .nl-input-wrap {
+  border-color: var(--bad);
+}
+.nl-field.is-disabled .nl-input-wrap {
+  background: var(--track);
+  border-color: var(--line);
+}
+.nl-field.is-disabled .nl-input,
+.nl-field.is-disabled .nl-label {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.nl-field.is-readonly .nl-input-wrap {
+  background: transparent;
+  border-color: var(--line);
+}
+
+/* Hover: a stronger border (ink-2). .is-hover forces it for the component page. */
+.nl-input-wrap:hover:not(:focus-within),
+.nl-field.is-hover .nl-input-wrap {
+  border-color: var(--ink-2);
+}
+.nl-field.is-error .nl-input-wrap:hover,
+.nl-field.is-error.is-hover .nl-input-wrap {
+  border-color: var(--bad);
+}
+.nl-field.is-disabled .nl-input-wrap:hover {
+  border-color: var(--line);
+}
+
+/* ---------- Select ---------- */
+.nl-select {
+  position: relative;
+}
+.nl-select__button {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  background: var(--field);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-input);
+  color: var(--ink);
+  font: var(--font-weight-regular) var(--body-size) / var(--body-line) var(--font-family);
+  text-align: left;
+  cursor: pointer;
+}
+.nl-select__button .nl-icon {
+  color: var(--ink-2);
+}
+.nl-select__value.is-placeholder {
+  color: var(--muted);
+}
+.nl-select.is-error .nl-select__button {
+  border-color: var(--bad);
+}
+.nl-select__button:disabled {
+  background: var(--track);
+  border-color: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.nl-select__menu {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--space-1));
+  max-height: 280px;
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  list-style: none;
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-menu);
+}
+.nl-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--control-height-small);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-button-small);
+  color: var(--ink);
+  font-size: var(--body-size);
+  cursor: pointer;
+}
+.nl-select__option.is-active {
+  background: var(--selected-row);
+}
+.nl-select__option[aria-selected='true'] {
+  background: var(--soft);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-select__option[aria-disabled='true'] {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Select hover */
+.nl-select__button:hover:not(:disabled),
+.nl-select.is-hover .nl-select__button {
+  border-color: var(--ink-2);
+}
+.nl-select.is-error .nl-select__button:hover {
+  border-color: var(--bad);
+}
+
+/* ---------- Checkbox ---------- */
+.nl-check,
+.nl-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-small);
+  color: var(--ink);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+  cursor: pointer;
+}
+.nl-check__input,
+.nl-switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+.nl-check__box {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: var(--field);
+  border: 1px solid var(--input-border);
+  border-radius: calc(var(--radius-button-small) / 2);
+  color: var(--on-brand);
+}
+.nl-check__box .nl-icon {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+.nl-check__input:checked + .nl-check__box {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.nl-check__input:checked + .nl-check__box .nl-icon {
+  opacity: 1;
+}
+.nl-check__input:disabled + .nl-check__box,
+.nl-switch__input:disabled + .nl-switch__track {
+  background: var(--track);
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+.nl-check.is-disabled,
+.nl-switch.is-disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+.nl-check.is-error .nl-check__box {
+  border-color: var(--bad);
+}
+
+/* Checkbox and switch hover */
+.nl-check:not(.is-disabled):hover .nl-check__input:not(:checked) + .nl-check__box,
+.nl-check.is-hover .nl-check__input:not(:checked) + .nl-check__box {
+  border-color: var(--ink-2);
+}
+.nl-switch:not(.is-disabled):hover .nl-switch__input:not(:checked) + .nl-switch__track,
+.nl-switch.is-hover .nl-switch__input:not(:checked) + .nl-switch__track {
+  background: var(--ink-2);
+}
+
+/* ---------- Switch: 36 by 20px; the off state uses input-border so it stays visible ---------- */
+.nl-switch__track {
+  box-sizing: border-box;
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  background: var(--input-border);
+  border-radius: var(--radius-pill);
+}
+.nl-switch__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--surface);
+  border-radius: var(--radius-pill);
+  transition: transform 120ms;
+}
+.nl-switch__input:checked + .nl-switch__track {
+  background: var(--brand);
+}
+.nl-switch__input:checked + .nl-switch__track::after {
+  transform: translateX(16px);
+}
+.nl-switch__status {
+  margin-left: var(--space-2);
+  color: var(--good);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-medium);
+}
+.nl-switch__status.is-error {
+  color: var(--bad);
+}
+
+/* ---------- Chip, badge, status label, payment chip ---------- */
+.nl-chip {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--space-6);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--soft);
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+.nl-chip--brand {
+  color: var(--brand-text);
+}
+.nl-badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-5);
+  height: var(--space-5);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--track);
+  color: var(--brand-text);
+  font-size: var(--label-size);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+.nl-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--table-size);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.nl-status--good {
+  color: var(--good);
+}
+.nl-status--warn {
+  color: var(--warn);
+}
+.nl-status--bad {
+  color: var(--bad);
+}
+.nl-status--neutral {
+  color: var(--ink-2);
+}
+.nl-pay {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--space-6);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--soft);
+  color: var(--ink);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+.nl-pay__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--compare);
+}
+.nl-pay[data-method='mpesa'] .nl-pay__dot {
+  background: var(--series-1);
+}
+.nl-pay[data-method='cash'] .nl-pay__dot {
+  background: var(--series-2);
+}
+.nl-pay[data-method='card'] .nl-pay__dot {
+  background: var(--series-3);
+}
+.nl-pay[data-method='credit'] .nl-pay__dot {
+  background: var(--series-4);
+}
+
+/* ---------- Card ---------- */
+.nl-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--card-padding);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+}
+.nl-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.nl-card__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+  line-height: 1.3;
+}
+.nl-card--small .nl-card__title {
+  font-size: var(--card-title-size-small);
+}
+.nl-card__subtitle {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+/* ---------- Small screens: every tap target is at least 44px, with 8px between neighbours ---------- */
+@media (max-width: 767px) {
+  .nl-btn,
+  .nl-input-wrap,
+  .nl-select__button {
+    min-height: var(--control-height-till);
+  }
+  .nl-btn--small {
+    min-height: var(--control-height-till);
+  }
+  .nl-check,
+  .nl-switch {
+    min-height: var(--control-height-till);
+  }
+  .nl-select__option {
+    min-height: var(--control-height-till);
+  }
+}
+
+/* ---------- Reduced motion: nothing moves ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .nl-spinner {
+    animation: none;
+  }
+  .nl-switch__track::after {
+    transition: none;
+  }
+}

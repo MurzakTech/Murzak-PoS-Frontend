@@ -1,0 +1,139 @@
+/*
+ * Murzak POS design tokens (ticket P1-1).
+ *
+ * The one place a colour, type size, space, radius or shadow of the redesigned screens is set. Names and
+ * values are the Part 1 "Design system" tables of the Build Pack. No redesigned component may hard-code a
+ * colour, size or radius that is not here; the tests in tokens.test.js fail if one does.
+ *
+ * Light values are on the root element; the dark values replace them when the root carries
+ * data-theme="dark" (set by src/theme/ThemeProvider.js). Both themes use the same names, so no component
+ * needs a dark-only rule. The current (pre-redesign) screens do not read any of these, so they look as before.
+ */
+
+:root {
+  /* Colour: light */
+  --bg: #f4f4f8; /* Page background */
+  --surface: #ffffff; /* Cards, dialogs, menus */
+  --ink: #12131a; /* Main text */
+  --ink-2: #4a4b57; /* Secondary text */
+  --muted: #6b6c78; /* Captions and field labels */
+  --line: #e6e6ee; /* Hairlines and card borders */
+  --base: #cfcfdb; /* Dividers inside controls */
+  --input-border: #8a8b99; /* Input outline and the off state of a switch */
+  --field: #fafafc; /* Input fill */
+  --brand: #4f46e5; /* Primary button fill, selected marks */
+  --brand-text: #4f46e5; /* Brand-coloured text and icons */
+  --on-brand: #ffffff; /* Text on a brand fill */
+  --soft: #eeedfd; /* Selected background, chip fill */
+  --track: #e8e7fb; /* Meter track, "before" badge */
+  --selected-row: #f3f2ff; /* Selected table row */
+  --good: #006300; /* Success text, always with a check icon */
+  --bad: #c93232; /* Error and destructive text, with an icon */
+  --warn: #a85d00; /* Warning text, with an icon */
+  --series-1: #4f46e5; /* M-Pesa, and the main series in any chart */
+  --series-2: #eb6834; /* Cash, and costs */
+  --series-3: #1baf7a; /* Card */
+  --series-4: #eda100; /* On credit */
+  --compare: #9a9bb0; /* Previous period and other reference marks */
+  /* The ink colour as channels, so a shadow can be "ink at 10%" in either theme */
+  --ink-rgb: 18 19 26;
+
+  /* Type */
+  --font-family: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --page-title-size: 28px; /* One per page */
+  --page-title-weight: 700;
+  --page-title-spacing: -0.02em;
+  --card-title-size: 17px; /* Card headings */
+  --card-title-size-small: 15px; /* Card headings in small cards */
+  --card-title-weight: 600;
+  --dialog-title-size: 16px; /* Dialog titles, at 700 */
+  --body-size: 14px; /* Paragraphs and form text */
+  --body-line: 1.5;
+  --table-size: 13.5px; /* Rows and cells */
+  --caption-size: 12.5px; /* Helper text, in the muted colour */
+  --label-size: 11.5px; /* Field and column labels, in capitals */
+  --label-weight: 700;
+  --label-spacing: 0.06em;
+  --kpi-size: 22px; /* Stat tiles */
+  --kpi-weight: 700;
+  --hero-size: 44px; /* Today's total and the till amount due */
+  --hero-weight: 700;
+
+  /* Spacing scale: padding and gaps */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* Layout: back-office pages */
+  --card-padding: 20px;
+  --card-gap: 16px;
+  --page-gutter: 24px;
+  --content-max: 1240px;
+  --topbar-height: 64px; /* App shell: top bar */
+  --sidebar-width: 240px; /* App shell: sidebar */
+  --sidebar-width-collapsed: 72px; /* App shell: sidebar with icons only */
+
+  /* Radius */
+  --radius-card: 14px;
+  --radius-tile: 12px;
+  --radius-input: 10px;
+  --radius-button: 10px;
+  --radius-button-small: 8px;
+  --radius-pill: 999px;
+
+  /* Control height: buttons and inputs */
+  --control-height: 40px;
+  --control-height-till: 44px;
+  --control-height-small: 32px;
+
+  /* Elevation: cards have a 1px line and no shadow */
+  --card-border: 1px solid var(--line);
+  --shadow-card: none;
+  --shadow-menu: 0 8px 24px rgb(var(--ink-rgb) / 0.1);
+  --shadow-dialog: 0 12px 32px rgb(var(--ink-rgb) / 0.12);
+
+  /* Icons: 18px, 1.8px stroke, round ends, current text colour */
+  --icon-size: 18px;
+  --icon-stroke: 1.8px;
+
+  /* Keyboard focus ring: 2px in brand-text, 2px away from the control */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--brand-text);
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e0f14;
+  --surface: #171821;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #9a9aa8;
+  --line: #262735;
+  --base: #383848;
+  --input-border: #6b6c80;
+  --field: #1d1e29;
+  --brand: #7c75f0;
+  --brand-text: #8f89f3;
+  --on-brand: #0e0f14;
+  --soft: #23224a;
+  --track: #2a2a52;
+  --selected-row: #1f1f3d;
+  --good: #0ca30c;
+  --bad: #e66767;
+  --warn: #e0a040;
+  --series-1: #7c75f0;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --compare: #9a9bb0;
+  --ink-rgb: 240 239 236;
+}

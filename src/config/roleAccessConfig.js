@@ -158,6 +158,7 @@ const ROUTE_GROUPS = {
     '/settings/payment-matching',
     '/settings/sales-people',
     '/settings/security',
+    '/settings/new-look',
   ],
   INDUSTRY: [
     '/industry/:industryCode/products',
@@ -552,6 +553,8 @@ export const getAllowedRoutes = (roles) => {
 export const RESTRICTED_ROUTES = {
   '/sales/returns': ['Sales Manager', 'Accounts Manager'],
   '/settings/audit-trail': ['Accounts Manager', 'Auditor'],
+  // The New look switch: owners only. Administrator and System Manager always pass, so no other role is listed.
+  '/settings/new-look': [],
   // Money checks: who may decide, who may match the bank statement, who manages sales people
   '/settings/approvals': ['Accounts Manager', 'Purchase Manager'],
   '/settings/payment-matching': ['Accounts Manager'],

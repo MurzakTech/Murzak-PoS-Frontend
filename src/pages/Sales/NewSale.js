@@ -31,9 +31,26 @@ import { getStockBalanceMultiple } from '../../store/inventorySlice';
 import { showNotification } from '../../store/notificationSlice';
 import { listCustomers, createCustomer } from '../../store/customerSlice';
 import LoyaltyRedemption from '../../components/Sales/LoyaltyRedemption';
+import { useNewLook } from '../../newlook/NewLookProvider';
+import '../../newlook/components'; // the shared components and their styles, used only when the New look is on
+import useKeptCart from '../../newlook/till/useKeptCart';
+import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
+import { sellingLocations } from '../../newlook/till/sellingLocations';
+import { stockNote } from '../../newlook/till/stockNote';
+import { getTillPaymentModes } from '../../api/paymentMethodsApi';
+import useUsualOpening from '../../newlook/setup/useUsualOpening';
+import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
+import tillText from '../../newlook/till/strings.till';
+import fillText from '../../newlook/labels/fill';
 import PosHeader from './pos/PosHeader';
 import ProductPanel from './pos/ProductPanel';
 import OrderPanel from './pos/OrderPanel';
+import '../../newlook/till/till-controls.css';
+import PayScreen from '../../newlook/till/PayScreen';
+import TillPanel from '../../newlook/till/TillPanel';
+import ShiftCloseDialog from '../../newlook/till/ShiftCloseDialog';
+import { getPreview, isPageLive } from '../../newlook/redirects/live';
+import { toNewAddress } from '../../newlook/redirects/engine';
 import PaymentPanel from './pos/PaymentPanel';
 import SalesPersonPicker from '../../components/Sales/SalesPersonPicker';
 import OpenTill from './pos/OpenTill';
@@ -262,6 +279,12 @@ const NewSale = () => {
   const [dispensing, setDispensing] = useState(null);
   const [rxOpen, setRxOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const { enabled: newLook } = useNewLook(); // the redesigned till pieces show only while the shop's New look is on
+  const [pendingLeave, setPendingLeave] = useState('/dashboard'); // where the cashier is going when the leave dialog opens
+  const [leaveHolding, setLeaveHolding] = useState(false);
+  const [tillPanelOpen, setTillPanelOpen] = useState(false); // New look: the Till open pill's panel (Recent sales)
+  const [shiftCloseOpen, setShiftCloseOpen] = useState(false); // New look: the shift-end count
+  const [leaveError, setLeaveError] = useState('');
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
   const [showPictures, setShowPictures] = useState(readShowPictures);
@@ -280,6 +303,8 @@ const NewSale = () => {
     control: posOpeningFormControl,
     handleSubmit: handlePosOpeningSubmit,
     reset: resetPosOpeningForm,
+    getValues: getPosOpeningValues,
+    setValue: setPosOpeningValue,
     formState: { errors: posOpeningErrors },
   } = useForm({
     defaultValues: {
@@ -294,6 +319,9 @@ const NewSale = () => {
     control: posOpeningFormControl,
     name: 'balance_details',
   });
+
+  // New look: the usual opening cash the owner set in first-time set-up fills in a first amount that is still empty (see useUsualOpening)
+  useUsualOpening({ enabled: newLook, company: userCompany, sessionOpen: isPOSSessionOpen, rows: balanceFields.length, getValue: getPosOpeningValues, setValue: setPosOpeningValue });
 
   // Form for Customer Creation
   const {
@@ -345,6 +373,26 @@ const NewSale = () => {
       }));
     }
   }, [userCompany, dispatch]);
+
+  // New look: the ways of paying the owner has switched on in Settings (kept on this device, so the till still has them offline)
+  const [tillModes, setTillModes] = useState(() => readSavedModes(userCompany));
+  useEffect(() => {
+    if (!newLook || !userCompany) return undefined;
+    let cancelled = false;
+    setTillModes(readSavedModes(userCompany));
+    getTillPaymentModes(userCompany)
+      .then((modes) => {
+        if (cancelled) return;
+        saveModes(userCompany, modes);
+        setTillModes(modes);
+      })
+      .catch(() => {
+        // Offline or not reachable: the last known list stays in use
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [newLook, userCompany]);
 
   // Which methods go through a gateway (configured per business under Settings > Payment Gateways)
   useEffect(() => {
@@ -1313,6 +1361,16 @@ const NewSale = () => {
     return ['Cash', 'Card', 'Mobile Money', 'Bank Transfer'];
   }, [paymentMethods]);
 
+  // What the pay screen offers: with the New look, only what Settings has switched on, in the order Cash, M-Pesa, Card, On credit, Other
+  const payModes = useMemo(() => (newLook ? offeredModes(paymentModes, tillModes) : paymentModes), [newLook, paymentModes, tillModes]);
+  useEffect(() => {
+    // If the method in use was switched off, move to the first one that is still on
+    if (newLook && payModes.length > 0 && !payModes.includes(paymentMode)) {
+      setPaymentMode(payModes[0]);
+      setPayments((rows) => rows.map((row) => (payModes.includes(row.mode) ? row : { ...row, mode: payModes[0] })));
+    }
+  }, [newLook, payModes, paymentMode]);
+
   // Credit info helper - use selectedCustomerObj directly (more reliable than searching)
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
   const creditInfo = useMemo(() => {
@@ -1541,7 +1599,7 @@ const NewSale = () => {
   };
 
   const holdCurrentSale = async (label) => {
-    if (cart.length === 0 || heldBusyRef.current) return;
+    if (cart.length === 0 || heldBusyRef.current) return false;
     heldBusyRef.current = true;
     try {
       const held = makeHeldSale(
@@ -1552,13 +1610,14 @@ const NewSale = () => {
       if (!result.ok) {
         // The sale stays on screen: clearing it now would lose it
         showHeldMessage('This sale could not be put on hold: neither the server nor this device would keep it. It is still on screen, so finish it or write it down first.', 'error');
-        return;
+        return false;
       }
       resetSale();
       const name = heldTitle(held);
       if (result.where === 'server') showHeldMessage(`"${name}" is on hold and shared with the other tills. Find it under Held sales at the top.`, 'success');
       else if (result.fellBack) showHeldMessage(`"${name}" is on hold on this device only, because the server could not be reached. It will be shared when the connection returns.`, 'warning');
       else showHeldMessage(`"${name}" is on hold. Find it under Held sales at the top.`, 'success');
+      return true;
     } finally {
       heldBusyRef.current = false;
     }
@@ -1735,10 +1794,15 @@ const NewSale = () => {
     if (!result.ok) showHeldMessage(result.message || 'Could not mark it as served.', 'error');
   };
 
-  const requestExit = () => {
-    if (cart.length > 0) setLeaveDialogOpen(true);
-    else navigate('/dashboard');
+  // Going anywhere else from the till (the exit button, Sales history): a sale in progress is asked about first
+  const leaveTo = (destination) => {
+    if (cart.length > 0) {
+      setPendingLeave(destination);
+      setLeaveError('');
+      setLeaveDialogOpen(true);
+    } else navigate(destination);
   };
+  const requestExit = () => leaveTo('/dashboard');
 
   const handlePaymentModeChange = (mode) => {
     setPaymentMode(mode);
@@ -1908,16 +1972,39 @@ const NewSale = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // A half-finished sale should survive an accidental refresh prompt
+  // New look: the sale in progress is kept on this device, so a refresh, a closed tab or a crash loses nothing (AC-21)
+  const keptSale = useMemo(
+    () => ({ cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue, activeHeldLabel, kitchen }),
+    [cart, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue, activeHeldLabel, kitchen]
+  );
+  useKeptCart({
+    enabled: newLook,
+    company: userCompany,
+    user: userId,
+    sale: keptSale,
+    onRestore: (kept) => {
+      setCart(kept.cart);
+      setCustomer(kept.customer);
+      setCustomerId(kept.customerId);
+      setSelectedCustomerObj(kept.selectedCustomerObj);
+      setCustomerPriceList(kept.customerPriceList);
+      setManualDiscountType(kept.manualDiscountType);
+      setManualDiscountValue(kept.manualDiscountValue);
+      setActiveHeldLabel(kept.activeHeldLabel);
+      setKitchen(kept.kitchen || EMPTY_KITCHEN);
+    },
+  });
+
+  // A half-finished sale should survive an accidental refresh prompt (with the New look the sale is kept, so no prompt is needed)
   useEffect(() => {
-    if (cart.length === 0) return undefined;
+    if (cart.length === 0 || newLook) return undefined;
     const warn = (e) => {
       e.preventDefault();
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [cart.length]);
+  }, [cart.length, newLook]);
 
   // Show more tiles reset when the filter changes
   useEffect(() => setTileLimit(TILE_PAGE), [debouncedSearchTerm, selectedCategory]);
@@ -1942,7 +2029,17 @@ const NewSale = () => {
       }
     },
   });
+  // New look: a line with more than is in stock says so in words, such as "Only 13 left" (a service keeps no stock, so it never does)
+  const lineStockNote = (item) => {
+    const product = products.find((p) => p.item_code === item.item_code);
+    if (product && (product.is_stock_item === 0 || product.is_stock_item === false)) return null;
+    const stock = productStocks[item.item_code]?.[item.warehouse || defaultWarehouse];
+    return stockNote(item.qty, stock === undefined ? null : stock);
+  };
   const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
+
+  // The pay screen: the redesigned one while the New look is on (same props, so nothing the old one did is lost)
+  const PayPanel = newLook ? PayScreen : PaymentPanel;
 
   const orderPanel = (
     <OrderPanel
@@ -1955,9 +2052,10 @@ const NewSale = () => {
       onDec={(code) => updateQuantity(code, -1)}
       onSetQty={setQuantity}
       onRemove={removeFromCart}
-      warehouses={warehouses}
+      warehouses={newLook ? sellingLocations(warehouses) : warehouses}
       defaultWarehouse={defaultWarehouse}
       onChangeWarehouse={handleChangeLineWarehouse}
+      stockNoteFor={newLook ? lineStockNote : undefined}
       totals={totals}
       manualDiscountType={manualDiscountType}
       manualDiscountValue={manualDiscountValue}
@@ -1979,7 +2077,7 @@ const NewSale = () => {
   );
 
   return (
-    <Box sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
+    <Box className={newLook ? 'nl-till-root' : undefined} sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
       <PosHeader
         storeName={storeName}
         warehouses={warehouses}
@@ -1987,12 +2085,12 @@ const NewSale = () => {
         onChangeStore={(w) => dispatch(setActiveWarehouse(w))}
         cashierName={cashierName}
         sessionOpen={isPOSSessionOpen}
-        onSessionDetails={handleViewSessionDetails}
+        onSessionDetails={newLook ? () => setTillPanelOpen(true) : handleViewSessionDetails}
         heldCount={heldSales.length}
         onOpenHeld={() => setHeldDialogOpen(true)}
         onExit={requestExit}
-        onCloseSession={handleCloseSession}
-        onGoHistory={() => navigate('/sales/history')}
+        onCloseSession={newLook ? () => setShiftCloseOpen(true) : handleCloseSession}
+        onGoHistory={() => (newLook ? leaveTo('/sales/history') : navigate('/sales/history'))}
         themeMode={themeMode}
         onToggleTheme={toggleColorMode}
         autoPrint={autoPrint}
@@ -2038,10 +2136,10 @@ const NewSale = () => {
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
           <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {isCheckoutMode ? (
-              <PaymentPanel
+              <PayPanel
                 currency={currency}
                 total={grandTotal}
-                paymentModes={paymentModes}
+                paymentModes={payModes}
                 paymentMode={paymentMode}
                 onPaymentModeChange={handlePaymentModeChange}
                 splitPayments={splitPayments}
@@ -2195,6 +2293,41 @@ const NewSale = () => {
         entry={posOpeningEntry}
       />
 
+      {newLook && (
+        <>
+          <TillPanel
+            open={tillPanelOpen}
+            onClose={() => setTillPanelOpen(false)}
+            session={posOpeningEntry}
+            currency={currency}
+            heldCount={heldSales.length}
+            onOpenHeld={() => {
+              setTillPanelOpen(false);
+              setHeldDialogOpen(true);
+            }}
+            onCloseTill={() => {
+              setTillPanelOpen(false);
+              setShiftCloseOpen(true);
+            }}
+            onOpenSale={(id) => {
+              setTillPanelOpen(false);
+              leaveTo(isPageLive('/sales', getPreview()) ? `${toNewAddress('/sales')}?sale=${encodeURIComponent(id)}` : '/sales/history');
+            }}
+          />
+          <ShiftCloseDialog
+            open={shiftCloseOpen}
+            onClose={() => setShiftCloseOpen(false)}
+            session={posOpeningEntry}
+            currency={currency}
+            onClosed={(result) => {
+              // The server has closed the session: tell the till, so it shows the "open the till" screen as it does after a close today
+              const name = posOpeningEntry?.name;
+              dispatch(closePOSOpeningEntry.fulfilled({ requestedName: name, openingEntry: null, outcome: result?.outcome === 'closing' ? 'closing' : 'closed' }, 'new-look-close', { pos_opening_entry: name }));
+            }}
+          />
+        </>
+      )}
+
       <HeldSalesDialog
         open={heldDialogOpen}
         onClose={() => setHeldDialogOpen(false)}
@@ -2310,8 +2443,32 @@ const NewSale = () => {
         }}
       />
 
+      <LeaveTillDialog
+        open={newLook && leaveDialogOpen}
+        itemCount={cartItemCount}
+        busy={leaveHolding}
+        error={leaveError}
+        onStay={() => setLeaveDialogOpen(false)}
+        onLeaveAndClear={() => {
+          setLeaveDialogOpen(false);
+          resetSale();
+          navigate(pendingLeave);
+        }}
+        onHoldAndLeave={async () => {
+          setLeaveHolding(true);
+          setLeaveError('');
+          const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+          const held = await holdCurrentSale(activeHeldLabel || fillText(tillText.leave.holdLabel, { time }));
+          setLeaveHolding(false);
+          if (held) {
+            setLeaveDialogOpen(false);
+            navigate(pendingLeave);
+          } else setLeaveError(tillText.leave.holdFailed);
+        }}
+      />
+
       <PosConfirm
-        open={leaveDialogOpen}
+        open={!newLook && leaveDialogOpen}
         title="Leave the till?"
         message="The sale in progress has items in it. If you leave now, it will be lost. You can put it on hold instead."
         confirmLabel="Leave and discard"
@@ -2319,7 +2476,7 @@ const NewSale = () => {
         onClose={() => setLeaveDialogOpen(false)}
         onConfirm={() => {
           setLeaveDialogOpen(false);
-          navigate('/dashboard');
+          navigate(pendingLeave);
         }}
       />
 

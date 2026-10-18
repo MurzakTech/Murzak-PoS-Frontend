@@ -5,6 +5,10 @@ import Layout from '../components/Layout/Layout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import IdleSignOut from '../components/IdleSignOut';
 import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Common';
+import NewLookGate from '../newlook/NewLookGate';
+import NewLookShell from '../newlook/NewLookShellConnected';
+import { newLookRoutes } from '../newlook/newLookRoutes';
+import LegacyRedirects from '../newlook/redirects/LegacyRedirects';
 
 // Branded splash for public pages; layout-shaped skeleton inside the app shell
 const LoadingFallback = FullPageLoader;
@@ -63,6 +67,8 @@ const AppRouter = () => {
     <ErrorBoundary>
     <BrowserRouter>
       <IdleSignOut />
+      {/* With the New look on, an old address whose new page is live goes to the new page (src/newlook/redirects) */}
+      <LegacyRedirects>
       <Routes>
           {/* Public routes (without Layout) */}
           {publicRoutes.map((route) => {
@@ -159,6 +165,28 @@ const AppRouter = () => {
                 }) || []
             )}
           
+          {/* Redesigned screens: open only while the shop's New look switch is on (see src/newlook) */}
+          {newLookRoutes.map((route) => {
+            const Component = route.element;
+            return (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  <ProtectedRoute>
+                    <NewLookGate>
+                      <NewLookShell>
+                        <Suspense fallback={<ContentLoadingFallback />}>
+                          <Component />
+                        </Suspense>
+                      </NewLookShell>
+                    </NewLookGate>
+                  </ProtectedRoute>
+                }
+              />
+            );
+          })}
+
           {/* 404 route */}
           {routes
             .filter((route) => route.path === '*')
@@ -177,6 +205,7 @@ const AppRouter = () => {
               );
             })}
         </Routes>
+      </LegacyRedirects>
     </BrowserRouter>
     </ErrorBoundary>
   );

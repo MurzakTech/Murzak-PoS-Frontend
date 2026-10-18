@@ -1,0 +1,200 @@
+/*
+ * The Products page, the Categories tab and the New product form (tickets P4-1 and P4-2). Every colour, size and space is a
+ * design token. The list and the product panel use the shared list-with-detail layout; below 768px the rows become cards and
+ * the filters sit behind one Filters button.
+ */
+.nl-products {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-products__list {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+
+.nl-products-sub {
+  display: block;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+.nl-products-note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--body-size);
+}
+
+/* Export, Import and New product, side by side at the right of the title */
+.nl-products-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.nl-products__filters-toggle {
+  justify-self: start;
+  min-height: var(--control-height-till);
+}
+
+/* ---------- Cards (below 768px) ---------- */
+.nl-products-cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-products-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-till);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--table-size);
+  text-align: left;
+  cursor: pointer;
+}
+.nl-products-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-products-card.is-selected {
+  background: var(--selected-row);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+.nl-products-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-products-card__head {
+  font-size: var(--body-size);
+}
+.nl-products-card__aside {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nl-products-card__line {
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  .nl-products .nl-detail__nav .nl-btn,
+  .nl-products .nl-detail__actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+  .nl-products .nl-detail__actions {
+    gap: var(--space-2);
+  }
+  .nl-products-actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+}
+
+/* ---------- The New product form ---------- */
+.nl-products-formtop {
+  outline: none;
+}
+.nl-products-formgroup {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-products-profit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-products-profit .nl-icon {
+  flex: none;
+  color: var(--brand-text);
+}
+
+.nl-products-chips {
+  display: grid;
+  gap: var(--space-2);
+  outline: none;
+}
+.nl-products-chips:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-products-chips__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-products-chip {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+}
+.nl-products-chip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-products-chip .nl-chip {
+  min-height: var(--control-height-small);
+}
+@media (max-width: 767px) {
+  .nl-products-chip,
+  .nl-products-chip .nl-chip {
+    min-height: var(--control-height-till);
+  }
+  .nl-products-chips__list {
+    gap: var(--space-2);
+  }
+}
+
+.nl-products-dialog-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* A category name in the table is a link: the brand text colour, underlined on hover, with the focus ring */
+.nl-products-link {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+.nl-products-link:hover {
+  text-decoration: underline;
+}
+.nl-products-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-button-small);
+}
+
+
+/* On a phone these stand-alone links are tap targets: at least 44px high */
+@media (max-width: 767px) {
+  .nl-products-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}

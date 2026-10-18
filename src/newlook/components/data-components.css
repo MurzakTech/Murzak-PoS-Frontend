@@ -1,0 +1,578 @@
+/*
+ * Styles of the data components (ticket P1-4): Skeleton, Empty state, Segmented control, Tabs, Table and summary
+ * row, Pagination, Filter row and Detail panel, plus the small additions they need in Field and Select.
+ * Every colour, size, radius and space is a design token from ../tokens.css; the test in tokens.test.js fails
+ * if a colour is written here. Hover is an overlay of the ink colour (8%), pressed 16%, as in components.css.
+ */
+
+/* ---------- Focus ring for the new keyboard targets (2px brand-text, 2px offset) ---------- */
+.nl-segmented__item:focus-visible,
+.nl-tab:focus-visible,
+.nl-split a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+/* A row sits inside a clipped table, so its ring is drawn just inside the row */
+.nl-table tbody tr:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+}
+.nl-detail__title:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-table-wrap:focus-visible,
+.nl-detail__fold summary:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ---------- Additions to Field and Select ---------- */
+.nl-input-icon {
+  display: inline-flex;
+  align-items: center;
+  padding-left: var(--space-3);
+  color: var(--muted);
+}
+.nl-input-icon + .nl-input {
+  padding-left: var(--space-2);
+}
+.nl-input[type='search']::-webkit-search-cancel-button,
+.nl-input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.nl-select--small .nl-select__button {
+  min-height: var(--control-height-small);
+  border-radius: var(--radius-button-small);
+}
+/* Inline: the label sits beside the box, and the menu opens upward because this sits at the foot of a list */
+.nl-select--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+}
+.nl-select--inline .nl-label {
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-medium);
+}
+.nl-select--inline .nl-select__button {
+  min-width: calc(var(--space-8) + var(--space-5));
+}
+.nl-select--inline .nl-select__menu {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+  left: auto;
+  right: 0;
+  min-width: 100%;
+}
+
+/* ---------- Skeleton ---------- */
+.nl-skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--track) 0%, var(--line) 50%, var(--track) 100%);
+  background-size: 200% 100%;
+  animation: nl-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes nl-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.nl-skeleton-text {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-skeleton-rows {
+  display: grid;
+}
+.nl-skeleton-row {
+  display: grid;
+  align-items: center;
+  gap: var(--space-4);
+  box-sizing: border-box;
+  height: calc(var(--space-3) * 2 + var(--control-height-small) + 1px);
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.nl-loading {
+  position: relative;
+}
+
+/* ---------- Empty state ---------- */
+.nl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.nl-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--soft);
+  color: var(--brand-text);
+}
+.nl-empty.is-error .nl-empty__icon {
+  color: var(--bad);
+}
+.nl-empty__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+  line-height: 1.3;
+}
+.nl-empty__text {
+  max-width: 44ch;
+  margin: 0 0 var(--space-1);
+  color: var(--ink-2);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+
+/* ---------- Segmented control ---------- */
+.nl-segmented {
+  max-width: 100%;
+  overflow-x: auto;
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button);
+}
+.nl-segmented__item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--control-height) - var(--space-2) - 2px);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-button-small);
+  background-color: transparent;
+  background-image: none;
+  color: var(--ink-2);
+  font: var(--font-weight-medium) var(--body-size) / 1 var(--font-family);
+  white-space: nowrap;
+  cursor: pointer;
+}
+/* The bold width is reserved up front, so choosing a segment never moves its neighbours */
+.nl-segmented__item::after {
+  content: attr(data-label);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-segmented__item:hover,
+.nl-segmented__item.is-hover {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));
+}
+.nl-segmented__item:active {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.16), rgb(var(--ink-rgb) / 0.16));
+}
+.nl-segmented__item.is-selected {
+  background-color: var(--soft);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-segmented--small .nl-segmented__item {
+  min-height: calc(var(--control-height-small) - var(--space-2) - 2px);
+  padding: 0 var(--space-3);
+}
+
+/* ---------- Tabs ---------- */
+.nl-tabs {
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+}
+.nl-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  margin-bottom: -1px;
+  padding: 0 var(--space-1);
+  border-bottom: 2px solid transparent;
+  color: var(--ink-2);
+  font: var(--font-weight-medium) var(--body-size) / 1 var(--font-family);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nl-tab__label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+.nl-tab__label::after {
+  content: attr(data-label);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-tab:hover {
+  color: var(--ink);
+}
+.nl-tab.is-selected {
+  border-bottom-color: var(--brand-text);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- Table ---------- */
+.nl-table-wrap {
+  position: relative; /* so hidden helper text inside the table scrolls with it instead of widening the page */
+  box-sizing: border-box;
+  min-width: 0;
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  /* clip (not hidden) keeps the rounded corners without stopping the header from sticking to the page */
+  overflow: clip;
+}
+.nl-table-wrap.has-max-height,
+.nl-table-wrap.is-scrollable {
+  overflow: auto;
+}
+.nl-table-wrap.is-scrollable .nl-table th {
+  position: static;
+}
+.nl-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--ink);
+  font-size: var(--table-size);
+  line-height: 1.4;
+}
+.nl-table th {
+  position: sticky;
+  top: var(--sticky-top, 0);
+  z-index: 1;
+  padding: var(--space-3);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.nl-table td {
+  /* 12px above and below a 32px small button (a row's menu), plus the 1px line: every row is this tall */
+  height: calc(var(--space-3) * 2 + var(--control-height-small) + 1px);
+  box-sizing: border-box;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.nl-table th:first-child,
+.nl-table td:first-child {
+  padding-left: var(--space-4);
+}
+.nl-table th:last-child,
+.nl-table td:last-child {
+  padding-right: var(--space-4);
+}
+.nl-table .is-nowrap {
+  white-space: nowrap;
+}
+.nl-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.nl-table .is-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.nl-table tbody tr.is-clickable {
+  cursor: pointer;
+}
+.nl-table tbody tr:hover td,
+.nl-table tbody tr.is-hover td {
+  background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));
+}
+.nl-table tbody tr.is-selected td {
+  background-color: var(--selected-row);
+}
+/* A bar on the open row's left edge, so the open row is not shown by its fill alone */
+.nl-table tbody tr.is-selected td:first-child {
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+
+/* ---------- Summary row ---------- */
+.nl-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-gap);
+  margin: 0;
+}
+.nl-summary__item {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-tile);
+}
+.nl-summary__item dt {
+  margin: 0 0 var(--space-1);
+}
+.nl-summary__value {
+  min-height: var(--space-6);
+  margin: 0;
+  font-size: var(--kpi-size);
+  font-weight: var(--kpi-weight);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.nl-summary__note {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Pagination ---------- */
+.nl-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) 0;
+}
+.nl-pagination__showing,
+.nl-pagination__page {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-pagination__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ---------- Filter row ---------- */
+.nl-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+.nl-filters__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.nl-filters__search {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+.nl-filters__date {
+  width: 150px;
+}
+.nl-filters__select {
+  min-width: 170px;
+}
+.nl-filters__clear {
+  align-self: flex-end;
+}
+
+/* ---------- Detail panel and list with detail ---------- */
+.nl-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--card-gap);
+  align-items: start;
+}
+@media (min-width: 1100px) {
+  .nl-split.has-detail {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .nl-split.has-detail .nl-split__list {
+    grid-column: span 8;
+  }
+  .nl-split.has-detail .nl-split__detail {
+    grid-column: span 4;
+    position: sticky;
+    top: var(--sticky-top, var(--space-4));
+  }
+}
+/* Below 1100px an open panel takes the whole page, and the list waits behind it */
+@media (max-width: 1099px) {
+  .nl-split.has-detail .nl-split__list {
+    display: none;
+  }
+}
+
+.nl-detail {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--card-padding);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+}
+.nl-detail__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-detail__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.nl-detail__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+  line-height: 1.3;
+}
+.nl-detail__subtitle,
+.nl-detail__position {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-detail__position {
+  margin-top: var(--space-1);
+}
+.nl-detail__nav {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+}
+.nl-detail__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.nl-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+.nl-detail__fold {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  font-size: var(--table-size);
+}
+.nl-detail__fold summary {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+.nl-detail__fold .nl-facts {
+  margin-top: var(--space-3);
+}
+
+.nl-facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.nl-facts__row {
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-facts__row dt {
+  margin: 0;
+}
+.nl-facts__row dd {
+  margin: 0;
+  font-size: var(--body-size);
+  overflow-wrap: anywhere;
+}
+
+/* A column marked hideOnTablet gives way below 1100px, where a detail panel or a side list takes part of the width */
+@media (max-width: 1100px) {
+  .nl-table .hide-on-tablet {
+    display: none;
+  }
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 767px) {
+  .nl-segmented__item,
+  .nl-tab {
+    min-height: var(--control-height-till);
+  }
+  /* Tighter gaps so more of the tab strip is in view; the rest scrolls sideways */
+  .nl-tabs {
+    gap: var(--space-4);
+  }
+  .nl-segmented--small .nl-segmented__item {
+    min-height: var(--control-height-till);
+  }
+  /* The presets share the full width, so four of them always fit */
+  .nl-segmented {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .nl-segmented__item {
+    flex: 1 1 0;
+    padding: 0 var(--space-2);
+  }
+  .nl-table {
+    min-width: 560px;
+  }
+  /* A column marked hideOnPhone gives way on a phone, and a table with few columns left no longer needs the wide minimum */
+  .nl-table .hide-on-phone {
+    display: none;
+  }
+  .nl-table-wrap.is-compact .nl-table {
+    min-width: 0;
+  }
+  .nl-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nl-filters > * {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .nl-filters__date {
+    flex: 1 1 calc(50% - var(--space-2));
+    width: auto;
+  }
+  .nl-select--small .nl-select__button {
+    min-height: var(--control-height-till);
+  }
+  .nl-pagination__controls {
+    width: 100%;
+  }
+}
+
+/* ---------- Reduced motion: the shimmer stops ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .nl-skeleton {
+    animation: none;
+  }
+}

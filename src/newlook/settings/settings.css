@@ -1,0 +1,300 @@
+.nl-settings {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+}
+.nl-settings-switches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.nl-settings-switch {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.nl-settings-switch:last-child {
+  border-bottom: 0;
+}
+.nl-settings-hint,
+.nl-settings-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-settings-note {
+  margin-bottom: var(--space-3);
+}
+.nl-settings-subtitle {
+  margin: var(--space-5) 0 var(--space-1);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- The Settings page (ticket P5-3): a side list of five sections and a card per group of settings ---------- */
+.nl-settings-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  min-width: 0;
+}
+.nl-settings-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--card-gap);
+  min-width: 0;
+  max-width: 760px;
+}
+.nl-settings-nav {
+  position: sticky;
+  top: var(--space-4);
+}
+.nl-settings-nav__title {
+  margin: 0 0 var(--space-2);
+  padding: 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.nl-settings-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-settings-nav__link {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-button);
+  color: var(--ink-2);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+.nl-settings-nav__link:hover {
+  background: var(--soft);
+}
+.nl-settings-nav__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-settings-nav__link[aria-current='page'] {
+  background: var(--soft);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+/* A card, its fields and its own Save row */
+.nl-settings-card {
+  min-width: 0;
+  border-radius: var(--radius-card);
+}
+.nl-settings-card.is-highlighted,
+.nl-settings-link.is-highlighted {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-settings-form {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-settings-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  min-width: 0;
+}
+.nl-settings-fields > .is-wide {
+  grid-column: 1 / -1;
+}
+.nl-settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+.nl-settings-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-settings-status.is-saved {
+  color: var(--good);
+}
+.nl-settings-buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+.nl-settings-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--bad);
+  font-size: var(--body-size);
+}
+.nl-settings-error .nl-icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* A list of links to the current screens */
+.nl-settings-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.nl-settings-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+.nl-settings-link:last-child {
+  border-bottom: 0;
+}
+.nl-settings-link__text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.nl-settings-link__title {
+  margin: 0;
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-settings-link .nl-btn {
+  flex: none;
+}
+
+/* A line that reads like a field: a name, its value and a word (On, Off) */
+.nl-settings-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: var(--body-size);
+}
+.nl-settings-line strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* The Team list */
+.nl-settings-person {
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-settings-person__name {
+  font-weight: var(--font-weight-semibold);
+}
+.nl-settings-person__sub {
+  color: var(--muted);
+  font-size: var(--caption-size);
+  overflow-wrap: anywhere;
+}
+.nl-settings-person__phone-only {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .nl-settings-person__phone-only {
+    display: block;
+  }
+}
+.nl-settings-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  color: var(--good);
+  font-size: var(--caption-size);
+}
+.nl-settings-dialog {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-settings-audit-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 200px));
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.nl-settings-audit-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+/* Phones: the side list becomes a row of tabs that scrolls sideways; cards use one column */
+@media (max-width: 767px) {
+  .nl-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  .nl-settings-nav {
+    position: static;
+    overflow-x: auto;
+  }
+  .nl-settings-nav__title {
+    display: none;
+  }
+  .nl-settings-nav ul {
+    display: flex;
+    gap: var(--space-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .nl-settings-nav__link {
+    min-height: 44px;
+    white-space: nowrap;
+    border-radius: var(--radius-button) var(--radius-button) 0 0;
+  }
+  .nl-settings-nav__link[aria-current='page'] {
+    box-shadow: inset 0 -3px 0 var(--brand);
+  }
+  .nl-settings-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nl-settings-audit-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nl-settings-link {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .nl-settings-link .nl-btn {
+    min-height: 44px;
+  }
+  .nl-settings-person__phone-only {
+    display: block;
+  }
+}

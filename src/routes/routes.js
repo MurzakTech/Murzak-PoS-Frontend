@@ -110,6 +110,7 @@ const Approvals = lazy(() => import('../pages/Settings/Approvals'));
 const PaymentMatching = lazy(() => import('../pages/Settings/PaymentMatching'));
 const SalesPeople = lazy(() => import('../pages/Settings/SalesPeople'));
 const Security = lazy(() => import('../pages/Settings/Security'));
+const NewLook = lazy(() => import('../pages/Settings/NewLook'));
 const AccountProvisioning = lazy(() => import('../pages/Settings/AccountProvisioning'));
 const PaymentMethods = lazy(() => import('../pages/Settings/PaymentMethods'));
 const PaymentGateways = lazy(() => import('../pages/Settings/PaymentGateways'));
@@ -901,6 +902,7 @@ export const protectedRoutes = [
       { path: '/settings/payment-matching', label: 'Payment Matching', icon: 'CompareArrows' },
       { path: '/settings/sales-people', label: 'Sales People', icon: 'People' },
       { path: '/settings/security', label: 'Security', icon: 'Security' },
+      { path: '/settings/new-look', label: 'New look', icon: 'Settings' },
     ],
     children: [
       {
@@ -986,6 +988,12 @@ export const protectedRoutes = [
         element: Security,
         label: 'Security',
         icon: 'Security',
+      },
+      {
+        path: '/settings/new-look',
+        element: NewLook,
+        label: 'New look',
+        icon: 'Settings',
       },
       // Dynamic routes (not in sidebar, accessed via links)
       {

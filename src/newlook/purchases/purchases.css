@@ -1,0 +1,468 @@
+/*
+ * The Purchases page, the Receive goods steps and the New purchase form (ticket P4-5). Every colour, size and space is a
+ * design token. The list and the purchase panel use the shared list-with-detail layout; below 768px the rows become cards and
+ * the filters sit behind one Filters button.
+ */
+.nl-purchases {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-purchases__list {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-purchases-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.nl-purchases-sub {
+  display: block;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-purchases-form {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-purchases-form__method {
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-purchases__filters-toggle {
+  justify-self: start;
+  min-height: var(--control-height-till);
+}
+
+/* ---------- The purchase in the panel ---------- */
+.nl-purchase__note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-purchase__lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--table-size);
+}
+.nl-purchase__lines th {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-align: left;
+  text-transform: uppercase;
+}
+.nl-purchase__lines td {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.nl-purchase__lines .is-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-left: var(--space-3);
+}
+.nl-purchase__totals {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--body-size);
+}
+.nl-purchase__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-purchase__total dt,
+.nl-purchase__total dd {
+  margin: 0;
+}
+.nl-purchase__total dd {
+  font-variant-numeric: tabular-nums;
+}
+.nl-purchase__total.is-strong {
+  font-weight: var(--font-weight-bold);
+}
+.nl-purchase__section {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-purchase__section h3 {
+  margin: 0;
+}
+.nl-purchase__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--table-size);
+}
+.nl-purchase__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+.nl-purchase__list a {
+  color: var(--brand-text);
+}
+.nl-purchase__list a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-purchase__sub {
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* ---------- Cards (below 768px) ---------- */
+.nl-purchases-cards {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-purchases-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-till);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--table-size);
+  text-align: left;
+  cursor: pointer;
+}
+.nl-purchases-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-purchases-card.is-selected {
+  background: var(--selected-row);
+  box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
+}
+.nl-purchases-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nl-purchases-card__head {
+  font-size: var(--body-size);
+}
+.nl-purchases-card__aside {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.nl-purchases-card__line {
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  .nl-purchases .nl-detail__nav .nl-btn,
+  .nl-purchases .nl-detail__actions .nl-btn,
+  .nl-purchases-actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+  .nl-purchases .nl-detail__actions {
+    gap: var(--space-2);
+  }
+  .nl-purchases-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ---------- Receive goods ---------- */
+.nl-receive {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--card-gap);
+}
+.nl-receive-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-receive-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+}
+.nl-receive-steps__item.is-current {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-receive-steps__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  background: var(--soft);
+  border-radius: var(--radius-pill);
+  font-variant-numeric: tabular-nums;
+}
+.nl-receive-steps__item.is-current .nl-receive-steps__number {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.nl-receive-steps__item.is-done .nl-receive-steps__number {
+  color: var(--good);
+}
+.nl-receive__heading {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+}
+.nl-receive__heading:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-receive__chosen {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-receive__tools {
+  display: flex;
+  gap: var(--space-2);
+}
+.nl-receive-note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-receive-qty {
+  min-width: calc(var(--space-8) * 2);
+}
+/* The label of a field inside a table row stays for screen readers (it names the product) but is not drawn again on every row */
+.nl-receive-qty .nl-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.nl-receive-facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.nl-receive-facts dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+.nl-receive-total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--body-size);
+}
+.nl-receive-total strong {
+  font-variant-numeric: tabular-nums;
+}
+.nl-receive-done {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--card-padding);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+}
+.nl-receive-done p {
+  margin: 0;
+}
+.nl-receive-done__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--good);
+  font-size: var(--card-title-size);
+}
+.nl-receive-done__title:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-receive-done__stock,
+.nl-receive-done__links {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-receive-done__links a {
+  color: var(--brand-text);
+}
+.nl-receive-done__links a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-receive-done__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ---------- New purchase ---------- */
+.nl-newpurchase__items {
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-newpurchase__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+}
+.nl-newpurchase__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--body-size);
+}
+.nl-newpurchase__total strong {
+  font-variant-numeric: tabular-nums;
+}
+.nl-newpurchase__bill {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-buy-picker {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-buy-picker__list {
+  display: grid;
+  gap: var(--space-1);
+  max-height: 220px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.nl-buy-picker__option {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-input);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.nl-buy-picker__option:hover {
+  background: var(--selected-row);
+}
+.nl-buy-picker__option:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+@media (max-width: 767px) {
+  .nl-buy-picker__option {
+    min-height: var(--control-height-till);
+  }
+  .nl-receive .nl-btn,
+  .nl-newpurchase__items .nl-btn {
+    min-height: var(--control-height-till);
+  }
+}
+
+/* ---------- Printing a purchase ---------- */
+.nl-purchase-print {
+  display: none;
+}
+@media print {
+  body.nl-printing-purchase > *:not(.nl-purchase-print) {
+    display: none !important;
+  }
+  body.nl-printing-purchase > .nl-purchase-print {
+    display: block;
+    box-sizing: border-box;
+    max-width: 180mm;
+    margin: 0 auto;
+    padding: var(--space-4);
+    background: Canvas;
+    color: CanvasText;
+    color-scheme: light;
+    font-family: var(--font-family);
+    font-size: var(--table-size);
+  }
+  .nl-purchase-print h1 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--card-title-size);
+  }
+  .nl-purchase-print p {
+    margin: 0 0 var(--space-1);
+  }
+  .nl-purchase-print .nl-purchase__lines th,
+  .nl-purchase-print .nl-purchase__list {
+    color: CanvasText;
+  }
+}
+
+/* A link inside a form is the brand text colour, underlined on hover; on a phone it is a 44px tap target */
+.nl-purchases-link {
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+.nl-purchases-link:hover {
+  text-decoration: underline;
+}
+.nl-purchases-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-button-small);
+}
+@media (max-width: 767px) {
+  .nl-purchases-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
+}
+
+/* The lines of a purchase scroll sideways inside a narrow panel rather than widening the page */
+.nl-purchase__lines-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.nl-purchase__lines-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

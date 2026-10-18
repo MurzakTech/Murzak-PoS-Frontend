@@ -1,0 +1,218 @@
+/*
+ * The redesigned Sign-in page (ticket P5-5). Every colour, size and space is a design token. One card, centred, 360px to 420px wide
+ * (it shrinks to fit a 320px phone with a 16px gutter on each side). The page sets its own background so it reads in both themes.
+ */
+.nl-auth {
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-family);
+  font-size: var(--body-size);
+  line-height: var(--body-line);
+}
+.nl-auth *,
+.nl-auth *::before,
+.nl-auth *::after {
+  box-sizing: border-box;
+}
+.nl-auth__bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3) var(--space-4) 0;
+}
+.nl-auth__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+/* ---------- The card ---------- */
+.nl-auth__card.nl-card {
+  width: 100%;
+  max-width: 420px;
+  min-width: 0;
+  background: var(--surface);
+  padding: var(--space-6) var(--space-5);
+}
+@media (min-width: 480px) {
+  .nl-auth__card.nl-card {
+    min-width: 360px;
+    padding: var(--space-7);
+  }
+}
+.nl-auth__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: var(--radius-button-small);
+}
+.nl-auth__brand:focus-visible,
+.nl-auth__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-auth__logo {
+  display: block;
+  height: var(--space-7);
+  width: auto;
+  flex: none;
+}
+.nl-auth__name {
+  font-size: var(--card-title-size);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--page-title-spacing);
+  white-space: nowrap;
+}
+.nl-auth__title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
+  letter-spacing: var(--page-title-spacing);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.nl-auth__subtitle {
+  margin: 0 0 var(--space-5);
+  color: var(--ink-2);
+}
+
+/* ---------- Messages: an icon and words, never colour alone ---------- */
+.nl-auth__alert,
+.nl-auth__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  color: var(--ink);
+}
+.nl-auth__alert {
+  border-color: var(--bad);
+}
+.nl-auth__alert .nl-icon {
+  color: var(--bad);
+  margin-top: 2px;
+  flex: none;
+}
+.nl-auth__note .nl-icon {
+  color: var(--brand-text);
+  margin-top: 2px;
+  flex: none;
+}
+.nl-auth__alert-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.nl-auth__alert .nl-btn {
+  flex: none;
+  margin: calc(var(--space-1) * -1) calc(var(--space-1) * -1) 0 0;
+}
+
+/* ---------- The form ---------- */
+.nl-auth__form {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.nl-auth__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.nl-auth__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-small);
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  border-radius: var(--radius-button-small);
+}
+.nl-auth__link:hover {
+  text-decoration: underline;
+}
+.nl-auth__submit {
+  width: 100%;
+}
+.nl-auth__form .nl-btn {
+  width: 100%;
+  justify-content: center;
+}
+.nl-auth__small {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* The code: big, evenly spaced digits */
+.nl-auth__code .nl-input {
+  font-size: var(--kpi-size);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Below the form ---------- */
+.nl-auth__switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  text-align: center;
+}
+.nl-auth__switch p {
+  margin: 0;
+}
+.nl-auth__legal {
+  max-width: 420px;
+  color: var(--muted);
+  font-size: var(--caption-size);
+  text-align: center;
+}
+.nl-auth__legal p {
+  margin: 0;
+}
+.nl-auth__legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+/* ---------- Small screens: tap targets are at least 44px with 8px between neighbours ---------- */
+@media (max-width: 767px) {
+  .nl-auth__link {
+    min-height: var(--control-height-till);
+  }
+  .nl-auth__form {
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 767px) {
+  .nl-auth__brand {
+    min-height: var(--control-height-till);
+  }
+}

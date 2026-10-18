@@ -1,0 +1,283 @@
+/*
+ * Reports (ticket P5-2). The landing page is a grid of question cards; a report page is a header, a filter row, a strip
+ * of figures, the charts and the table. Every colour, size and space is a design token.
+ *
+ * The age scale of the debt and stock bars is made from series-1 and the card colour (the Spec's ordered indigo scale
+ * could not be added as new colour tokens: the token set is fixed). The deeper the colour, the older the amount, in
+ * both themes; the legend always names each part, so age is never read from colour alone.
+ */
+.nl-reports {
+  --age-1: color-mix(in srgb, var(--series-1) 35%, var(--surface));
+  --age-2: color-mix(in srgb, var(--series-1) 62%, var(--surface));
+  --age-3: var(--series-1);
+  --age-4: color-mix(in srgb, var(--series-1) 78%, var(--ink));
+  max-width: var(--content-max);
+  margin: 0 auto;
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+/* On the dark card the light end of the scale would vanish, so the scale starts pale and deepens toward the older bands */
+:root[data-theme='dark'] .nl-reports {
+  --age-1: color-mix(in srgb, var(--series-1) 45%, var(--ink));
+  --age-2: color-mix(in srgb, var(--series-1) 72%, var(--ink));
+  --age-3: var(--series-1);
+  --age-4: color-mix(in srgb, var(--series-1) 80%, var(--surface));
+}
+
+.nl-reports__back {
+  justify-self: start;
+  margin-bottom: calc(var(--space-2) * -1);
+}
+
+/* ---------- Landing: the six questions ---------- */
+.nl-reports__questions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-report-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-height: 132px;
+  padding: var(--card-padding);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+}
+.nl-report-card:hover {
+  background: var(--selected-row);
+}
+.nl-report-card__title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: var(--card-title-weight);
+}
+/* The link covers the whole card; the card is one target, with the question as its name */
+.nl-report-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+.nl-report-card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+.nl-report-card__link:focus-visible {
+  outline: none;
+}
+.nl-report-card__link:focus-visible::after {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-report-card__text {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-report-card__answer {
+  margin: auto 0 0;
+  padding-top: var(--space-2);
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  min-height: var(--space-5);
+}
+
+/* ---------- More reports ---------- */
+.nl-more {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.nl-more__group {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+}
+.nl-more__title {
+  margin: 0;
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-more__text {
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-more__links {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nl-more__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-small);
+  color: var(--brand-text);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+.nl-more__link:hover {
+  text-decoration: underline;
+}
+.nl-more__link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-button-small);
+}
+
+/* ---------- A report page ---------- */
+.nl-reports__filters {
+  display: grid;
+  gap: var(--space-2);
+}
+.nl-reports__filter-extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.nl-reports__asat {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+.nl-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--card-gap);
+  margin: 0;
+}
+.nl-figure {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-tile);
+}
+.nl-figure dt {
+  margin: 0 0 var(--space-1);
+}
+.nl-figure__value {
+  min-height: var(--space-6);
+  margin: 0;
+  font-size: var(--kpi-size);
+  font-weight: var(--kpi-weight);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.nl-figure.is-strong {
+  background: var(--soft);
+}
+.nl-figure__note {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-figure__change {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-figure__change.is-good {
+  color: var(--good);
+}
+.nl-figure__change.is-bad {
+  color: var(--bad);
+}
+
+.nl-reports__note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-input);
+  background: var(--soft);
+  color: var(--ink);
+  font-size: var(--caption-size);
+}
+.nl-reports__note .nl-icon {
+  color: var(--warn);
+  flex: none;
+}
+.nl-reports__note p {
+  flex: 1 1 280px;
+  margin: 0;
+}
+.nl-reports__plain-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+.nl-reports__charts {
+  display: grid;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-reports__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--card-gap);
+  min-width: 0;
+}
+.nl-reports__table {
+  min-width: 0;
+}
+.nl-reports__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.nl-reports__remind {
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .nl-reports__questions,
+  .nl-more {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nl-reports__pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Below 768px every tap target is at least 44px with 8px between neighbours */
+@media (max-width: 767px) {
+  .nl-reports__questions,
+  .nl-more {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nl-more__link {
+    min-height: var(--control-height-till);
+  }
+  .nl-more__links {
+    gap: var(--space-2);
+  }
+  .nl-report-card {
+    min-height: 0;
+  }
+}

@@ -58,6 +58,8 @@ export const ThemeProvider = ({ children }) => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', theme.palette.background.default);
     document.documentElement.style.colorScheme = mode;
+    // The redesign's tokens (src/newlook/tokens.css) switch light to dark on this; current screens ignore it
+    document.documentElement.setAttribute('data-theme', mode);
   }, [mode, theme]);
 
   return (
