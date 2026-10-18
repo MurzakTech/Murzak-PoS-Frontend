@@ -28,7 +28,6 @@ import {
   ArrowBack,
   Edit,
   Delete,
-  Print,
   Receipt,
   AssignmentReturn,
 } from '@mui/icons-material';
@@ -43,6 +42,7 @@ import {
   clearSelectedSalesInvoice,
   clearSelectedPOSInvoice,
 } from '../../store/salesSlice';
+import PrintButton from '../../components/Common/PrintButton';
 import { showNotification } from '../../store/notificationSlice';
 
 const SalesInvoiceDetails = () => {
@@ -220,21 +220,7 @@ const SalesInvoiceDetails = () => {
                 Cancel
               </Button>
             )}
-            <Button
-              variant="outlined"
-              startIcon={<Print />}
-              onClick={() => {
-                // TODO: Implement print functionality
-                dispatch(showNotification({
-                  message: 'Print functionality coming soon',
-                  severity: 'info',
-                  title: 'Info',
-                }));
-              }}
-              sx={{ textTransform: 'none' }}
-            >
-              Print
-            </Button>
+            <PrintButton doctype={isPOS ? 'POS Invoice' : 'Sales Invoice'} name={invoice.name} label="Print" sx={{ textTransform: 'none' }} />
           </Box>
         </Box>
 
@@ -516,21 +502,7 @@ const SalesInvoiceDetails = () => {
                         Create Return
                       </Button>
                     )}
-                    <Button
-                      variant="outlined"
-                      startIcon={<Print />}
-                      onClick={() => {
-                        // TODO: Implement print functionality
-                        dispatch(showNotification({
-                          message: 'Print functionality coming soon',
-                          severity: 'info',
-                          title: 'Info',
-                        }));
-                      }}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      Print Receipt
-                    </Button>
+                    <PrintButton doctype={isPOS ? 'POS Invoice' : 'Sales Invoice'} name={invoice.name} label="Print Receipt" sx={{ textTransform: 'none' }} />
                   </Box>
                 </CardContent>
               </Card>

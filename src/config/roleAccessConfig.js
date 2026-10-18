@@ -70,6 +70,10 @@ const ROUTE_GROUPS = {
     '/inventory/multi-level-reconciliation/new',
     '/inventory/multi-level-reconciliation/:id',
     '/inventory/multi-level-reconciliation/:id/stock-take',
+    '/inventory/recipes',
+    '/inventory/recipes/new',
+    '/inventory/recipes/:dish',
+    '/inventory/wastage',
   ],
   CUSTOMERS: [
     '/customers',
@@ -150,6 +154,9 @@ const ROUTE_GROUPS = {
     '/settings/inventory-discounts/:id/edit',
     '/settings/loyalty-programs',
     '/settings/audit-trail',
+    '/settings/approvals',
+    '/settings/payment-matching',
+    '/settings/sales-people',
     '/settings/security',
     '/settings/new-look',
   ],
@@ -548,6 +555,10 @@ export const RESTRICTED_ROUTES = {
   '/settings/audit-trail': ['Accounts Manager', 'Auditor'],
   // The New look switch: owners only. Administrator and System Manager always pass, so no other role is listed.
   '/settings/new-look': [],
+  // Money checks: who may decide, who may match the bank statement, who manages sales people
+  '/settings/approvals': ['Accounts Manager', 'Purchase Manager'],
+  '/settings/payment-matching': ['Accounts Manager'],
+  '/settings/sales-people': ['Sales Manager', 'Accounts Manager'],
 };
 
 const restrictedRolesFor = (routePath) => {
