@@ -18,6 +18,8 @@ const shell = {
     siteName: 'Murzak POS',
     hintPage: 'Page',
     hintAction: 'Action',
+    // Shown for a moment while the shop's look is being learned (see NewLookGate.jsx)
+    loading: 'Loading your shop',
   },
 
   help: {

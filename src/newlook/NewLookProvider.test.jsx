@@ -75,6 +75,16 @@ test('with nothing saved, the first ask shows "loading", never a wrong look', as
   expect(state()).toBe('ready:on');
 });
 
+test('a saved "off" is not trusted before the server answers (it may be from before the New look became the default)', async () => {
+  localStorage.setItem('murzak_new_look:Shop A', '0');
+  let answer;
+  getNewLook.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+  mount();
+  expect(state()).toBe('loading:off');
+  await act(async () => answer(true));
+  expect(state()).toBe('ready:on');
+});
+
 test('when the server cannot be reached the saved answer stays, and with none saved it is off', async () => {
   getNewLook.mockRejectedValue(new Error('offline'));
   localStorage.setItem('murzak_new_look:Shop A', '1');

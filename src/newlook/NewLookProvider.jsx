@@ -21,10 +21,12 @@ const CACHE_PREFIX = 'murzak_new_look:';
 
 const cacheKey = (company) => `${CACHE_PREFIX}${company || 'default'}`;
 
+// Only a saved "on" is trusted before the server answers. Before the New look became the default, every device saved "off" from the
+// server's answer, so a saved "off" may be left over from then and must not show the earlier screens for a moment (the "flash")
+// before the real answer arrives. A saved "off" therefore counts as not known yet: the app waits for the server (see NewLookGate).
 const readCache = (company) => {
   try {
-    const saved = localStorage.getItem(cacheKey(company));
-    return saved === null ? null : saved === '1';
+    return localStorage.getItem(cacheKey(company)) === '1' ? true : null;
   } catch (e) {
     return null; // storage can be unavailable (private mode); carry on without it
   }
