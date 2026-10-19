@@ -15,6 +15,10 @@ export const DEFAULT_ACCENT = ACCENTS[0];
 export const STYLES = ['thermal80', 'thermal58', 'a4'];
 export const DEFAULT_STYLE = STYLES[0];
 
+/** The backgrounds of the sign-in page and the Home banner. The till always keeps a plain background, whatever is chosen. */
+export const BACKDROPS = ['plain', 'waves', 'weave', 'market', 'sunrise'];
+export const DEFAULT_BACKDROP = 'waves';
+
 export const LIMITS = { tagline: 80, footer: 160, social: 30, website: 100 };
 
 /** The logo: JPG, PNG or WebP, at most 1 MB */
@@ -24,11 +28,11 @@ export const LOGO_ACCEPT = LOGO_TYPES.join(',');
 export const LOGO_MAX_BYTES = 1024 * 1024;
 
 /** The brand of a shop that never chose anything */
-export const DEFAULT_BRAND = { logo: '', accent: DEFAULT_ACCENT, tagline: '', footer: '', style: DEFAULT_STYLE, social: '', website: '' };
+export const DEFAULT_BRAND = { logo: '', accent: DEFAULT_ACCENT, tagline: '', footer: '', style: DEFAULT_STYLE, social: '', website: '', backdrop: DEFAULT_BACKDROP };
 
 /** The fields each Settings card holds */
 export const GROUPS = {
-  look: ['logo', 'accent'],
+  look: ['logo', 'accent', 'backdrop'],
   words: ['tagline', 'footer', 'social', 'website'],
   style: ['style'],
 };
@@ -57,6 +61,7 @@ export const readBrand = (data) => {
   const text = (key) => tidy(source[key]);
   const accent = text('accent').toLowerCase();
   const style = text('style').toLowerCase();
+  const backdrop = text('backdrop').toLowerCase();
   const logo = text('logo');
   return {
     logo: LOGO.test(logo) ? logo : '',
@@ -64,6 +69,7 @@ export const readBrand = (data) => {
     tagline: text('tagline').slice(0, LIMITS.tagline),
     footer: text('footer').slice(0, LIMITS.footer),
     style: STYLES.includes(style) ? style : DEFAULT_STYLE,
+    backdrop: BACKDROPS.includes(backdrop) ? backdrop : DEFAULT_BACKDROP,
     social: HANDLE.test(text('social')) ? handleText(source.social) : '',
     website: WEBSITE.test(websiteText(source.website)) ? websiteText(source.website) : '',
   };
@@ -75,6 +81,7 @@ export const brandProblems = (values) => {
   const v = values || {};
   if (!ACCENTS.includes(v.accent)) found.accent = 'accentWrong';
   if (!STYLES.includes(v.style)) found.style = 'styleWrong';
+  if (v.backdrop !== undefined && !BACKDROPS.includes(v.backdrop)) found.backdrop = 'backdropWrong';
   if (tidy(v.tagline).length > LIMITS.tagline) found.tagline = 'tooLong';
   if (tidy(v.footer).length > LIMITS.footer) found.footer = 'tooLong';
   if (/[<>]/.test(`${v.tagline || ''}${v.footer || ''}`)) {

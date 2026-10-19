@@ -1,4 +1,4 @@
-import { ACCENTS, DEFAULT_ACCENT, readBrand } from './brandModel';
+import { ACCENTS, DEFAULT_ACCENT, DEFAULT_BACKDROP, readBrand } from './brandModel';
 
 /**
  * The brand as this device last learned it (ticket P7-3), kept in this browser only, like the New look device flag (auth/deviceFlag.js).
@@ -22,7 +22,7 @@ const safeParse = (text) => {
   }
 };
 
-/** { logo, accent, name } as last learned; empty values when nothing is kept */
+/** { logo, accent, backdrop, name } as last learned; empty values when nothing is kept */
 export const readDeviceBrand = () => {
   let stored = null;
   try {
@@ -31,12 +31,12 @@ export const readDeviceBrand = () => {
     stored = null; // storage can be unavailable (private mode)
   }
   const brand = readBrand(stored || {});
-  return { logo: brand.logo, accent: brand.accent, name: String((stored && stored.name) || '').slice(0, 100) };
+  return { logo: brand.logo, accent: brand.accent, backdrop: brand.backdrop, name: String((stored && stored.name) || '').slice(0, 100) };
 };
 
-export const writeDeviceBrand = ({ logo, accent, name }) => {
+export const writeDeviceBrand = ({ logo, accent, backdrop, name }) => {
   try {
-    localStorage.setItem(DEVICE_KEY, JSON.stringify({ logo: logo || '', accent: accent || DEFAULT_ACCENT, name: name || '' }));
+    localStorage.setItem(DEVICE_KEY, JSON.stringify({ logo: logo || '', accent: accent || DEFAULT_ACCENT, backdrop: backdrop || DEFAULT_BACKDROP, name: name || '' }));
   } catch (e) {
     // Not critical; the next sign-in on this device just shows the plain page
   }

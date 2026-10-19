@@ -184,3 +184,45 @@
     padding: var(--space-2);
   }
 }
+
+/* Background choice: a row of small tiles, each showing its pattern */
+.nl-brand-backdrops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.nl-brand-backdrop {
+  display: grid;
+  gap: var(--space-2);
+  width: 112px;
+  padding: var(--space-2);
+  border: 1px solid var(--base);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.nl-brand-backdrop .nl-bd-tile {
+  display: grid;
+  place-items: center;
+  color: var(--on-brand);
+}
+.nl-brand-backdrop.is-selected {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+.nl-brand-backdrop.is-selected .nl-bd-tile svg {
+  padding: var(--space-1);
+  border-radius: 50%;
+  background: var(--brand);
+}
+.nl-brand-backdrop:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-brand-backdrop:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -3,6 +3,8 @@
  * (it shrinks to fit a 320px phone with a 16px gutter on each side). The page sets its own background so it reads in both themes.
  */
 .nl-auth {
+  position: relative;
+  isolation: isolate;
   box-sizing: border-box;
   min-height: 100vh;
   display: flex;

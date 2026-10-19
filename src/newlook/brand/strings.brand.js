@@ -25,6 +25,12 @@ const brand = {
     colourHelper: 'Used for buttons and highlights on the screen, and on A4 receipts. Every colour here is easy to read on white and on the dark screen.',
     selected: 'Chosen',
   },
+  // The background of the sign-in page and the Home banner (the till always stays plain, so cashiers are never distracted)
+  backdrop: {
+    label: 'Background',
+    helper: 'Shown behind the sign-in page and the top of Home. The till keeps a plain background so it is easy to read all day.',
+    names: { plain: 'Plain', waves: 'Soft waves', weave: 'Woven pattern', market: 'Market scene', sunrise: 'Sunrise' },
+  },
   accents: {
     indigo: 'Indigo',
     blue: 'Blue',
@@ -85,7 +91,7 @@ const brand = {
     totals: { subtotal: 1180, discount: 0, offers: 20, tax: 0, total: 1160, paid: 1200, change: 40, outstanding: 0, cashGiven: 1200 },
     payments: [{ label: 'Cash', amount: 1200, reference: '' }],
   },
-  problem: { accentWrong: 'Choose one of the colours.', styleWrong: 'Choose one of the receipt styles.' },
+  problem: { accentWrong: 'Choose one of the colours.', styleWrong: 'Choose one of the receipt styles.', backdropWrong: 'Choose one of the backgrounds.' },
 };
 
 export default brand;

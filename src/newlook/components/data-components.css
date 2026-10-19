@@ -598,3 +598,40 @@
     animation: none;
   }
 }
+
+/* Empty states with a picture: line art in the accent colour, or a self-hosted photo with soft rounded corners */
+.nl-art {
+  width: 120px;
+  height: 120px;
+  max-width: 100%;
+}
+.nl-art__wash {
+  fill: var(--soft);
+}
+.nl-art__paper {
+  fill: var(--surface);
+  stroke: var(--brand);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nl-art__badge {
+  fill: var(--soft);
+  stroke: var(--brand);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nl-art__line {
+  stroke: var(--brand);
+}
+.nl-art__tick {
+  stroke: var(--brand);
+}
+.nl-empty__photo {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+}

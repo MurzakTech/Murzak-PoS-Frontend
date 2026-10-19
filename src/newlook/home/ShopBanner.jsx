@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 import S from '../strings';
 import fill from '../labels/fill';
 import { useBrand } from '../brand/BrandProvider';
+import Backdrop from '../brand/Backdrop';
 
 const T = S.home.banner;
 
@@ -22,6 +23,7 @@ const ShopBanner = ({ actions, canBrand = false, brandTo }) => {
   const hasLook = Boolean(brand.logo || brand.tagline);
   return (
     <section className="nl-card nl-shop" aria-label={T.label}>
+      <Backdrop name={brand.backdrop} />
       <div className="nl-shop__who">
         {brand.logo ? (
           <img className="nl-shop__logo" src={brand.logo} alt={fill(T.logoAlt, { name: name || T.label })} />

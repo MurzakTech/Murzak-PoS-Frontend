@@ -135,7 +135,7 @@ const CustomersPage = () => {
   const emptyKey = params.hasFilters ? 'noMatch' : owing ? 'owing' : 'all';
   const emptyStates = {
     noMatch: { icon: 'search', title: T.empty.noMatchTitle, description: T.empty.noMatchText, action: { label: T.empty.clear, onClick: params.clear } },
-    all: { icon: 'users', title: T.empty.allTitle, description: T.empty.allText, action: { label: T.addCustomer, icon: 'plus', onClick: () => navigate(addAddress) } },
+    all: { art: 'customers', icon: 'users', title: T.empty.allTitle, description: T.empty.allText, action: { label: T.addCustomer, icon: 'plus', onClick: () => navigate(addAddress) } },
     owing: { icon: 'check', title: T.empty.owingTitle, description: T.empty.owingText, action: { label: T.empty.showAll, onClick: () => navigate(tabAddress(location.pathname, 'all', search)) } },
   };
 

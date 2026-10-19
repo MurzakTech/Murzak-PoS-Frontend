@@ -142,7 +142,7 @@ const ProductsPage = () => {
 
   const empty = hasFilters
     ? { icon: 'search', title: T.empty.noMatchTitle, description: T.empty.noMatchText, action: { label: T.empty.clear, onClick: clearFilters } }
-    : { icon: 'box', title: T.empty.title, description: T.empty.text, action: { label: T.addProduct, icon: 'plus', onClick: () => navigate(NEW_PRODUCT_PATH) } };
+    : { photo: 'empty-shelf', art: 'products', icon: 'box', title: T.empty.title, description: T.empty.text, action: { label: T.addProduct, icon: 'plus', onClick: () => navigate(NEW_PRODUCT_PATH) } };
 
   const useCards = narrow && ready && rows.length > 0;
 
