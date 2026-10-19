@@ -107,6 +107,8 @@ const shell = {
   pageHeader: {
     documentTitle: '{title} | {site}',
     tabsLabel: '{title} views',
+    more: 'More',
+    moreLabel: 'More actions for this page',
   },
 
   access: {

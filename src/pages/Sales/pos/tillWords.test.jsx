@@ -14,6 +14,7 @@ import { NewLookContext } from '../../../newlook/NewLookProvider';
 import ProductPanel from './ProductPanel';
 import OrderPanel from './OrderPanel';
 import ReceiptDialog from './ReceiptDialog';
+import PhoneSaleBar from './PhoneSaleBar';
 import HeldSalesDialog from './HeldSalesDialog';
 import OfflineSalesBar from './OfflineSalesBar';
 import NotFound from '../../NotFound';
@@ -119,6 +120,30 @@ describe('the sale in progress', () => {
   });
 });
 
+describe('the button that takes payment', () => {
+  test('New look: Pay, with the total', () => {
+    render(withLook(true, orderPanel()));
+    expect(screen.getByRole('button', { name: /^Pay KES 1,250/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Charge/ })).not.toBeInTheDocument();
+  });
+  test('New look: Pay on its own while the sale is empty', () => {
+    render(withLook(true, orderPanel({ cart: [], totals: { ...TOTALS, itemsTotal: 0, grandTotal: 0 } })));
+    expect(screen.getByRole('button', { name: /^Pay$/ })).toBeDisabled();
+  });
+  test('old look: unchanged, Charge', () => {
+    render(withLook(false, orderPanel()));
+    expect(screen.getByRole('button', { name: /^Charge KES\s?1,250/ })).toBeInTheDocument();
+  });
+  test('the phone bar says Pay in the New look and Charge in the old look', () => {
+    const bar = () => <PhoneSaleBar itemCount={2} total={1250} currency="KES" onViewSale={() => {}} onCharge={() => {}} />;
+    const { unmount } = render(withLook(true, bar()));
+    expect(screen.getByRole('button', { name: /^Pay KES 1,250/ })).toBeInTheDocument();
+    unmount();
+    render(withLook(false, bar()));
+    expect(screen.getByRole('button', { name: /^Charge KES\s?1,250/ })).toBeInTheDocument();
+  });
+});
+
 describe('the receipt after a sale', () => {
   const receipt = () => (
     <ReceiptDialog
@@ -140,6 +165,18 @@ describe('the receipt after a sale', () => {
   test('old look: unchanged', () => {
     render(withLook(false, receipt()));
     expect(screen.getByText('1 Nos x 1,250')).toBeInTheDocument();
+  });
+  test('New look: the short number leads and the full system reference follows', () => {
+    render(withLook(true, receipt()));
+    expect(screen.getByText('#0099')).toBeInTheDocument();
+    expect(screen.getByText('Reference')).toBeInTheDocument();
+    expect(screen.getByText('ACC-PSINV-2026-00099')).toBeInTheDocument();
+  });
+  test('old look: the system number only, as before', () => {
+    render(withLook(false, receipt()));
+    expect(screen.getByText('ACC-PSINV-2026-00099')).toBeInTheDocument();
+    expect(screen.queryByText('#0099')).not.toBeInTheDocument();
+    expect(screen.queryByText('Reference')).not.toBeInTheDocument();
   });
 });
 

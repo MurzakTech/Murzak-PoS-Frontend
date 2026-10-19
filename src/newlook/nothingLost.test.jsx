@@ -19,6 +19,7 @@ import { BUILT_PAGES } from './redirects/live';
 import { newLookRoutes } from './newLookRoutes';
 import { NAVIGATION, flatItems } from './shell/navigation';
 import { ADVANCED_CARDS, OLD } from './settings/settingsModel';
+import { MORE_SCREENS } from './products/productsModel';
 
 jest.mock('../api/axiosInstance', () => ({ __esModule: true, default: {} }));
 
@@ -85,7 +86,7 @@ const ACTIONS = [
   { n: 15, action: 'Edit price, SKU, unit, expiry, batch per item and store', home: 'Stock row menu opens the current Inventory Details', kind: 'link', ref: '/inventory/item-details' },
   { n: 16, action: 'Multi-level stock count (three roles)', home: 'Count stock step 1, "Count in three steps by role"', kind: 'link', ref: '/inventory/multi-level-reconciliation' },
   { n: 17, action: 'Stores: add, edit, staff, default store, staff assignment', home: 'Stock levels, Locations tab (second store) and Settings, Advanced, Stores (first store)', kind: 'link', ref: '/warehouses' },
-  { n: 18, action: 'Stock transfers: request, approve, dispatch, receive, cancel', home: 'Transfers tab (second store) and Settings, Advanced, Stock transfers', kind: 'link', ref: '/stock-transfers' },
+  { n: 18, action: 'Stock transfers: request, approve, dispatch, receive, cancel', home: 'Transfers tab (second store) and Products, More, Stock transfers (second store)', kind: 'link', ref: '/stock-transfers' },
   { n: 19, action: 'Purchase order: create, edit draft, submit, cancel', home: 'New purchase; panel: Edit draft, Send order to supplier, Cancel', kind: 'words', ref: ['Save and send order', 'Edit draft', 'Send order to supplier', 'Cancel'] },
   { n: 20, action: 'Receive goods (GRN), then create purchase invoice', home: 'Receive goods button; panel: Make the bill', kind: 'words', ref: ['Receive goods', 'Make the bill'] },
   { n: 21, action: 'Direct bill: CSV upload, mark as paid, update stock, skip eTIMS, create product inline', home: 'New purchase, More options, "I already have the bill"', kind: 'words', ref: ['I already have the bill'] },
@@ -144,7 +145,7 @@ describe('1. Every action of the audit (section 4) has a home', () => {
 const STAYS = {
   '/kitchen': { from: '/kitchen', where: 'Settings, Advanced, Station screen settings' },
   '/industry/:industryCode/products': { from: '/industry/', where: 'Settings, Advanced, Industry starter products; set-up wizard' },
-  '/products/update-price': { from: '/products/update-price', where: 'Settings, Advanced, Update many prices' },
+  '/products/update-price': { from: '/products/update-price', where: 'Products, More, Update many prices' },
   '/products/variations': { from: '/products/variations', where: 'Settings, Advanced, Product variations' },
   '/products/bulk-import': { from: '/products/bulk-import', where: 'Products, Import' },
   '/products/bulk-stock-import': { from: '/products/bulk-stock-import', where: 'Set-up wizard and Settings, Advanced, Import opening stock' },
@@ -160,12 +161,12 @@ const STAYS = {
   '/inventory/recipes/new': { inside: '/inventory/recipes', where: 'New recipe button on the current Recipes screen' },
   '/inventory/recipes/:dish': { inside: '/inventory/recipes', where: 'a row of the current Recipes screen' },
   '/inventory/wastage': { from: '/inventory/wastage', where: 'Settings, Advanced, Wastage' },
-  '/inventory/material-transfers': { from: '/inventory/material-transfers', where: 'Settings, Advanced, Move stock between stores' },
+  '/inventory/material-transfers': { from: '/inventory/material-transfers', where: 'Products, More, Move stock between stores (second store)' },
   '/inventory/material-transfer': { inside: '/inventory/material-transfers', where: 'New button on the current Material Transfers list' },
   '/inventory/stock-entry': { from: '/inventory/stock-entry', where: 'Settings, Advanced, Make or repack goods' },
   '/inventory/multi-level-reconciliation/:id': { from: '/inventory/multi-level-reconciliation', where: 'Count stock, Count in three steps by role, then a row of that list' },
   '/inventory/multi-level-reconciliation/:id/stock-take': { from: '/inventory/multi-level-reconciliation', where: 'Add stock take on a current count' },
-  '/stock-transfers': { from: '/stock-transfers', where: 'Stock levels, Transfers; Settings, Advanced, Stock transfers' },
+  '/stock-transfers': { from: '/stock-transfers', where: 'Stock levels, Transfers; Products, More, Stock transfers (second store)' },
   '/stock-transfers/list': { inside: '/stock-transfers', where: 'All Transfers on the current Stock transfers screen' },
   '/stock-transfers/create': { inside: '/stock-transfers', where: 'Direct Transfer on the current Stock transfers screen' },
   '/stock-transfers/create-request': { inside: '/stock-transfers', where: 'Transfer Request on the current Stock transfers screen' },
@@ -261,14 +262,15 @@ describe('3. Every item of the old menu has a place', () => {
   });
 
   test('every old sub-menu entry that is not redirected is a card or link in Settings, Advanced or on a page', () => {
-    const advanced = new Set(ADVANCED_CARDS.map((c) => c.to).filter(Boolean));
+    // Update many prices and the two transfer screens are buttons in the Products header's More menu instead of Advanced cards
+    const advanced = new Set([...ADVANCED_CARDS.map((c) => c.to).filter(Boolean), ...Object.values(MORE_SCREENS)]);
     ['/products/load-products', '/inventory/recipes', '/inventory/wastage', '/settings/approvals', '/settings/payment-matching', '/settings/sales-people', '/settings/new-look', '/warehouses', '/stock-transfers', '/inventory/material-transfers', '/inventory/stock-entry', '/products/update-price', '/products/variations', '/products/bulk-stock-import', '/kitchen'].forEach((address) => {
       expect(advanced.has(address)).toBe(true);
     });
   });
 
   test('Advanced covers the screens named in OLD', () => {
-    const advanced = new Set(ADVANCED_CARDS.map((c) => c.to));
+    const advanced = new Set([...ADVANCED_CARDS.map((c) => c.to), ...Object.values(MORE_SCREENS)]);
     ['stores', 'stockTransfers', 'materialTransfers', 'stockEntry', 'updatePrices', 'variations', 'loadProducts', 'openingStock'].forEach((key) => expect(advanced.has(OLD[key])).toBe(true));
   });
 });

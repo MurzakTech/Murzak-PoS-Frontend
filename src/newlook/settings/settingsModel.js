@@ -85,11 +85,10 @@ export const ADVANCED_CARDS = [
   { section: 'sales-people', to: OLD.salesPeople },
   { section: 'recipes', to: OLD.recipes },
   { section: 'wastage', to: OLD.wastage },
+  // Stores stays here too: it is how a one-store shop adds its second store. Stock transfers, Move stock between stores and Update many
+  // prices are buttons in the Products header's More menu (the transfers only with a second store)
   { section: 'stores', to: OLD.stores },
-  { section: 'stock-transfers', to: OLD.stockTransfers },
-  { section: 'material-transfers', to: OLD.materialTransfers },
   { section: 'make-goods', to: OLD.stockEntry },
-  { section: 'update-prices', to: OLD.updatePrices },
   { section: 'variations', to: OLD.variations },
   { section: 'load-products', to: OLD.loadProducts },
   { section: 'opening-stock', to: OLD.openingStock },

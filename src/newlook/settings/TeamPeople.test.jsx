@@ -73,6 +73,12 @@ describe('the list', () => {
     expect(screen.getByText('3 active of 4')).toBeInTheDocument();
   });
 
+  test('does not print anyone\'s login email under their name', async () => {
+    show();
+    await screen.findByText('Juma Kamau', { selector: '.nl-settings-person__name' });
+    ['amina@shop.test', 'juma@shop.test', 'zawadi@shop.test', 'baraka@shop.test'].forEach((email) => expect(screen.queryByText(email)).not.toBeInTheDocument());
+  });
+
   test('asks for the team of the signed-in business', async () => {
     const load = jest.fn().mockResolvedValue(data());
     show({ load });

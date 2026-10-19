@@ -1,7 +1,8 @@
 # The new Murzak POS: what moved
 
 This page is for the shop owner and the people who work in the shop. Print it or share it. Nothing has been removed; some things
-have new names or a new place. If the New look is switched off, the shop keeps working exactly as before.
+have new names or a new place. The New look is on for every shop. If an owner switches it off in Settings, the shop goes back to the
+earlier screens at once.
 
 ## The menu
 
@@ -38,6 +39,8 @@ The menu on the left now has Home, then four groups, and Settings at the bottom.
 | Apply Discount On | Discount |
 | Credit Card | Card |
 | Bank Draft, Cheque, Wire Transfer | Other |
+| Charge (the till button) | Pay |
+| The long invoice number on a receipt | A short receipt number such as #0045, with the full reference printed under it |
 | MPESA | M-Pesa |
 | POS Profile | Till settings |
 | Staff | Team (under Settings) |
@@ -63,6 +66,11 @@ Progress, Finished Goods, Goods In Transit, and Stock Entry (unless the shop mak
 
 Some jobs still open the earlier screen from a link, such as the bulk price update, variations, importing products, locations and
 stock transfers, recipes and wastage, and the keys for M-Pesa and other payment gateways. They work as before.
+
+## The page buttons
+
+Each page now shows its main button and a **More** menu. Export, Import and the less common jobs are in More. On Products, More
+also holds Update many prices, and with a second store Stores, Stock transfers and Move stock between stores.
 
 ## If you cannot find something
 

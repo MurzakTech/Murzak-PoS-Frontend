@@ -7,6 +7,8 @@ import React from 'react';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { AccessProvider } from '../access/AccessProvider';
 import { ToastProvider } from '../components/Toast';
 import { setPreview } from '../redirects/live';
@@ -14,6 +16,7 @@ import ProductsPage from './ProductsPage';
 import { listCategories, listProducts } from '../../api/productsListApi';
 import { getMyAccess } from '../../api/accessApi';
 import { saveTextFile } from '../../utils/saveTextFile';
+import { listWarehouses } from '../../store/warehouseSlice';
 
 jest.mock('../../api/axiosInstance', () => ({ __esModule: true, default: {} }));
 jest.mock('../../api/productsListApi', () => ({
@@ -25,6 +28,7 @@ jest.mock('../../api/productsListApi', () => ({
   renameCategory: jest.fn(),
   deleteCategory: jest.fn(),
 }));
+jest.mock('../../store/warehouseSlice', () => ({ listWarehouses: jest.fn() }));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
 jest.mock('../../utils/saveTextFile', () => ({ saveTextFile: jest.fn() }));
 
@@ -117,6 +121,13 @@ beforeEach(() => {
   }
 });
 
+// The header holds the main button and a More menu; everything else is one click further in
+const MORE = 'More actions for this page';
+const inMore = (name) => {
+  userEvent.click(screen.getByRole('button', { name: MORE }));
+  return screen.getByRole('menuitem', { name });
+};
+
 describe('the page', () => {
   test('has the title, the two tabs, and Export, Import and New product in the header', async () => {
     await renderPage();
@@ -124,7 +135,9 @@ describe('the page', () => {
     const tabs = screen.getByRole('tablist', { name: 'Products views' });
     expect(within(tabs).getByRole('tab', { name: 'All products' })).toHaveAttribute('aria-selected', 'true');
     expect(within(tabs).getByRole('tab', { name: 'Categories' })).toHaveAttribute('aria-selected', 'false');
-    ['Export', 'Import', 'New product'].forEach((name) => expect(screen.getByRole('button', { name })).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'New product' })).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: MORE }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Update many prices']);
     await screen.findByRole('row', { name: /Product number 39/ });
   });
 
@@ -342,7 +355,7 @@ describe('empty and error states', () => {
     listProducts.mockResolvedValue({ ...answer(), rows: [], total: 0, pages: 1 });
     await renderPage();
     await screen.findByRole('heading', { name: 'No products yet' });
-    expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled();
+    expect(inMore('Export')).toBeDisabled();
   });
 });
 
@@ -504,21 +517,21 @@ describe('the header buttons', () => {
 
   test('Import goes to the current import screen until the new one is live', async () => {
     await renderPage();
-    userEvent.click(screen.getByRole('button', { name: 'Import' }));
+    userEvent.click(inMore('Import'));
     await waitFor(() => expect(where()).toBe('/products/bulk-import'));
   });
 
   test('Import goes to the new import page once it is live', async () => {
     setPreview(true);
     await renderPage();
-    userEvent.click(screen.getByRole('button', { name: 'Import' }));
+    userEvent.click(inMore('Import'));
     await waitFor(() => expect(where()).toBe('/new-look/products/import'));
   });
 
   test('Export saves the rows on screen as a spreadsheet and says how many', async () => {
     await renderPage();
     await screen.findByRole('row', { name: /Soap bar/ });
-    userEvent.click(screen.getByRole('button', { name: 'Export' }));
+    userEvent.click(inMore('Export'));
     expect(saveTextFile).toHaveBeenCalledTimes(1);
     const [text, name] = saveTextFile.mock.calls[0];
     expect(name).toMatch(/^products-\d{4}-\d{2}-\d{2}\.csv$/);
@@ -577,5 +590,46 @@ describe('phones', () => {
     window.innerWidth = 390;
     await renderPage('/new-look/products?q=soap&category=Food');
     expect(await screen.findByRole('button', { name: 'Filters (2 on)' })).toBeInTheDocument();
+  });
+});
+
+describe('the More menu and the number of stores', () => {
+  const withStores = async (warehouses) => {
+    canSeeCost = true;
+    listWarehouses.mockReturnValue({ type: 'warehouse/list/test' });
+    getMyAccess.mockResolvedValue({ tier: 'owner', can: { cost_of_goods: true, profit: true } });
+    const store = configureStore({ reducer: (state = { auth: { user: { company: 'Demo Shop' } }, warehouse: { warehouses } }) => state });
+    render(
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/new-look/products']}>
+          <AccessProvider userKey="beth">
+            <ToastProvider>
+              <ProductsPage />
+              <Where />
+            </ToastProvider>
+          </AccessProvider>
+        </MemoryRouter>
+      </Provider>
+    );
+    await screen.findByRole('row', { name: /Soap bar/ });
+    userEvent.click(screen.getByRole('button', { name: MORE }));
+  };
+
+  test('a one-store shop is not offered Stores or the transfer screens', async () => {
+    await withStores([{ name: 'Duka Kuu - DS' }]);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Update many prices']);
+  });
+
+  test('a shop with a second store is offered Stores and both transfer screens, each opening the current screen', async () => {
+    await withStores([{ name: 'Duka Kuu - DS' }, { name: 'Tawi - DS', warehouse_name: 'Tawi' }]);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Update many prices', 'Stores', 'Stock transfers', 'Move stock between stores']);
+    userEvent.click(screen.getByRole('menuitem', { name: 'Stock transfers' }));
+    expect(where()).toBe('/stock-transfers?legacy=1');
+  });
+
+  test('Update many prices opens the current bulk price screen', async () => {
+    await withStores([{ name: 'Duka Kuu - DS' }]);
+    userEvent.click(screen.getByRole('menuitem', { name: 'Update many prices' }));
+    expect(where()).toBe('/products/update-price?legacy=1');
   });
 });

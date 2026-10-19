@@ -5,6 +5,7 @@ import './shell.css';
 export { default as AppShell } from './AppShell';
 export { default as TopBar } from './TopBar';
 export { default as Sidebar } from './Sidebar';
+export { default as HeaderActions } from './HeaderActions';
 export { default as PageHeader, MAX_HEADER_ACTIONS, SITE_NAME } from './PageHeader';
 export { default as SearchPalette, search, RECENT_KEY, MAX_RECENT } from './SearchPalette';
 export { NAVIGATION, flatItems, isActive, resolveNavigation } from './navigation';

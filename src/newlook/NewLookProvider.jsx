@@ -7,10 +7,11 @@ import { writeDeviceFlag } from './auth/deviceFlag';
 /**
  * Whether this shop is using the redesigned screens (the "New look").
  *
- * The truth is on the server, one switch per business, off by default. The last answer is also kept on
- * this device, so a till that opens without a connection shows the same look it showed last time. An
- * answer from the server always replaces the saved one. With no answer at all, the look is OFF, which is
- * the app exactly as it was before the redesign.
+ * The truth is on the server, one switch per business, ON by default (an owner can switch it off). The last
+ * answer is also kept on this device, so a till that opens without a connection shows the same look it showed
+ * last time. An answer from the server always replaces the saved one. With no answer at all (the server could
+ * not be asked and nothing is saved, for example a shop whose back end has not been updated yet), the look is
+ * OFF, which is the app exactly as it was before the redesign, so nothing breaks on a shop that is not ready.
  *
  * status: 'idle' (nobody signed in), 'loading' (asking the server and nothing saved yet),
  *         'ready' (known), 'error' (the server could not be asked; the saved answer, or off, is used)

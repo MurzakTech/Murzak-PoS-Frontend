@@ -27,6 +27,12 @@ const till = {
     exit: 'Leave the till',
     exitTip: 'Back to Home',
     applyDiscount: 'Apply discount',
+    // The bottom bar's button to take payment: the Spec calls it Pay ({amount} is the sale total)
+    pay: 'Pay',
+    // On the sale receipt: the short number leads, the full system reference follows (see receiptNumber.js)
+    receiptNo: 'Receipt no.',
+    receiptReference: 'Reference',
+    payAmount: 'Pay {amount}',
     removeDiscount: 'Remove discount',
     closeHeldSales: 'Close',
   },

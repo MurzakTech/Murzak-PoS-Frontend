@@ -41,6 +41,7 @@ import ProductImage from '../../../components/Common/ProductImage';
 import { useNewLook } from '../../../newlook/NewLookProvider';
 import { quantityText, unitWord } from '../../../newlook/products/unitWords';
 import tillText from '../../../newlook/till/strings.till';
+import fill from '../../../newlook/labels/fill';
 
 const StepperButton = ({ children, ...props }) => (
   <IconButton
@@ -330,7 +331,7 @@ const OrderPanel = ({
               endIcon={isBusy ? <CircularProgress size={20} color="inherit" /> : <ArrowForward />}
               sx={{ height: 64, fontSize: '1.25rem', fontWeight: 750, borderRadius: 3, color: empty ? undefined : '#fff', background: (t) => (empty ? undefined : t.custom.gradient), boxShadow: (t) => (empty ? 'none' : `0 8px 22px ${alpha(t.palette.primary.main, 0.32)}`) }}
             >
-              {empty ? 'Charge' : `Charge ${money(totals.grandTotal, currency)}`}
+              {empty ? (newLook ? tillText.labels.pay : 'Charge') : newLook ? fill(tillText.labels.payAmount, { amount: money(totals.grandTotal, currency) }) : `Charge ${money(totals.grandTotal, currency)}`}
             </Button>
             <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
               <Button fullWidth size="small" color="inherit" startIcon={<PauseCircleOutline />} disabled={empty} onClick={onHold} sx={{ color: 'text.secondary', minHeight: 44 }}>

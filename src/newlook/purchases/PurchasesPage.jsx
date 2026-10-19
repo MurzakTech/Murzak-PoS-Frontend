@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import FilterRow from '../components/FilterRow';
-import Menu from '../components/Menu';
 import Pagination from '../components/Pagination';
 import SummaryRow from '../components/SummaryRow';
 import Table from '../components/Table';
@@ -10,7 +9,7 @@ import { ListWithDetail } from '../components/DetailPanel';
 import useListParams from '../components/useListParams';
 import { formatMoney, rowsWords } from '../components/format';
 import { useToast } from '../components/Toast';
-import { PageHeader, useViewportBand } from '../shell';
+import { HeaderActions, PageHeader, useViewportBand } from '../shell';
 import fill from '../labels/fill';
 import { saveTextFile } from '../../utils/saveTextFile';
 import './purchases.css';
@@ -249,21 +248,19 @@ const PurchasesPage = () => {
         title={T.title}
         subtitle={T.subtitle}
         actions={
-          // Export, the other purchase screens, Receive goods and New purchase share one place at the right of the title (the Spec asks for Export in the header and the Purchases row for both buttons)
-          <div className="nl-purchases-actions">
-            <Button variant="secondary" icon="arrowDown" disabled={!ready || rows.length === 0} onClick={exportCsv}>
-              {T.export}
-            </Button>
-            <Menu label={T.more.label} items={moreItems} variant="secondary" size="default">
-              {T.more.label}
-            </Menu>
-            <Button variant="secondary" icon="truck" onClick={() => navigate(RECEIVE_PATH)}>
-              {T.receiveGoods}
-            </Button>
-            <Button icon="plus" onClick={() => navigate(NEW_PATH)}>
-              {T.newPurchase}
-            </Button>
-          </div>
+          // New purchase is the main button; Receive goods, Export and the other purchase screens are in More, so the header holds two controls
+          <HeaderActions
+            primary={
+              <Button icon="plus" onClick={() => navigate(NEW_PATH)}>
+                {T.newPurchase}
+              </Button>
+            }
+            items={[
+              { label: T.receiveGoods, icon: 'truck', onClick: () => navigate(RECEIVE_PATH) },
+              { label: T.export, icon: 'arrowDown', disabled: !ready || rows.length === 0, onClick: exportCsv },
+              ...moreItems,
+            ]}
+          />
         }
         tabs={{ label: T.tabsLabel, tabs, value: tab }}
       />

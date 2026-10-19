@@ -1,5 +1,9 @@
 # P6-6: Staged rollout and rollback rehearsal
 
+> **Update, 19 October 2026:** the owner decided the New look is the default for every store (see `P6-7-owner-decisions.md`). The
+> staged pilot below (stages 2 and 3) is therefore skipped; the checklist, the readiness check and the switch-back steps still apply
+> and matter more, because every store is switched at once when the back end change is deployed.
+
 This is the plan for moving shops onto the New look, one stage at a time, and for moving any shop back in seconds. It follows the
 "Rollout and rollback" section of the Build Pack. The waiting times are suggestions; shorten them only if the owner agrees.
 
@@ -16,8 +20,7 @@ This is the plan for moving shops onto the New look, one stage at a time, and fo
 Definitions used throughout: a **blocker** is a sale that cannot be completed, an amount that is wrong, or data that is lost. A
 **major defect** is a feature in a ticket that does not work. A **minor defect** is a look or wording problem.
 
-Today only stage 1 is open. The New look is off by default for every shop and is switched on per shop, in that shop's own settings
-(Settings, New look). Nothing in this document switches any shop on.
+The New look is on by default for every shop; an owner can switch it off in that shop's own settings (Settings, New look).
 
 ## 2. Before switching a shop on (one checklist per shop)
 

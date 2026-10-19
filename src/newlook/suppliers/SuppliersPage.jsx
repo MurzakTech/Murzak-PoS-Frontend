@@ -11,7 +11,7 @@ import { ListWithDetail } from '../components/DetailPanel';
 import useListParams from '../components/useListParams';
 import { formatMoney, rowsWords } from '../components/format';
 import { useToast } from '../components/Toast';
-import { PageHeader, useViewportBand } from '../shell';
+import { HeaderActions, PageHeader, useViewportBand } from '../shell';
 import { useAccess } from '../access/AccessProvider';
 import fill from '../labels/fill';
 import { useAppSelector } from '../../store/hooks';
@@ -19,10 +19,10 @@ import { saveTextFile } from '../../utils/saveTextFile';
 import './suppliers.css';
 import DueStatus from './DueStatus';
 import SupplierCards from './SupplierCards';
-import SupplierGroupsLink from './SupplierGroupsLink';
 import SupplierPanel from './SupplierPanel';
 import { useSupplierGroups, useSuppliersList } from './useSuppliersData';
-import { csvName, dueDateWords, editAddress, hasOwed, isoDay, owedFromParam, owedOptions, owedText, statusFromParam, suppliersCsv } from './suppliersModel';
+import { oldScreen } from '../redirects/engine';
+import { csvName, dueDateWords, editAddress, GROUPS_PATH, hasOwed, isoDay, owedFromParam, owedOptions, owedText, statusFromParam, suppliersCsv } from './suppliersModel';
 import T from './strings.suppliers';
 
 const FILTER_KEYS = ['owed', 'group', 'status'];
@@ -248,15 +248,18 @@ const SuppliersPage = () => {
         title={T.title}
         subtitle={T.subtitle}
         actions={
-          <>
-            <Button variant="secondary" icon="arrowDown" disabled={!ready || rows.length === 0} onClick={exportCsv}>
-              {T.export}
-            </Button>
-            <Button icon="plus" onClick={() => navigate(addAddress)}>
-              {T.addSupplier}
-            </Button>
-            <SupplierGroupsLink />
-          </>
+          // Add supplier is the main button; Export and Supplier groups (the earlier screen, until Settings, Advanced has its own) are in More
+          <HeaderActions
+            primary={
+              <Button icon="plus" onClick={() => navigate(addAddress)}>
+                {T.addSupplier}
+              </Button>
+            }
+            items={[
+              { label: T.export, icon: 'arrowDown', disabled: !ready || rows.length === 0, onClick: exportCsv },
+              { label: T.more.groups, onClick: () => navigate(oldScreen(GROUPS_PATH)) },
+            ]}
+          />
         }
       />
       <ListWithDetail list={list} detail={detail} />

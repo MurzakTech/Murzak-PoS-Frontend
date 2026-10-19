@@ -5,6 +5,8 @@ import { fmt, money, round2 } from './money';
 import PrintButton from '../../../components/Common/PrintButton';
 import { useNewLook } from '../../../newlook/NewLookProvider';
 import { unitWord } from '../../../newlook/products/unitWords';
+import { shortReceiptNumber } from '../../../newlook/till/receiptNumber';
+import tillText from '../../../newlook/till/strings.till';
 
 // The reply to a sale does not say which kind of invoice it made; the number does
 export const invoiceDoctype = (invoice) =>
@@ -73,7 +75,15 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
           </Typography>
         </Box>
         <Divider sx={{ borderStyle: 'dashed', mb: 1 }} />
-        <Row label="Receipt no." value={invoice.name} />
+        {newLook && !invoice.offline ? (
+          <>
+            {/* The short number leads, as in the Sales list; the full system reference stays underneath for the books and the tax receipt */}
+            <Row label={tillText.labels.receiptNo} value={shortReceiptNumber(invoiceDoctype(invoice), invoice.name)} bold />
+            <Row label={tillText.labels.receiptReference} value={invoice.name} />
+          </>
+        ) : (
+          <Row label="Receipt no." value={invoice.name} />
+        )}
         <Row label="Date" value={`${when.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} ${when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`} />
         <Row label="Served by" value={cashierName} />
         <Row label="Customer" value={invoice.customer || saleData.customer || 'Walk-in Customer'} />

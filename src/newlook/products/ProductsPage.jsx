@@ -9,10 +9,11 @@ import Table from '../components/Table';
 import { ListWithDetail } from '../components/DetailPanel';
 import useListParams from '../components/useListParams';
 import { useToast } from '../components/Toast';
-import { PageHeader, useViewportBand } from '../shell';
+import { HeaderActions, PageHeader, useViewportBand } from '../shell';
 import { useAccess } from '../access/AccessProvider';
 import { usePreviewRedirects, isPageLive } from '../redirects/live';
-import { toNewAddress } from '../redirects/engine';
+import { oldScreen, toNewAddress } from '../redirects/engine';
+import useSeveralStores from '../stock/useSeveralStores';
 import fill from '../labels/fill';
 import { saveTextFile } from '../../utils/saveTextFile';
 import './products.css';
@@ -20,7 +21,7 @@ import CategoriesTab from './CategoriesTab';
 import ProductCards from './ProductCards';
 import ProductPanel from './ProductPanel';
 import { useCategories, useProductByCode, useProductList } from './useProductsData';
-import { categoryLabel, categoryOptions, csvFor, csvName, editAddress, hasCost, isoDay, NEW_PRODUCT_PATH, productsTabs, showFromParam, showOptions, statusView, stockText, tabFromPath } from './productsModel';
+import { categoryLabel, categoryOptions, csvFor, csvName, editAddress, hasCost, isoDay, MORE_SCREENS, NEW_PRODUCT_PATH, productsTabs, showFromParam, showOptions, statusView, stockText, tabFromPath } from './productsModel';
 import T from './strings.products';
 import { rowsWords } from '../components/format';
 
@@ -56,6 +57,9 @@ const ProductsPage = () => {
   const isCashier = access.tier === 'cashier';
   const canChange = !isCashier;
   const canSeeCost = access.can('cost_of_goods');
+
+  // Stores and the transfer screens only make sense with a second selling location, so a one-store shop never sees them
+  const hasSeveralStores = useSeveralStores();
 
   // Where things go: the redesigned page once it is live, otherwise the current screen
   const go = (path, old) => (isPageLive(path, previewOn) ? toNewAddress(path) : old);
@@ -211,23 +215,25 @@ const ProductsPage = () => {
       </Button>
     ) : undefined
   ) : (
-    // Export, Import and New product share one place at the right of the title (the Spec asks for Export in the header
-    // and the Products row for an Import button)
-    <div className="nl-products-actions">
-      <Button variant="secondary" icon="arrowDown" disabled={!ready || rows.length === 0} onClick={exportCsv}>
-        {T.export}
-      </Button>
-      {canChange ? (
-        <Button variant="secondary" icon="arrowUp" onClick={() => navigate(go('/products/import', '/products/bulk-import'))}>
-          {T.import}
-        </Button>
-      ) : null}
-      {canChange ? (
-        <Button icon="plus" onClick={() => navigate(NEW_PRODUCT_PATH)}>
-          {T.newProduct}
-        </Button>
-      ) : null}
-    </div>
+    // New product is the page's one main button; Export, Import, Update many prices and (with a second store) Stores and the transfer
+    // screens sit in the More menu, so the header holds two controls at most
+    <HeaderActions
+      primary={
+        canChange ? (
+          <Button icon="plus" onClick={() => navigate(NEW_PRODUCT_PATH)}>
+            {T.newProduct}
+          </Button>
+        ) : undefined
+      }
+      items={[
+        { label: T.export, icon: 'arrowDown', disabled: !ready || rows.length === 0, onClick: exportCsv },
+        { label: T.import, icon: 'arrowUp', hidden: !canChange, onClick: () => navigate(go('/products/import', '/products/bulk-import')) },
+        { label: T.more.updatePrices, hidden: !canChange, onClick: () => navigate(oldScreen(MORE_SCREENS.updatePrices)) },
+        { label: T.more.stores, hidden: !canChange || !hasSeveralStores, onClick: () => navigate(oldScreen(MORE_SCREENS.stores)) },
+        { label: T.more.stockTransfers, hidden: !canChange || !hasSeveralStores, onClick: () => navigate(oldScreen(MORE_SCREENS.stockTransfers)) },
+        { label: T.more.materialTransfers, hidden: !canChange || !hasSeveralStores, onClick: () => navigate(oldScreen(MORE_SCREENS.materialTransfers)) },
+      ]}
+    />
   );
 
   return (
