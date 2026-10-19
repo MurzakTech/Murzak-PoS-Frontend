@@ -7,7 +7,7 @@
  */
 
 const UPDATE_CHECK_MS = 60 * 60 * 1000; // tills stay open all day, so look for updates hourly
-const STARTUP_WINDOW_MS = 10 * 1000;
+const STARTUP_WINDOW_MS = 30 * 1000;
 
 export function register({ onUpdate } = {}) {
   if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;
@@ -48,5 +48,12 @@ export function register({ onUpdate } = {}) {
     });
 
     setInterval(() => registration.update().catch(() => {}), UPDATE_CHECK_MS);
+
+    // Look for a new version at once when the app starts and whenever the person comes back to the tab, so a deploy is picked up
+    // on the next visit instead of an hour later. The kept cart (see newlook/till/cartStore.js) survives the reload that follows.
+    registration.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') registration.update().catch(() => {});
+    });
   });
 }
