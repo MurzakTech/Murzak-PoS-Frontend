@@ -2134,7 +2134,8 @@ const NewSale = () => {
       <Box ref={cartAnnouncementRef} role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }} />
 
       {showShiftCheck ? (
-        <Box sx={{ flex: 1, display: 'grid', placeItems: 'center' }} aria-busy="true">
+        // Its own key: the products area that replaces this message is a new element, not this one re-styled, so it is not counted as moving
+        <Box key="checking-shift" sx={{ flex: 1, display: 'grid', placeItems: 'center' }} aria-busy="true">
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Checking your shift...</Typography>
@@ -2158,7 +2159,7 @@ const NewSale = () => {
           openError={openTillError}
         />
       ) : (
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: isPhone ? 'column' : 'row' }}>
+        <Box key="selling" sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: isPhone ? 'column' : 'row' }}>
           <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {isCheckoutMode ? (
               <PayPanel
