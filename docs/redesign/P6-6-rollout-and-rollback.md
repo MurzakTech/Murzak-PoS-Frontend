@@ -126,10 +126,36 @@ supplied. It takes about ten minutes and is done by the owner or the builder wit
 | Lighthouse on a real connection, real phones and tablets | See the P6-2 and P6-3 notes |
 | An M-Pesa sale with the live gateway | Never charged with real money; use the gateway's test mode only, with keys supplied as environment variables |
 
-## 6. Switch-off check results
+## 6. Switch-off check and on/off rehearsal (built app, pretend server answers)
 
-See the end of this document, section 7, which is filled in after the rehearsal on the built app.
+Run on the production build of this branch, in a real browser (headless Chromium), with every server answer pretended. The same four
+addresses were opened with the New look ON, then OFF, then ON again, as a person would see them when a shop is switched on, back,
+and on again.
 
-## 7. Rehearsal record (built app, pretend server)
+| Address opened | New look ON | New look OFF | ON again |
+|---|---|---|---|
+| `/dashboard` (old Dashboard) | Opens the new Home | Stays on the old Dashboard | Opens the new Home |
+| `/sales/history` (old Sales) | Opens the new Sales | Stays on the old Sales History | Opens the new Sales |
+| `/reports/sales-analytics` (a report) | Opens the new report | Stays on the old report | Opens the new report |
+| `/sales/pos` (the till) | The till opens its first step ("Open your till") | The same | The same |
 
-To be completed by the rehearsal run recorded in the Phase 6 report.
+All 36 checks passed: the address ends where it should, something is on the screen, and there are no page errors. The cash sale
+with the New look off, and the same sale with it on, were stepped through in the offline and nothing-lost pass (P6-5): both complete
+and queue or upload the same way, and the New look adds no extra request to those actions.
+
+What this does **not** prove: it is not a real shop, a real database or the live server. The real rehearsal is section 4.2.
+
+## 7. Rehearsal record for the real test store
+
+Fill this in when section 4.2 is done.
+
+| Item | Value |
+|---|---|
+| Date and who did it | |
+| Store | |
+| Seconds to turn New look off | |
+| Cash sale on the old till worked | yes / no |
+| Sales History opened | yes / no |
+| A report ran | yes / no |
+| Expense from the New look found under Journal Entry | yes / no / not applicable |
+| Anything that surprised you | |
