@@ -4,6 +4,9 @@ import { CheckCircle, Print, Receipt } from '@mui/icons-material';
 import { fmt, money, round2 } from './money';
 import PrintButton from '../../../components/Common/PrintButton';
 import { useNewLook } from '../../../newlook/NewLookProvider';
+import { useBrand } from '../../../newlook/brand/BrandProvider';
+import ShopReceipt from '../../../newlook/receipt/Receipt';
+import { fromTill } from '../../../newlook/receipt/receiptModel';
 import { unitWord } from '../../../newlook/products/unitWords';
 import { shortReceiptNumber } from '../../../newlook/till/receiptNumber';
 import tillText from '../../../newlook/till/strings.till';
@@ -33,6 +36,7 @@ const Row = ({ label, value, bold, tone }) => (
 // announcement: an optional hidden live region (the New look passes one that says "Sale complete, KES 100")
 const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, currency, onNewSale, onPrint, onViewInvoice, announcement = null }) => {
   const { enabled: newLook } = useNewLook();
+  const { brand, business } = useBrand();
   if (!invoice || !saleData) return null;
 
   const items = saleData.items || [];
@@ -67,6 +71,12 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
         )}
       </Box>
 
+      {newLook ? (
+        // The New look draws the shop's own receipt (logo, address, tax number, footer, the style the shop chose); the same component the Sales page prints
+        <Box className={`receipt-printable nl-rcpt-wrap--${brand.style}`} sx={{ p: 2 }}>
+          <ShopReceipt receipt={fromTill({ invoice, saleData, cashierName, doctype: invoiceDoctype(invoice) })} brand={brand} business={business} style={brand.style} />
+        </Box>
+      ) : (
       <Box className="receipt-printable" sx={{ p: 3, pt: 2.5, fontSize: '0.8125rem' }}>
         <Box sx={{ textAlign: 'center', mb: 1.5 }}>
           <Typography variant="h6" sx={{ fontWeight: 800 }}>{companyName || 'Receipt'}</Typography>
@@ -117,6 +127,7 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
           Thank you for shopping with us.
         </Typography>
       </Box>
+      )}
 
       <DialogActions className="no-print" sx={{ p: 2, gap: 1, flexDirection: 'column', alignItems: 'stretch' }}>
         <Button variant="contained" size="large" onClick={onNewSale} autoFocus sx={{ height: 56, fontSize: '1.0625rem', fontWeight: 750 }}>
