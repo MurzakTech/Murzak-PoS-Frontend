@@ -573,3 +573,125 @@
     justify-content: center;
   }
 }
+
+/* ---------- A livelier Home: muted brand tints, soft shapes and a gentle entrance ----------
+ * Everything below uses the shop's own accent through the existing tokens (--brand, --soft, --surface), mixed down to a quiet tint, so it
+ * follows the colour chosen in Settings, Brand and works in the dark theme too. Motion is a short fade and rise, and a slow pulse on the
+ * "updated" dot; with "reduce motion" on, none of it moves. */
+.nl-shop {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(115deg, var(--soft) 0%, color-mix(in srgb, var(--soft) 55%, var(--surface)) 60%, var(--surface) 100%);
+}
+.nl-shop::before,
+.nl-shop::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.nl-shop::before {
+  width: 220px;
+  height: 220px;
+  top: -90px;
+  right: -50px;
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+}
+.nl-shop::after {
+  width: 120px;
+  height: 120px;
+  bottom: -60px;
+  left: 38%;
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+}
+.nl-shop__action {
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+.nl-shop__action:hover {
+  transform: translateY(-2px);
+}
+
+/* The big figures sit on a quiet wash of the accent instead of plain white */
+.nl-hero {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 6%, var(--surface)) 0%, var(--surface) 70%);
+}
+.nl-tile {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 5%, var(--surface)) 0%, var(--surface) 65%);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.nl-tile:hover {
+  transform: translateY(-2px);
+}
+
+/* A small dot beside "Updated" that breathes, so the page feels live */
+.nl-home__updated::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--brand);
+  animation: nl-home-pulse 2.4s ease-in-out infinite;
+}
+
+/* Entrance: each block fades in and rises a few pixels, one after the other */
+.nl-shop,
+.nl-hero,
+.nl-tile {
+  animation: nl-home-rise 420ms ease both;
+}
+.nl-hero {
+  animation-delay: 60ms;
+}
+.nl-tile:nth-of-type(1) {
+  animation-delay: 120ms;
+}
+.nl-tile:nth-of-type(2) {
+  animation-delay: 170ms;
+}
+.nl-tile:nth-of-type(3) {
+  animation-delay: 220ms;
+}
+.nl-tile:nth-of-type(4) {
+  animation-delay: 270ms;
+}
+@keyframes nl-home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes nl-home-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nl-shop,
+  .nl-hero,
+  .nl-tile,
+  .nl-home__updated::before {
+    animation: none;
+  }
+  .nl-shop__action,
+  .nl-tile {
+    transition: none;
+  }
+  .nl-shop__action:hover,
+  .nl-tile:hover {
+    transform: none;
+  }
+}
