@@ -584,28 +584,6 @@
   isolation: isolate;
   background: linear-gradient(115deg, var(--soft) 0%, color-mix(in srgb, var(--soft) 55%, var(--surface)) 60%, var(--surface) 100%);
 }
-.nl-shop::before,
-.nl-shop::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.nl-shop::before {
-  width: 220px;
-  height: 220px;
-  top: -90px;
-  right: -50px;
-  background: color-mix(in srgb, var(--brand) 12%, transparent);
-}
-.nl-shop::after {
-  width: 120px;
-  height: 120px;
-  bottom: -60px;
-  left: 38%;
-  background: color-mix(in srgb, var(--brand) 8%, transparent);
-}
 .nl-shop__action {
   transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
 }

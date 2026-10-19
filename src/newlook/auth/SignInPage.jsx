@@ -7,6 +7,7 @@ import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../../config/deployment';
 import logoMark from '../../assets/logo_mark.png';
 import { productImageUrl } from '../../utils/productArt';
 import { applyAccent, readDeviceBrand } from '../brand/deviceBrand';
+import Backdrop from '../brand/Backdrop';
 import useSignIn from './useSignIn';
 import { plainSignInError } from './signInErrors';
 import fill from '../labels/fill';
@@ -115,6 +116,7 @@ const SignInPage = () => {
 
   return (
     <div className="nl-auth">
+      <Backdrop name={shop.backdrop} />
       <div className="nl-auth__bar">
         <Button variant="ghost" icon={mode === 'dark' ? 'sun' : 'moon'} aria-label={mode === 'dark' ? T.theme.toLight : T.theme.toDark} onClick={toggleColorMode} />
       </div>

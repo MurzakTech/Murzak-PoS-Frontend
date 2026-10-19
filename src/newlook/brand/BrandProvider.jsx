@@ -43,7 +43,7 @@ export const BrandProvider = ({ children }) => {
     const remember = (part) => {
       latest = { ...latest, ...part };
       writeCache(company, latest);
-      writeDeviceBrand({ logo: latest.brand.logo, accent: latest.brand.accent, name: latest.business.companyName || latest.business.name });
+      writeDeviceBrand({ logo: latest.brand.logo, accent: latest.brand.accent, backdrop: latest.brand.backdrop, name: latest.business.companyName || latest.business.name });
       setState({ ...latest, status: 'ready' });
     };
     getBrand(company)

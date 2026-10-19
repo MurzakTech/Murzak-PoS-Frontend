@@ -168,7 +168,7 @@ const SalesPage = () => {
   const toAll = tabAddress(location.pathname, 'all', search);
   const emptyStates = {
     noMatch: { icon: 'search', title: T.empty.noMatchTitle, description: T.empty.noMatchText, action: { label: T.empty.clear, onClick: params.clear } },
-    all: { title: T.empty.allTitle, description: T.empty.allText, action: { label: T.empty.goToTill, icon: 'till', onClick: () => navigate(go('/till', '/sales/pos')) } },
+    all: { art: 'sales', title: T.empty.allTitle, description: T.empty.allText, action: { label: T.empty.goToTill, icon: 'till', onClick: () => navigate(go('/till', '/sales/pos')) } },
     unpaid: { icon: 'check', title: T.empty.unpaidTitle, description: T.empty.unpaidText, action: { label: T.empty.showAll, onClick: () => navigate(toAll) } },
     returns: { title: T.empty.returnsTitle, description: T.empty.returnsText, action: { label: T.empty.showAll, onClick: () => navigate(toAll) } },
     sessions: { title: T.empty.sessionsTitle, description: T.empty.sessionsText, action: { label: T.empty.goToTill, icon: 'till', onClick: () => navigate(go('/till', '/sales/pos')) } },

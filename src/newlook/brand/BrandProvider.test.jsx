@@ -73,7 +73,7 @@ test('the last answer is kept on the device, so an offline start still has the s
   const { unmount } = mount();
   await waitFor(() => expect(screen.getByTestId('p')).toHaveTextContent('ready|teal'));
   expect(JSON.parse(localStorage.getItem(`${CACHE_PREFIX}Shop A`)).brand.tagline).toBe('Fresh');
-  expect(readDeviceBrand()).toEqual({ logo: '/files/logo.png', accent: 'teal', name: 'Shop A' });
+  expect(readDeviceBrand()).toEqual({ logo: '/files/logo.png', accent: 'teal', backdrop: 'waves', name: 'Shop A' });
   unmount();
 
   getBrand.mockRejectedValue(new Error('offline'));

@@ -91,3 +91,23 @@ describe('what changed', () => {
     expect(websiteText('HTTP://a.co.ke//')).toBe('a.co.ke');
   });
 });
+
+describe('the background choice', () => {
+  const { BACKDROPS, DEFAULT_BACKDROP, readBrand, brandProblems } = require('./brandModel');
+
+  test('five backgrounds exist and the soft waves are the default', () => {
+    expect(BACKDROPS).toEqual(['plain', 'waves', 'weave', 'market', 'sunrise']);
+    expect(DEFAULT_BACKDROP).toBe('waves');
+  });
+
+  test('a missing or unknown background falls back to the default, and a listed one is kept in any case', () => {
+    expect(readBrand({}).backdrop).toBe('waves');
+    expect(readBrand({ backdrop: 'fireworks' }).backdrop).toBe('waves');
+    expect(readBrand({ backdrop: 'Market' }).backdrop).toBe('market');
+  });
+
+  test('a background off the list is a problem', () => {
+    expect(brandProblems({ accent: 'indigo', style: 'a4', backdrop: 'fireworks' }).backdrop).toBe('backdropWrong');
+    expect(brandProblems({ accent: 'indigo', style: 'a4', backdrop: 'plain' }).backdrop).toBeUndefined();
+  });
+});

@@ -70,7 +70,7 @@ test('choosing a colour saves only the colour card, shows Saved and tells the sc
   expect(within(card('Logo and colour')).getByText('Not saved yet')).toBeInTheDocument();
   userEvent.click(within(card('Logo and colour')).getByRole('button', { name: 'Save' }));
   await within(card('Logo and colour')).findByText('Saved');
-  expect(save).toHaveBeenCalledWith({ logo: '', accent: 'teal' }, 'Shop A');
+  expect(save).toHaveBeenCalledWith({ logo: '', accent: 'teal', backdrop: 'waves' }, 'Shop A');
   expect(applySaved).toHaveBeenCalledWith(expect.objectContaining({ accent: 'teal' }));
   expect(screen.getByRole('article')).toHaveAttribute('data-swatch', 'teal');
 });
@@ -144,7 +144,7 @@ test('a good logo is uploaded, shown, and saved with the card; it can be removed
   await waitFor(() => expect(screen.getAllByRole('img', { name: 'Your logo' })[0]).toHaveAttribute('src', expect.stringContaining('/files/logo.png')));
   userEvent.click(within(card('Logo and colour')).getByRole('button', { name: 'Save' }));
   await within(card('Logo and colour')).findByText('Saved');
-  expect(save).toHaveBeenCalledWith({ logo: '/files/logo.png', accent: 'indigo' }, 'Shop A');
+  expect(save).toHaveBeenCalledWith({ logo: '/files/logo.png', accent: 'indigo', backdrop: 'waves' }, 'Shop A');
   userEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
   expect(screen.getByText('No logo yet')).toBeInTheDocument();
 });

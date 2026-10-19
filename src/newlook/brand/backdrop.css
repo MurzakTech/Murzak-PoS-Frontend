@@ -1,0 +1,48 @@
+/*
+ * The shop's chosen background (Settings, Brand). Every colour is the shop's accent (--brand) or the page colours, mixed down to a tint,
+ * so the layer follows the accent and the dark theme. It sits behind its parent (the parent sets position: relative; isolation: isolate)
+ * and never takes a click.
+ */
+.nl-bd {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.nl-bd--waves {
+  background:
+    radial-gradient(120% 60% at 0% 100%, color-mix(in srgb, var(--brand) 14%, transparent) 0 40%, transparent 41%),
+    radial-gradient(100% 50% at 100% 0%, color-mix(in srgb, var(--brand) 10%, transparent) 0 38%, transparent 39%),
+    radial-gradient(80% 40% at 60% 112%, color-mix(in srgb, var(--brand) 8%, transparent) 0 40%, transparent 41%);
+}
+.nl-bd--weave {
+  background:
+    repeating-linear-gradient(45deg, color-mix(in srgb, var(--brand) 8%, transparent) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--brand) 8%, transparent) 0 2px, transparent 2px 18px);
+}
+.nl-bd--sunrise {
+  background:
+    radial-gradient(circle at 50% 125%, color-mix(in srgb, var(--warn) 30%, transparent) 0, color-mix(in srgb, var(--brand) 14%, transparent) 42%, transparent 72%);
+}
+/* The photo, faded behind a veil of the page colour so text on top keeps its contrast in both themes */
+.nl-bd--market {
+  background-size: cover;
+  background-position: center;
+}
+.nl-bd--market::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 90%, transparent));
+}
+
+/* The small tiles in Settings, Brand that show each choice */
+.nl-bd-tile {
+  position: relative;
+  isolation: isolate;
+  height: 56px;
+  border-radius: var(--radius-input);
+  background: var(--surface);
+  overflow: hidden;
+}

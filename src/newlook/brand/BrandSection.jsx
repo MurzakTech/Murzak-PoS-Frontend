@@ -12,7 +12,8 @@ import SettingsCard from '../settings/SettingsCard';
 import useSettingsUser from '../settings/useSettingsUser';
 import Receipt from '../receipt/Receipt';
 import { useBrand } from './BrandProvider';
-import { ACCENTS, DEFAULT_BRAND, GROUPS, LIMITS, LOGO_ACCEPT, STYLES, brandProblems, groupChanged, logoProblem, tidied } from './brandModel';
+import Backdrop from './Backdrop';
+import { ACCENTS, BACKDROPS, DEFAULT_BRAND, GROUPS, LIMITS, LOGO_ACCEPT, STYLES, brandProblems, groupChanged, logoProblem, tidied } from './brandModel';
 import './brand.css';
 import T from './strings.brand';
 
@@ -64,6 +65,29 @@ const AccentChoice = ({ value, onChange, disabled }) => {
     </div>
   );
 };
+
+const BackdropChoice = ({ value, onChange, disabled }) => (
+  <div className="nl-brand-field is-wide">
+    <p className="nl-brand-label" id="brand-backdrop-label">
+      {T.backdrop.label}
+    </p>
+    <div role="radiogroup" aria-labelledby="brand-backdrop-label" className="nl-brand-backdrops">
+      {BACKDROPS.map((key) => {
+        const on = key === value;
+        return (
+          <button key={key} type="button" role="radio" aria-checked={on} disabled={disabled} className={['nl-brand-backdrop', on && 'is-selected'].filter(Boolean).join(' ')} onClick={() => onChange(key)}>
+            <span className="nl-bd-tile">
+              <Backdrop name={key} />
+              {on ? <Icon name="check" /> : null}
+            </span>
+            <span className="nl-brand-swatch__name">{T.backdrop.names[key]}</span>
+          </button>
+        );
+      })}
+    </div>
+    <p className="nl-brand-helper">{T.backdrop.helper}</p>
+  </div>
+);
 
 const LogoChoice = ({ value, onChange, upload, disabled }) => {
   const input = useRef(null);
@@ -264,6 +288,7 @@ const BrandSection = ({ load = getBrand, save = setBrand, upload = uploadLogo })
         <>
           <LogoChoice value={draft.logo} onChange={set('logo')} upload={upload} disabled={disabled} />
           <AccentChoice value={draft.accent} onChange={set('accent')} disabled={disabled} />
+          <BackdropChoice value={draft.backdrop} onChange={set('backdrop')} disabled={disabled} />
         </>
       )}
       {card(
