@@ -5,7 +5,6 @@ import { Chip } from '../components/Chip';
 import { ConfirmDialog } from '../components/Dialog';
 import Field from '../components/Field';
 import Icon from '../components/Icon';
-import Select from '../components/Select';
 import { useToast } from '../components/Toast';
 import { useAccess } from '../access/AccessProvider';
 import { FormPage, MoreOptions } from '../forms';
@@ -16,7 +15,9 @@ import useBusinessFeatures from '../setup/useBusinessFeatures';
 import './products.css';
 import CategoryDialog from './CategoryDialog';
 import { useCategories, useUnits } from './useProductsData';
-import { checkForm, chipCategories, cleanQuantity, EMPTY_FORM, FIELD_IDS, FIELD_ORDER, freshForm, isDirty, MORE_FIELDS, PRODUCTS_PATH, profitLine, requestFrom, summaryOf, unitOptions } from './productsModel';
+import useShopUnits from './useShopUnits';
+import UnitPicker from './UnitPicker';
+import { checkForm, chipCategories, cleanQuantity, EMPTY_FORM, FIELD_IDS, FIELD_ORDER, freshForm, isDirty, MORE_FIELDS, PRODUCTS_PATH, profitLine, requestFrom, summaryOf } from './productsModel';
 import T from './strings.products';
 
 /**
@@ -32,6 +33,7 @@ const NewProductPage = () => {
   const canSeeCost = access.can('cost_of_goods');
   const categories = useCategories();
   const units = useUnits();
+  const shopUnits = useShopUnits();
   const business = useBusinessFeatures().features; // a retail shop ("What do you sell?") sees the barcode and the unit first
 
   const [values, setValues] = useState(EMPTY_FORM);
@@ -107,12 +109,11 @@ const NewProductPage = () => {
   const errors = useMemo(() => summaryOf(problems), [problems]);
 
   const profit = canSeeCost ? profitLine(values.price, values.cost) : '';
-  const unitChoices = useMemo(() => unitOptions(units.status === 'ready' ? units.data : []), [units.status, units.data]);
   const allCategories = categories.status === 'ready' ? categories.data.categories : [];
   const chips = chipCategories(allCategories, values.category, { showAll: showAllChips });
   const hiddenChips = allCategories.filter((c) => c.name !== T.rootCategory).length - chips.length;
 
-  const unitField = <Select id={FIELD_IDS.unit} label={F.unit} helper={units.status === 'error' ? F.unitsFailed : F.unitHelper} options={unitChoices} value={values.unit} error={problems.unit} onChange={set('unit')} />;
+  const unitField = <UnitPicker id={FIELD_IDS.unit} label={F.unit} helper={units.status === 'error' ? F.unitsFailed : F.unitHelper} value={values.unit} error={problems.unit} onChange={set('unit')} units={units} shop={shopUnits} />;
   const barcodeField = <Field id={FIELD_IDS.barcode} label={F.barcode} helper={F.barcodeHelper} value={values.barcode} error={problems.barcode} autoComplete="off" onChange={set('barcode')} />;
 
   const cancel = () => (dirty ? setAskCancel(true) : navigate(PRODUCTS_PATH));
