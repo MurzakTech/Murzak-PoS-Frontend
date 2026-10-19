@@ -4,6 +4,8 @@ import Button from '../components/Button';
 import Icon from '../components/Icon';
 import Menu from '../components/Menu';
 import { KEEPOUT_ATTRIBUTE } from '../components/Toast';
+import { useBrand } from '../brand/BrandProvider';
+import { productImageUrl } from '../../utils/productArt';
 import S from '../strings';
 import fill from '../labels/fill';
 
@@ -43,6 +45,9 @@ const TopBar = ({
   user,
   userItems = [],
 }) => {
+  // The shop's own logo replaces the product name when the owner has set one (Settings, Brand); otherwise the name is shown
+  const { brand } = useBrand();
+  const shopLogo = brand.logo ? productImageUrl({ image: brand.logo }) : null;
   const tillLabel = till && till.open === false ? T.openTill : T.goToTill;
   const initial = ((user && (user.name || user.email)) || T.fallbackInitial).trim().charAt(0).toUpperCase();
   const who = (user && (user.name || user.email)) || T.fallbackWho;
@@ -54,7 +59,7 @@ const TopBar = ({
       {showMenuButton ? <Button variant="ghost" icon="menu" aria-label={T.openMenu} aria-haspopup="dialog" onClick={onMenu} className="nl-topbar__menu" /> : null}
 
       <Link to={homeTo} className="nl-topbar__logo" aria-label={fill(T.logoLabel, { site: S.shell.shell.siteName })}>
-        {S.shell.shell.siteName}
+        {shopLogo ? <img src={shopLogo} alt="" className="nl-topbar__logo-image" /> : S.shell.shell.siteName}
       </Link>
 
       <button type="button" className="nl-topbar__search" onClick={onSearch} aria-haspopup="dialog" aria-keyshortcuts="Control+K /" aria-label={T.search}>

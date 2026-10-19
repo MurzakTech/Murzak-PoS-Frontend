@@ -1,12 +1,12 @@
 import { oldScreen } from '../redirects/engine';
 
 /**
- * The shape of the Settings page (ticket P5-3, acceptance check AC-32): the five sections, the address of each, and the
+ * The shape of the Settings page (ticket P5-3, acceptance check AC-32): the six sections (Brand was added in P7-3), the address of each, and the
  * cards of Advanced, each with the current screen it opens. Pure data and small functions, so they are tested alone.
  */
-export const SECTIONS = ['business', 'till', 'tax', 'team', 'advanced'];
+export const SECTIONS = ['business', 'brand', 'till', 'tax', 'team', 'advanced'];
 /** The same names as an object, for code that names one section */
-export const SECTION = { business: 'business', till: 'till', tax: 'tax', team: 'team', advanced: 'advanced' };
+export const SECTION = { business: 'business', brand: 'brand', till: 'till', tax: 'tax', team: 'team', advanced: 'advanced' };
 export const FIRST_SECTION = 'business';
 export const SETTINGS_PATH = '/new-look/settings';
 

@@ -410,7 +410,7 @@ describe('the receipt panel', () => {
     window.print = jest.fn(() => {
       expect(document.body.classList.contains('nl-printing-receipt')).toBe(true);
       expect(document.body.querySelector('.nl-receipt-print')).not.toBeNull();
-      expect(document.body.querySelector('.nl-receipt-print').textContent).not.toMatch(/ACC-/);
+      expect(document.body.querySelector('.nl-receipt-print').textContent).toMatch(/ACC-/);
     });
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#0044\b/ }));

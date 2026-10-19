@@ -187,35 +187,26 @@
 }
 
 /* ---------- Printing a receipt ---------- */
+/* The receipt itself (its width, paper and styles) is drawn by receipt/Receipt.jsx; this only hides the page around it while printing */
+/* Off screen but laid out (not display: none), so the receipt can measure its own length for a till roll */
 .nl-receipt-print {
-  display: none;
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
 }
 @media print {
   body.nl-printing-receipt > *:not(.nl-receipt-print) {
     display: none !important;
   }
   body.nl-printing-receipt > .nl-receipt-print {
+    position: static;
+    visibility: visible;
     display: block;
-    box-sizing: border-box;
-    max-width: 80mm;
-    margin: 0 auto;
-    padding: var(--space-4);
     background: Canvas;
     color: CanvasText;
     color-scheme: light;
-    font-family: var(--font-family);
-    font-size: var(--table-size);
-  }
-  .nl-receipt-print h1 {
-    margin: 0 0 var(--space-2);
-    font-size: var(--card-title-size);
-  }
-  .nl-receipt-print p {
-    margin: 0 0 var(--space-1);
-  }
-  .nl-receipt-print .nl-receipt__lines th,
-  .nl-receipt-print .nl-receipt__list,
-  .nl-receipt-print .nl-receipt__ref {
-    color: CanvasText;
   }
 }

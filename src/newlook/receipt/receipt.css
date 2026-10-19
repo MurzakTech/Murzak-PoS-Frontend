@@ -1,0 +1,345 @@
+/*
+ * The sale receipt (ticket P7-3). It is always drawn on white paper, whatever the screen's theme, with the system colours
+ * Canvas and CanvasText under color-scheme: light, so no colour is written out here. The thermal styles use black only; the A4
+ * style uses the shop's accent (--accent-paper, set by [data-swatch] in tokens.css) on its rules and its total.
+ */
+.nl-rcpt {
+  box-sizing: border-box;
+  margin: 0 auto;
+  background: Canvas;
+  color: CanvasText;
+  color-scheme: light;
+  font-family: var(--font-family);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.nl-rcpt *,
+.nl-rcpt *::before,
+.nl-rcpt *::after {
+  box-sizing: border-box;
+}
+.nl-rcpt p,
+.nl-rcpt h2,
+.nl-rcpt dl,
+.nl-rcpt dd,
+.nl-rcpt dt {
+  margin: 0;
+}
+
+/* ---------- Widths ---------- */
+.nl-rcpt--thermal80 {
+  width: 100%;
+  max-width: 80mm;
+  padding: 3mm;
+  font-size: 12px;
+}
+.nl-rcpt--thermal58 {
+  width: 100%;
+  max-width: 58mm;
+  padding: 2mm;
+  font-size: 11px;
+}
+.nl-rcpt--a4 {
+  width: 100%;
+  max-width: 210mm;
+  padding: 12mm 14mm;
+  font-size: 13px;
+  border-top: 4px solid var(--accent-paper);
+}
+
+/* ---------- Header ---------- */
+.nl-rcpt__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.nl-rcpt__logo {
+  display: block;
+  max-width: 100%;
+  max-height: 18mm;
+  object-fit: contain;
+  /* A till roll prints in black only: the logo is shown in greys so the preview matches the paper */
+  filter: grayscale(1) contrast(1.3);
+}
+.nl-rcpt__name {
+  font-size: 1.25em;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+.nl-rcpt__tagline {
+  font-style: italic;
+}
+.nl-rcpt--a4 .nl-rcpt__head {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  text-align: left;
+  padding-bottom: 12px;
+  border-bottom: 1px solid CanvasText;
+}
+.nl-rcpt--a4 .nl-rcpt__logo {
+  max-width: 40mm;
+  max-height: 24mm;
+  filter: none;
+}
+.nl-rcpt--a4 .nl-rcpt__name {
+  font-size: 1.6em;
+}
+
+/* ---------- Title and number ---------- */
+.nl-rcpt__title {
+  margin-top: 8px;
+  font-size: 1em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.nl-rcpt--a4 .nl-rcpt__title {
+  margin-top: 14px;
+  font-size: 1.3em;
+  text-align: left;
+}
+.nl-rcpt__number {
+  margin-top: 4px;
+  text-align: center;
+}
+.nl-rcpt--a4 .nl-rcpt__number {
+  text-align: left;
+}
+.nl-rcpt__no {
+  font-size: 1.4em;
+  font-weight: var(--font-weight-bold);
+}
+.nl-rcpt__no-label {
+  font-size: 0.7em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.nl-rcpt__ref {
+  font-size: 0.85em;
+}
+.nl-rcpt__ref-label {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- Date, cashier, customer ---------- */
+.nl-rcpt__facts {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 6px 0;
+  border-top: 1px dashed CanvasText;
+  border-bottom: 1px dashed CanvasText;
+}
+.nl-rcpt__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nl-rcpt__facts dd {
+  text-align: right;
+}
+.nl-rcpt--a4 .nl-rcpt__facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  border-top: 0;
+  border-bottom: 1px solid CanvasText;
+}
+.nl-rcpt--a4 .nl-rcpt__facts > div {
+  display: block;
+}
+.nl-rcpt--a4 .nl-rcpt__facts dt {
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.nl-rcpt--a4 .nl-rcpt__facts dd {
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---------- Items ---------- */
+.nl-rcpt__items {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+.nl-rcpt__items th {
+  padding: 2px 0 4px;
+  border-bottom: 1px solid CanvasText;
+  font-size: 0.85em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.nl-rcpt__items td {
+  padding: 4px 0;
+  vertical-align: top;
+  border-bottom: 1px dotted CanvasText;
+}
+.nl-rcpt__items .nl-rcpt__col-num {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 8px;
+}
+.nl-rcpt__item-name {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+}
+.nl-rcpt__sub,
+.nl-rcpt__offer {
+  display: block;
+  font-size: 0.92em;
+}
+.nl-rcpt__offer {
+  font-style: italic;
+}
+/* The quantity and price columns exist only on A4; a thermal receipt says them under the name instead */
+.nl-rcpt--thermal80 .is-a4only,
+.nl-rcpt--thermal58 .is-a4only,
+.nl-rcpt--a4 .nl-rcpt__sub {
+  display: none;
+}
+.nl-rcpt--a4 .nl-rcpt__col-qty {
+  width: 22%;
+  padding-left: 8px;
+}
+.nl-rcpt--a4 .nl-rcpt__items th {
+  border-bottom: 2px solid var(--accent-paper);
+}
+.nl-rcpt--a4 .nl-rcpt__items td {
+  padding: 6px 0;
+  border-bottom: 1px solid CanvasText;
+}
+.nl-rcpt--a4 .nl-rcpt__items .nl-rcpt__col-num {
+  width: 16%;
+}
+.nl-rcpt--a4 .nl-rcpt__offer {
+  font-size: 0.85em;
+}
+
+/* ---------- Totals and payments ---------- */
+.nl-rcpt__totals,
+.nl-rcpt__pay {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+}
+.nl-rcpt__pay {
+  padding-top: 6px;
+  border-top: 1px dashed CanvasText;
+}
+.nl-rcpt__total {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nl-rcpt__total dd {
+  text-align: right;
+  white-space: nowrap;
+}
+.nl-rcpt__total.is-strong {
+  font-size: 1.15em;
+  font-weight: var(--font-weight-bold);
+}
+.nl-rcpt__totals .nl-rcpt__total.is-strong {
+  padding-top: 4px;
+  border-top: 1px solid CanvasText;
+  font-size: 1.3em;
+}
+.nl-rcpt--a4 .nl-rcpt__totals,
+.nl-rcpt--a4 .nl-rcpt__pay {
+  width: 50%;
+  margin-left: auto;
+}
+.nl-rcpt--a4 .nl-rcpt__totals .nl-rcpt__total.is-strong {
+  border-top: 2px solid var(--accent-paper);
+}
+
+/* ---------- Footer ---------- */
+.nl-rcpt__foot {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed CanvasText;
+  text-align: center;
+}
+.nl-rcpt__footer-message {
+  font-weight: var(--font-weight-semibold);
+}
+.nl-rcpt__contact {
+  font-size: 0.92em;
+}
+.nl-rcpt--a4 .nl-rcpt__foot {
+  border-top: 2px solid var(--accent-paper);
+}
+
+/* ---------- The accent: A4 only, never on a till roll ---------- */
+.nl-rcpt--a4 .nl-rcpt__accent {
+  color: var(--accent-paper);
+}
+
+/* ---------- A phone: the A4 page narrows to the screen ---------- */
+@media (max-width: 640px) {
+  .nl-rcpt--a4 {
+    padding: 16px;
+  }
+  .nl-rcpt--a4 .nl-rcpt__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .nl-rcpt--a4 .nl-rcpt__facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .nl-rcpt--a4 .nl-rcpt__totals,
+  .nl-rcpt--a4 .nl-rcpt__pay {
+    width: 100%;
+  }
+  .nl-rcpt--a4 .nl-rcpt__col-qty {
+    width: auto;
+  }
+}
+
+/* ---------- Printing ---------- */
+@media print {
+  /* The page margin (the @page rule of the style) is the margin; the paper is the width */
+  .nl-rcpt {
+    max-width: none;
+    padding: 0;
+    break-inside: avoid-page;
+  }
+  .nl-rcpt--a4 {
+    border-top-width: 3px;
+  }
+  /* The till's old print rules colour everything black and fix a 76mm width; these keep the chosen style (they are more specific) */
+  .receipt-printable.nl-rcpt-wrap--thermal58 {
+    width: 54mm !important;
+    max-width: 54mm !important;
+  }
+  .receipt-printable.nl-rcpt-wrap--a4 {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .receipt-printable .nl-rcpt--a4 .nl-rcpt__accent {
+    color: var(--accent-paper) !important;
+  }
+  .nl-rcpt--a4,
+  .nl-rcpt--a4 .nl-rcpt__items th,
+  .nl-rcpt--a4 .nl-rcpt__totals .nl-rcpt__total.is-strong,
+  .nl-rcpt--a4 .nl-rcpt__foot {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

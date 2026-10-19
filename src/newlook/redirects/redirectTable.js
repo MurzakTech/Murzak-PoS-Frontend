@@ -506,6 +506,7 @@ const PAGES = [
   { path: '/reports/performance', title: 'Performance' },
 
   { path: '/settings/business', title: 'Business' },
+  { path: '/settings/brand', title: 'Brand and receipts' },
   { path: '/settings/till', title: 'Till and payments' },
   { path: '/settings/tax', title: 'Tax' },
   { path: '/settings/team', title: 'Team and security' },

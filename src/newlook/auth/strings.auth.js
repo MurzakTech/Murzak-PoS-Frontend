@@ -8,6 +8,7 @@
 const auth = {
   brand: 'Murzak POS',
   homeLabel: 'Murzak POS home',
+  homeLabelShop: '{name} home',
 
   theme: { toLight: 'Switch to light theme', toDark: 'Switch to dark theme' },
 

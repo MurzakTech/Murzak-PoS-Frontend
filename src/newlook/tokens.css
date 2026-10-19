@@ -137,3 +137,178 @@
   --compare: #9a9bb0;
   --ink-rgb: 240 239 236;
 }
+
+/*
+ * Accent choices (ticket P7-3): the shop owner picks ONE of these on Settings, Brand. Each [data-accent] rule re-sets the brand colour and
+ * its ramp (brand, brand-text, on-brand, soft, track, selected-row) in both themes; nothing else changes. No accent is set until the
+ * shop picks one, which is the indigo above. Every pair that carries text is at least 4.5:1 (checked in brand/accents.test.js).
+ *
+ * [data-swatch] is the same colour for use on one element: a colour chip in Settings (--swatch) and a receipt on white paper
+ * (--accent-paper), which must be the light-theme colour even while the screen is dark.
+ */
+:root[data-accent='blue'] {
+  --brand: #1f5dc1;
+  --brand-text: #1f5dc1;
+  --on-brand: #ffffff;
+  --soft: #e7f0fe;
+  --track: #d9e7fc;
+  --selected-row: #f0f6ff;
+}
+:root[data-accent='blue'][data-theme='dark'] {
+  --brand: #6699eb;
+  --brand-text: #71a1ef;
+  --on-brand: #0e0f14;
+  --soft: #1b2b46;
+  --track: #213350;
+  --selected-row: #1a273d;
+}
+:root[data-accent='teal'] {
+  --brand: #13766d;
+  --brand-text: #13766d;
+  --on-brand: #ffffff;
+  --soft: #e7fefb;
+  --track: #d9fcf8;
+  --selected-row: #f0fffd;
+}
+:root[data-accent='teal'][data-theme='dark'] {
+  --brand: #1acbb9;
+  --brand-text: #17d3c0;
+  --on-brand: #0e0f14;
+  --soft: #1b4642;
+  --track: #21504b;
+  --selected-row: #1a3d39;
+}
+:root[data-accent='green'] {
+  --brand: #147b3a;
+  --brand-text: #147b3a;
+  --on-brand: #ffffff;
+  --soft: #e7feef;
+  --track: #d9fce6;
+  --selected-row: #f0fff5;
+}
+:root[data-accent='green'][data-theme='dark'] {
+  --brand: #1acb5b;
+  --brand-text: #18d85e;
+  --on-brand: #0e0f14;
+  --soft: #1b462b;
+  --track: #215032;
+  --selected-row: #1a3d27;
+}
+:root[data-accent='amber'] {
+  --brand: #915818;
+  --brand-text: #915818;
+  --on-brand: #ffffff;
+  --soft: #fef3e7;
+  --track: #fcecd9;
+  --selected-row: #fff8f0;
+}
+:root[data-accent='amber'][data-theme='dark'] {
+  --brand: #dd831d;
+  --brand-text: #eb9e47;
+  --on-brand: #0e0f14;
+  --soft: #46321b;
+  --track: #503a21;
+  --selected-row: #3d2d1a;
+}
+:root[data-accent='red'] {
+  --brand: #b81e1e;
+  --brand-text: #b81e1e;
+  --on-brand: #ffffff;
+  --soft: #fee7e7;
+  --track: #fcd9d9;
+  --selected-row: #fff0f0;
+}
+:root[data-accent='red'][data-theme='dark'] {
+  --brand: #ed7373;
+  --brand-text: #f07a7a;
+  --on-brand: #0e0f14;
+  --soft: #461b1b;
+  --track: #502121;
+  --selected-row: #3d1a1a;
+}
+:root[data-accent='pink'] {
+  --brand: #b41d69;
+  --brand-text: #b41d69;
+  --on-brand: #ffffff;
+  --soft: #fee7f2;
+  --track: #fcd9eb;
+  --selected-row: #fff0f7;
+}
+:root[data-accent='pink'][data-theme='dark'] {
+  --brand: #ec6aab;
+  --brand-text: #f075b3;
+  --on-brand: #0e0f14;
+  --soft: #461b30;
+  --track: #502138;
+  --selected-row: #3d1a2b;
+}
+:root[data-accent='purple'] {
+  --brand: #8624db;
+  --brand-text: #8624db;
+  --on-brand: #ffffff;
+  --soft: #f3e7fe;
+  --track: #ecd9fc;
+  --selected-row: #f8f0ff;
+}
+:root[data-accent='purple'][data-theme='dark'] {
+  --brand: #b97cee;
+  --brand-text: #bb7ef1;
+  --on-brand: #0e0f14;
+  --soft: #321b46;
+  --track: #3a2150;
+  --selected-row: #2d1a3d;
+}
+:root[data-accent='slate'] {
+  --brand: #56657b;
+  --brand-text: #56657b;
+  --on-brand: #ffffff;
+  --soft: #eff2f5;
+  --track: #e7eaef;
+  --selected-row: #f0f6ff;
+}
+:root[data-accent='slate'][data-theme='dark'] {
+  --brand: #8598b2;
+  --brand-text: #95a7c1;
+  --on-brand: #0e0f14;
+  --soft: #292f38;
+  --track: #303741;
+  --selected-row: #252a32;
+}
+
+[data-swatch='indigo'] {
+  --swatch: #352cdd;
+  --accent-paper: #352cdd;
+}
+[data-swatch='blue'] {
+  --swatch: #1f5dc1;
+  --accent-paper: #1f5dc1;
+}
+[data-swatch='teal'] {
+  --swatch: #13766d;
+  --accent-paper: #13766d;
+}
+[data-swatch='green'] {
+  --swatch: #147b3a;
+  --accent-paper: #147b3a;
+}
+[data-swatch='amber'] {
+  --swatch: #915818;
+  --accent-paper: #915818;
+}
+[data-swatch='red'] {
+  --swatch: #b81e1e;
+  --accent-paper: #b81e1e;
+}
+[data-swatch='pink'] {
+  --swatch: #b41d69;
+  --accent-paper: #b41d69;
+}
+[data-swatch='purple'] {
+  --swatch: #8624db;
+  --accent-paper: #8624db;
+}
+[data-swatch='slate'] {
+  --swatch: #56657b;
+  --accent-paper: #56657b;
+}
+

@@ -1,5 +1,5 @@
 /**
- * The shape of the Settings page (ticket P5-3, AC-32): five sections, addresses that resolve, the names the old addresses
+ * The shape of the Settings page (ticket P5-3, AC-32): six sections, addresses that resolve, the names the old addresses
  * redirect to, and links that do not bounce back.
  */
 import { REDIRECTS, NEW_PAGES } from '../redirects/redirectTable';
@@ -8,9 +8,9 @@ import { newLookRoutes } from '../newLookRoutes';
 import { ADVANCED_CARDS, SECTIONS, cardAddress, cardFromSearch, industryAddress, openFromSearch, sectionAddress, sectionFromPath } from './settingsModel';
 import T from './strings.settings';
 
-describe('the five sections', () => {
-  test('are Business, Till and payments, Tax, Team and security and Advanced, in that order', () => {
-    expect(SECTIONS.map((key) => T.shell.sections[key].title)).toEqual(['Business', 'Till and payments', 'Tax', 'Team and security', 'Advanced']);
+describe('the six sections', () => {
+  test('are Business, Brand and receipts, Till and payments, Tax, Team and security and Advanced, in that order', () => {
+    expect(SECTIONS.map((key) => T.shell.sections[key].title)).toEqual(['Business', 'Brand and receipts', 'Till and payments', 'Tax', 'Team and security', 'Advanced']);
   });
 
   test('match the Settings pages of the redirect table, with the same titles', () => {
@@ -44,7 +44,7 @@ describe('the five sections', () => {
 describe('the old Settings, Staff and Roles addresses', () => {
   const rows = REDIRECTS.filter((r) => /^\/(settings|staff|roles)/.test(r.from) && r.to);
 
-  test('every row ends at one of the five sections', () => {
+  test('every row ends at one of the six sections', () => {
     const targets = rows.map((row) => row.to.split('?')[0]);
     const allowed = SECTIONS.map((key) => `/settings/${key}`);
     expect(targets.filter((target) => !allowed.includes(target))).toEqual([]);

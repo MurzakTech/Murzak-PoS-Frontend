@@ -15,7 +15,6 @@ import { useSyncExternalStore } from 'react';
 // Finished pages. With the New look on, their old addresses open them. Held back on purpose:
 //   /till                        the till is the current screen with the New look parts inside it, not a separate page
 //   /sales/new                   the New invoice form is not redesigned yet
-//   /products/import             Import is not redesigned yet
 //   /stock/locations, /transfers they only link to the current Stores and Stock transfers screens, so redirecting those would loop
 //   /reports/stock-movement, /reports/performance  they only link to the current screens
 export const BUILT_PAGES = [
@@ -33,6 +32,7 @@ export const BUILT_PAGES = [
   '/products',
   '/products/categories',
   '/products/new',
+  '/products/import',
   // Stock levels (P4-3, P4-4)
   '/stock',
   '/stock/low',
@@ -57,12 +57,13 @@ export const BUILT_PAGES = [
   '/reports/stock-summary',
   '/reports/stock-value',
   '/reports/aging-stock',
-  // Settings (P5-3): the five sections
+  // Settings (P5-3, P7-3): the six sections
   '/settings/business',
   '/settings/till',
   '/settings/tax',
   '/settings/team',
   '/settings/advanced',
+  '/settings/brand',
 ];
 export const PREVIEW_KEY = 'murzak_new_look:preview-redirects';
 

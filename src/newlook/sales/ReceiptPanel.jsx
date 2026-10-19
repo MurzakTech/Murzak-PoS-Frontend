@@ -9,8 +9,11 @@ import { formatPhone } from '../labels/renameMap';
 import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import PaymentDialog from './PaymentDialog';
+import { useBrand } from '../brand/BrandProvider';
+import Receipt from '../receipt/Receipt';
+import { fromSale } from '../receipt/receiptModel';
 import { useSale } from './useSalesData';
-import { customerName, detailsFor, statusView, whatsappLink, whenLabel } from './salesModel';
+import { detailsFor, statusView, whatsappLink, whenLabel } from './salesModel';
 import T from './strings.sales';
 
 const PRINT_CLASS = 'nl-printing-receipt';
@@ -103,27 +106,22 @@ const ReceiptBody = ({ sale, printing = false }) => {
   );
 };
 
-/** What the printer gets: the receipt only, with no system reference. It exists only while printing. */
-const PrintBlock = ({ sale }) =>
-  createPortal(
+/** What the printer gets: the shop's receipt only, in the style the shop chose. It exists only while printing. */
+const PrintBlock = ({ sale }) => {
+  const { brand, business } = useBrand();
+  return createPortal(
     <div className="nl-receipt-print">
-      <h1>{fill(T.panel.receiptTitle, { receipt: sale.receipt })}</h1>
-      <p>{whenLabel(sale.date, sale.time)}</p>
-      <p>
-        {T.panel.cashier}: {sale.cashier || T.noValue}
-      </p>
-      <p>
-        {T.panel.customer}: {customerName({ customer: sale.customer && sale.customer.name })}
-      </p>
-      <ReceiptBody sale={sale} printing />
+      <Receipt receipt={fromSale(sale)} brand={brand} business={business} style={brand.style} />
     </div>,
     document.body
   );
+};
 
 /**
  * The receipt panel of the Sales page (ticket P3-8). It asks the server for the receipt itself, so the list and the
  * panel load, fail and retry independently. Buttons: Take payment (only when the server says it can be taken),
- * Print, Send on WhatsApp and Return items. The system reference (ACC-...) is shown only under Details.
+ * Print (which is also the reprint), Send on WhatsApp and Return items. Print draws the shop's own receipt (logo, address, tax number,
+ * footer message and the style the shop chose) with the short number and, under it, the full reference.
  *
  *   id, doctype   which receipt; summary is the list row, used for the title while the receipt loads
  *   returnAddress(sale)   where Return items goes (the current returns screen with the invoice filled in)
@@ -136,17 +134,23 @@ const ReceiptPanel = ({ id, doctype, summary, position, onClose, onPrevious, onN
   const [paying, setPaying] = useState(false);
   const [printing, setPrinting] = useState(false);
 
-  // Printing: the print block is drawn first, then the browser's print window opens, then the block goes away
+  // Printing: the print block is drawn first and measures its own length (a till roll is as long as the receipt), then the browser's
+  // print window opens a moment later, then the block goes away
   useEffect(() => {
     if (!printing) return undefined;
     document.body.classList.add(PRINT_CLASS);
-    try {
-      window.print();
-    } finally {
+    const timer = setTimeout(() => {
+      try {
+        window.print();
+      } finally {
+        document.body.classList.remove(PRINT_CLASS);
+        setPrinting(false);
+      }
+    }, 50);
+    return () => {
+      clearTimeout(timer);
       document.body.classList.remove(PRINT_CLASS);
-      setPrinting(false);
-    }
-    return () => document.body.classList.remove(PRINT_CLASS);
+    };
   }, [printing]);
 
   const loading = status === 'loading' && !sale;
