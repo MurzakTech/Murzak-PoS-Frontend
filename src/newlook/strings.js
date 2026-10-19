@@ -367,6 +367,18 @@ const home = {
   dateLine: '{weekday} {day} {month} {year}',
   updated: 'Updated {time}',
   refresh: 'Refresh',
+  // The shop banner at the top of Home: the shop's own name, logo and tagline, and the jobs done most often
+  banner: {
+    label: 'Your shop',
+    defaultTagline: 'Here is how your shop is doing today.',
+    logoAlt: 'Logo of {name}',
+    actionsLabel: 'Quick actions',
+    newSale: 'New sale',
+    addProduct: 'Add product',
+    receiveGoods: 'Receive goods',
+    addExpense: 'Add expense',
+    setBrand: 'Add your logo and colours',
+  },
   hero: {
     label: 'Today so far',
     title: 'Today so far (KES)',

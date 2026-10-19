@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
 import { useDelayedFlag } from '../components/Skeleton';
 import { PageHeader } from '../shell';
+import ShopBanner from './ShopBanner';
 import { useAccess } from '../access/AccessProvider';
 import { isPageLive, usePreviewRedirects } from '../redirects/live';
 import { toNewAddress } from '../redirects/engine';
@@ -85,6 +86,17 @@ const HomePage = () => {
     products: go('/products', '/products'),
     payments: go('/settings/till', '/settings/payment-methods'),
   };
+  // The jobs done most often, limited to what the person may do (a cashier sells; owners and managers also add and receive)
+  const shopActions = [
+    { key: 'sale', label: S.home.banner.newSale, icon: 'receipt', to: links.openTill },
+    ...(access.tier === 'cashier'
+      ? []
+      : [
+          { key: 'product', label: S.home.banner.addProduct, icon: 'box', to: go('/products/new', '/products/new') },
+          { key: 'receive', label: S.home.banner.receiveGoods, icon: 'truck', to: toNewAddress('/purchases/receive') },
+          { key: 'expense', label: S.home.banner.addExpense, icon: 'wallet', to: toNewAddress('/expenses/new') },
+        ]),
+  ];
   const attentionLinks = {
     close: links.closeTill,
     reorder: (item) => go(`/purchases/new?item=${encodeURIComponent(item.item_code || '')}`, '/purchases/new'),
@@ -226,6 +238,8 @@ const HomePage = () => {
           </Button>
         }
       />
+
+      <ShopBanner actions={shopActions} canBrand={access.tier === 'owner'} brandTo={toNewAddress('/settings/brand')} />
 
       <SetupBanner />
 
