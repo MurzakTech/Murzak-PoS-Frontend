@@ -49,7 +49,7 @@ export const REDIRECTS = [
   // Products
   { from: '/products', to: '/products', status: 'sure' },
   { from: '/products/new', to: '/products/new', status: 'sure' },
-  { from: '/products/load-products', to: '/products/import', status: 'sure', note: 'Load Products is now the Import button.' },
+  { from: '/products/load-products', to: null, status: 'keep', note: 'Load Products is the industry starter catalogue, which the spreadsheet import does not replace, so the current screen stays at this address (a card in Settings, Advanced opens it).' },
   { from: '/products/categories', to: '/products/categories', status: 'sure' },
   { from: '/products/brands', to: '/settings/advanced?section=brands', status: 'sure' },
   { from: '/products/units', to: '/settings/advanced?section=units', status: 'sure' },
@@ -60,21 +60,11 @@ export const REDIRECTS = [
   {
     from: '/products/bulk-import',
     to: '/products/import',
-    status: 'unclear',
-    note: 'The Spec only names one Import button. Assumed a bulk product import is the same Import page.',
+    status: 'sure',
+    note: 'The spreadsheet import is the Import page (P7-1), which now also carries stock, category, unit, description and pictures.',
   },
-  {
-    from: '/products/bulk-stock-import',
-    to: '/products/import',
-    status: 'unclear',
-    note: 'The Spec does not say where an opening stock import goes. Assumed it is a choice on the same Import page, because Stock in is a single short form, not a bulk import.',
-  },
-  {
-    from: '/industry/:industryCode/products',
-    to: '/products/import',
-    status: 'unclear',
-    note: 'This is the industry starter catalogue opened from the old Dashboard. The Spec names no screen for it. Assumed it is part of Import, and the first-time set-up wizard may replace it.',
-  },
+  { from: '/products/bulk-stock-import', to: null, status: 'keep', note: 'The opening stock import has its own sheet and rules, so the current screen stays at this address (a card in Settings, Advanced opens it). The Import page can also carry opening stock for new products.' },
+  { from: '/industry/:industryCode/products', to: null, status: 'keep', note: 'The industry starter catalogue stays on the current screen (a card in Settings, Advanced opens it).' },
 
   // Stock levels (old Inventory)
   { from: '/inventory', to: '/stock', status: 'sure' },
