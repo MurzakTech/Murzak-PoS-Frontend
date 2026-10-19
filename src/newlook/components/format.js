@@ -24,3 +24,25 @@ export const formatCount = (n, singular, plural) => fill(T.count, { count: Numbe
 
 /** formatShowing(20, 135) gives "Showing 20 of 135". */
 export const formatShowing = (shown, total) => fill(T.showing, { shown: Number(shown).toLocaleString('en-US'), total: Number(total).toLocaleString('en-US') });
+
+/**
+ * A percentage with one decimal at most and no trailing zero: 21.5 gives "21.5%", 25 gives "25%", 13.2345 gives "13.2%".
+ * Missing or non-numeric values give "0%". The sign is kept (-3.46 gives "-3.5%").
+ */
+export const formatPercent = (value) => {
+  const n = Number(value);
+  if (value === null || value === undefined || value === '' || Number.isNaN(n)) return '0%';
+  const rounded = Math.round(n * 10) / 10;
+  return `${Object.is(rounded, -0) ? 0 : rounded}%`;
+};
+
+/** The number alone, rounded the same way: formatPercentNumber(13.2345) gives 13.2. For templates that already carry the % sign. */
+export const percentNumber = (value) => {
+  const n = Number(value);
+  if (Number.isNaN(n)) return 0;
+  const rounded = Math.round(n * 10) / 10;
+  return Object.is(rounded, -0) ? 0 : rounded;
+};
+
+/** "Saved 1 row" / "Saved 20 rows" style: a count of rows with its noun, using the same plural rule as formatCount */
+export const rowsWords = (n) => formatCount(n, T.rowNoun);

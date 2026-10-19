@@ -39,11 +39,11 @@ beforeEach(() => {
 });
 
 describe('reading and writing the flag', () => {
-  test('nothing saved means off (never signed in on this device)', () => {
-    expect(readDeviceFlag()).toBe(false);
+  test('nothing saved means on (never signed in on this device, and the New look is the default)', () => {
+    expect(readDeviceFlag()).toBe(true);
   });
 
-  test('1 is on, 0 is off, anything else is off', () => {
+  test('1 is on, 0 is off, anything else is on', () => {
     writeDeviceFlag(true);
     expect(localStorage.getItem(DEVICE_KEY)).toBe('1');
     expect(readDeviceFlag()).toBe(true);
@@ -51,17 +51,17 @@ describe('reading and writing the flag', () => {
     expect(localStorage.getItem(DEVICE_KEY)).toBe('0');
     expect(readDeviceFlag()).toBe(false);
     localStorage.setItem(DEVICE_KEY, 'yes');
-    expect(readDeviceFlag()).toBe(false);
+    expect(readDeviceFlag()).toBe(true);
   });
 
-  test('blocked storage is off and does not throw', () => {
+  test('blocked storage is on and does not throw', () => {
     const get = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
     });
     const set = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('blocked');
     });
-    expect(readDeviceFlag()).toBe(false);
+    expect(readDeviceFlag()).toBe(true);
     expect(() => writeDeviceFlag(true)).not.toThrow();
     get.mockRestore();
     set.mockRestore();

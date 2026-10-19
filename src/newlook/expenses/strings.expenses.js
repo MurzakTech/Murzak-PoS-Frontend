@@ -8,7 +8,7 @@ const expenses = {
   addExpense: 'Add expense',
   export: 'Export CSV',
   exportName: 'expenses-{period}-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
   noValue: '-',
 
   noAccess: {

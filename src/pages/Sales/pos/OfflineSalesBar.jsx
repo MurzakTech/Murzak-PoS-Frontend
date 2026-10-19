@@ -6,6 +6,9 @@ import {
 import { CloudOff, CloudUpload } from '@mui/icons-material';
 import { STATUS, removeSale, retrySale, MAX_QUEUED_SALES, MAX_QUEUE_AGE_HOURS } from '../../../utils/offlineSales';
 import { money } from './money';
+import { useNewLook } from '../../../newlook/NewLookProvider';
+import { formatCount } from '../../../newlook/components/format';
+import tillText from '../../../newlook/till/strings.till';
 
 const saleTotal = (sale) => Number(sale.receipt?.grandTotal) || 0;
 
@@ -15,6 +18,7 @@ const saleTotal = (sale) => Number(sale.receipt?.grandTotal) || 0;
  * removed by a manager.
  */
 const OfflineSalesBar = ({ online, syncing, sales, pending, needsAttention, onSyncNow }) => {
+  const { enabled: newLook } = useNewLook();
   const [open, setOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(null);
 
@@ -76,7 +80,7 @@ const OfflineSalesBar = ({ online, syncing, sales, pending, needsAttention, onSy
                       <TableCell>
                         <Typography variant="body2">{sale.id}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {(sale.payload.items || []).length} item(s) · {sale.payload.customer}
+                          {newLook ? formatCount((sale.payload.items || []).length, tillText.itemNoun) : `${(sale.payload.items || []).length} item(s)`} · {sale.payload.customer}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">{money(saleTotal(sale))}</TableCell>

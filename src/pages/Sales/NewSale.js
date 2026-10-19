@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -49,6 +49,7 @@ import '../../newlook/till/till-controls.css';
 import PayScreen from '../../newlook/till/PayScreen';
 import TillPanel from '../../newlook/till/TillPanel';
 import ShiftCloseDialog from '../../newlook/till/ShiftCloseDialog';
+import SaleAnnouncement from '../../newlook/till/SaleAnnouncement';
 import { getPreview, isPageLive } from '../../newlook/redirects/live';
 import { toNewAddress } from '../../newlook/redirects/engine';
 import PaymentPanel from './pos/PaymentPanel';
@@ -196,7 +197,8 @@ const NewSale = () => {
   // Local state
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // paces the server look-up of offers and the tile count
+  const shownSearchTerm = useDeferredValue(searchTerm); // the tiles follow the typing at once, from the catalogue kept on the device
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [manualDiscountType, setManualDiscountType] = useState('percentage'); // 'percentage' | 'amount'
   const [manualDiscountValue, setManualDiscountValue] = useState(0);
@@ -234,7 +236,8 @@ const NewSale = () => {
   const [creditAmount, setCreditAmount] = useState(0);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   const [openTillError, setOpenTillError] = useState(''); // why the last "Open till" attempt failed
-  const isPhone = useMediaQuery((t) => t.breakpoints.down('md'));
+  // The phone layout (products on top, the sale as a bottom sheet) is below 768px; from 768px the products and the sale sit side by side
+  const isPhone = useMediaQuery('(max-width:767.95px)');
   const [cartSheetOpen, setCartSheetOpen] = useState(false); // phones: the sale slides up over the products
   const [priceEntryProduct, setPriceEntryProduct] = useState(null); // product waiting for a typed price
   const [amountGiven, setAmountGiven] = useState(0);
@@ -280,6 +283,12 @@ const NewSale = () => {
   const [rxOpen, setRxOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const { enabled: newLook } = useNewLook(); // the redesigned till pieces show only while the shop's New look is on
+  // New look: a class on the page body, so the keyboard focus ring (till-controls.css) also reaches dialogs and menus that open outside the till
+  useEffect(() => {
+    if (!newLook) return undefined;
+    document.body.classList.add('nl-till-active');
+    return () => document.body.classList.remove('nl-till-active');
+  }, [newLook]);
   const [pendingLeave, setPendingLeave] = useState('/dashboard'); // where the cashier is going when the leave dialog opens
   const [leaveHolding, setLeaveHolding] = useState(false);
   const [tillPanelOpen, setTillPanelOpen] = useState(false); // New look: the Till open pill's panel (Recent sales)
@@ -714,24 +723,30 @@ const NewSale = () => {
   }, [products]);
 
   // Filter products with memoization
-  const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      const matchesSearch = productMatches(product, debouncedSearchTerm);
+  const filterProducts = (term) =>
+    products.filter(product => {
+      const matchesSearch = productMatches(product, term);
       const matchesCategory = selectedCategory === 'all' || 
                              (product.item_group || '').toLowerCase() === selectedCategory.toLowerCase();
       return matchesSearch && matchesCategory;
     });
-  }, [products, debouncedSearchTerm, selectedCategory]);
+  const filteredProducts = useMemo(() => filterProducts(shownSearchTerm), [products, shownSearchTerm, selectedCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch discounts for paginated products (for product table display)
+  // Fetch discounts for paginated products (for product table display). The look-up follows the paced search term, so typing
+  // does not send a request for every key; with a paused (or empty) search it is the tiles on show.
+  const discountProducts = useMemo(
+    () => (debouncedSearchTerm === shownSearchTerm ? filteredProducts : filterProducts(debouncedSearchTerm)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredProducts, products, debouncedSearchTerm, shownSearchTerm, selectedCategory]
+  );
   const productDiscountItems = useMemo(() => 
-    filteredProducts
+    discountProducts
       .slice(0, tileLimit)
       .map(product => ({
         item_code: product.item_code,
         item_group: product.item_group,
       })),
-    [filteredProducts, tileLimit]
+    [discountProducts, tileLimit]
   );
   
   // Fetch discounts for products in grid
@@ -814,7 +829,7 @@ const NewSale = () => {
         }];
         // Announce to screen readers
         if (cartAnnouncementRef.current) {
-          cartAnnouncementRef.current.textContent = `${product.item_name || product.name} added to cart. Cart now has ${newCart.length} items.`;
+          cartAnnouncementRef.current.textContent = `${product.item_name || product.name} added to cart. Cart now has ${newCart.length} item${newCart.length === 1 ? '' : 's'}.`;
         }
         return newCart;
       });
@@ -884,7 +899,7 @@ const NewSale = () => {
       const newCart = prevCart.filter(item => item.item_code !== itemCode);
       // Announce to screen readers
       if (cartAnnouncementRef.current) {
-        cartAnnouncementRef.current.textContent = `Item removed from cart. Cart now has ${newCart.length} items.`;
+        cartAnnouncementRef.current.textContent = `Item removed from cart. Cart now has ${newCart.length} item${newCart.length === 1 ? '' : 's'}.`;
       }
       return newCart;
     });
@@ -1858,6 +1873,12 @@ const NewSale = () => {
     return map;
   }, [cart]);
 
+  // One steady function for the tiles, so adding a line redraws the tile that changed, not all of them (each tile is memoised and
+  // would otherwise see a new function on every change of the sale)
+  const addToCartRef = useRef(null);
+  addToCartRef.current = addToCart;
+  const addFromTile = useCallback((product) => addToCartRef.current(product), []);
+
   const getTileData = (product) => {
     const itemCode = product.item_code;
     let base = product.standard_rate || product.price || 0;
@@ -2078,9 +2099,13 @@ const NewSale = () => {
 
   return (
     <Box className={newLook ? 'nl-till-root' : undefined} sx={{ height: '100dvh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', overflow: 'hidden' }}>
+      {newLook && <h1 className="nl-visually-hidden">{tillText.pageTitle}</h1>}
       <PosHeader
         storeName={storeName}
-        warehouses={warehouses}
+        warehouses={newLook ? sellingLocations(warehouses) : warehouses}
+        exitLabel={newLook ? tillText.labels.exit : undefined}
+        exitTip={newLook ? tillText.labels.exitTip : undefined}
+        fallbackTitle={newLook ? tillText.pageTitle : undefined}
         canChangeStore={cart.length === 0}
         onChangeStore={(w) => dispatch(setActiveWarehouse(w))}
         cashierName={cashierName}
@@ -2109,7 +2134,8 @@ const NewSale = () => {
       <Box ref={cartAnnouncementRef} role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }} />
 
       {showShiftCheck ? (
-        <Box sx={{ flex: 1, display: 'grid', placeItems: 'center' }} aria-busy="true">
+        // Its own key: the products area that replaces this message is a new element, not this one re-styled, so it is not counted as moving
+        <Box key="checking-shift" sx={{ flex: 1, display: 'grid', placeItems: 'center' }} aria-busy="true">
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Checking your shift...</Typography>
@@ -2133,7 +2159,7 @@ const NewSale = () => {
           openError={openTillError}
         />
       ) : (
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+        <Box key="selling" sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: isPhone ? 'column' : 'row' }}>
           <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {isCheckoutMode ? (
               <PayPanel
@@ -2206,7 +2232,7 @@ const NewSale = () => {
                 onShowMore={() => setTileLimit((n) => n + TILE_PAGE)}
                 isLoading={isLoadingProducts}
                 getTileData={getTileData}
-                addToCart={addToCart}
+                addToCart={addFromTile}
                 hasStore={!!defaultWarehouse}
                 priceListNote={
                   customerId && customerPriceList !== 'Standard Selling'
@@ -2230,7 +2256,7 @@ const NewSale = () => {
               />
             )
           ) : (
-            <Box sx={{ width: { md: 400, lg: 440 }, flexShrink: 0, minHeight: 0 }}>
+            <Box sx={{ width: { xs: 340, md: 400, lg: 440 }, flexShrink: 0, minHeight: 0 }}>
               {orderPanel}
             </Box>
           )}
@@ -2242,11 +2268,11 @@ const NewSale = () => {
         anchor="bottom"
         open={isPhone && cartSheetOpen && isPOSSessionOpen}
         onClose={() => setCartSheetOpen(false)}
-        slotProps={{ paper: { sx: { height: '88dvh', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column' } } }}
+        slotProps={{ paper: { 'aria-label': 'Current sale', sx: { height: '88dvh', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column' } } }}
       >
-        <Box sx={{ position: 'relative', flexShrink: 0, pt: 1, pb: 0.5, display: 'flex', justifyContent: 'center', bgcolor: 'background.paper' }}>
+        <Box sx={{ position: 'relative', flexShrink: 0, pt: 1, pb: 0.5, minHeight: 56, display: 'flex', justifyContent: 'center', bgcolor: 'background.paper' }}>
           <Box sx={{ width: 40, height: 5, borderRadius: 3, bgcolor: 'divider' }} />
-          <IconButton onClick={() => setCartSheetOpen(false)} aria-label="Close sale" sx={{ position: 'absolute', right: 6, top: 2 }}>
+          <IconButton onClick={() => setCartSheetOpen(false)} aria-label="Close sale" sx={{ position: 'absolute', right: 6, top: 4, width: 44, height: 44 }}>
             <Close />
           </IconButton>
         </Box>
@@ -2283,6 +2309,7 @@ const NewSale = () => {
         onNewSale={handleReceiptClose}
         onPrint={handlePrintReceipt}
         onViewInvoice={handleViewInvoice}
+        announcement={newLook && completedInvoice ? <SaleAnnouncement total={completedInvoice.grand_total || completedSaleData?.grandTotal || 0} /> : null}
       />
 
       <CloseTillDialog

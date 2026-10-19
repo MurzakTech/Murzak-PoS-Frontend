@@ -24,7 +24,7 @@ const ChartsPage = () => {
           <Button variant="secondary" size="small" onClick={() => setState('loading')}>Show loading</Button>
           <Button variant="secondary" size="small" onClick={() => setState('empty')}>Show empty</Button>
           <Button variant="secondary" size="small" onClick={() => setState('error')}>Show error</Button>
-          <RouterLink to="/new-look/components" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>Components</RouterLink>
+          <RouterLink to="/new-look/components" className="nl-page-link" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>Components</RouterLink>
         </div>
       </div>
 

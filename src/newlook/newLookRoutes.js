@@ -1,35 +1,43 @@
-import HomePage from './home/HomePage';
-import SetupWizard from './setup/SetupWizard';
-import TillSettingsPage from './settings/TillSettingsPage';
-import SettingsPage from './settings/SettingsPage';
-import SalesPage from './sales/SalesPage';
-import { UnpaidRedirect, ReturnsRedirect as SalesReturnsRedirect, SessionsRedirect } from './sales/SalesTabRedirect';
-import CustomersPage from './customers/CustomersPage';
-import NewCustomerPage from './customers/NewCustomerPage';
-import EditCustomerPage from './customers/EditCustomerPage';
-import OwingRedirect from './customers/OwingRedirect';
-import StockLevelsPage from './stock/StockLevelsPage';
-import ProductsPage from './products/ProductsPage';
-import NewProductPage from './products/NewProductPage';
-import EditProductPage from './products/EditProductPage';
-import SuppliersPage from './suppliers/SuppliersPage';
-import NewSupplierPage from './suppliers/NewSupplierPage';
-import EditSupplierPage from './suppliers/EditSupplierPage';
-import PurchasesPage from './purchases/PurchasesPage';
-import NewPurchasePage from './purchases/NewPurchasePage';
-import ReceiveGoodsPage from './purchases/ReceiveGoodsPage';
-import { OrdersRedirect, ReturnsRedirect } from './purchases/TabRedirect';
-import ExpensesPage from './expenses/ExpensesPage';
-import AddExpensePage from './expenses/AddExpensePage';
-import ReportsPage from './reports/ReportsPage';
-import ReportPage from './reports/ReportPage';
-import ComponentPage from './ComponentPage';
-import ChartsPage from './charts/ChartsPage';
-import RedirectsPage from './redirects/RedirectsPage';
+import { lazyPage, lazyNamed } from './lazyPage';
 import PagePlaceholder from './redirects/PagePlaceholder';
 import { NEW_PAGES } from './redirects/redirectTable';
 import { NEW_LOOK_PREFIX } from './redirects/engine';
 import { BUILT_PAGES } from './redirects/live';
+
+// Every redesigned page loads only when its address is opened (route-level code splitting, ticket P6-3). The chart library
+// (recharts) rides along only with the pages that draw a chart: Home, Reports and the chart page. A page shows the shell's
+// loading skeleton for the moment its code takes to arrive (see the Suspense in src/routes/AppRouter.js).
+const HomePage = lazyPage(() => import('./home/HomePage'), 'HomePage');
+const SetupWizard = lazyPage(() => import('./setup/SetupWizard'), 'SetupWizard');
+const TillSettingsPage = lazyPage(() => import('./settings/TillSettingsPage'), 'TillSettingsPage');
+const SettingsPage = lazyPage(() => import('./settings/SettingsPage'), 'SettingsPage');
+const SalesPage = lazyPage(() => import('./sales/SalesPage'), 'SalesPage');
+const UnpaidRedirect = lazyNamed(() => import('./sales/SalesTabRedirect'), 'UnpaidRedirect');
+const SalesReturnsRedirect = lazyNamed(() => import('./sales/SalesTabRedirect'), 'ReturnsRedirect', 'SalesReturnsRedirect');
+const SessionsRedirect = lazyNamed(() => import('./sales/SalesTabRedirect'), 'SessionsRedirect');
+const CustomersPage = lazyPage(() => import('./customers/CustomersPage'), 'CustomersPage');
+const NewCustomerPage = lazyPage(() => import('./customers/NewCustomerPage'), 'NewCustomerPage');
+const EditCustomerPage = lazyPage(() => import('./customers/EditCustomerPage'), 'EditCustomerPage');
+const OwingRedirect = lazyPage(() => import('./customers/OwingRedirect'), 'OwingRedirect');
+const StockLevelsPage = lazyPage(() => import('./stock/StockLevelsPage'), 'StockLevelsPage');
+const ProductsPage = lazyPage(() => import('./products/ProductsPage'), 'ProductsPage');
+const NewProductPage = lazyPage(() => import('./products/NewProductPage'), 'NewProductPage');
+const EditProductPage = lazyPage(() => import('./products/EditProductPage'), 'EditProductPage');
+const SuppliersPage = lazyPage(() => import('./suppliers/SuppliersPage'), 'SuppliersPage');
+const NewSupplierPage = lazyPage(() => import('./suppliers/NewSupplierPage'), 'NewSupplierPage');
+const EditSupplierPage = lazyPage(() => import('./suppliers/EditSupplierPage'), 'EditSupplierPage');
+const PurchasesPage = lazyPage(() => import('./purchases/PurchasesPage'), 'PurchasesPage');
+const NewPurchasePage = lazyPage(() => import('./purchases/NewPurchasePage'), 'NewPurchasePage');
+const ReceiveGoodsPage = lazyPage(() => import('./purchases/ReceiveGoodsPage'), 'ReceiveGoodsPage');
+const OrdersRedirect = lazyNamed(() => import('./purchases/TabRedirect'), 'OrdersRedirect');
+const ReturnsRedirect = lazyNamed(() => import('./purchases/TabRedirect'), 'ReturnsRedirect');
+const ExpensesPage = lazyPage(() => import('./expenses/ExpensesPage'), 'ExpensesPage');
+const AddExpensePage = lazyPage(() => import('./expenses/AddExpensePage'), 'AddExpensePage');
+const ReportsPage = lazyPage(() => import('./reports/ReportsPage'), 'ReportsPage');
+const ReportPage = lazyPage(() => import('./reports/ReportPage'), 'ReportPage');
+const ComponentPage = lazyPage(() => import('./ComponentPage'), 'ComponentPage');
+const ChartsPage = lazyPage(() => import('./charts/ChartsPage'), 'ChartsPage');
+const RedirectsPage = lazyPage(() => import('./redirects/RedirectsPage'), 'RedirectsPage');
 
 /**
  * The redesigned screens built so far. Each opens inside the New look shell, and only while the shop's

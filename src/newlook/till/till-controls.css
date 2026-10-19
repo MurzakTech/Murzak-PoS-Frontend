@@ -21,3 +21,14 @@
 .nl-till-root .MuiListItemButton-root {
   min-height: var(--control-height-till);
 }
+
+/*
+ * Keyboard focus ring (Accessibility rules, Focus): 2px brand-text with a 2px gap on every control the till offers, including
+ * the dialogs and menus that open outside it (the page body carries nl-till-active while the New look till is open). The current
+ * till's buttons draw no outline of their own, so without this a keyboard user sees no ring. Text fields keep their own
+ * highlighted border.
+ */
+.nl-till-active :focus-visible:not(.MuiInputBase-input) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

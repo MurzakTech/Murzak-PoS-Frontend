@@ -3,6 +3,10 @@ import { Alert, Box, Button, Dialog, DialogActions, Divider, Typography } from '
 import { CheckCircle, Print, Receipt } from '@mui/icons-material';
 import { fmt, money, round2 } from './money';
 import PrintButton from '../../../components/Common/PrintButton';
+import { useNewLook } from '../../../newlook/NewLookProvider';
+import { unitWord } from '../../../newlook/products/unitWords';
+import { shortReceiptNumber } from '../../../newlook/till/receiptNumber';
+import tillText from '../../../newlook/till/strings.till';
 
 // The reply to a sale does not say which kind of invoice it made; the number does
 export const invoiceDoctype = (invoice) =>
@@ -26,7 +30,9 @@ const Row = ({ label, value, bold, tone }) => (
   </Box>
 );
 
-const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, currency, onNewSale, onPrint, onViewInvoice }) => {
+// announcement: an optional hidden live region (the New look passes one that says "Sale complete, KES 100")
+const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, currency, onNewSale, onPrint, onViewInvoice, announcement = null }) => {
+  const { enabled: newLook } = useNewLook();
   if (!invoice || !saleData) return null;
 
   const items = saleData.items || [];
@@ -43,6 +49,7 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
       <style>{PRINT_CSS}</style>
 
       <Box className="no-print" sx={{ textAlign: 'center', pt: 3, px: 3 }}>
+        {announcement}
         <CheckCircle sx={{ fontSize: 48, color: 'success.main' }} />
         <Typography id="receipt-title" variant="h4" sx={{ mt: 0.5 }}>Sale complete</Typography>
         {change > 0 ? (
@@ -68,7 +75,15 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
           </Typography>
         </Box>
         <Divider sx={{ borderStyle: 'dashed', mb: 1 }} />
-        <Row label="Receipt no." value={invoice.name} />
+        {newLook && !invoice.offline ? (
+          <>
+            {/* The short number leads, as in the Sales list; the full system reference stays underneath for the books and the tax receipt */}
+            <Row label={tillText.labels.receiptNo} value={shortReceiptNumber(invoiceDoctype(invoice), invoice.name)} bold />
+            <Row label={tillText.labels.receiptReference} value={invoice.name} />
+          </>
+        ) : (
+          <Row label="Receipt no." value={invoice.name} />
+        )}
         <Row label="Date" value={`${when.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} ${when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`} />
         <Row label="Served by" value={cashierName} />
         <Row label="Customer" value={invoice.customer || saleData.customer || 'Walk-in Customer'} />
@@ -78,7 +93,7 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
           <Box key={item.item_code} sx={{ py: 0.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 650 }}>{item.item_name || item.item_code}</Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">{fmt(item.qty)} {item.uom} x {fmt(item.rate)}</Typography>
+              <Typography variant="caption" color="text.secondary">{fmt(item.qty)} {newLook ? unitWord(item.uom) : item.uom} x {fmt(item.rate)}</Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmt(item.subtotal ?? item.rate * item.qty)}</Typography>
             </Box>
             {item.discount_amount > 0 && <Typography variant="caption" color="success.main">Offer: -{fmt(item.discount_amount)}</Typography>}

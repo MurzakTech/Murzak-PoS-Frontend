@@ -25,6 +25,12 @@
   outline: none;
 }
 
+.nl-chart__frame .recharts-surface:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
+  border-radius: var(--radius-input);
+}
+
 .nl-chart__frame .recharts-wrapper:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);

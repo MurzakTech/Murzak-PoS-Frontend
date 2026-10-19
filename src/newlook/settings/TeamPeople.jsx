@@ -108,7 +108,6 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
             {m.full_name}
             {m.email === me ? ` (${P.you})` : ''}
           </span>
-          <span className="nl-settings-person__sub">{m.email}</span>
           <span className="nl-settings-person__sub nl-settings-person__phone-only">
             {T.team.roles[m.tier]}, {canUseTill(m.roles) ? P.tillYes : P.tillNo}, {m.enabled ? P.active : P.deactivated}
           </span>

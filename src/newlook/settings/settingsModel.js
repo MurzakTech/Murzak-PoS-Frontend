@@ -52,6 +52,15 @@ export const OLD = {
   salesPeople: '/settings/sales-people',
   recipes: '/inventory/recipes',
   wastage: '/inventory/wastage',
+  // Added in P6-5 so that nothing a person can do today is without a home (AC-40)
+  stores: '/warehouses',
+  stockTransfers: '/stock-transfers',
+  materialTransfers: '/inventory/material-transfers',
+  stockEntry: '/inventory/stock-entry',
+  updatePrices: '/products/update-price',
+  variations: '/products/variations',
+  loadProducts: '/products/load-products',
+  openingStock: '/products/bulk-stock-import',
 };
 
 export const legacy = (address) => oldScreen(address);
@@ -76,6 +85,12 @@ export const ADVANCED_CARDS = [
   { section: 'sales-people', to: OLD.salesPeople },
   { section: 'recipes', to: OLD.recipes },
   { section: 'wastage', to: OLD.wastage },
+  // Stores is a card in Settings, Business (a one-store shop adds its second store there). Stock transfers, Move stock between stores and
+  // Update many prices are buttons in the Products header's More menu (Stores and the transfers only with a second store)
+  { section: 'make-goods', to: OLD.stockEntry },
+  { section: 'variations', to: OLD.variations },
+  { section: 'load-products', to: OLD.loadProducts },
+  { section: 'opening-stock', to: OLD.openingStock },
   // The New look switch is not redirected, so its address is used as it is
   { section: 'new-look', to: OLD.newLook, plain: true },
 ];

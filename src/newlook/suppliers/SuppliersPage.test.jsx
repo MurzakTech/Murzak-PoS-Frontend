@@ -384,6 +384,13 @@ describe('a bill that is late or due soon shows an icon and a word', () => {
   });
 });
 
+// The header holds the main button and a More menu; everything else is one click further in
+const MORE = 'More actions for this page';
+const inMore = (name) => {
+  userEvent.click(screen.getByRole('button', { name: MORE }));
+  return screen.getByRole('menuitem', { name });
+};
+
 describe('the header, Export and the empty states', () => {
   test('Add supplier in the header opens the new supplier form', async () => {
     await renderPage();
@@ -395,15 +402,14 @@ describe('the header, Export and the empty states', () => {
   test('Supplier groups is in the header overflow and opens the current groups screen', async () => {
     await renderPage();
     await screen.findAllByRole('row');
-    userEvent.click(screen.getByRole('button', { name: 'More actions' }));
-    userEvent.click(screen.getByRole('menuitem', { name: 'Supplier groups' }));
+    userEvent.click(inMore('Supplier groups'));
     expect(where()).toBe('/suppliers/groups?legacy=1');
   });
 
   test('Export CSV in the header saves the rows on screen, with the owed columns for an owner', async () => {
     await renderPage();
     await screen.findByRole('row', { name: /Bidco Distributors 001/ });
-    userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+    userEvent.click(inMore('Export CSV'));
     expect(saveTextFile).toHaveBeenCalledTimes(1);
     const [text, name] = saveTextFile.mock.calls[0];
     expect(name).toMatch(/^suppliers-all-\d{4}-\d{2}-\d{2}\.csv$/);
@@ -416,7 +422,7 @@ describe('the header, Export and the empty states', () => {
   test('Export on the Owed list is named for it and holds the owed suppliers', async () => {
     await renderPage('/new-look/suppliers?owed=1');
     await screen.findByRole('row', { name: /Kilimo Seeds 045/ });
-    userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+    userEvent.click(inMore('Export CSV'));
     const [text, name] = saveTextFile.mock.calls[0];
     expect(name).toMatch(/^suppliers-owed-/);
     expect(text.trim().split('\n')).toHaveLength(6);
@@ -435,7 +441,7 @@ describe('the header, Export and the empty states', () => {
       </MemoryRouter>
     );
     await screen.findByText('No suppliers yet');
-    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    expect(inMore('Export CSV')).toBeDisabled();
   });
 
   test('a shop with no suppliers sees one action, Add supplier', async () => {
@@ -504,7 +510,7 @@ describe('a cashier (AC-14, AC-28)', () => {
   test('Export saves no owed columns', async () => {
     await renderPage('/new-look/suppliers', 'cashier');
     await screen.findByRole('row', { name: /Bidco Distributors 001/ });
-    userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
+    userEvent.click(inMore('Export CSV'));
     const text = saveTextFile.mock.calls[0][0];
     expect(text.split('\n')[0]).toBe('"Supplier","Type","Group","Tax ID","Country","Currency","Status"');
     expect(text).not.toContain('27000');

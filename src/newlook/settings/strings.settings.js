@@ -70,6 +70,12 @@ const settings = {
       link: 'Open bank accounts',
       note: 'Bank details are kept on the current screen. They are never shown or typed here.',
     },
+    // Where a shop adds a second store (the Products page offers Stores too, once the shop has two)
+    stores: {
+      title: 'Stores',
+      subtitle: 'The places you sell from',
+      note: 'Add a store, change its details, or choose who works in it. This opens the current Stores screen.',
+    },
     letterhead: {
       title: 'Letterhead',
       subtitle: 'The shop name, address and logo at the top of printed receipts and documents',
@@ -277,6 +283,10 @@ const settings = {
       'account-provisioning': { title: 'Account provisioning', text: 'Picks the account that holds the cost of goods received before their supplier bill arrives.' },
       'inventory-discounts': { title: 'Inventory discounts', text: 'Rules that take money off chosen products, with start and end dates.' },
       'loyalty-programs': { title: 'Loyalty programmes', text: 'Points customers earn when they buy, and how they can spend them.' },
+      'make-goods': { title: 'Make or repack goods', text: 'For shops that make goods or repack them: use up some products to make others.' },
+      variations: { title: 'Product variations', text: 'Sizes, colours and other versions of one product.' },
+      'load-products': { title: 'Load products', text: 'Load a ready-made list of products for your kind of shop.' },
+      'opening-stock': { title: 'Import opening stock', text: 'Bring in the stock you already have from a spreadsheet.' },
       'industry-products': { title: 'Industry starter products', text: 'Ready-made product lists for your kind of shop that you can pick from and add.' },
       'station-screen': { title: 'Station screen settings', text: 'The kitchen or bar screen that shows incoming orders on a tablet.' },
       approvals: { title: 'Approvals', text: 'Who must approve money decisions, and who may decide.' },

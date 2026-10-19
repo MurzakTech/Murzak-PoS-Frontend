@@ -351,6 +351,23 @@
   gap: var(--space-2);
 }
 
+/* More menu beside the page's main button */
+.nl-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+@media (max-width: 767px) {
+  .nl-header-actions {
+    justify-content: flex-start;
+  }
+  .nl-header-actions .nl-btn {
+    min-height: var(--control-height-till);
+  }
+}
+
 /* ---------- Search ---------- */
 .nl-search__heading {
   margin: 0;

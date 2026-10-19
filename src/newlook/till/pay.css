@@ -60,6 +60,15 @@
   flex: 1 1 0;
   min-height: calc(var(--control-height-till) - var(--space-2) - 2px);
 }
+/* On a phone each choice (Cash, M-Pesa, Card) is itself a 44px tap target, with 8px between neighbours */
+@media (max-width: 767px) {
+  .nlp .nl-segmented {
+    gap: var(--space-2);
+  }
+  .nlp .nl-segmented__item {
+    min-height: var(--control-height-till);
+  }
+}
 
 .nlp__grid {
   display: grid;
@@ -275,5 +284,31 @@
 @container (min-width: 560px) {
   .nlp__grid.has-pad {
     grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  }
+}
+
+/*
+ * A phone-wide screen is one column, so the pad is four keys wide (Backspace and Clear down the right side) and the quick cash notes
+ * share one row. Without this the last rows of the pad fell below Complete sale in a window 755px high (acceptance check AC-19).
+ * Keys stay 44px high with 8px between them.
+ */
+@container (max-width: 559px) {
+  .nlp-pad {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .nlp .nlp-key {
+    min-height: var(--control-height-till);
+  }
+  .nlp .nlp-key--back {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .nlp .nlp-key--clear {
+    grid-column: 4;
+    grid-row: 2 / span 3;
+  }
+  .nlp-quick__button {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }

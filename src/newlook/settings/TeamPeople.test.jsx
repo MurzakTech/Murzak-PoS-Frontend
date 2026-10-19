@@ -73,6 +73,12 @@ describe('the list', () => {
     expect(screen.getByText('3 active of 4')).toBeInTheDocument();
   });
 
+  test('does not print anyone\'s login email under their name', async () => {
+    show();
+    await screen.findByText('Juma Kamau', { selector: '.nl-settings-person__name' });
+    ['amina@shop.test', 'juma@shop.test', 'zawadi@shop.test', 'baraka@shop.test'].forEach((email) => expect(screen.queryByText(email)).not.toBeInTheDocument());
+  });
+
   test('asks for the team of the signed-in business', async () => {
     const load = jest.fn().mockResolvedValue(data());
     show({ load });
@@ -210,6 +216,17 @@ describe('changing a person', () => {
     expect(remove).not.toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByRole('status')).toHaveTextContent('Saved');
+  });
+
+  test('the phone number is shown as 0712 345 678 and a name change sends the number as it was stored', async () => {
+    const update = jest.fn().mockResolvedValue({});
+    const dialog = await edit('Juma Kamau', { dialogApi: { update, add: jest.fn(), remove: jest.fn() } });
+    expect(dialog.getByLabelText('Mobile (optional)')).toHaveValue('0712 345 678');
+    const first = dialog.getByLabelText('First name');
+    userEvent.clear(first);
+    userEvent.type(first, 'Jumaa');
+    userEvent.click(dialog.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ email: 'juma@shop.test', firstName: 'Jumaa', lastName: 'Kamau', phone: '0712345678' }));
   });
 
   test('the email cannot be changed', async () => {

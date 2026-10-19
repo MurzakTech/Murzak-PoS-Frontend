@@ -69,9 +69,9 @@ const NewLook = () => {
           )}
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          While this is off, everyone in the shop sees the app exactly as it is today. When you turn it on, people see the
-          redesigned screens that are ready, and every other screen stays as it is. You can switch back at any time; no sale,
-          stock figure or account changes either way.
+          The New look is on by default. While it is on, people see the redesigned screens, and the few screens that have not
+          been redesigned stay as they were. If you turn it off, everyone in the shop sees the app exactly as it was before. You
+          can switch back at any time; no sale, stock figure or account changes either way.
         </Typography>
 
         <FormControlLabel

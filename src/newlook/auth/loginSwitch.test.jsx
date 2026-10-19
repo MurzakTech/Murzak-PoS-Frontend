@@ -47,13 +47,14 @@ beforeEach(() => {
 });
 
 describe('which sign-in page opens', () => {
-  test('a device that was never signed in shows the current page, exactly as before', () => {
+  test('a device that was never signed in shows the redesigned page, because the New look is the default', () => {
     mount();
-    expect(screen.getByText(CURRENT_SUBTITLE)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: T.theme.toDark })).not.toBeInTheDocument();
+    expect(screen.queryByText(CURRENT_SUBTITLE)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: T.signIn.title })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: T.theme.toDark })).toBeInTheDocument();
   });
 
-  test('the flag off shows the current page', () => {
+  test('the flag off (an owner switched the New look off) shows the current page', () => {
     localStorage.setItem(DEVICE_KEY, '0');
     mount();
     expect(screen.getByText(CURRENT_SUBTITLE)).toBeInTheDocument();
@@ -67,13 +68,14 @@ describe('which sign-in page opens', () => {
     expect(screen.getByRole('button', { name: T.theme.toDark })).toBeInTheDocument();
   });
 
-  test('blocked storage shows the current page', () => {
+  test('blocked storage shows the redesigned page, the default', () => {
     const get = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
     });
     try {
       mount();
-      expect(screen.getByText(CURRENT_SUBTITLE)).toBeInTheDocument();
+      expect(screen.queryByText(CURRENT_SUBTITLE)).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: T.signIn.title })).toBeInTheDocument();
     } finally {
       get.mockRestore();
     }
@@ -84,7 +86,7 @@ describe('both pages send the same requests', () => {
   const run = async (flag) => {
     jest.resetAllMocks();
     localStorage.clear();
-    if (flag) localStorage.setItem(DEVICE_KEY, '1');
+    localStorage.setItem(DEVICE_KEY, flag ? '1' : '0');
     // the code is asked for, then accepted
     axiosInstance.post.mockRejectedValueOnce(refusal(401, { two_factor_required: true, message: 'Enter the code.' }));
     axiosInstance.post.mockResolvedValueOnce(SIGNED_IN);

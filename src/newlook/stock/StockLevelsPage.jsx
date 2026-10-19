@@ -49,6 +49,7 @@ import {
 import T from './strings.stock';
 import { oldScreen } from '../redirects/engine';
 import useBusinessFeatures from '../setup/useBusinessFeatures';
+import { rowsWords } from '../components/format';
 
 const FILTER_KEYS = ['category', 'store', 'status', 'kind', 'within'];
 const STATE_KEYS = ['action', 'item'];
@@ -163,7 +164,7 @@ const StockLevelsPage = () => {
 
   const exportCsv = () => {
     saveTextFile(csvFor(tab, rows, showValue), csvName(tab, isoDay(new Date())));
-    toast.success(fill(T.exportDone, { count: rows.length }));
+    toast.success(fill(T.exportDone, { rows: rowsWords(rows.length) }));
   };
 
   // ---------- Filters ----------

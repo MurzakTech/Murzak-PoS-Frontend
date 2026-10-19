@@ -13,6 +13,14 @@ export const PRODUCTS_PATH = '/new-look/products';
 export const CATEGORIES_PATH = '/new-look/products/categories';
 export const NEW_PRODUCT_PATH = '/new-look/products/new';
 
+/** Current screens reached from the More menu of the Products header (no redesigned form yet); each opens with the legacy marker */
+export const MORE_SCREENS = {
+  updatePrices: '/products/update-price',
+  stores: '/warehouses',
+  stockTransfers: '/stock-transfers',
+  materialTransfers: '/inventory/material-transfers',
+};
+
 /** Which tab an address is on */
 export const tabFromPath = (pathname) => (/\/products\/categories\/?$/.test(String(pathname || '')) ? 'categories' : 'products');
 

@@ -4,17 +4,15 @@
  */
 import { newLookRoutes } from '../newLookRoutes';
 import PagePlaceholder from '../redirects/PagePlaceholder';
-import ExpensesPage from './ExpensesPage';
-import AddExpensePage from './AddExpensePage';
 
 describe('the routes', () => {
   const find = (path) => newLookRoutes.filter((r) => r.path === path);
 
   test('the list and the Add form each have one route of their own', () => {
     expect(find('/new-look/expenses')).toHaveLength(1);
-    expect(find('/new-look/expenses')[0].element).toBe(ExpensesPage);
+    expect(find('/new-look/expenses')[0].element.pageName).toBe('ExpensesPage');
     expect(find('/new-look/expenses/new')).toHaveLength(1);
-    expect(find('/new-look/expenses/new')[0].element).toBe(AddExpensePage);
+    expect(find('/new-look/expenses/new')[0].element.pageName).toBe('AddExpensePage');
     expect(find('/new-look/expenses')[0].element).not.toBe(PagePlaceholder);
   });
 

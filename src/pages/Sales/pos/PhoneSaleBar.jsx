@@ -3,14 +3,18 @@ import { Badge, Box, Button, ButtonBase, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { ShoppingBasketOutlined, ExpandLess, ArrowForward } from '@mui/icons-material';
 import { fmt, money } from './money';
+import { useNewLook } from '../../../newlook/NewLookProvider';
+import tillText from '../../../newlook/till/strings.till';
+import fill from '../../../newlook/labels/fill';
 
 /**
  * Bottom bar for the till on phones. The product grid gets the whole screen;
  * the sale itself is one tap away ("View sale" slides it up) and the Charge
- * button is always under the thumb.
+ * (Pay, in the New look) button is always under the thumb.
  */
 const PhoneSaleBar = ({ itemCount, total, currency, onViewSale, onCharge, disabled }) => {
   const empty = itemCount === 0;
+  const { enabled: newLook } = useNewLook(); // the New look says Pay where the earlier till says Charge
   return (
     <Box
       sx={{
@@ -57,7 +61,7 @@ const PhoneSaleBar = ({ itemCount, total, currency, onViewSale, onCharge, disabl
           whiteSpace: 'nowrap',
         }}
       >
-        {empty ? 'Charge' : `Charge ${money(total, currency)}`}
+        {empty ? (newLook ? tillText.labels.pay : 'Charge') : newLook ? fill(tillText.labels.payAmount, { amount: money(total, currency) }) : `Charge ${money(total, currency)}`}
       </Button>
     </Box>
   );

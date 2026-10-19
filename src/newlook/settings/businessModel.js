@@ -3,6 +3,8 @@
  * Pure functions, so they are tested without a screen. The business name, short name, country and currency are shown but
  * not changed here: the server uses the name to find the business and ignores the other three when it saves.
  */
+import { formatPhone } from '../labels/renameMap';
+
 const EMAIL = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 /** The names of the three cards, as they are used in code (not words to read) */
@@ -22,14 +24,20 @@ export const valuesFromCompany = (company) => ({
   city: company.address.city,
   state: company.address.state,
   pincode: company.address.pincode,
-  phone: company.phone,
+  phone: formatPhone(company.phone) || '',
   email: company.email,
   firstName: company.contact.firstName,
   lastName: company.contact.lastName,
   contactEmail: company.contact.email,
-  mobile: company.contact.mobile,
-  contactPhone: company.contact.phone,
+  mobile: formatPhone(company.contact.mobile) || '',
+  contactPhone: formatPhone(company.contact.phone) || '',
 });
+
+/** A phone number the person did not touch keeps its stored form (they saw 0712 345 678; the shop may have stored 0712345678). */
+const phoneToSave = (typed, stored) => {
+  const text = String(typed).trim();
+  return text === String(formatPhone(stored) || '').trim() ? stored : text;
+};
 
 /** The company with one card's values written in, every other part as last saved. */
 export const companyWith = (company, card, values) => {
@@ -37,11 +45,11 @@ export const companyWith = (company, card, values) => {
   if (card === 'details') next.taxId = values.taxId.trim();
   if (card === 'address') {
     next.address = { line1: values.line1.trim(), line2: values.line2.trim(), city: values.city.trim(), state: values.state.trim(), pincode: values.pincode.trim() };
-    next.phone = values.phone.trim();
+    next.phone = phoneToSave(values.phone, company.phone);
     next.email = values.email.trim();
   }
   if (card === 'contact') {
-    next.contact = { firstName: values.firstName.trim(), lastName: values.lastName.trim(), email: values.contactEmail.trim(), mobile: values.mobile.trim(), phone: values.contactPhone.trim() };
+    next.contact = { firstName: values.firstName.trim(), lastName: values.lastName.trim(), email: values.contactEmail.trim(), mobile: phoneToSave(values.mobile, company.contact.mobile), phone: phoneToSave(values.contactPhone, company.contact.phone) };
   }
   return next;
 };

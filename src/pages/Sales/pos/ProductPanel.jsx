@@ -6,8 +6,11 @@ import EmptyState from '../../../components/Common/EmptyState';
 import ProductImage from '../../../components/Common/ProductImage';
 import { fmt } from './money';
 import { isPrescriptionOnly } from '../../../utils/prescription';
+import { useNewLook } from '../../../newlook/NewLookProvider';
+import { unitWord } from '../../../newlook/products/unitWords';
 
 const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, stockQty, cartQty, uom, disabled, onAdd, showImage }) => {
+  const { enabled: newLook } = useNewLook(); // the New look says "piece", not "Nos"
   const out = stockQty !== null && stockQty <= 0; // 0.6 kg left is still for sale
   const short = stockQty !== null && !out && stockQty < cartQty + 1 && cartQty > 0;
   const low = stockQty !== null && !out && stockQty <= 5;
@@ -92,7 +95,7 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
             </Typography>
           )}
           <Typography variant="caption" color="text.secondary">
-            per {uom}
+            per {newLook ? unitWord(uom) : uom}
           </Typography>
         </Box>
         <Box sx={{ textAlign: 'right', flexShrink: 0 }}>

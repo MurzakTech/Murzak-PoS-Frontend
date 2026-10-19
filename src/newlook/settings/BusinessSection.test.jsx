@@ -55,9 +55,16 @@ test('shows the three cards with the business as the server has it', async () =>
   expect(await screen.findByLabelText('Tax ID (KRA PIN)')).toHaveValue('P000000000A');
   expect(screen.getByLabelText('Address')).toHaveValue('1 Test Road');
   expect(screen.getByLabelText('Town or city')).toHaveValue('Nairobi');
-  expect(screen.getByLabelText('Phone', { selector: '#business-address-phone' })).toHaveValue('0711000000');
+  expect(screen.getByLabelText('Phone', { selector: '#business-address-phone' })).toHaveValue('0711 000 000');
   expect(screen.getByLabelText('First name')).toHaveValue('Amina');
   ['Business details', 'Address and contact', 'Contact person'].forEach((name) => expect(screen.getByRole('heading', { name })).toBeInTheDocument());
+});
+
+test('Stores has a card here, for every shop, opening the current Stores screen', async () => {
+  show('owner', { load: jest.fn().mockResolvedValue(COMPANY) });
+  await screen.findByLabelText('Tax ID (KRA PIN)');
+  expect(screen.getByRole('heading', { name: 'Stores' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Stores/ })).toHaveAttribute('href', '/warehouses?legacy=1');
 });
 
 test('the business name, short name, country and currency are shown but cannot be typed over', async () => {

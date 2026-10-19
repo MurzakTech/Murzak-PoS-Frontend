@@ -13,8 +13,15 @@ const products = {
   addProduct: 'Add product',
   import: 'Import',
   export: 'Export',
+  // The header's More menu: the earlier screens that have no redesigned form yet (Stores and the transfers show only with a second store)
+  more: {
+    updatePrices: 'Update many prices',
+    stores: 'Stores',
+    stockTransfers: 'Stock transfers',
+    materialTransfers: 'Move stock between stores',
+  },
   exportName: 'products-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
 
   summary: { label: 'Products at a glance', products: 'Products', low: 'Low on stock', out: 'Out of stock' },
 

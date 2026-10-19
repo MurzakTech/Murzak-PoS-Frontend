@@ -626,3 +626,34 @@ describe('phones', () => {
     expect(await screen.findByRole('button', { name: 'Filters (2 on)' })).toBeInTheDocument();
   });
 });
+
+describe('words and formats (P6-4)', () => {
+  test('the receipt shows the customer phone as 0712 345 678 even when it is stored as +254712345678', async () => {
+    getSale.mockImplementation(async (id) => saleFor(ALL_ROWS.find((r) => r.id === id) || ALL_ROWS[0], { customer: { name: 'Wanjiru Kamau', mobile: '+254712345678' } }));
+    await renderPage('/new-look/sales?open=ACC-PSINV-2026-00044');
+    expect(await screen.findByRole('heading', { level: 2, name: 'Receipt #0044' })).toBeInTheDocument();
+    expect(await screen.findByText('0712 345 678')).toBeInTheDocument();
+    expect(screen.queryByText('+254712345678')).not.toBeInTheDocument();
+  });
+
+  test('on a phone a till session with one sale says "1 sale", never "1 sales"', async () => {
+    window.innerWidth = 390;
+    listSales.mockImplementation(async (query) => ({
+      ...answer(query),
+      rows: [{ ...SESSIONS[3], sales_count: 1 }, { ...SESSIONS[0], sales_count: 12 }],
+    }));
+    await renderPage('/new-look/sales?tab=sessions');
+    await screen.findByRole('list', { name: /Till sessions|Sales/ });
+    expect(screen.getAllByText('1 sale').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('12 sales').length).toBeGreaterThan(0);
+    expect(screen.queryByText('1 sales')).not.toBeInTheDocument();
+  });
+
+  test('Export says "Saved 1 row" for one row', async () => {
+    listSales.mockImplementation(async (query) => ({ ...answer(query), rows: [ALL_ROWS[0]], total: 1, pages: 1 }));
+    await renderPage();
+    await screen.findByRole('row', { name: /#0045\b/ });
+    userEvent.click(screen.getByRole('button', { name: /Export/ }));
+    expect(await screen.findByText('Saved 1 row as a spreadsheet file')).toBeInTheDocument();
+  });
+});

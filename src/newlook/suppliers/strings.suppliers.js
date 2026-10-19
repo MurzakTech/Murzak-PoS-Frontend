@@ -8,7 +8,7 @@ const suppliers = {
   addSupplier: 'Add supplier',
   export: 'Export CSV',
   exportName: 'suppliers-{view}-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
   noValue: '-',
 
   more: { label: 'More actions', groups: 'Supplier groups' },

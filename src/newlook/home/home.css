@@ -7,6 +7,7 @@
   max-width: var(--content-max);
   margin: 0 auto;
   display: grid;
+  grid-template-columns: minmax(0, 1fr); /* one column that never grows past the window, whatever its widest child */
   gap: var(--card-gap);
   min-width: 0;
 }
@@ -161,6 +162,8 @@
 }
 .nl-home__filters .nl-filters {
   flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ---------- Stat tiles ---------- */
@@ -381,6 +384,52 @@
   font-size: var(--caption-size);
 }
 
+/* ---------- Reserved heights ----------
+ * A card keeps about the height it will have once its numbers arrive, so nothing below it jumps (layout shift under 0.1, ticket P6-3).
+ * The figures are the heights measured on the demo-shaped data; a card with more to say simply grows. */
+.nl-hero {
+  min-height: 247px;
+}
+.nl-tile {
+  min-height: 230px;
+}
+.nl-home__sales,
+.nl-home__attention {
+  min-height: 420px;
+}
+.nl-home__charts > * {
+  min-height: 440px;
+}
+@media (max-width: 1099px) {
+  .nl-hero {
+    min-height: 262px;
+  }
+  .nl-tile {
+    min-height: 200px;
+  }
+  .nl-home__attention {
+    min-height: 220px;
+  }
+  .nl-home__charts > * {
+    min-height: 300px;
+  }
+}
+@media (max-width: 767px) {
+  .nl-hero {
+    min-height: 400px;
+  }
+  .nl-home__sales {
+    min-height: 480px;
+  }
+  .nl-home__attention {
+    min-height: 280px;
+  }
+  /* The date and "Updated 14:52" share a line on a wide screen and wrap to two on a phone; keep both lines from the start */
+  .nl-home .nl-page-header__subtitle {
+    min-height: calc(var(--body-line) * 2 * 1em);
+  }
+}
+
 /* ---------- Responsive ---------- */
 /* Below 1100px the Sales chart takes the full width and Needs attention moves below it */
 @media (max-width: 1099px) {
@@ -398,6 +447,12 @@
 
 /* Below 768px everything is one column: hero, tiles two by two, Needs attention, Sales chart, then the three cards */
 @media (max-width: 767px) {
+  /* A stand-alone link (See all alerts) is a 44px target on a phone */
+  .nl-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
   .nl-home__attention {
     order: -1;
   }

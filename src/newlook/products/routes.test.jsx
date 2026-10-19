@@ -5,20 +5,18 @@
 import { newLookRoutes } from '../newLookRoutes';
 import PagePlaceholder from '../redirects/PagePlaceholder';
 import { NEW_PAGES } from '../redirects/redirectTable';
-import ProductsPage from './ProductsPage';
-import NewProductPage from './NewProductPage';
 
 const find = (path) => newLookRoutes.filter((r) => r.path === path);
 
 describe('the routes', () => {
   test('the list and the Categories tab are one page, so moving between the tabs does not rebuild it', () => {
     expect(find('/new-look/products/*')).toHaveLength(1);
-    expect(find('/new-look/products/*')[0].element).toBe(ProductsPage);
+    expect(find('/new-look/products/*')[0].element.pageName).toBe('ProductsPage');
   });
 
   test('the New product form has a route of its own', () => {
     expect(find('/new-look/products/new')).toHaveLength(1);
-    expect(find('/new-look/products/new')[0].element).toBe(NewProductPage);
+    expect(find('/new-look/products/new')[0].element.pageName).toBe('NewProductPage');
   });
 
   test('no address of the Products pages is also given a placeholder', () => {

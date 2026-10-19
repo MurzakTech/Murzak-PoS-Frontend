@@ -448,12 +448,18 @@ describe('the Show filter: goods received notes and every supplier bill', () => 
   });
 });
 
+// The header holds the main button and a More menu; everything else is one click further in
+const MORE = 'More actions for this page';
+const inMore = (name) => {
+  userEvent.click(screen.getByRole('button', { name: MORE }));
+  return screen.getByRole('menuitem', { name });
+};
+
 describe('Export, empty and error states, and the header', () => {
   test('Export is in the page header and saves what is on screen as a spreadsheet', async () => {
     await renderPage();
     await screen.findByRole('row', { name: /#O0045\b/ });
-    const header = screen.getByRole('heading', { level: 1, name: 'Purchases' }).closest('.nl-page-header');
-    userEvent.click(within(header).getByRole('button', { name: 'Export' }));
+    userEvent.click(inMore('Export'));
     expect(saveTextFile).toHaveBeenCalledTimes(1);
     expect(saveTextFile.mock.calls[0][0]).toContain('"Purchase","Supplier","Date","Total","Status"');
     expect(saveTextFile.mock.calls[0][1]).toMatch(/^purchases-all-\d{4}-\d{2}-\d{2}\.csv$/);
@@ -463,7 +469,7 @@ describe('Export, empty and error states, and the header', () => {
     listPurchases.mockResolvedValue({ ...answer(), rows: [], total: 0 });
     await renderPage();
     await screen.findByText('No purchases yet');
-    expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled();
+    expect(inMore('Export')).toBeDisabled();
   });
 
   test('an empty list names the next action: a new purchase', async () => {
@@ -499,11 +505,12 @@ describe('Export, empty and error states, and the header', () => {
     expect(listPurchases).toHaveBeenCalledTimes(2);
   });
 
-  test('the header has New purchase and Receive goods', async () => {
+  test('the header has New purchase and a More menu with Receive goods', async () => {
     await renderPage();
     await screen.findByRole('row', { name: /#O0045\b/ });
     const header = screen.getByRole('heading', { level: 1, name: 'Purchases' }).closest('.nl-page-header');
-    userEvent.click(within(header).getByRole('button', { name: 'Receive goods' }));
+    expect(within(header).getAllByRole('button').map((b) => b.textContent)).toEqual(['More', 'New purchase']);
+    userEvent.click(inMore('Receive goods'));
     expect(where()).toBe('/new-look/purchases/receive');
   });
 
@@ -518,8 +525,8 @@ describe('Export, empty and error states, and the header', () => {
   test('the other purchase lists stay one menu away: goods received notes, all supplier bills, and recording goods with no order', async () => {
     await renderPage();
     await screen.findByRole('row', { name: /#O0045\b/ });
-    userEvent.click(screen.getByRole('button', { name: 'More purchase screens' }));
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Goods received notes', 'All supplier bills', 'Record goods with no order (earlier screen)']);
+    userEvent.click(screen.getByRole('button', { name: MORE }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Receive goods', 'Export', 'Goods received notes', 'All supplier bills', 'Record goods with no order (earlier screen)']);
     userEvent.click(screen.getByRole('menuitem', { name: 'Record goods with no order (earlier screen)' }));
     expect(where()).toBe('/purchases/receipts/new?legacy=1');
   });
@@ -527,8 +534,7 @@ describe('Export, empty and error states, and the header', () => {
   test('Goods received notes in the menu shows that view in this page', async () => {
     await renderPage();
     await screen.findByRole('row', { name: /#O0045\b/ });
-    userEvent.click(screen.getByRole('button', { name: 'More purchase screens' }));
-    userEvent.click(screen.getByRole('menuitem', { name: 'Goods received notes' }));
+    userEvent.click(inMore('Goods received notes'));
     await waitFor(() => expect(where()).toContain('kind=receipts'));
     await waitFor(() => expect(listPurchases).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'receipts', tab: 'all' })));
   });

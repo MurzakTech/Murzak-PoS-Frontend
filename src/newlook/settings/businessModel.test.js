@@ -14,7 +14,7 @@ const company = {
 };
 
 test('the card values come from the company', () => {
-  expect(valuesFromCompany(company)).toMatchObject({ taxId: 'P000000000A', line1: '1 Test Road', city: 'Nairobi', phone: '0711000000', email: 'desk@shop-a.test', firstName: 'Amina', contactEmail: 'amina@shop-a.test' });
+  expect(valuesFromCompany(company)).toMatchObject({ taxId: 'P000000000A', line1: '1 Test Road', city: 'Nairobi', phone: '0711 000 000', email: 'desk@shop-a.test', firstName: 'Amina', contactEmail: 'amina@shop-a.test' });
 });
 
 test('saving one card writes only that card over what was last saved', () => {
@@ -48,4 +48,31 @@ test('a card has changed only when one of its own fields differs, ignoring space
   expect(cardChanged('address', { ...values, city: 'Mombasa' }, values)).toBe(true);
   expect(cardChanged('address', { ...values, firstName: 'Other' }, values)).toBe(false);
   expect(cardChanged('details', { ...values, taxId: 'P111111111B' }, values)).toBe(true);
+});
+
+describe('phone numbers (P6-4): shown as 0712 345 678, stored as the shop had them unless changed', () => {
+  test('the card shows a Kenyan number in groups, and leaves other text as it is', () => {
+    const shown = valuesFromCompany({ ...company, phone: '+254712345678', contact: { ...company.contact, mobile: '0722000000', phone: 'ext 12' } });
+    expect(shown.phone).toBe('0712 345 678');
+    expect(shown.mobile).toBe('0722 000 000');
+    expect(shown.contactPhone).toBe('ext 12');
+  });
+
+  test('a number the person did not touch is saved exactly as it was stored', () => {
+    const stored = { ...company, phone: '+254712345678' };
+    const values = { ...valuesFromCompany(stored), city: 'Mombasa' };
+    expect(companyWith(stored, 'address', values).phone).toBe('+254712345678');
+    expect(cardChanged('address', valuesFromCompany(stored), valuesFromCompany(stored))).toBe(false);
+  });
+
+  test('a number the person typed is saved as typed', () => {
+    const values = { ...valuesFromCompany(company), phone: '0733 111 222' };
+    expect(companyWith(company, 'address', values).phone).toBe('0733 111 222');
+  });
+
+  test('an empty number stays empty', () => {
+    const values = valuesFromCompany({ ...company, phone: '' });
+    expect(values.phone).toBe('');
+    expect(companyWith({ ...company, phone: '' }, 'address', values).phone).toBe('');
+  });
 });

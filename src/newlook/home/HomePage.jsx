@@ -10,6 +10,7 @@ import { toNewAddress } from '../redirects/engine';
 import { HoursChart, PaymentsChart, SalesChart, TopProductsChart } from '../charts';
 import S from '../strings';
 import fill from '../labels/fill';
+import { percentNumber } from '../components/format';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
 import { getStaffUsers } from '../../store/staffSlice';
@@ -161,7 +162,7 @@ const HomePage = () => {
           failed={!loading && failed('tiles.net_profit', np)}
           onRetry={reload}
           value={np ? money(np.value) : ''}
-          detail={np ? [fill(T.tiles.margin, { pct: np.margin_pct }), np.estimated ? T.tiles.estimated : null].filter(Boolean).join('. ') : null}
+          detail={np ? [fill(T.tiles.margin, { pct: percentNumber(np.margin_pct) }), np.estimated ? T.tiles.estimated : null].filter(Boolean).join('. ') : null}
           change={tileChange(np)}
           spark={sparkOf(np)}
           progress={progress}
