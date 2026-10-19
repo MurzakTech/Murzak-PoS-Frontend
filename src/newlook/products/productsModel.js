@@ -178,13 +178,20 @@ export const requestFrom = (values, { canSeeCost = false } = {}) => ({
   ...(canSeeCost ? { cost: values.cost } : {}),
 });
 
-/** The units to offer: the common ones first, then the rest A to Z, each in plain words. The default is always there. */
-export const unitOptions = (uoms = []) => {
+/**
+ * The units to offer: the shop's own industry units first (in the order given), then its own custom units, then the common ones,
+ * then the rest A to Z, each in plain words. The default is always there. `first` is a list of stored names; one that the site
+ * does not have is skipped.
+ */
+export const unitOptions = (uoms = [], first = []) => {
   const names = new Set(uoms.map((u) => u.name));
   names.add(T.defaultUnit);
+  const front = first.filter((name) => names.has(name));
   const rank = (name) => {
+    const early = front.indexOf(name);
+    if (early !== -1) return early;
     const at = T.commonUnits.indexOf(name);
-    return at === -1 ? T.commonUnits.length : at;
+    return front.length + (at === -1 ? T.commonUnits.length : at);
   };
   // Two stored names with the same plain word (Ltr and Litre) are one choice for the person: keep the first
   const seen = new Set();
@@ -198,6 +205,9 @@ export const unitOptions = (uoms = []) => {
     })
     .map((name) => ({ value: name, label: unitLabel(name) }));
 };
+
+/** The stored names to show first for a shop: its industry units that exist, then its own units */
+export const firstUnits = (shop) => (shop ? [...shop.units.filter((u) => u.exists).map((u) => u.name), ...shop.custom.map((c) => c.name)] : []);
 
 /** The category chips: every category except the top one, with the chosen one always among the first `limit` */
 export const chipCategories = (categories = [], chosen = '', { showAll = false, limit = 12 } = {}) => {

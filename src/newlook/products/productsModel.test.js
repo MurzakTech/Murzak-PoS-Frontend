@@ -24,6 +24,7 @@ import {
   summaryOf,
   tabFromPath,
   unitOptions,
+  firstUnits,
 } from './productsModel';
 
 describe('tabs', () => {
@@ -210,9 +211,21 @@ describe('the New product form', () => {
 
 describe('units and category chips', () => {
   test('the common units come first, in plain words, and the default is always there', () => {
-    const options = unitOptions([{ name: 'Zebra' }, { name: 'Kg' }, { name: 'Box' }, { name: 'Bale' }]);
-    expect(options.map((o) => o.label)).toEqual(['Pieces', 'Kilograms', 'Boxes', 'Bale', 'Zebra']);
+    const options = unitOptions([{ name: 'Zebra' }, { name: 'Kg' }, { name: 'Box' }, { name: 'Drum' }]);
+    expect(options.map((o) => o.label)).toEqual(['Pieces', 'Kilograms', 'Boxes', 'Drum', 'Zebra']);
     expect(options[0].value).toBe('Nos');
+  });
+
+  test('the shop\'s industry units come first in the order given, then its own, then the common ones; a unit the site lacks is skipped', () => {
+    const uoms = [{ name: 'Kg' }, { name: 'Tablet' }, { name: 'Strip' }, { name: 'Jerrycan' }, { name: 'Box' }];
+    const options = unitOptions(uoms, ['Nos', 'Tablet', 'Strip', 'Capsule', 'Jerrycan']);
+    expect(options.map((o) => o.value)).toEqual(['Nos', 'Tablet', 'Strip', 'Jerrycan', 'Kg', 'Box']);
+  });
+
+  test('firstUnits lists the existing industry units then the shop\'s own, and nothing without a shop', () => {
+    expect(firstUnits(null)).toEqual([]);
+    const shop = { units: [{ name: 'Nos', exists: true }, { name: 'Tablet', exists: false }], custom: [{ name: 'Jerrycan', plural: 'jerrycans' }] };
+    expect(firstUnits(shop)).toEqual(['Nos', 'Jerrycan']);
   });
 
   test('two stored names with the same plain word are one choice', () => {

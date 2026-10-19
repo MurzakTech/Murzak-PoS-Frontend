@@ -198,3 +198,9 @@
     min-height: var(--control-height-till);
   }
 }
+
+.nl-products-dialog-heading {
+  margin: 0;
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}

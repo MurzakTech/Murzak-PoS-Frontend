@@ -17,7 +17,9 @@ import { useAppSelector } from '../../store/hooks';
 import { findProduct, ProductSaveError, updateProduct } from '../../api/productsListApi';
 import './products.css';
 import { useCategories, useUnits } from './useProductsData';
-import { categoryLabel, changesFrom, checkForm, FIELD_IDS, formFromProduct, isEdited, MORE_FIELDS, PRODUCTS_PATH, profitLine, summaryOf, unitOptions } from './productsModel';
+import useShopUnits from './useShopUnits';
+import UnitPicker from './UnitPicker';
+import { categoryLabel, changesFrom, checkForm, FIELD_IDS, formFromProduct, isEdited, MORE_FIELDS, PRODUCTS_PATH, profitLine, summaryOf } from './productsModel';
 import T from './strings.products';
 
 /**
@@ -36,6 +38,7 @@ const EditProductPage = () => {
   const { warehouses } = useAppSelector((state) => state.warehouse);
   const categories = useCategories();
   const units = useUnits();
+  const shopUnits = useShopUnits();
   const E = T.edit;
   const F = T.form;
 
@@ -141,7 +144,6 @@ const EditProductPage = () => {
   const profit = canSeeCost ? profitLine(values.price, values.cost) : '';
   const allCategories = categories.status === 'ready' ? categories.data.categories : [];
   const categoryChoices = [{ value: '', label: T.noCategory }, ...allCategories.filter((c) => c.name !== T.rootCategory).map((c) => ({ value: c.name, label: categoryLabel(c.name) }))];
-  const unitChoices = unitOptions(units.status === 'ready' ? units.data : []);
 
   return (
     <>
@@ -162,7 +164,7 @@ const EditProductPage = () => {
               ) : null}
             </div>
           ) : null}
-          <Select id={FIELD_IDS.unit} label={F.unit} helper={F.unitHelper} options={unitChoices} value={values.unit} onChange={set('unit')} />
+          <UnitPicker id={FIELD_IDS.unit} label={F.unit} helper={F.unitHelper} value={values.unit} onChange={set('unit')} units={units} shop={shopUnits} />
           <Select id={FIELD_IDS.category} label={F.category} helper={categories.status === 'error' ? F.categoryError : undefined} options={categoryChoices} value={values.category} onChange={set('category')} />
           <Field id={FIELD_IDS.barcode} label={F.barcode} helper={E.barcodeHelper} value={values.barcode} readOnly />
           <Checkbox label={E.enabled} checked={values.enabled} onChange={set('enabled')} />
