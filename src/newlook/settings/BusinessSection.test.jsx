@@ -60,6 +60,13 @@ test('shows the three cards with the business as the server has it', async () =>
   ['Business details', 'Address and contact', 'Contact person'].forEach((name) => expect(screen.getByRole('heading', { name })).toBeInTheDocument());
 });
 
+test('Stores has a card here, for every shop, opening the current Stores screen', async () => {
+  show('owner', { load: jest.fn().mockResolvedValue(COMPANY) });
+  await screen.findByLabelText('Tax ID (KRA PIN)');
+  expect(screen.getByRole('heading', { name: 'Stores' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Stores/ })).toHaveAttribute('href', '/warehouses?legacy=1');
+});
+
 test('the business name, short name, country and currency are shown but cannot be typed over', async () => {
   show('owner', { load: jest.fn().mockResolvedValue(COMPANY) });
   await screen.findByLabelText('Business name');

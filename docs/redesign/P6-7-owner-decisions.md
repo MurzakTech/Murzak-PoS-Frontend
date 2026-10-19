@@ -76,9 +76,9 @@ printed by the server and is not changed by this.
 - Stores and the two transfer screens are hidden for a shop with one selling location. "One selling location" uses the same rule as the
   till's store menu: real selling locations only, so the folders and stock-in-production places a new business comes with do not make a
   shop look like it has two.
-- The Settings, Advanced cards for Stock transfers, Move stock between stores and Update many prices are removed (they moved).
-- **Stores stays in Settings, Advanced as well**, because that is how a one-store shop adds its second store. Without it, the Stores
-  button would never appear. Tell me if you want it removed there too.
+- The Settings, Advanced cards for Stock transfers, Move stock between stores and Update many prices are removed (they moved). The Stores card moved to Settings, Business.
+- **Stores has another home: a card in Settings, Business** (owner decision, 19 October), shown to every shop, because that is how a
+  one-store shop adds its second store. It is no longer a card in Settings, Advanced.
 - The nothing-lost checks (AC-40) were updated to count the Products More menu as a home.
 
 ## 5. Where this is not checked

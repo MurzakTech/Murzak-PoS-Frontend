@@ -114,6 +114,7 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
     <>
       {body}
       <LinkList id="business-banks" title={B.banks.title} subtitle={B.banks.subtitle} items={[{ key: 'bank-accounts', text: B.banks.note, to: legacy(OLD.bankAccounts) }]} />
+      <LinkList id="business-stores" title={B.stores.title} subtitle={B.stores.subtitle} items={[{ key: 'stores', text: B.stores.note, to: legacy(OLD.stores) }]} />
       <LinkList id="business-letterhead" title={B.letterhead.title} subtitle={B.letterhead.subtitle} items={[{ key: 'letterhead', text: B.letterhead.note, to: legacy(OLD.business) }]} />
     </>
   );
