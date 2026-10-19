@@ -10,7 +10,7 @@ const customers = {
   addCustomer: 'Add customer',
   export: 'Export CSV',
   exportName: 'customers-{tab}-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
   noValue: '-',
 
   summary: { label: 'Customers summary', customers: 'Customers', owing: 'Owing', owingCustomers: 'Customers who owe' },

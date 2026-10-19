@@ -8,8 +8,11 @@ const sales = {
   tabsLabel: 'Sales views',
   tabs: { all: 'All sales', unpaid: 'Unpaid', returns: 'Returns', sessions: 'Till sessions' },
   export: 'Export',
+  // The header's overflow: screens that are not redesigned yet, opened as they are today
+  more: { label: 'More sales screens', newInvoice: 'New invoice (earlier screen)' },
+  links: { newInvoice: '/sales/invoice/new' },
   exportName: 'sales-{tab}-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
 
   summary: { label: 'Sales for the period', sold: 'Sold', unpaid: 'Unpaid', returned: 'Returned' },
 
@@ -176,7 +179,7 @@ const sales = {
     failed: 'The payment was not saved. {reason}',
   },
 
-  sessions: { sessionCount: '{count} sales' },
+  sessions: { sessionCount: '{sales}', saleNoun: 'sale' },
 };
 
 export default sales;

@@ -1,6 +1,7 @@
 import S from '../strings';
 import fill from '../labels/fill';
-import { formatMoney } from '../components/format';
+import { formatCount, formatMoney, formatPercent, percentNumber } from '../components/format';
+import { formatPhone } from '../labels/renameMap';
 import { changeInfo } from '../home/homeModel';
 import { dayMonth, shortDate } from '../charts/chartFormat';
 import T from './strings.reports';
@@ -110,10 +111,10 @@ const NUMBER = (value) => Number(value || 0).toLocaleString('en-US', { maximumFr
 const FORMAT = {
   money: (value) => formatMoney(value),
   number: (value) => NUMBER(value),
-  percent: (value) => `${Number(value || 0)}%`,
+  percent: (value) => formatPercent(value),
   text: (value) => (value === null || value === undefined ? '' : String(value)),
   date: (value, row) => (row && row.so_far ? fill(T.sales.soFar, { date: periodLabel(value) }) : periodLabel(value)),
-  days: (value) => (Number(value) > 0 ? fill(T.owed.oldest, { days: NUMBER(value) }) : T.owed.oldestToday),
+  days: (value) => (Number(value) > 0 ? formatCount(Number(value), T.owed.dayNoun) : T.owed.oldestToday),
 };
 const RIGHT = new Set(['money', 'number', 'percent', 'days']);
 
@@ -156,7 +157,7 @@ export const columnsFor = (name, data) => {
         col('band2', C.band2, 'money', { get: (r) => (r.bands || {})['8_14'], phoneHide: true }),
         col('band3', C.band3, 'money', { get: (r) => (r.bands || {})['15_30'], phoneHide: true }),
         col('band4', C.band4, 'money', { get: (r) => (r.bands || {}).over_30, phoneHide: true }),
-        col('mobile', C.phone, 'text', { phoneHide: true }),
+        col('mobile', C.phone, 'text', { phoneHide: true, get: (r) => (r.mobile ? formatPhone(r.mobile) : '') }),
       ];
     }
     case 'running-costs': {
@@ -243,19 +244,19 @@ export const figuresFor = (name, data) => {
         { key: 'cost', label: T.profit.summary.cost, value: formatMoney(s.cost_of_goods), change: changeInfo(pctChange(s.cost_of_goods, s.previous_cost_of_goods), T.profit.change), goodWhen: 'down' },
         { key: 'running', label: T.profit.summary.running, value: formatMoney(s.running_costs), change: changeInfo(pctChange(s.running_costs, s.previous_running_costs), T.profit.change), goodWhen: 'down' },
         { key: 'net', label: T.profit.summary.net, value: formatMoney(s.net_profit), change: changeInfo(s.change_pct, T.profit.change), goodWhen: 'up', strong: true },
-        { key: 'margin', label: T.profit.summary.margin, value: `${Number(s.margin_pct || 0)}%` },
+        { key: 'margin', label: T.profit.summary.margin, value: formatPercent(s.margin_pct) },
       ];
     case 'owed':
       return [
         { key: 'total', label: T.owed.summary.total, value: formatMoney(s.amount) },
-        { key: 'customers', label: T.owed.summary.customers, value: count(s.customers), note: s.customers ? fill(T.owed.customersNote, { days: NUMBER(s.oldest_days) }) : undefined },
-        { key: 'older', label: T.owed.summary.older, value: formatMoney(s.over_30_amount), note: Number(s.over_30_amount) > 0 ? fill(T.owed.olderNote, { pct: s.over_30_share_pct }) : T.owed.olderNone },
+        { key: 'customers', label: T.owed.summary.customers, value: count(s.customers), note: s.customers ? fill(T.owed.customersNote, { age: formatCount(Number(s.oldest_days || 0), T.owed.dayNoun) }) : undefined },
+        { key: 'older', label: T.owed.summary.older, value: formatMoney(s.over_30_amount), note: Number(s.over_30_amount) > 0 ? fill(T.owed.olderNote, { pct: percentNumber(s.over_30_share_pct) }) : T.owed.olderNone },
       ];
     case 'running-costs': {
       const biggest = s.biggest;
       return [
         { key: 'total', label: T.costs.summary.total, value: formatMoney(s.total), change: changeInfo(s.change_pct, T.costs.change), goodWhen: 'down' },
-        { key: 'biggest', label: T.costs.summary.biggest, value: biggest ? biggest.category : '-', note: biggest ? fill(T.costs.biggestNote, { amount: formatMoney(biggest.amount), pct: biggest.share_pct }) : T.costs.biggestNone },
+        { key: 'biggest', label: T.costs.summary.biggest, value: biggest ? biggest.category : '-', note: biggest ? fill(T.costs.biggestNote, { amount: formatMoney(biggest.amount), pct: percentNumber(biggest.share_pct) }) : T.costs.biggestNone },
         { key: 'daily', label: T.costs.summary.daily, value: formatMoney(s.daily_average) },
       ];
     }
@@ -270,14 +271,14 @@ export const figuresFor = (name, data) => {
       return [
         { key: 'value', label: T.stock.summary.value, value: formatMoney(s.value), note: T.stock.valueOnlyNote },
         { key: 'categories', label: T.stock.summary.categories, value: count(s.categories) },
-        { key: 'biggest', label: T.stock.summary.biggest, value: biggest ? biggest.category : '-', note: biggest ? fill(T.stock.biggestNote, { pct: biggest.share_pct }) : undefined },
+        { key: 'biggest', label: T.stock.summary.biggest, value: biggest ? biggest.category : '-', note: biggest ? fill(T.stock.biggestNote, { pct: percentNumber(biggest.share_pct) }) : undefined },
       ];
     }
     case 'aging-stock':
       return [
-        { key: 'products', label: T.aging.summary.products, value: count(s.products), note: s.products ? fill(T.aging.productsNote, { pct: s.share_of_products_pct }) : undefined },
+        { key: 'products', label: T.aging.summary.products, value: count(s.products), note: s.products ? fill(T.aging.productsNote, { pct: percentNumber(s.share_of_products_pct) }) : undefined },
         { key: 'value', label: T.aging.summary.value, value: formatMoney(s.value) },
-        { key: 'oldest', label: T.aging.summary.oldest, value: s.products ? fill(T.aging.oldestValue, { days: NUMBER(s.oldest_days) }) : T.aging.oldestNone },
+        { key: 'oldest', label: T.aging.summary.oldest, value: s.products ? fill(T.aging.oldestValue, { age: formatCount(Number(s.oldest_days || 0), T.aging.dayNoun) }) : T.aging.oldestNone },
       ];
     default:
       return [];
@@ -326,7 +327,7 @@ export const answerFor = (key, preview) => {
       const net = Number(preview.net_profit);
       if (net < 0) return fill(T.answers.profitLoss, { amount: formatMoney(Math.abs(net)) });
       if (net === 0) return T.answers.profitNone;
-      return fill(T.answers.profit, { amount: formatMoney(net), margin: Number(preview.margin_pct) || 0 });
+      return fill(T.answers.profit, { amount: formatMoney(net), margin: percentNumber(preview.margin_pct) });
     }
     case 'owed':
       return Number(preview.amount) > 0 ? fill(T.answers.owed, { amount: formatMoney(preview.amount), customers: customersWords(preview.customers) }) : T.answers.owedNone;

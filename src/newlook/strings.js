@@ -280,6 +280,7 @@ const components = {
     money: '{sign}{currency} {amount}',
     count: '{count} {noun}',
     pluralEnding: 's',
+    rowNoun: 'row',
     showing: 'Showing {shown} of {total}',
   },
 };
@@ -498,6 +499,13 @@ const home = {
   },
 };
 
-const S = { shell, components, charts, home };
+// The page shown when an address matches nothing, while the New look is on (no code, one way forward)
+const notFound = {
+  title: 'We could not find that page',
+  text: 'The address may be mistyped, or the page may have moved. Go back to Home and carry on from there.',
+  home: 'Go to Home',
+};
+
+const S = { shell, components, charts, home, notFound };
 
 export default S;

@@ -28,6 +28,9 @@ import Clock from './Clock';
  * (store, who is signed in, shift status) and nothing that leads away from selling.
  */
 const PosHeader = ({
+  exitLabel = 'Exit point of sale',
+  exitTip = 'Back to dashboard',
+  fallbackTitle = 'Point of sale',
   storeName,
   warehouses = [],
   canChangeStore,
@@ -85,8 +88,8 @@ const PosHeader = ({
         borderColor: 'divider',
       }}
     >
-      <Tooltip title="Back to dashboard">
-        <IconButton onClick={onExit} aria-label="Exit point of sale" sx={{ color: 'text.secondary' }}>
+      <Tooltip title={exitTip}>
+        <IconButton onClick={onExit} aria-label={exitLabel} sx={{ color: 'text.secondary' }}>
           <ArrowBack />
         </IconButton>
       </Tooltip>
@@ -97,8 +100,8 @@ const PosHeader = ({
       </Box>
 
       {/* Phones: just the store name, so the cashier knows which till this is */}
-      <Typography variant="subtitle1" noWrap sx={{ display: { xs: 'block', md: 'none' }, fontWeight: 700, minWidth: 0 }}>
-        {storeName || 'Point of sale'}
+      <Typography variant="subtitle1" component="span" noWrap sx={{ display: { xs: 'block', md: 'none' }, fontWeight: 700, minWidth: 0 }}>
+        {storeName || fallbackTitle}
       </Typography>
 
       <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2.5, minWidth: 0, color: 'text.secondary' }}>
@@ -113,7 +116,7 @@ const PosHeader = ({
               endIcon={warehouses.length > 1 ? <ExpandMore /> : null}
               sx={{ color: 'text.secondary', fontWeight: 600, minWidth: 0, '&.Mui-disabled': { color: 'text.secondary' } }}
             >
-              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>{storeName || 'No store selected'}</Typography>
+              <Typography variant="subtitle2" component="span" noWrap sx={{ fontWeight: 600 }}>{storeName || 'No store selected'}</Typography>
             </Button>
           </span>
         </Tooltip>
@@ -126,7 +129,7 @@ const PosHeader = ({
         </Menu>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
           <PersonOutline sx={{ fontSize: 18 }} />
-          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+          <Typography variant="subtitle2" component="span" noWrap sx={{ fontWeight: 600 }}>
             {cashierName}
           </Typography>
         </Box>
@@ -141,6 +144,7 @@ const PosHeader = ({
           variant="outlined"
           icon={<ReceiptLong />}
           label="Till open"
+          aria-label="Till open"
           onClick={onSessionDetails}
           sx={{ fontWeight: 700, '& .MuiChip-label': { display: { xs: 'none', sm: 'block' } }, '& .MuiChip-icon': { mx: { xs: 0.75, sm: undefined } } }}
         />

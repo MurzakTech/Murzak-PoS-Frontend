@@ -5,6 +5,7 @@ import DetailPanel, { DetailFacts } from '../components/DetailPanel';
 import EmptyState from '../components/EmptyState';
 import { PaymentChip, StatusLabel } from '../components/Chip';
 import { formatMoney } from '../components/format';
+import { formatPhone } from '../labels/renameMap';
 import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import PaymentDialog from './PaymentDialog';
@@ -190,7 +191,7 @@ const ReceiptPanel = ({ id, doctype, summary, position, onClose, onPrevious, onN
             <DetailFacts
               facts={[
                 { label: T.panel.customer, value: shown.customer && shown.customer.name ? shown.customer.name : T.walkIn },
-                { label: T.panel.mobile, value: shown.customer && shown.customer.mobile },
+                { label: T.panel.mobile, value: shown.customer && shown.customer.mobile ? formatPhone(shown.customer.mobile) : undefined },
                 { label: T.panel.when, value: whenLabel(shown.date, shown.time) },
                 { label: T.panel.cashier, value: shown.cashier },
               ]}

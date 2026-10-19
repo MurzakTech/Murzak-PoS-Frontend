@@ -14,7 +14,7 @@ const products = {
   import: 'Import',
   export: 'Export',
   exportName: 'products-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
 
   summary: { label: 'Products at a glance', products: 'Products', low: 'Low on stock', out: 'Out of stock' },
 

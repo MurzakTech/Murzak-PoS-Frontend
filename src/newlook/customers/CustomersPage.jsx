@@ -8,7 +8,7 @@ import SummaryRow from '../components/SummaryRow';
 import Table from '../components/Table';
 import { ListWithDetail } from '../components/DetailPanel';
 import useListParams from '../components/useListParams';
-import { formatMoney } from '../components/format';
+import { formatMoney, rowsWords } from '../components/format';
 import { useToast } from '../components/Toast';
 import { PageHeader, useViewportBand } from '../shell';
 import { useAccess } from '../access/AccessProvider';
@@ -116,7 +116,7 @@ const CustomersPage = () => {
 
   const exportCsv = () => {
     saveTextFile(customersCsv(rows, canSeeMoney), csvName(tab, isoDay(new Date())));
-    toast.success(fill(T.exportDone, { count: rows.length }));
+    toast.success(fill(T.exportDone, { rows: rowsWords(rows.length) }));
   };
 
   // ---------- Table columns ----------

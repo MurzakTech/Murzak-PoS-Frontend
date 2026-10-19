@@ -185,6 +185,17 @@
 .nl-figure.is-strong {
   background: var(--soft);
 }
+/* On the soft fill the quiet words use ink-2 and the change words take a little ink, so all keep 4.5:1 in both themes */
+.nl-figure.is-strong dt,
+.nl-figure.is-strong .nl-figure__note {
+  color: var(--ink-2);
+}
+.nl-figure.is-strong .nl-figure__change.is-good {
+  color: color-mix(in srgb, var(--good) 80%, var(--ink));
+}
+.nl-figure.is-strong .nl-figure__change.is-bad {
+  color: color-mix(in srgb, var(--bad) 80%, var(--ink));
+}
 .nl-figure__note {
   margin: var(--space-1) 0 0;
   color: var(--muted);

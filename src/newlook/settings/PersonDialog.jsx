@@ -7,6 +7,7 @@ import Select from '../components/Select';
 import { addRoles, createPerson, removeRoles, updatePerson } from '../../api/teamApi';
 import fill from '../labels/fill';
 import { OLD, legacy } from './settingsModel';
+import { formatPhone } from '../labels/renameMap';
 import { TIERS, fieldForError, isLastOwner, personProblems, planTierChange, rolesForNewPerson } from './teamModel';
 import T from './strings.settings';
 
@@ -16,7 +17,7 @@ const emptyValues = (member) => ({
   firstName: member ? member.first_name : '',
   lastName: member ? member.last_name : '',
   email: member ? member.email : '',
-  phone: member ? member.phone : '',
+  phone: member ? formatPhone(member.phone || '') : '',
   password: '',
   tier: member ? member.tier : 'cashier',
 });
@@ -70,7 +71,7 @@ const PersonDialog = ({ member, members, tiers, me, company, onClose, onDone, ap
         await calls.create({ firstName: values.firstName.trim(), lastName: values.lastName.trim(), email: values.email.trim(), password: values.password, phone: values.phone.trim(), roles: rolesForNewPerson(values.tier, tiers), company });
       } else {
         if (values.firstName.trim() !== start.firstName || values.lastName.trim() !== start.lastName || values.phone.trim() !== start.phone) {
-          await calls.update({ email: member.email, firstName: values.firstName.trim(), lastName: values.lastName.trim(), phone: values.phone.trim() });
+          await calls.update({ email: member.email, firstName: values.firstName.trim(), lastName: values.lastName.trim(), phone: values.phone.trim() === start.phone ? member.phone : values.phone.trim() });
         }
         if (values.tier !== member.tier) {
           const plan = planTierChange(member, values.tier, tiers);

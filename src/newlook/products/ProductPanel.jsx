@@ -1,7 +1,7 @@
 import React from 'react';
 import DetailPanel, { DetailFacts } from '../components/DetailPanel';
 import { StatusLabel } from '../components/Chip';
-import { formatMoney } from '../components/format';
+import { formatMoney, formatPercent } from '../components/format';
 import fill from '../labels/fill';
 import { categoryLabel, hasCost, profitOf, statusView, stockText } from './productsModel';
 import { quantityText, unitLabel } from './unitWords';
@@ -29,7 +29,7 @@ const ProductPanel = ({ product, scope, position, canSeeCost, canChange, loading
             : [
                 {
                   label: profit < 0 ? P.loss : P.profit,
-                  value: product.margin_percent === null || product.margin_percent === undefined ? formatMoney(Math.abs(profit)) : `${formatMoney(Math.abs(profit))} (${product.margin_percent}%)`,
+                  value: product.margin_percent === null || product.margin_percent === undefined ? formatMoney(Math.abs(profit)) : `${formatMoney(Math.abs(profit))} (${formatPercent(product.margin_percent)})`,
                 },
               ]),
         ]

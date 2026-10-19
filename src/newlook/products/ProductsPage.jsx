@@ -22,6 +22,7 @@ import ProductPanel from './ProductPanel';
 import { useCategories, useProductByCode, useProductList } from './useProductsData';
 import { categoryLabel, categoryOptions, csvFor, csvName, editAddress, hasCost, isoDay, NEW_PRODUCT_PATH, productsTabs, showFromParam, showOptions, statusView, stockText, tabFromPath } from './productsModel';
 import T from './strings.products';
+import { rowsWords } from '../components/format';
 
 const KEY = 'item_code';
 const FILTER_KEYS = ['category', 'status'];
@@ -101,7 +102,7 @@ const ProductsPage = () => {
   const exportCsv = () => {
     const withCost = canSeeCost && rows.length > 0 && rows.every(hasCost);
     saveTextFile(csvFor(rows, withCost), csvName(isoDay(new Date())));
-    toast.success(fill(T.exportDone, { count: rows.length }));
+    toast.success(fill(T.exportDone, { rows: rowsWords(rows.length) }));
   };
 
   const dropdowns = [

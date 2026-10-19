@@ -6,7 +6,7 @@ import EmptyState from '../components/EmptyState';
 import FilterRow from '../components/FilterRow';
 import Icon from '../components/Icon';
 import Pagination from '../components/Pagination';
-import { formatMoney } from '../components/format';
+import { formatMoney, rowsWords } from '../components/format';
 import Segmented from '../components/Segmented';
 import Table from '../components/Table';
 import { useToast } from '../components/Toast';
@@ -100,7 +100,7 @@ const ReportView = ({ name }) => {
 
   const exportCsv = () => {
     saveTextFile(reportCsv(columns, rows), csvName(name, todayIso()));
-    toast.success(fill(T.page.exportDone, { count: rows.length }));
+    toast.success(fill(T.page.exportDone, { rows: rowsWords(rows.length) }));
   };
 
   // ---------- Table ----------

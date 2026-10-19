@@ -313,6 +313,22 @@
 .nl-table tbody tr.is-selected td {
   background-color: var(--selected-row);
 }
+/* Coloured status words on a hovered or open row stay at 4.5:1: a little ink goes into the mix (Accessibility rules, Text contrast) */
+.nl-table tbody tr:hover td .nl-status--warn,
+.nl-table tbody tr.is-hover td .nl-status--warn,
+.nl-table tbody tr.is-selected td .nl-status--warn {
+  color: color-mix(in srgb, var(--warn) 82%, var(--ink));
+}
+.nl-table tbody tr:hover td .nl-status--bad,
+.nl-table tbody tr.is-hover td .nl-status--bad,
+.nl-table tbody tr.is-selected td .nl-status--bad {
+  color: color-mix(in srgb, var(--bad) 82%, var(--ink));
+}
+.nl-table tbody tr:hover td .nl-status--good,
+.nl-table tbody tr.is-hover td .nl-status--good,
+.nl-table tbody tr.is-selected td .nl-status--good {
+  color: color-mix(in srgb, var(--good) 82%, var(--ink));
+}
 /* A bar on the open row's left edge, so the open row is not shown by its fill alone */
 .nl-table tbody tr.is-selected td:first-child {
   box-shadow: inset var(--focus-ring-width) 0 0 var(--brand-text);
@@ -383,6 +399,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
+  max-width: 100%;
 }
 .nl-filters__search {
   flex: 1 1 220px;
@@ -531,11 +549,15 @@
   .nl-segmented--small .nl-segmented__item {
     min-height: var(--control-height-till);
   }
-  /* The presets share the full width, so four of them always fit */
+  /* The presets share the full width, so four of them always fit; 8px between neighbours, as for every tap target */
   .nl-segmented {
     display: flex;
     width: 100%;
     box-sizing: border-box;
+    gap: var(--space-2);
+  }
+  .nl-detail__nav {
+    gap: var(--space-2);
   }
   .nl-segmented__item {
     flex: 1 1 0;

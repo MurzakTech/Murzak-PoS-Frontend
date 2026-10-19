@@ -3,6 +3,8 @@
  * their words in their own strings.<area>.js files.
  */
 const till = {
+  // The till's one page heading, kept off the screen (the header carries the visible words)
+  pageTitle: 'Till',
   leave: {
     title: 'Leave the till?',
     message: 'The sale in progress has items in it. You can put it on hold and come back to it, or clear it.',
@@ -19,6 +21,17 @@ const till = {
     only: 'Only {qty} left',
     none: 'None left in stock',
   },
+  itemNoun: 'item',
+  // Names of buttons and controls of the current till screen that the New look words differently (a verb and its object, no old terms)
+  labels: {
+    exit: 'Leave the till',
+    exitTip: 'Back to Home',
+    applyDiscount: 'Apply discount',
+    removeDiscount: 'Remove discount',
+    closeHeldSales: 'Close',
+  },
+  // Spoken (not shown) when a sale is completed
+  saleComplete: 'Sale complete, {amount}',
 };
 
 export default till;

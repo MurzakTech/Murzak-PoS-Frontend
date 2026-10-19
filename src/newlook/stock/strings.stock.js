@@ -20,7 +20,7 @@ const stock = {
   stockOut: 'Stock out or write-off',
   export: 'Export',
   exportName: 'stock-{tab}-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
   noValue: '–',
   chooseStore: 'Choose a store',
 

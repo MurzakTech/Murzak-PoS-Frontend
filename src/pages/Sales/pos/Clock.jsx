@@ -9,7 +9,7 @@ const Clock = () => {
     return () => clearInterval(id);
   }, []);
   return (
-    <Typography variant="subtitle2" sx={{ fontVariantNumeric: 'tabular-nums', color: 'text.secondary', fontWeight: 600 }}>
+    <Typography variant="subtitle2" component="span" sx={{ fontVariantNumeric: 'tabular-nums', color: 'text.secondary', fontWeight: 600 }}>
       {now.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
     </Typography>
   );

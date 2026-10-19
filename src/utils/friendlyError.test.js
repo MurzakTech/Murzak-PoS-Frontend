@@ -91,3 +91,27 @@ describe('friendly error messages', () => {
   });
 });
 
+
+describe('language sweep (P6-4): no error numbers and no exception names on screen', () => {
+  test('a bare exception name becomes a plain sentence, never the name', () => {
+    expect(humanizeMessage('frappe.exceptions.PermissionError')).toBe(MESSAGES.permission);
+    expect(humanizeMessage('frappe.exceptions.DoesNotExistError')).toBe(MESSAGES.notFound);
+    expect(humanizeMessage('frappe.exceptions.SomethingUnknownError')).toBe(GENERIC);
+    expect(friendlyErrorMessage(axiosError(403, { exc_type: 'PermissionError', exception: 'frappe.exceptions.PermissionError' }))).toBe(MESSAGES.permission);
+  });
+
+  test('a leading "Error 417:" or "HTTP 500" is removed and the sentence stays', () => {
+    expect(humanizeMessage('Error 417: Insufficient permission to open this')).toBe('Insufficient permission to open this.');
+    expect(humanizeMessage('Error 500 database is locked')).toBe('Database is locked.');
+    expect(humanizeMessage('HTTP 404: That record is gone')).toBe('That record is gone.');
+    expect(humanizeMessage('Status code 403')).toBe(GENERIC);
+  });
+
+  test('field names in a missing-information message use the rename map words', () => {
+    expect(humanizeMessage('[Item, ITEM-001]: item_code, stock_uom')).toBe('Some required information is missing: product code, unit.');
+  });
+
+  test('ordinary sentences with numbers are not touched', () => {
+    expect(humanizeMessage('Only 417 left in stock')).toBe('Only 417 left in stock.');
+  });
+});

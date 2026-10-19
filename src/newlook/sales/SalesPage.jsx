@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import Menu from '../components/Menu';
 import { PaymentChip, StatusLabel } from '../components/Chip';
 import FilterRow from '../components/FilterRow';
 import Pagination from '../components/Pagination';
@@ -8,7 +9,7 @@ import SummaryRow from '../components/SummaryRow';
 import Table from '../components/Table';
 import { ListWithDetail } from '../components/DetailPanel';
 import useListParams from '../components/useListParams';
-import { formatMoney } from '../components/format';
+import { formatCount, formatMoney, rowsWords } from '../components/format';
 import { useToast } from '../components/Toast';
 import { PageHeader, useViewportBand } from '../shell';
 import { useAccess } from '../access/AccessProvider';
@@ -141,7 +142,7 @@ const SalesPage = () => {
 
   const exportCsv = () => {
     saveTextFile(csvFor(tab, rows), csvName(tab, isoDay(new Date())));
-    toast.success(fill(T.exportDone, { count: rows.length }));
+    toast.success(fill(T.exportDone, { rows: rowsWords(rows.length) }));
   };
 
   // ---------- Table columns ----------
@@ -185,7 +186,7 @@ const SalesPage = () => {
   const sessionCards = rows.map((r) => ({
     key: r.id,
     head: r.cashier_name || r.cashier,
-    aside: fill(T.sessions.sessionCount, { count: r.sales_count }),
+    aside: fill(T.sessions.sessionCount, { sales: formatCount(r.sales_count, T.sessions.saleNoun) }),
     lines: [`${sessionOpened(r)} / ${sessionClosed(r)}`, `${T.columns.expected}: ${formatMoney(r.expected)}`, `${T.columns.counted}: ${r.counted === null || r.counted === undefined ? T.noValue : formatMoney(r.counted)}`],
     foot: <DifferenceLabel difference={r.difference} />,
   }));
@@ -272,9 +273,12 @@ const SalesPage = () => {
         title={T.title}
         subtitle={T.subtitle}
         actions={
-          <Button variant="secondary" icon="arrowDown" disabled={!ready || rows.length === 0} onClick={exportCsv}>
-            {T.export}
-          </Button>
+          <>
+            <Button variant="secondary" icon="arrowDown" disabled={!ready || rows.length === 0} onClick={exportCsv}>
+              {T.export}
+            </Button>
+            {isCashier ? null : <Menu label={T.more.label} items={[{ label: T.more.newInvoice, onClick: () => navigate(oldScreen(T.links.newInvoice)) }]} />}
+          </>
         }
         tabs={{ label: T.tabsLabel, tabs, value: tab }}
       />

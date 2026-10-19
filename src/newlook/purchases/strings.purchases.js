@@ -12,7 +12,7 @@ const purchases = {
   receiveGoods: 'Receive goods',
   export: 'Export',
   exportName: 'purchases-{tab}-{date}.csv',
-  exportDone: 'Saved {count} rows as a spreadsheet file',
+  exportDone: 'Saved {rows} as a spreadsheet file',
   noValue: '–',
   months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 

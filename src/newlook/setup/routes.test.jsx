@@ -4,13 +4,12 @@
  */
 import { newLookRoutes } from '../newLookRoutes';
 import PagePlaceholder from '../redirects/PagePlaceholder';
-import SetupWizard from './SetupWizard';
 import { REDIRECTS } from '../redirects/redirectTable';
 
 test('/new-look/setup opens the wizard, once', () => {
   const found = newLookRoutes.filter((r) => r.path === '/new-look/setup');
   expect(found).toHaveLength(1);
-  expect(found[0].element).toBe(SetupWizard);
+  expect(found[0].element.pageName).toBe('SetupWizard');
   expect(found[0].element).not.toBe(PagePlaceholder);
 });
 

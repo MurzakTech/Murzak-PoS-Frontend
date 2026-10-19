@@ -29,6 +29,9 @@
 .nl-setup-steps__state {
   color: var(--muted);
 }
+.nl-setup-steps__item.is-current .nl-setup-steps__state {
+  color: var(--ink-2);
+}
 
 .nl-setup-heading {
   display: grid;

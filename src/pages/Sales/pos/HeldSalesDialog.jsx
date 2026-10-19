@@ -5,8 +5,11 @@ import { money } from './money';
 import PosConfirm from './PosConfirm';
 import HoldSaleDialog from './HoldSaleDialog';
 import { heldTitle, heldTotal, heldAge, labelInUse } from '../../../utils/heldSales';
+import { useNewLook } from '../../../newlook/NewLookProvider';
+import tillText from '../../../newlook/till/strings.till';
 
 const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, canRecall, currency, now, status = 'unavailable' }) => {
+  const { enabled: newLook } = useNewLook();
   const shared = status === 'online' || status === 'offline'; // the server keeps held sales: some may still be only on this device
   const [discarding, setDiscarding] = useState(null); // the held sale someone is about to throw away
   const [renaming, setRenaming] = useState(null);
@@ -57,7 +60,7 @@ const HeldSalesDialog = ({ open, onClose, held, onRecall, onDelete, onRename, ca
             </>
           )}
         </DialogContent>
-        <DialogActions><Button onClick={onClose}>Done</Button></DialogActions>
+        <DialogActions><Button onClick={onClose}>{newLook ? tillText.labels.closeHeldSales : 'Done'}</Button></DialogActions>
       </Dialog>
 
       <PosConfirm

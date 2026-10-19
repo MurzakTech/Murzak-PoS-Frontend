@@ -55,7 +55,7 @@ test('shows the three cards with the business as the server has it', async () =>
   expect(await screen.findByLabelText('Tax ID (KRA PIN)')).toHaveValue('P000000000A');
   expect(screen.getByLabelText('Address')).toHaveValue('1 Test Road');
   expect(screen.getByLabelText('Town or city')).toHaveValue('Nairobi');
-  expect(screen.getByLabelText('Phone', { selector: '#business-address-phone' })).toHaveValue('0711000000');
+  expect(screen.getByLabelText('Phone', { selector: '#business-address-phone' })).toHaveValue('0711 000 000');
   expect(screen.getByLabelText('First name')).toHaveValue('Amina');
   ['Business details', 'Address and contact', 'Contact person'].forEach((name) => expect(screen.getByRole('heading', { name })).toBeInTheDocument());
 });

@@ -212,6 +212,17 @@ describe('changing a person', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Saved');
   });
 
+  test('the phone number is shown as 0712 345 678 and a name change sends the number as it was stored', async () => {
+    const update = jest.fn().mockResolvedValue({});
+    const dialog = await edit('Juma Kamau', { dialogApi: { update, add: jest.fn(), remove: jest.fn() } });
+    expect(dialog.getByLabelText('Mobile (optional)')).toHaveValue('0712 345 678');
+    const first = dialog.getByLabelText('First name');
+    userEvent.clear(first);
+    userEvent.type(first, 'Jumaa');
+    userEvent.click(dialog.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ email: 'juma@shop.test', firstName: 'Jumaa', lastName: 'Kamau', phone: '0712345678' }));
+  });
+
   test('the email cannot be changed', async () => {
     const dialog = await edit('Zawadi Mwangi', {});
     expect(dialog.getByLabelText('Email (they sign in with this)')).toHaveAttribute('readonly');

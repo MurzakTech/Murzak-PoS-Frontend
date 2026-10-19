@@ -39,7 +39,7 @@ const writeCache = (company, enabled) => {
   }
 };
 
-const NewLookContext = createContext({
+export const NewLookContext = createContext({
   enabled: false,
   status: 'idle',
   company: null,

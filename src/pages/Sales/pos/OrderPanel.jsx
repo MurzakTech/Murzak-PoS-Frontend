@@ -38,17 +38,21 @@ import {
 } from '@mui/icons-material';
 import { fmt, money } from './money';
 import ProductImage from '../../../components/Common/ProductImage';
+import { useNewLook } from '../../../newlook/NewLookProvider';
+import { quantityText, unitWord } from '../../../newlook/products/unitWords';
+import tillText from '../../../newlook/till/strings.till';
 
 const StepperButton = ({ children, ...props }) => (
   <IconButton
     {...props}
-    sx={{ width: 40, height: 40, border: 1, borderColor: 'divider', bgcolor: 'background.paper', '&:active': { transform: 'scale(.94)' } }}
+    sx={{ width: 44, height: 44, border: 1, borderColor: 'divider', bgcolor: 'background.paper', '&:active': { transform: 'scale(.94)' } }}
   >
     {children}
   </IconButton>
 );
 
 const CartLine = React.memo(({ note, item, readOnly, currency, warehouses, defaultWarehouse, onInc, onDec, onSetQty, onRemove, onChangeWarehouse, kitchenEnabled, onEditNote }) => {
+  const { enabled: newLook } = useNewLook();
   const [anchor, setAnchor] = useState(null);
   const lineBase = item.rate * item.qty;
   const hasOffer = item.discount_amount > 0;
@@ -102,23 +106,23 @@ const CartLine = React.memo(({ note, item, readOnly, currency, warehouses, defau
             onChange={(e) => onSetQty(item.item_code, e.target.value)}
             onFocus={(e) => e.target.select()}
             inputProps={{ inputMode: 'decimal', 'aria-label': `Quantity of ${item.item_name}`, style: { textAlign: 'center' } }}
-            sx={{ width: 64, height: 40, border: 1, borderColor: 'divider', borderRadius: 2, fontWeight: 700, fontSize: '1.0625rem', bgcolor: 'background.paper', fontVariantNumeric: 'tabular-nums' }}
+            sx={{ width: 64, height: 44, border: 1, borderColor: 'divider', borderRadius: 2, fontWeight: 700, fontSize: '1.0625rem', bgcolor: 'background.paper', fontVariantNumeric: 'tabular-nums' }}
           />
           <StepperButton onClick={() => onInc(item.item_code)} aria-label={`One more ${item.item_name}`}>
             <Add fontSize="small" />
           </StepperButton>
           <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-            {item.uom}
+            {newLook ? unitWord(item.uom) : item.uom}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
           {kitchenEnabled && (
-            <IconButton size="small" aria-label={item.note ? `Change note for ${item.item_name}` : `Add a note for ${item.item_name}`} onClick={() => onEditNote(item.item_code)} sx={{ color: item.note ? 'warning.main' : 'text.secondary' }}>
+            <IconButton size="small" aria-label={item.note ? `Change note for ${item.item_name}` : `Add a note for ${item.item_name}`} onClick={() => onEditNote(item.item_code)} sx={{ width: 44, height: 44, color: item.note ? 'warning.main' : 'text.secondary' }}>
               <EditNoteOutlined fontSize="small" />
             </IconButton>
           )}
           {warehouses.length > 1 && (
             <>
-              <IconButton size="small" aria-label={`More options for ${item.item_name}`} onClick={(e) => setAnchor(e.currentTarget)} sx={{ color: 'text.secondary' }}>
+              <IconButton size="small" aria-label={`More options for ${item.item_name}`} onClick={(e) => setAnchor(e.currentTarget)} sx={{ width: 44, height: 44, color: 'text.secondary' }}>
                 <MoreVert fontSize="small" />
               </IconButton>
               <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
@@ -135,7 +139,7 @@ const CartLine = React.memo(({ note, item, readOnly, currency, warehouses, defau
         </Box>
       ) : (
         <Typography variant="caption" color="text.secondary" sx={{ gridColumn: '1 / -1', mt: -0.5 }}>
-          {item.qty} {item.uom}
+          {newLook ? quantityText(item.qty, item.uom) : `${item.qty} ${item.uom}`}
         </Typography>
       )}
     </Box>
@@ -183,6 +187,7 @@ const OrderPanel = ({
   onEditNote,
   stockNoteFor, // New look: (item) => words such as "Only 13 left", or null
 }) => {
+  const { enabled: newLook } = useNewLook(); // the New look words a few labels differently
   const [discountAnchor, setDiscountAnchor] = useState(null);
   const [draftType, setDraftType] = useState('percentage');
   const [draftValue, setDraftValue] = useState('');
@@ -287,7 +292,7 @@ const OrderPanel = ({
             color="inherit"
             startIcon={<LocalOfferOutlined />}
             onClick={openDiscount}
-            sx={{ color: 'text.secondary', mb: 1, ml: -1 }}
+            sx={{ color: 'text.secondary', mb: 1, ml: -1, minHeight: 44 }}
           >
             {totals.manualDiscount > 0 ? 'Change discount' : 'Add discount'}
           </Button>
@@ -296,7 +301,7 @@ const OrderPanel = ({
         <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', mb: 1.5 }}>
           <Typography variant="h6" sx={{ color: 'text.secondary' }}>Total</Typography>
           <Typography variant="h2" sx={{ fontWeight: 800, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }} aria-live="polite">
-            <Box component="span" sx={{ fontSize: '0.5em', color: 'text.secondary', mr: 0.75, fontWeight: 650 }}>{currency}</Box>
+            <Box component="span" sx={{ fontSize: '0.5em', color: 'text.secondary', mr: newLook ? 0.5 : 0.75, fontWeight: 650 }}>{currency}{newLook ? ' ' : ''}</Box>
             {fmt(totals.grandTotal)}
           </Typography>
         </Box>
@@ -328,10 +333,10 @@ const OrderPanel = ({
               {empty ? 'Charge' : `Charge ${money(totals.grandTotal, currency)}`}
             </Button>
             <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-              <Button fullWidth size="small" color="inherit" startIcon={<PauseCircleOutline />} disabled={empty} onClick={onHold} sx={{ color: 'text.secondary' }}>
+              <Button fullWidth size="small" color="inherit" startIcon={<PauseCircleOutline />} disabled={empty} onClick={onHold} sx={{ color: 'text.secondary', minHeight: 44 }}>
                 Hold sale
               </Button>
-              <Button fullWidth size="small" color="inherit" startIcon={<DeleteOutline />} disabled={empty} onClick={onClear} sx={{ color: 'text.secondary' }}>
+              <Button fullWidth size="small" color="inherit" startIcon={<DeleteOutline />} disabled={empty} onClick={onClear} sx={{ color: 'text.secondary', minHeight: 44 }}>
                 Clear
               </Button>
             </Stack>
@@ -365,10 +370,10 @@ const OrderPanel = ({
           <Stack direction="row" spacing={1}>
             {manualDiscountValue > 0 && (
               <Button fullWidth color="inherit" onClick={() => { onManualDiscountChange('percentage', 0); setDiscountAnchor(null); }}>
-                Remove
+                {newLook ? tillText.labels.removeDiscount : 'Remove'}
               </Button>
             )}
-            <Button fullWidth variant="contained" type="submit">Apply</Button>
+            <Button fullWidth variant="contained" type="submit">{newLook ? tillText.labels.applyDiscount : 'Apply'}</Button>
           </Stack>
         </Box>
       </Popover>

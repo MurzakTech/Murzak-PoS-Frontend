@@ -97,9 +97,9 @@ const FIELD_LABELS = {
   custom_unit_of_quantity: 'KRA unit of quantity (eTIMS)',
   custom_etims_country_of_origin: 'country of origin (eTIMS)',
   custom_company: 'business',
-  stock_uom: 'unit of measure',
+  stock_uom: 'unit',
   item_group: 'category',
-  item_code: 'item code',
+  item_code: 'product code',
   item_name: 'product name',
 };
 
@@ -138,6 +138,13 @@ export const humanizeMessage = (input, fallback = GENERIC) => {
     const m = text.match(pattern);
     if (m) return replace(m);
   }
+
+  // A bare exception name with no sentence, such as "frappe.exceptions.PermissionError": say what it means, never the name
+  const bare = text.match(/^(?:[\w]+\.)+(\w*(?:Error|Exception))\.?$/);
+  if (bare) return EXC_TYPES[bare[1]] || fallback;
+  // "Error 417: Insufficient permission" -> "Insufficient permission": a person never needs the number
+  text = text.replace(/^(?:error|http(?: error)?|status)\s*(?:code\s*)?\d{3}\s*[:.-]?\s*/i, '').trim();
+  if (!text) return fallback;
 
   // "frappe.exceptions.ValidationError: Stock is short" -> "Stock is short"
   text = text.replace(/^([\w]+\.)*[\w]*(Error|Exception)\s*:\s*/, '').trim();

@@ -255,7 +255,7 @@ const DataDemo = () => (
         <EmptyState icon="alert" tone="error" title="We could not load this" description="Check your connection and try again. Nothing was changed." action={{ label: 'Try again', onClick: () => {} }} />
       </div>
       <p style={{ margin: 'var(--space-4) 0 0', color: 'var(--muted)', fontSize: 'var(--caption-size)' }}>
-        <Link to={BASE} style={{ color: 'var(--brand-text)' }}>Reset the list above</Link>
+        <Link to={BASE} className="nl-page-link" style={{ color: 'var(--brand-text)' }}>Reset the list above</Link>
       </p>
     </Card>
   </>

@@ -566,6 +566,12 @@
   .nl-select__option {
     min-height: var(--control-height-till);
   }
+  /* A stand-alone link in a page (Back to the New look) is a 44px target */
+  .nl-page-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height-till);
+  }
 }
 
 /* ---------- Reduced motion: nothing moves ---------- */

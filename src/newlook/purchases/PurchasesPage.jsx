@@ -8,7 +8,7 @@ import SummaryRow from '../components/SummaryRow';
 import Table from '../components/Table';
 import { ListWithDetail } from '../components/DetailPanel';
 import useListParams from '../components/useListParams';
-import { formatMoney } from '../components/format';
+import { formatMoney, rowsWords } from '../components/format';
 import { useToast } from '../components/Toast';
 import { PageHeader, useViewportBand } from '../shell';
 import fill from '../labels/fill';
@@ -140,7 +140,7 @@ const PurchasesPage = () => {
 
   const exportCsv = () => {
     saveTextFile(purchasesCsv(rows), csvName(tab, isoDay(new Date())));
-    toast.success(fill(T.exportDone, { count: rows.length }));
+    toast.success(fill(T.exportDone, { rows: rowsWords(rows.length) }));
   };
 
   const columns = [
