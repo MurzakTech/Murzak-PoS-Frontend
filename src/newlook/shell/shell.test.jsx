@@ -15,6 +15,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { Button, ToastProvider } from '../components';
 import NewLookShell from '../NewLookShell';
+import { BrandContext } from '../brand/BrandProvider';
 import { AppShell, NAVIGATION, PageHeader, Sidebar, TopBar, bandFor, flatItems, isActive, resolveNavigation, search, RECENT_KEY, SIDEBAR_KEY } from './index';
 
 // The menu as it opens today: each item goes to the current screen until its new page is built (ticket P1-7)
@@ -663,4 +664,24 @@ test('the top bar can be shown by itself', () => {
     </MemoryRouter>
   );
   expect(screen.getByRole('link', { name: 'Go to till' })).toHaveAttribute('href', '/till');
+});
+
+test('the top bar shows the shop logo in place of the product name once the owner has set one (ticket P7-3)', () => {
+  const { unmount } = render(
+    <MemoryRouter>
+      <TopBar homeTo="/" tillTo="/till" />
+    </MemoryRouter>
+  );
+  expect(screen.getByRole('link', { name: /home/i })).toHaveTextContent('Murzak POS');
+  unmount();
+  render(
+    <MemoryRouter>
+      <BrandContext.Provider value={{ brand: { logo: '/files/logo.png' }, business: {}, status: 'ready', applySaved: () => {} }}>
+        <TopBar homeTo="/" tillTo="/till" />
+      </BrandContext.Provider>
+    </MemoryRouter>
+  );
+  const home = screen.getByRole('link', { name: /home/i });
+  expect(home).not.toHaveTextContent('Murzak POS');
+  expect(home.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/files/logo.png')); // eslint-disable-line testing-library/no-node-access
 });

@@ -13,6 +13,7 @@ import onboardingReducer from '../../store/onboardingSlice';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import axiosInstance from '../../api/axiosInstance';
 import SignInPage from './SignInPage';
+import { DEVICE_KEY } from '../brand/deviceBrand';
 import T from './strings.auth';
 
 jest.mock('../../api/axiosInstance', () => ({ __esModule: true, default: { post: jest.fn(), get: jest.fn() } }));
@@ -65,6 +66,30 @@ beforeEach(() => {
   jest.resetAllMocks();
   localStorage.clear();
   document.documentElement.removeAttribute('data-theme');
+  document.documentElement.removeAttribute('data-accent');
+});
+
+describe('the shop brand on this device (ticket P7-3)', () => {
+  test('a device that knows the shop shows its logo and name, and sets its colour', () => {
+    localStorage.setItem(DEVICE_KEY, JSON.stringify({ logo: '/files/logo.png', accent: 'teal', name: 'Demo Shop' }));
+    renderPage();
+    const link = screen.getByRole('link', { name: 'Demo Shop home' });
+    expect(link).toHaveTextContent('Demo Shop');
+    expect(document.documentElement.getAttribute('data-accent')).toBe('teal');
+    expect(link.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/files/logo.png')); // eslint-disable-line testing-library/no-node-access
+  });
+
+  test('a device that knows nothing shows the plain page with no colour set', () => {
+    renderPage();
+    expect(screen.getByRole('link', { name: T.homeLabel })).toHaveTextContent(T.brand);
+    expect(document.documentElement.hasAttribute('data-accent')).toBe(false);
+  });
+
+  test('damaged saved details are ignored', () => {
+    localStorage.setItem(DEVICE_KEY, '{not json');
+    renderPage();
+    expect(screen.getByRole('link', { name: T.homeLabel })).toBeInTheDocument();
+  });
 });
 
 describe('the page', () => {

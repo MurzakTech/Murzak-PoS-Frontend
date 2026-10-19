@@ -1,0 +1,102 @@
+/* Import products (ticket P7-1). Every colour, size and space is a design token. */
+.nl-import {
+  min-width: 0;
+}
+.nl-import .nl-card {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.nl-import__note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--body-size);
+}
+.nl-import__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.nl-import__chips {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.nl-import__fact {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: var(--body-size);
+}
+.nl-import__fact .nl-icon {
+  flex: none;
+  margin-top: var(--space-1);
+  color: var(--ink-2);
+}
+.nl-import__strong {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--bad);
+}
+.nl-import__left-out {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius-input);
+  background: var(--surface);
+  justify-items: start;
+}
+.nl-import__list {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+}
+.nl-import__small {
+  font-size: var(--caption-size);
+  color: var(--ink-2);
+  margin-top: var(--space-1);
+}
+.nl-import__guide summary {
+  cursor: pointer;
+  min-height: var(--control-height);
+  display: flex;
+  align-items: center;
+  color: var(--brand-text);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-import__guide summary:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-import__guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--caption-size);
+  margin-top: var(--space-3);
+}
+.nl-import__guide-table th,
+.nl-import__guide-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+.nl-import__guide-table th[scope='row'] {
+  white-space: nowrap;
+}
+.nl-import__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

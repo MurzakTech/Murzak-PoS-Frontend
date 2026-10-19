@@ -147,7 +147,6 @@ const STAYS = {
   '/industry/:industryCode/products': { from: '/industry/', where: 'Settings, Advanced, Industry starter products; set-up wizard' },
   '/products/update-price': { from: '/products/update-price', where: 'Products, More, Update many prices' },
   '/products/variations': { from: '/products/variations', where: 'Settings, Advanced, Product variations' },
-  '/products/bulk-import': { from: '/products/bulk-import', where: 'Products, Import' },
   '/products/bulk-stock-import': { from: '/products/bulk-stock-import', where: 'Set-up wizard and Settings, Advanced, Import opening stock' },
   '/products/load-products': { from: '/products/load-products', where: 'Settings, Advanced, Load products' },
   '/sales/pos': { from: '/sales/pos', where: 'Go to till (top bar), Sales, + New, Sale' },

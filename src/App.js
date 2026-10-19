@@ -3,13 +3,18 @@ import AppRouter from './routes/AppRouter';
 import UpdateReadyNotice from './components/Common/UpdateReadyNotice';
 import { NewLookProvider } from './newlook/NewLookProvider';
 import NewLookGate from './newlook/NewLookGate';
+import UnitWordsLoader from './newlook/products/UnitWordsLoader';
+import { BrandProvider } from './newlook/brand/BrandProvider';
 
 function App() {
   return (
     <NewLookProvider>
-      <NewLookGate>
-        <AppRouter />
-      </NewLookGate>
+      <UnitWordsLoader />
+      <BrandProvider>
+        <NewLookGate>
+          <AppRouter />
+        </NewLookGate>
+      </BrandProvider>
       <UpdateReadyNotice />
     </NewLookProvider>
   );

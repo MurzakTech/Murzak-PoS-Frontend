@@ -1,6 +1,6 @@
 /* eslint-disable testing-library/no-node-access -- a card, a row or a table row is found from its own heading or name with closest(), because none of them has a role or label of its own to ask for */
 /**
- * The Settings page (ticket P5-3, AC-32): five sections in a side list, each an address that opens the same section on refresh,
+ * The Settings page (ticket P5-3, AC-32): six sections in a side list, each an address that opens the same section on refresh,
  * the bare address opening Business, ?section= kept, and the server calls of every section reached through one page.
  */
 import React from 'react';
@@ -67,10 +67,10 @@ beforeEach(() => {
   listAuditEvents.mockResolvedValue({ events: [], hasMore: false });
 });
 
-test('has a side list of the five sections, with the open one marked', async () => {
+test('has a side list of the six sections, with the open one marked', async () => {
   renderAt('/new-look/settings/tax');
   const nav = screen.getByRole('navigation', { name: 'Settings sections' });
-  expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Business', 'Till and payments', 'Tax', 'Team and security', 'Advanced']);
+  expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Business', 'Brand and receipts', 'Till and payments', 'Tax', 'Team and security', 'Advanced']);
   expect(within(nav).getByRole('link', { name: 'Tax' })).toHaveAttribute('aria-current', 'page');
   expect(within(nav).getByRole('link', { name: 'Business' })).not.toHaveAttribute('aria-current');
   expect(screen.getByRole('heading', { level: 1, name: 'Tax' })).toBeInTheDocument();

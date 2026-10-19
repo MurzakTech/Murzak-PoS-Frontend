@@ -15,6 +15,7 @@ const settings = {
     leave: { title: 'Leave without saving?', message: 'You have changes that are not saved yet. If you leave now, they will be lost.', stay: 'Stay', leave: 'Leave without saving' },
     sections: {
       business: { title: 'Business', subtitle: 'Who you are, where you are and how to reach you' },
+      brand: { title: 'Brand and receipts', subtitle: 'Your logo, your colour and how your receipt looks' },
       till: { title: 'Till and payments', subtitle: 'How the till takes money' },
       tax: { title: 'Tax', subtitle: 'Your link with the Kenya Revenue Authority' },
       team: { title: 'Team and security', subtitle: 'Who works in the shop, what they can do and who did what' },

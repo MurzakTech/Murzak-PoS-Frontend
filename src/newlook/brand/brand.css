@@ -1,0 +1,186 @@
+/* Settings, Brand (ticket P7-3). Colours come from the tokens; the accent chips use --swatch from [data-swatch] in tokens.css. */
+.nl-brand-field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.nl-brand-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.nl-brand-helper,
+.nl-brand-error {
+  margin: 0;
+  font-size: var(--caption-size);
+}
+.nl-brand-helper {
+  color: var(--muted);
+}
+.nl-brand-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--bad);
+}
+
+/* Logo */
+.nl-brand-logo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.nl-brand-logo__frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 96px;
+  padding: var(--space-2);
+  border: 1px dashed var(--input-border);
+  border-radius: var(--radius-card);
+  background: var(--field);
+  color: var(--muted);
+  font-size: var(--caption-size);
+  text-align: center;
+}
+.nl-brand-logo__frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.nl-brand-logo__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Accent colours */
+.nl-brand-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-2);
+}
+.nl-brand-swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-button);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--body-size);
+  cursor: pointer;
+}
+.nl-brand-swatch:hover:not(:disabled) {
+  background: var(--soft);
+}
+.nl-brand-swatch:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-brand-swatch.is-selected {
+  border-color: var(--brand-text);
+  background: var(--soft);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: inset 0 0 0 1px var(--brand-text);
+}
+.nl-brand-swatch:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.nl-brand-swatch__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--swatch);
+  color: var(--on-brand);
+}
+.nl-brand-swatch__chip .nl-icon {
+  width: 14px;
+  height: 14px;
+  /* The check sits on every colour in white (light chips are all dark enough for white) */
+  color: Canvas;
+  stroke-width: 2.5;
+}
+
+/* Receipt styles */
+.nl-brand-styles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.nl-brand-style {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-3);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-button);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.nl-brand-style:hover:not(:disabled) {
+  background: var(--soft);
+}
+.nl-brand-style:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-brand-style.is-selected {
+  border-color: var(--brand-text);
+  background: var(--soft);
+  box-shadow: inset 0 0 0 1px var(--brand-text);
+}
+.nl-brand-style__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--body-size);
+  font-weight: var(--font-weight-semibold);
+}
+.nl-brand-style__help {
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+
+/* The made-up receipt */
+.nl-brand-preview {
+  overflow-x: auto;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--bg);
+}
+.nl-brand-preview .nl-rcpt {
+  box-shadow: 0 1px 4px rgb(var(--ink-rgb) / 0.15);
+}
+
+@media (max-width: 767px) {
+  .nl-brand-styles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nl-brand-swatch {
+    min-height: 44px;
+  }
+  .nl-brand-style {
+    min-height: 44px;
+  }
+  .nl-brand-preview {
+    padding: var(--space-2);
+  }
+}

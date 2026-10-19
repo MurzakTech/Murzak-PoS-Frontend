@@ -1,4 +1,4 @@
-import { hasUnitWords, quantityText, unitLabel, unitWord, unitWords } from './unitWords';
+import { clearShopUnitWords, hasUnitWords, quantityText, resolveUnit, savedUnitWordsCompany, setShopUnitWords, unitLabel, unitWord, unitWords } from './unitWords';
 import T from './strings.products';
 import { OLD_TERMS } from '../labels/renameMap';
 
@@ -23,9 +23,9 @@ describe('unitWords', () => {
   });
 
   test('a unit with no plain word is shown exactly as it is stored', () => {
-    expect(unitWords('Bale')).toBe('Bale');
+    expect(unitWords('Drum')).toBe('Drum');
     expect(unitWords('  Drum ')).toBe('Drum');
-    expect(hasUnitWords('Bale')).toBe(false);
+    expect(hasUnitWords('Drum')).toBe(false);
   });
 
   test('nothing in gives nothing out', () => {
@@ -80,10 +80,10 @@ describe('unitWords', () => {
 describe('unitWord and unitLabel', () => {
   test('one and a capitalised many', () => {
     expect(unitWord('Box')).toBe('box');
-    expect(unitWord('Bale')).toBe('Bale');
+    expect(unitWord('Drum')).toBe('Drum');
     expect(unitLabel('Box')).toBe('Boxes');
     expect(unitLabel('Nos')).toBe('Pieces');
-    expect(unitLabel('Bale')).toBe('Bale');
+    expect(unitLabel('Drum')).toBe('Drum');
   });
 });
 
@@ -104,7 +104,7 @@ describe('quantityText', () => {
   });
 
   test('an unknown unit is written as stored', () => {
-    expect(quantityText(3, 'Bale')).toBe('3 Bale');
+    expect(quantityText(3, 'Drum')).toBe('3 Drum');
   });
 
   test('no unit leaves the number alone and no number leaves nothing', () => {
@@ -112,5 +112,107 @@ describe('quantityText', () => {
     expect(quantityText(null, 'Nos')).toBe('');
     expect(quantityText('', 'Nos')).toBe('');
     expect(quantityText('abc', 'Nos')).toBe('');
+  });
+});
+
+describe('the units of the industries have plain words', () => {
+  test.each([
+    ['Tablet', 'tablet', 'tablets'],
+    ['Capsule', 'capsule', 'capsules'],
+    ['Strip', 'strip', 'strips'],
+    ['Vial', 'vial', 'vials'],
+    ['Tonne', 'tonne', 'tonnes'],
+    ['Carcass', 'carcass', 'carcasses'],
+    ['Person', 'person', 'people'],
+  ])('%s reads %s and %s', (stored, one, many) => {
+    expect(unitWord(stored)).toBe(one);
+    expect(unitWords(stored)).toBe(many);
+  });
+});
+
+describe("the shop's own words", () => {
+  afterEach(() => clearShopUnitWords());
+
+  test('a shop unit reads in singular and plural, everywhere units are shown', () => {
+    setShopUnitWords([{ name: 'Jerrycan', singular: 'jerrycan', plural: 'jerrycans' }], 'Shop A');
+    expect(unitWord('Jerrycan')).toBe('jerrycan');
+    expect(unitWords('jerrycan')).toBe('jerrycans');
+    expect(unitLabel('Jerrycan')).toBe('Jerrycans');
+    expect(quantityText(1, 'Jerrycan')).toBe('1 jerrycan');
+    expect(quantityText(3, 'Jerrycan')).toBe('3 jerrycans');
+    expect(hasUnitWords('Jerrycan')).toBe(true);
+  });
+
+  test('an irregular plural is kept', () => {
+    setShopUnitWords([{ name: 'Sheep', singular: 'sheep', plural: 'sheep' }]);
+    expect(quantityText(4, 'Sheep')).toBe('4 sheep');
+  });
+
+  test('the shop words win over the built-in ones, and clearing brings the built-in ones back', () => {
+    setShopUnitWords([{ name: 'Nos', singular: 'item', plural: 'items' }]);
+    expect(unitWords('Nos')).toBe('items');
+    clearShopUnitWords();
+    expect(unitWords('Nos')).toBe('pieces');
+  });
+
+  test('the words are kept on this device with their shop', () => {
+    setShopUnitWords([{ name: 'Jerrycan', singular: 'jerrycan', plural: 'jerrycans' }], 'Shop A');
+    expect(savedUnitWordsCompany()).toBe('Shop A');
+    expect(JSON.parse(localStorage.getItem('murzak_new_look:unit-words')).words.jerrycan).toEqual(['jerrycan', 'jerrycans']);
+    clearShopUnitWords();
+    expect(localStorage.getItem('murzak_new_look:unit-words')).toBeNull();
+  });
+});
+
+describe('resolveUnit', () => {
+  const shop = ['Nos', 'Kg', 'Ltr', 'Tablet', 'Meter'];
+
+  test('the stored name, the singular and the plural all give the stored name', () => {
+    expect(resolveUnit('Nos', shop)).toEqual({ unit: 'Nos', known: true });
+    expect(resolveUnit('piece', shop)).toEqual({ unit: 'Nos', known: true });
+    expect(resolveUnit('Pieces', shop)).toEqual({ unit: 'Nos', known: true });
+    expect(resolveUnit('kilogram', shop).unit).toBe('Kg');
+    expect(resolveUnit('Kilograms', shop).unit).toBe('Kg');
+    expect(resolveUnit('litres', shop).unit).toBe('Ltr');
+    expect(resolveUnit('metre', shop).unit).toBe('Meter');
+    expect(resolveUnit('tablets', shop).unit).toBe('Tablet');
+  });
+
+  test('capital letters and extra spaces do not matter', () => {
+    expect(resolveUnit('  KILO   gram ', ['Kilo gram']).unit).toBe('Kilo gram');
+    expect(resolveUnit(' TABLETS ', shop).unit).toBe('Tablet');
+  });
+
+  test('a short form means the unit with the same plain word', () => {
+    expect(resolveUnit('pcs', shop).unit).toBe('Nos');
+    expect(resolveUnit('kgs', shop).unit).toBe('Kg');
+    expect(resolveUnit('l', shop).unit).toBe('Ltr');
+  });
+
+  test('a unit the shop does not have is reported, never dropped', () => {
+    expect(resolveUnit('furlong', shop)).toEqual({ unit: '', known: false });
+    expect(resolveUnit('carcass', shop)).toEqual({ unit: '', known: false });
+  });
+
+  test('nothing given is not an error', () => {
+    expect(resolveUnit('', shop)).toEqual({ unit: '', known: true });
+    expect(resolveUnit(null, shop)).toEqual({ unit: '', known: true });
+    expect(resolveUnit('   ', shop)).toEqual({ unit: '', known: true });
+  });
+
+  test('the shop units may carry their own words', () => {
+    const own = [{ name: 'Jerrycan', singular: 'jerrycan', plural: 'jerrycans' }, 'Nos'];
+    expect(resolveUnit('jerrycans', own).unit).toBe('Jerrycan');
+    expect(resolveUnit('Jerrycan', own).unit).toBe('Jerrycan');
+  });
+
+  test('with two stored names for one word the first listed wins', () => {
+    expect(resolveUnit('litre', ['Ltr', 'Litre']).unit).toBe('Litre');
+    expect(resolveUnit('litres', ['Litre', 'Ltr']).unit).toBe('Litre');
+  });
+
+  test('an empty list of units knows nothing', () => {
+    expect(resolveUnit('piece', [])).toEqual({ unit: '', known: false });
+    expect(resolveUnit('piece')).toEqual({ unit: '', known: false });
   });
 });

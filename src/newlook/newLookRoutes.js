@@ -23,6 +23,7 @@ const StockLevelsPage = lazyPage(() => import('./stock/StockLevelsPage'), 'Stock
 const ProductsPage = lazyPage(() => import('./products/ProductsPage'), 'ProductsPage');
 const NewProductPage = lazyPage(() => import('./products/NewProductPage'), 'NewProductPage');
 const EditProductPage = lazyPage(() => import('./products/EditProductPage'), 'EditProductPage');
+const ImportProductsPage = lazyPage(() => import('./products/import/ImportProductsPage'), 'ImportProductsPage');
 const SuppliersPage = lazyPage(() => import('./suppliers/SuppliersPage'), 'SuppliersPage');
 const NewSupplierPage = lazyPage(() => import('./suppliers/NewSupplierPage'), 'NewSupplierPage');
 const EditSupplierPage = lazyPage(() => import('./suppliers/EditSupplierPage'), 'EditSupplierPage');
@@ -47,7 +48,7 @@ const RedirectsPage = lazyPage(() => import('./redirects/RedirectsPage'), 'Redir
  * each role arrive with the Roles ticket, P1-8).
  */
 // Pages that have their own route above, so they get no placeholder (add a page here when you add its route)
-const OWN_ROUTES = ['/', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions', '/settings/till', '/settings/business', '/settings/tax', '/settings/team', '/settings/advanced', '/customers', '/customers/owing', '/customers/new', '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry', '/products', '/products/categories', '/products/new', '/suppliers', '/suppliers/new', '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns', '/reports', '/reports/sales', '/reports/profit', '/reports/owed', '/reports/running-costs', '/reports/stock-summary', '/reports/stock-value', '/reports/aging-stock', '/setup', '/expenses', '/expenses/new'];
+const OWN_ROUTES = ['/', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions', '/settings/till', '/settings/business', '/settings/brand', '/settings/tax', '/settings/team', '/settings/advanced', '/customers', '/customers/owing', '/customers/new', '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry', '/products', '/products/categories', '/products/import', '/products/new', '/suppliers', '/suppliers/new', '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns', '/reports', '/reports/sales', '/reports/profit', '/reports/owed', '/reports/running-costs', '/reports/stock-summary', '/reports/stock-value', '/reports/aging-stock', '/setup', '/expenses', '/expenses/new'];
 
 export const newLookRoutes = [
   // Home (Phase 2): the greeting and hero band, four tiles, charts and Needs attention
@@ -61,6 +62,7 @@ export const newLookRoutes = [
   // Settings (P5-3): the Settings page with its five sections. The bare address opens Business; Team replaces Staff.
   { path: '/new-look/settings', element: SettingsPage },
   { path: '/new-look/settings/business', element: SettingsPage },
+  { path: '/new-look/settings/brand', element: SettingsPage },
   { path: '/new-look/settings/tax', element: SettingsPage },
   { path: '/new-look/settings/team', element: SettingsPage },
   { path: '/new-look/settings/advanced', element: SettingsPage },
@@ -84,6 +86,7 @@ export const newLookRoutes = [
   // more specific and win.
   { path: '/new-look/products/*', element: ProductsPage },
   { path: '/new-look/products/new', element: NewProductPage },
+  { path: '/new-look/products/import', element: ImportProductsPage },
   { path: '/new-look/products/:code/edit', element: EditProductPage },
   // Suppliers (P4-6): one list with an Owed filter, the supplier panel (what the shop owes and the next bill due), and the Add and Edit
   // forms. Supplier groups stay on the current screen (/suppliers/groups) until Settings, Advanced is built in Phase 5.

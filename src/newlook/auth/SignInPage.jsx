@@ -1,12 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Card, Checkbox, Field, Icon } from '../components';
 import { useThemeMode } from '../../theme/ThemeProvider';
 import { classifyLoginId, looksLikePhone } from '../../utils/phone';
 import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../../config/deployment';
 import logoMark from '../../assets/logo_mark.png';
+import { productImageUrl } from '../../utils/productArt';
+import { applyAccent, readDeviceBrand } from '../brand/deviceBrand';
 import useSignIn from './useSignIn';
 import { plainSignInError } from './signInErrors';
+import fill from '../labels/fill';
 import T from './strings.auth';
 import './auth.css';
 
@@ -32,6 +35,12 @@ const onlyDigits = (text) => String(text || '').replace(/\D/g, '').slice(0, 6);
 const SignInPage = () => {
   const location = useLocation();
   const { mode, toggleColorMode } = useThemeMode();
+  // The shop's own logo, name and colour as this device last learned them (nothing is known before sign-in on a new device)
+  const shop = useMemo(() => readDeviceBrand(), []);
+  const shopLogo = shop.logo ? productImageUrl({ image: shop.logo }) : null;
+  useEffect(() => {
+    applyAccent(shop.accent);
+  }, [shop.accent]);
   const { isLoading, error, step, submitPassword, submitCode, backToPassword, dismissError } = useSignIn();
 
   const [loginId, setLoginId] = useState('');
@@ -112,9 +121,9 @@ const SignInPage = () => {
 
       <main className="nl-auth__main">
         <Card className="nl-auth__card">
-          <Link to="/" className="nl-auth__brand" aria-label={T.homeLabel}>
-            <img src={logoMark} alt="" className="nl-auth__logo" />
-            <span className="nl-auth__name">{T.brand}</span>
+          <Link to="/" className="nl-auth__brand" aria-label={shop.name ? fill(T.homeLabelShop, { name: shop.name }) : T.homeLabel}>
+            <img src={shopLogo || logoMark} alt="" className="nl-auth__logo" />
+            <span className="nl-auth__name">{shop.name || T.brand}</span>
           </Link>
 
           <h1 className="nl-auth__title" id="nl-auth-title">

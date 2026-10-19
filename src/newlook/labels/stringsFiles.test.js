@@ -27,6 +27,7 @@ const stringsFiles = allFiles().filter((f) => STRINGS_FILE.test(f.rel));
 // Each one is an internal value the server uses (never shown as it is) or a word the rename map allows in Settings, Advanced.
 const ALLOWED = {
   'expenses/strings.expenses.js': ['stock entry'], // the key of a lookup from the server's record type to the plain words
+  'products/import/strings.import.js': ['uom'], // other ways people write the Unit column heading in a spreadsheet; never shown as a word
   'products/strings.products.js': ['item groups', 'nos'], // the shop's top category name and the stored unit value; unitWords shows "piece"
   'settings/strings.settings.js': ['account provisioning'], // the Advanced card; the rename map places it in Settings, Advanced
 };

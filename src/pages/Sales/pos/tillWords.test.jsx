@@ -18,6 +18,7 @@ import PhoneSaleBar from './PhoneSaleBar';
 import HeldSalesDialog from './HeldSalesDialog';
 import OfflineSalesBar from './OfflineSalesBar';
 import NotFound from '../../NotFound';
+import { BrandContext } from '../../../newlook/brand/BrandProvider';
 
 jest.mock('../../../api/axiosInstance', () => ({ __esModule: true, default: {} }));
 
@@ -220,5 +221,44 @@ describe('a page that does not exist', () => {
   test('old look: unchanged', () => {
     render(withLook(false, <NotFound />));
     expect(screen.getByText('404')).toBeInTheDocument();
+  });
+});
+
+describe('the shop receipt after a sale (ticket P7-3)', () => {
+  const brand = { logo: '/files/logo.png', accent: 'teal', tagline: 'Fresh every day', footer: 'Exchange within 7 days', style: 'a4', social: '@demoshop', website: 'www.demoshop.co.ke' };
+  const business = { companyName: 'Demo Shop', taxId: 'P000000000A', address: { line1: '1 Test Road', city: 'Nairobi', pincode: '00100' }, phone: '0711000000' };
+  const sale = () => (
+    <ReceiptDialog
+      open
+      invoice={{ name: 'ACC-PSINV-2026-00099', grand_total: 1250 }}
+      saleData={{ items: CART.map((i) => ({ ...i, subtotal: 1250 })), payments: [{ mode_of_payment: 'Cash', amount: 1250 }], paymentMode: 'Cash', amountGiven: 1500, grandTotal: 1250, timestamp: new Date('2026-10-18T14:52:00') }}
+      companyName="Demo Shop"
+      cashierName="Amina Wanjiku"
+      currency="KES"
+      onNewSale={() => {}}
+      onPrint={() => {}}
+      onViewInvoice={() => {}}
+    />
+  );
+  test('New look: the dialog shows the shop header, the footer and the chosen style', () => {
+    render(withLook(true, <BrandContext.Provider value={{ brand, business, status: 'ready', applySaved: () => {} }}>{sale()}</BrandContext.Provider>));
+    expect(screen.getByRole('article', { name: 'Sales receipt' })).toHaveClass('nl-rcpt--a4');
+    expect(screen.getByText('KRA PIN: P000000000A')).toBeInTheDocument();
+    expect(screen.getByText('Fresh every day')).toBeInTheDocument();
+    expect(screen.getByText('Exchange within 7 days')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Payments')).getByText('Change')).toBeInTheDocument();
+    expect(screen.getByLabelText('Payments')).toHaveTextContent('KES 250');
+  });
+  test('New look with no brand set up: a plain receipt, nothing missing that matters', () => {
+    render(withLook(true, sale()));
+    expect(screen.getByRole('article', { name: 'Sales receipt' })).toHaveClass('nl-rcpt--thermal80');
+    expect(screen.getByText('#0099')).toBeInTheDocument();
+    expect(screen.getByText('TOTAL')).toBeInTheDocument();
+  });
+  test('old look: the receipt is exactly as before, whatever the brand', () => {
+    render(withLook(false, <BrandContext.Provider value={{ brand, business, status: 'ready', applySaved: () => {} }}>{sale()}</BrandContext.Provider>));
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.queryByText('Fresh every day')).not.toBeInTheDocument();
+    expect(screen.getByText('Thank you for shopping with us.')).toBeInTheDocument();
   });
 });

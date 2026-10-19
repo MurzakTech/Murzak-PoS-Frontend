@@ -515,13 +515,7 @@ describe('the header buttons', () => {
     await waitFor(() => expect(where()).toBe('/new-look/products/new'));
   });
 
-  test('Import goes to the current import screen until the new one is live', async () => {
-    await renderPage();
-    userEvent.click(inMore('Import'));
-    await waitFor(() => expect(where()).toBe('/products/bulk-import'));
-  });
-
-  test('Import goes to the new import page once it is live', async () => {
+  test('Import opens the new import page', async () => {
     setPreview(true);
     await renderPage();
     userEvent.click(inMore('Import'));

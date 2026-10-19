@@ -86,9 +86,9 @@ describe('resolveRedirect', () => {
 });
 
 describe('Live pages and the preview switch', () => {
-  test('the finished pages are live; the till, New invoice, Import, Stores, Transfers and two reports are not', () => {
-    ['/', '/sales', '/customers', '/products', '/stock', '/purchases', '/suppliers'].forEach((page) => expect(isPageLive(page)).toBe(true));
-    ['/till', '/sales/new', '/products/import', '/stock/locations', '/stock/transfers', '/reports/stock-movement', '/reports/performance'].forEach((page) => expect(isPageLive(page)).toBe(false));
+  test('the finished pages are live; the till, New invoice, Stores, Transfers and two reports are not', () => {
+    ['/', '/sales', '/customers', '/products', '/products/import', '/stock', '/purchases', '/suppliers'].forEach((page) => expect(isPageLive(page)).toBe(true));
+    ['/till', '/sales/new', '/stock/locations', '/stock/transfers', '/reports/stock-movement', '/reports/performance'].forEach((page) => expect(isPageLive(page)).toBe(false));
   });
 
   test('a built page is live, with or without a query', () => {
