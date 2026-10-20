@@ -16,7 +16,7 @@ import { oldScreen } from '../redirects/engine';
 import { useAppSelector } from '../../store/hooks';
 import { findProduct, ProductSaveError, updateProduct } from '../../api/productsListApi';
 import './products.css';
-import { useCategories, useUnits } from './useProductsData';
+import { invalidateQuery, useCategories, useUnits } from './useProductsData';
 import useShopUnits from './useShopUnits';
 import UnitPicker from './UnitPicker';
 import { categoryLabel, changesFrom, checkForm, FIELD_IDS, formFromProduct, isEdited, MORE_FIELDS, PRODUCTS_PATH, profitLine, summaryOf } from './productsModel';
@@ -110,6 +110,7 @@ const EditProductPage = () => {
     setSaving(true);
     try {
       const product = await updateProduct({ code, changes, warehouse: defaultStore, company });
+      invalidateQuery();
       toast.success(fill(E.saved, { name: product.item_name || values.name.trim() }));
       navigate(`${PRODUCTS_PATH}?open=${encodeURIComponent(code)}`);
     } catch (error) {

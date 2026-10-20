@@ -14,7 +14,7 @@ import { createProduct, ProductSaveError } from '../../api/productsListApi';
 import useBusinessFeatures from '../setup/useBusinessFeatures';
 import './products.css';
 import CategoryDialog from './CategoryDialog';
-import { useCategories, useUnits } from './useProductsData';
+import { invalidateQuery, useCategories, useUnits } from './useProductsData';
 import useShopUnits from './useShopUnits';
 import UnitPicker from './UnitPicker';
 import { checkForm, chipCategories, cleanQuantity, EMPTY_FORM, FIELD_IDS, FIELD_ORDER, freshForm, isDirty, MORE_FIELDS, PRODUCTS_PATH, profitLine, requestFrom, summaryOf } from './productsModel';
@@ -86,6 +86,7 @@ const NewProductPage = () => {
     setSaving(true);
     try {
       const result = await createProduct(requestFrom(values, { canSeeCost }));
+      invalidateQuery();
       const name = result.product ? result.product.item_name : values.name.trim();
       toast.success(fill(addAnother ? F.savedAnother : F.saved, { name }));
       result.notes.forEach((note) => toast.error(note.message));

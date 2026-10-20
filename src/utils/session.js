@@ -1,4 +1,5 @@
 import { disconnectRealtime } from '../realtime/realtimeClient';
+import { clearOfflineStorage } from './offlineTill';
 
 // Everything the browser keeps for the person signed in. Tills are often shared,
 // so when a session ends none of this may be left for the next person.
@@ -22,6 +23,8 @@ const SESSION_KEYS = [
 
 export const clearSession = () => {
   SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
+  // Clear IndexedDB & in-memory caches
+  clearOfflineStorage();
   // The live connection belongs to the person who signed in
   disconnectRealtime();
 };

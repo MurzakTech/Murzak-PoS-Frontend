@@ -10,7 +10,7 @@ if (!API_BASE_URL) {
     '⚠️ REACT_APP_API_URL or REACT_APP_API_BASE_URL must be set in .env file.\n' +
     'Requests will be made relative to the current origin, which may cause issues.'
   );
-} else {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+} else {
   console.log('✅ API Base URL:', API_BASE_URL);
 }
 
@@ -24,30 +24,63 @@ const axiosInstance = axios.create({
   // withCredentials: true,
 });
 
-// Add JWT to every request except login and register
+// Dedicated unintercepted client for refreshing tokens to avoid interceptor recursion
+export const refreshClient = axios.create({
+  baseURL: API_BASE_URL || '',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+const redirectToLogin = () => {
+  clearSession();
+  if (typeof window !== 'undefined') {
+    const currentPath = window.location.pathname || '';
+    const isPublicPage = currentPath.includes('/login') || 
+                        currentPath.includes('/register') || 
+                        currentPath === '/';
+    const isOnboardingPage = currentPath.includes('/onboarding');
+    
+    // Don't redirect during onboarding - let the error be displayed
+    if (!isPublicPage && !isOnboardingPage) {
+      window.location.href = '/login';
+    }
+  }
+};
+
+// Endpoints that must NOT carry an Authorization header: signing in, signing up,
+// refreshing token, and password reset. Stale tokens would cause Frappe to reject
+// with 401 instead of processing as guest / refresh.
+export const PUBLIC_AUTH_ENDPOINTS = [
+  'murzak_pos.api.auth_api.login_user',
+  'murzak_pos.api.auth_api.register_user',
+  'murzak_pos.api.auth_api.refresh_token',
+  'murzak_pos.api.password_reset.',
+];
+
+// Add JWT to every request except public endpoints
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Endpoints that must NOT carry an Authorization header: signing in and
-    // signing up, where a stale token from a previous session would make
-    // Frappe reject the request (an invalid Bearer token is a 401, not Guest).
-    //
-    // Everything else sends the token when there is one. Guest-callable
-    // endpoints such as seed_products still work for a signed-in user, and
-    // tenant front doors (<shop>.pos.murzaktech.tech) refuse unauthenticated
-    // calls to them, so stripping the token there would break onboarding.
-    const publicEndpoints = [
-      'murzak_pos.api.auth_api.login_user',
-      'murzak_pos.api.auth_api.register_user',
-      'murzak_pos.api.password_reset.',
-    ];
-    
-    // Check if this is a public endpoint
-    const isPublicEndpoint = publicEndpoints.some(endpoint => 
+    const isPublicEndpoint = PUBLIC_AUTH_ENDPOINTS.some((endpoint) =>
       config.url?.includes(endpoint)
     );
     
     // Only add Authorization header for authenticated endpoints
-    if (!isPublicEndpoint) {
+    if (!isPublicEndpoint && typeof localStorage !== 'undefined') {
       const token = localStorage.getItem('access_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -102,25 +135,80 @@ axiosInstance.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  async (error) => {
     // Handle different status codes according to API documentation
     if (error.response) {
       const status = error.response.status;
       
-      // 401 Unauthorized - Not authenticated
+      // 401 Unauthorized - Attempt silent refresh before logging out
       if (status === 401) {
-        clearSession();
-        // Only redirect if not on public pages or onboarding page
-        const currentPath = window.location.pathname;
-        const isPublicPage = currentPath.includes('/login') || 
-                            currentPath.includes('/register') || 
-                            currentPath === '/';
-        const isOnboardingPage = currentPath.includes('/onboarding');
-        
-        // Don't redirect during onboarding - let the error be displayed
-        if (!isPublicPage && !isOnboardingPage) {
-          window.location.href = '/login';
+        const originalRequest = error.config || {};
+        const refreshTokenValue = typeof localStorage !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+
+        const isAuthEndpoint = PUBLIC_AUTH_ENDPOINTS.some((endpoint) =>
+          originalRequest.url?.includes(endpoint)
+        );
+
+        // If no refresh token exists, or request was already retried, or request was to an auth endpoint
+        if (!refreshTokenValue || originalRequest._retry || isAuthEndpoint) {
+          redirectToLogin();
+          error.rawMessage = error.message;
+          error.message = friendlyErrorMessage(error);
+          return Promise.reject(error);
         }
+
+        // If another request is currently refreshing the token, queue this request
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              originalRequest.headers = originalRequest.headers || {};
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return axiosInstance(originalRequest);
+            })
+            .catch((err) => Promise.reject(err));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        return new Promise((resolve, reject) => {
+          refreshClient
+            .post('murzak_pos.api.auth_api.refresh_token', { refresh_token: refreshTokenValue })
+            .then((res) => {
+              const body = res.data?.message ?? res.data;
+              const newAccessToken = body?.access_token || body?.data?.access_token;
+              const newRefreshToken = body?.refresh_token || body?.data?.refresh_token;
+
+              if (newAccessToken) {
+                if (typeof localStorage !== 'undefined') {
+                  localStorage.setItem('access_token', newAccessToken);
+                  if (newRefreshToken) {
+                    localStorage.setItem('refresh_token', newRefreshToken);
+                  }
+                }
+                axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+                originalRequest.headers = originalRequest.headers || {};
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+                processQueue(null, newAccessToken);
+                resolve(axiosInstance(originalRequest));
+              } else {
+                throw new Error('Refresh endpoint did not return an access token');
+              }
+            })
+            .catch((refreshError) => {
+              processQueue(refreshError, null);
+              redirectToLogin();
+              refreshError.rawMessage = refreshError.message;
+              refreshError.message = friendlyErrorMessage(refreshError);
+              reject(refreshError);
+            })
+            .finally(() => {
+              isRefreshing = false;
+            });
+        });
       }
       
       // Log error responses in development
@@ -173,5 +261,9 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export default axiosInstance;
+export const _resetRefreshStateForTest = () => {
+  isRefreshing = false;
+  failedQueue = [];
+};
 
+export default axiosInstance;

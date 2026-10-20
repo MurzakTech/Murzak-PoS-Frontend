@@ -1,5 +1,7 @@
 import { getExpenseOptions, getReceipt, listExpenses } from '../../api/expensesApi';
-import { useFetched } from '../suppliers/useSuppliersData';
+import { useFetched, useDataQuery, invalidateQuery } from '../hooks/useDataQuery';
+
+export { useFetched, useDataQuery, invalidateQuery };
 
 /** One page of the list; `query` is what listExpenses takes. Nothing is asked until `enabled` (the person's role is known). */
 export const useExpensesList = (query, enabled = true) => useFetched(JSON.stringify(query), () => listExpenses(query), enabled);

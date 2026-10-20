@@ -11,6 +11,8 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - name: Run automated tests
+        run: npm test -- --watchAll=false --ci
       - run: npm run build
         env:
           CI: false

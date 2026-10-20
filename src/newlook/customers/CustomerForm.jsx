@@ -13,7 +13,7 @@ import fill from '../labels/fill';
 import { createCustomer, updateCustomer } from '../../api/customersListApi';
 import { useAppSelector } from '../../store/hooks';
 import { emptyForm, formFromCustomer, formProblems, isDirty, listAddress, TYPES, toServerValues } from './customersModel';
-import { useCustomerOverview, useFormOptions } from './useCustomersData';
+import { invalidateQuery, useCustomerOverview, useFormOptions } from './useCustomersData';
 import './customers.css';
 import T from './strings.customers';
 
@@ -74,6 +74,7 @@ const CustomerForm = ({ mode, id }) => {
       let savedId = id;
       if (editing) await updateCustomer({ id, company, disabled: values.disabled, ...send });
       else savedId = (await createCustomer({ ...send, company })).id;
+      invalidateQuery();
       toast.success(fill(andAdd ? T.form.savedAdd : T.form.saved, { name: send.name }));
       setSaved(true);
       if (andAdd) {
