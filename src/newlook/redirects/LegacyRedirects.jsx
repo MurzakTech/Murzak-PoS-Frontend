@@ -23,11 +23,22 @@ const LegacyRedirects = ({ children }) => {
   const preview = usePreviewRedirects();
 
   if (!enabled) return children;
-  if (pathname.startsWith(NEW_LOOK_PREFIX)) stayOnCurrentScreens = false;
-  else if (new URLSearchParams(search).get(LEGACY_KEY) === '1') stayOnCurrentScreens = true;
-  if (stayOnCurrentScreens) return children;
+
+  const isExplicitLegacy = new URLSearchParams(search).get(LEGACY_KEY) === '1';
+  if (isExplicitLegacy) {
+    stayOnCurrentScreens = true;
+    return children;
+  }
+
+  if (NEW_LOOK_PREFIX && pathname.startsWith(NEW_LOOK_PREFIX)) {
+    stayOnCurrentScreens = false;
+  }
+
   const hit = resolveRedirect(pathname, search, hash, { isLive: (page) => isPageLive(page, preview) });
-  if (hit && hit.to !== `${pathname}${search}${hash}`) return <Navigate to={hit.to} replace />;
+  if (hit && hit.to !== `${pathname}${search}${hash}`) {
+    stayOnCurrentScreens = false;
+    return <Navigate to={hit.to} replace />;
+  }
   return children;
 };
 

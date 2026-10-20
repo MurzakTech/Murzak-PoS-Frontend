@@ -17,7 +17,7 @@ import S from '../strings';
  * Items are plain data, so a page's permissions can hide an item (ticket P1-8) without changing the shell.
  */
 export const NAVIGATION = {
-  home: { key: 'home', label: S.shell.nav.home, icon: 'home', page: '/', old: '/dashboard', match: [], matchExact: ['/dashboard', '/new-look', '/new-look/components', '/new-look/redirects'] },
+  home: { key: 'home', label: S.shell.nav.home, icon: 'home', page: '/', old: '/dashboard', match: [], matchExact: ['/', '/dashboard', '/components', '/redirects', '/new-look', '/new-look/components', '/new-look/redirects'] },
   groups: [
     {
       key: 'sell',
@@ -48,7 +48,7 @@ export const NAVIGATION = {
       key: 'money',
       label: S.shell.nav.groups.money,
       items: [
-        { key: 'expenses', label: S.shell.nav.items.expenses, icon: 'wallet', page: '/expenses', match: ['/new-look/expenses'] },
+        { key: 'expenses', label: S.shell.nav.items.expenses, icon: 'wallet', page: '/expenses', match: ['/expenses', '/new-look/expenses'] },
         { key: 'reports', label: S.shell.nav.items.reports, icon: 'chart', page: '/reports', old: '/reports', match: ['/reports', '/new-look/reports'] },
       ],
     },

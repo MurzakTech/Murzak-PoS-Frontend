@@ -37,35 +37,35 @@ beforeEach(() => {
 });
 
 describe('Addresses', () => {
-  test('new pages live under one transitional prefix, and Home is the prefix itself', () => {
-    expect(NEW_LOOK_PREFIX).toBe('/new-look');
-    expect(toNewAddress('/sales')).toBe('/new-look/sales');
-    expect(toNewAddress('/')).toBe('/new-look');
-    expect(toNewAddress('/stock?action=in')).toBe('/new-look/stock?action=in');
+  test('new pages live under canonical addresses, and Home is /', () => {
+    expect(NEW_LOOK_PREFIX).toBe('');
+    expect(toNewAddress('/sales')).toBe('/sales');
+    expect(toNewAddress('/')).toBe('/');
+    expect(toNewAddress('/stock?action=in')).toBe('/stock?action=in');
   });
 });
 
 describe('resolveRedirect', () => {
   test('sends an old address to its new page', () => {
-    expect(resolve('/sales/history').to).toBe('/new-look/sales');
-    expect(resolve('/dashboard').to).toBe('/new-look');
+    expect(resolve('/sales/history').to).toBe('/sales');
+    expect(resolve('/dashboard').to).toBe('/');
   });
 
   test('carries the record in the address to the panel that opens it', () => {
-    expect(resolve('/sales/invoice/INV-0033').to).toBe('/new-look/sales?open=INV-0033');
-    expect(resolve('/sales/invoice/a%20b').to).toBe('/new-look/sales?open=a+b'); // a space round-trips through the query
+    expect(resolve('/sales/invoice/INV-0033').to).toBe('/sales?open=INV-0033');
+    expect(resolve('/sales/invoice/a%20b').to).toBe('/sales?open=a+b'); // a space round-trips through the query
   });
 
   test('the more specific entry wins, whatever the order', () => {
-    expect(resolve('/purchases/new').to).toBe('/new-look/purchases/new');
-    expect(resolve('/purchases/PO-9').to).toBe('/new-look/purchases?open=PO-9');
-    expect(resolve('/sales/invoice/new').to).toBe('/new-look/sales/new');
+    expect(resolve('/purchases/new').to).toBe('/purchases/new');
+    expect(resolve('/purchases/PO-9').to).toBe('/purchases?open=PO-9');
+    expect(resolve('/sales/invoice/new').to).toBe('/sales/new');
     expect(findEntry('/purchases/new', [...TABLE].reverse()).entry.from).toBe('/purchases/new');
   });
 
   test('keeps the filters, page and anchor the person had; the redirect’s own keys win', () => {
-    expect(resolve('/sales/history', '?page=2&size=50', '#top').to).toBe('/new-look/sales?page=2&size=50#top');
-    expect(resolve('/sales/invoice/9', '?open=1&q=amina').to).toBe('/new-look/sales?open=9&q=amina');
+    expect(resolve('/sales/history', '?page=2&size=50', '#top').to).toBe('/sales?page=2&size=50#top');
+    expect(resolve('/sales/invoice/9', '?open=1&q=amina').to).toBe('/sales?open=9&q=amina');
   });
 
   test('does nothing for an unknown address or one outside the redesign', () => {
@@ -75,7 +75,7 @@ describe('resolveRedirect', () => {
 
   test('does nothing while the new page is not live', () => {
     expect(resolveRedirect('/sales/history', '', '', { table: TABLE, isLive: () => false })).toBeNull();
-    expect(resolveRedirect('/sales/history', '', '', { table: TABLE, isLive: (page) => page === '/sales' }).to).toBe('/new-look/sales');
+    expect(resolveRedirect('/sales/history', '', '', { table: TABLE, isLive: (page) => page === '/sales' }).to).toBe('/sales');
   });
 
   test('works out the current screen that does the job of a new page', () => {
@@ -121,7 +121,7 @@ describe('The real table', () => {
     concrete.forEach((path) => {
       const hit = resolveRedirect(path, '', '', { isLive: live });
       expect(hit).not.toBeNull();
-      expect(hit.to.startsWith('/new-look')).toBe(true);
+      expect(hit.to.startsWith('/')).toBe(true);
     });
   });
 
@@ -169,7 +169,7 @@ describe('LegacyRedirects (in the app)', () => {
     act(() => setPreview(true));
     app('/sales/invoice/INV-7?page=3');
     const where = screen.getByTestId('where').textContent;
-    expect(where).toMatch(/^\/new-look\/sales\?/);
+    expect(where).toMatch(/^\/sales\?/);
     expect(where).toContain('open=INV-7');
     expect(where).toContain('page=3');
   });
@@ -250,8 +250,8 @@ describe('The menu and its new pages (AC-05)', () => {
     const expenses = flatItems(current).find((i) => i.key === 'expenses');
     expect(expenses.old).toBeUndefined();
     expect(expenses.soon).toBeUndefined();
-    expect(expenses.to).toBe('/new-look/expenses');
-    expect(flatItems(previewed).find((i) => i.key === 'expenses').to).toBe('/new-look/expenses');
+    expect(expenses.to).toBe('/expenses');
+    expect(flatItems(previewed).find((i) => i.key === 'expenses').to).toBe('/expenses');
   });
 
   test('every item that is not marked soon can be opened', () => {
@@ -260,9 +260,9 @@ describe('The menu and its new pages (AC-05)', () => {
   });
 
   test('with the preview, an item opens its new page', () => {
-    expect(previewed.groups[0].items[0].to).toBe('/new-look/sales');
-    expect(previewed.settings.to).toBe('/new-look/settings/business');
-    expect(previewed.home.to).toBe('/new-look');
+    expect(previewed.groups[0].items[0].to).toBe('/sales');
+    expect(previewed.settings.to).toBe('/settings/business');
+    expect(previewed.home.to).toBe('/');
   });
 
   test('every item’s new page exists, so the menu never leads to "not found"', () => {
@@ -323,7 +323,7 @@ describe('The + New menu', () => {
     expect(expense.disabled).toBeUndefined();
     expense.onClick();
     // it has no current screen, so the destination the shell works out for the others is not used
-    expect(open).toHaveBeenCalledWith('/new-look/expenses/new');
+    expect(open).toHaveBeenCalledWith('/expenses/new');
   });
 
   test('Expense is shown to the same people who can add products', () => {
@@ -348,6 +348,6 @@ describe('The + New menu', () => {
     expect(open).toHaveBeenCalledWith('/products/new');
     expect(actions[1].keywords).toContain('add');
     actions[3].onSelect();
-    expect(open).toHaveBeenLastCalledWith('/new-look/expenses/new');
+    expect(open).toHaveBeenLastCalledWith('/expenses/new');
   });
 });

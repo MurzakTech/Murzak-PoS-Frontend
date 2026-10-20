@@ -14,7 +14,7 @@ import { isPageLive } from './live';
  * (status "keep"), or the new page is not live yet (see live.js). When two entries match, the more specific one
  * wins (so '/purchases/new' beats '/purchases/:id'), whatever their order in the table.
  */
-export const NEW_LOOK_PREFIX = '/new-look';
+export const NEW_LOOK_PREFIX = '';
 
 /**
  * Some jobs have no redesigned screen yet (a stock-only receipt, a sales return, the supplier groups). A link to the
@@ -24,11 +24,12 @@ export const NEW_LOOK_PREFIX = '/new-look';
 export const LEGACY_KEY = 'legacy';
 export const oldScreen = (address) => `${address}${address.includes('?') ? '&' : '?'}${LEGACY_KEY}=1`;
 
-/** '/sales?open=1' gives '/new-look/sales?open=1'; '/' gives '/new-look' */
+/** '/sales?open=1' gives '/sales?open=1'; '/' gives '/' */
 export const toNewAddress = (page) => {
   const [path, query] = page.split('?');
-  const base = path === '/' ? NEW_LOOK_PREFIX : `${NEW_LOOK_PREFIX}${path}`;
-  return query ? `${base}?${query}` : base;
+  const base = path || '/';
+  const prefixed = NEW_LOOK_PREFIX ? (base === '/' ? NEW_LOOK_PREFIX : `${NEW_LOOK_PREFIX}${base}`) : base;
+  return query ? `${prefixed}?${query}` : prefixed;
 };
 
 const staticSegments = (pattern) => pattern.split('/').filter((s) => s && !s.startsWith(':') && s !== '*').length;
