@@ -61,6 +61,10 @@ export const apiSlice = createApi({
     'Expense',
     'Warehouse',
     'Role',
+    'Staff',
+    'Onboarding',
+    'Setup',
+    'Report',
   ],
   endpoints: () => ({}),
 });
@@ -83,6 +87,12 @@ export const initApiBridge = (dispatch) => {
           'Stock',
           'Supplier',
           'Expense',
+          'Warehouse',
+          'Role',
+          'Staff',
+          'Onboarding',
+          'Setup',
+          'Report',
         ])
       );
       return;
@@ -95,6 +105,11 @@ export const initApiBridge = (dispatch) => {
     if (lower.includes('stock')) tagsToInvalidate.push('Stock');
     if (lower.includes('supplier')) tagsToInvalidate.push('Supplier');
     if (lower.includes('expense')) tagsToInvalidate.push('Expense');
+    if (lower.includes('warehouse')) tagsToInvalidate.push('Warehouse', 'Stock');
+    if (lower.includes('staff')) tagsToInvalidate.push('Staff');
+    if (lower.includes('role')) tagsToInvalidate.push('Role');
+    if (lower.includes('setup') || lower.includes('onboarding')) tagsToInvalidate.push('Setup', 'Onboarding');
+    if (lower.includes('report')) tagsToInvalidate.push('Report');
 
     if (tagsToInvalidate.length > 0) {
       dispatch(apiSlice.util.invalidateTags(tagsToInvalidate));

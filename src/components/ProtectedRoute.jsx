@@ -1,12 +1,123 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
-import { Box, Typography, Paper } from '@mui/material';
-import { PageSkeleton, FullPageLoader } from './Common/LoadingState';
-import Layout from './Layout/Layout';
 import useRoleAccess from '../hooks/useRoleAccess';
+import logoMark from '../assets/logo_mark.png';
 
-const ContentLoader = PageSkeleton;
+const LoadingSplash = () => (
+  <div
+    style={{
+      minHeight: '100vh',
+      display: 'grid',
+      placeItems: 'center',
+      background: 'var(--surface-sunken, #f8fafc)',
+      fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+    }}
+    role="status"
+    aria-live="polite"
+    aria-label="Loading application"
+  >
+    <div style={{ textAlign: 'center' }}>
+      <img
+        src={logoMark}
+        alt="Murzak POS"
+        style={{
+          width: 48,
+          height: 48,
+          display: 'block',
+          margin: '0 auto 16px',
+          opacity: 0.85,
+        }}
+      />
+      <div
+        style={{
+          width: 96,
+          height: 4,
+          background: 'var(--brand-primary, #4f46e5)',
+          borderRadius: 4,
+          margin: '0 auto',
+          opacity: 0.8,
+        }}
+      />
+    </div>
+  </div>
+);
+
+const AccessDenied = ({ requiredRoles, currentRoles }) => (
+  <div
+    style={{
+      minHeight: '100vh',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 'var(--space-4, 16px)',
+      background: 'var(--surface-sunken, #f8fafc)',
+      fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+      color: 'var(--ink, #0f172a)',
+    }}
+  >
+    <div
+      style={{
+        maxWidth: 480,
+        width: '100%',
+        padding: '32px 24px',
+        textAlign: 'center',
+        background: 'var(--surface, #ffffff)',
+        border: 'var(--card-border, 1px solid #e2e8f0)',
+        borderRadius: 'var(--radius-card, 12px)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+      }}
+    >
+      <div
+        style={{
+          width: 52,
+          height: 52,
+          margin: '0 auto 16px',
+          borderRadius: '50%',
+          background: 'rgba(239, 68, 68, 0.1)',
+          color: '#ef4444',
+          display: 'grid',
+          placeItems: 'center',
+          fontSize: 24,
+        }}
+      >
+        🔒
+      </div>
+      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: 'var(--ink, #0f172a)' }}>
+        Access Denied
+      </h2>
+      <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--muted, #64748b)', lineHeight: 1.5 }}>
+        You do not have permission to access this page.
+        {requiredRoles?.length > 0 && (
+          <span style={{ display: 'block', marginTop: 4 }}>
+            Required: <strong>{requiredRoles.join(', ')}</strong>
+          </span>
+        )}
+      </p>
+      {currentRoles?.length > 0 && (
+        <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--muted, #94a3b8)' }}>
+          Your current roles: {currentRoles.join(', ')}
+        </p>
+      )}
+      <a
+        href="/"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '10px 20px',
+          fontSize: 14,
+          fontWeight: 600,
+          color: '#ffffff',
+          background: 'var(--brand-primary, #4f46e5)',
+          borderRadius: 'var(--radius-button, 8px)',
+          textDecoration: 'none',
+        }}
+      >
+        Return to Home
+      </a>
+    </div>
+  </div>
+);
 
 const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = null }) => {
   const location = useLocation();
@@ -27,18 +138,13 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
 
   // Wait for initial auth check to complete before making routing decisions
   useEffect(() => {
-    // Check if we have a token in localStorage to determine if we should wait
     const token = localStorage.getItem('access_token');
     if (token) {
-      // If we have a token, wait for auth state to initialize
-      // The auth state should be set by getInitialState() immediately, but we wait
-      // a tick to ensure Redux state is ready
       const timer = setTimeout(() => {
         setIsInitializing(false);
       }, 50);
       return () => clearTimeout(timer);
     } else {
-      // No token, no need to wait
       setIsInitializing(false);
     }
   }, []);
@@ -50,23 +156,9 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     }
   }, [isLoading]);
 
-  // Check if children includes Layout component
-  const hasLayout = React.Children.toArray(children).some(
-    child => React.isValidElement(child) && child.type === Layout
-  );
-
   // Show loading while initializing auth state
   if (isInitializing || isLoading) {
-    // If Layout is present, render it with loader inside
-    if (hasLayout) {
-      return (
-        <Layout>
-          <ContentLoader />
-        </Layout>
-      );
-    }
-    // Otherwise show full-screen loader (for routes without Layout)
-    return <FullPageLoader />;
+    return <LoadingSplash />;
   }
 
   // If not authenticated → redirect to login (preserving intended destination)
@@ -74,53 +166,28 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // If onboarding is required but not completed, and not already on onboarding page
-  // Skip onboarding check if user has company data (staff users don't need onboarding)
-  if (requireOnboarding && !shouldSkipOnboarding && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
+  // If onboarding is required but not completed, and not already on onboarding/setup page
+  if (requireOnboarding && !shouldSkipOnboarding && location.pathname !== '/setup' && location.pathname !== '/onboarding') {
+    return <Navigate to="/setup" replace />;
   }
 
-  // If onboarding is completed (or user has company data) and user tries to access onboarding page, redirect to home
-  if (shouldSkipOnboarding && location.pathname === '/onboarding') {
-    return <Navigate to="/" replace />;
+  // If onboarding is completed and user tries to access legacy onboarding page, redirect to home
+  if (shouldSkipOnboarding && (location.pathname === '/onboarding' || location.pathname === '/setup')) {
+    // Only redirect away from /onboarding; /setup can be visited to review or edit setup
+    if (location.pathname === '/onboarding') {
+      return <Navigate to="/" replace />;
+    }
   }
 
   // Check role-based access
-  // If requiredRoles is specified, check if user has one of those roles
   if (requiredRoles && requiredRoles.length > 0) {
     if (!hasRole(requiredRoles)) {
-      // User doesn't have required role - show unauthorized message
-      return (
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100vh',
-            p: 3,
-            bgcolor: 'background.default',
-          }}
-        >
-          <Paper sx={{ p: 4, textAlign: 'center', maxWidth: 500, borderRadius: 2 }}>
-            <Typography variant="h5" gutterBottom color="error" fontWeight={700}>
-              Access Denied
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              You don't have permission to access this page. Required roles: {requiredRoles.join(', ')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Your current roles: {roles.length > 0 ? roles.join(', ') : 'None'}
-            </Typography>
-          </Paper>
-        </Box>
-      );
+      return <AccessDenied requiredRoles={requiredRoles} currentRoles={roles} />;
     }
   } else {
     // Check if user has access to the current route path
-    // Skip check for public routes like /onboarding
-    const publicPaths = ['/onboarding', '/login', '/register'];
+    const publicPaths = ['/onboarding', '/login', '/register', '/forgot-password'];
     if (!publicPaths.includes(location.pathname) && !hasAccess(location.pathname)) {
-      // User doesn't have access to this route - redirect to home
       return <Navigate to="/" replace />;
     }
   }

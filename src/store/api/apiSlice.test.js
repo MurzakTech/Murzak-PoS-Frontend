@@ -85,5 +85,23 @@ describe('RTK Query apiSlice & axiosBaseQuery', () => {
         payload: expect.arrayContaining(['Customer']),
       })
     );
+
+    mockDispatch.mockClear();
+    invalidateQuery('warehouses');
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'api/invalidateTags',
+        payload: expect.arrayContaining(['Warehouse', 'Stock']),
+      })
+    );
+
+    mockDispatch.mockClear();
+    invalidateQuery('staff');
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'api/invalidateTags',
+        payload: expect.arrayContaining(['Staff']),
+      })
+    );
   });
 });

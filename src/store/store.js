@@ -12,7 +12,6 @@ import warehouseReducer from './warehouseSlice';
 import inventoryReducer from './inventorySlice';
 import salesReducer from './salesSlice';
 import customerReducer from './customerSlice';
-import dashboardReducer from './dashboardSlice';
 import accountProvisioningReducer from './accountProvisioningSlice';
 import inventoryDiscountReducer from './inventoryDiscountSlice';
 import roleReducer from './roleSlice';
@@ -37,7 +36,6 @@ export const store = configureStore({
     inventory: inventoryReducer,
     sales: salesReducer,
     customer: customerReducer,
-    dashboard: dashboardReducer,
     accountProvisioning: accountProvisioningReducer,
     inventoryDiscount: inventoryDiscountReducer,
     role: roleReducer,
