@@ -80,6 +80,16 @@ const getErrorSeverity = (error) => errorSeverity(error);
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
 // Helper function to check if token is valid
+// Helper function to sanitize user object to ensure Redux state serializability
+export const sanitizeUser = (user) => {
+  if (!user || typeof user !== 'object') return null;
+  try {
+    return JSON.parse(JSON.stringify(user));
+  } catch {
+    return { ...user };
+  }
+};
+
 const isTokenValid = (token) => {
   if (!token) return false;
   try {
@@ -119,7 +129,7 @@ const getInitialState = () => {
   let user = null;
   if (userStr) {
     try {
-      user = JSON.parse(userStr);
+      user = sanitizeUser(JSON.parse(userStr));
     } catch (error) {
       console.error('Error parsing user from localStorage:', error);
     }
@@ -398,7 +408,10 @@ export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axiosInstance.post(ENDPOINTS.refreshToken);
+      const storedRefreshToken = typeof localStorage !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+      const response = await axiosInstance.post(ENDPOINTS.refreshToken, {
+        refresh_token: storedRefreshToken,
+      });
       const data = extractResponseData(response);
       const successMessage = extractSuccessMessage(response);
       
@@ -576,7 +589,7 @@ const authSlice = createSlice({
         const userStr = localStorage.getItem('user');
         if (userStr) {
           try {
-            state.user = JSON.parse(userStr);
+            state.user = sanitizeUser(JSON.parse(userStr));
           } catch (error) {
             console.error('Error parsing user from localStorage:', error);
           }
@@ -604,7 +617,7 @@ const authSlice = createSlice({
           user.pos_industry_code = action.payload.pos_industry?.name || action.payload.pos_industry?.industry_code || null;
           user.pos_industry_name = action.payload.pos_industry?.industry_name || null;
         }
-        state.user = user;
+        state.user = sanitizeUser(user);
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.apiKey = action.payload.apiKey;
@@ -628,7 +641,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
+        state.user = sanitizeUser(action.payload.user);
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.apiKey = action.payload.apiKey;
@@ -657,7 +670,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
+        state.user = sanitizeUser(action.payload);
         state.isAuthenticated = true; // Ensure authenticated state is set
         state.error = null;
       })
@@ -698,7 +711,7 @@ const authSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
+        state.user = sanitizeUser(action.payload);
         state.error = null;
       })
       .addCase(updateUserProfile.rejected, (state, action) => {

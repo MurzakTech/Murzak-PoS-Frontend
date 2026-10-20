@@ -92,7 +92,7 @@ import { getPosPaymentOptions } from '../../api/paymentGatewayApi';
 import OfflineSalesBar from './pos/OfflineSalesBar';
 import useOfflineSales from '../../hooks/useOfflineSales';
 import { enqueueSale, isConnectionProblem, loadQueue, offlineBlocker, queueRoom } from '../../utils/offlineSales';
-import { clearShift, loadCatalog, loadShift, saveCatalog, saveShift } from '../../utils/offlineTill';
+import { clearShift, loadCatalog, loadCatalogAsync, loadShift, saveCatalog, saveShift } from '../../utils/offlineTill';
 
 // Short id for one sale, sent to M-Pesa / Pesapal / PayPal so payments can be traced to it
 const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
@@ -185,7 +185,15 @@ const NewSale = () => {
 
   // Offline: sell from the product list saved the last time the till was online
   const offlineCatalog = useMemo(() => loadCatalog(userCompany), [userCompany]);
-  const products = liveProducts.length > 0 ? liveProducts : offlineCatalog;
+  const [asyncCatalog, setAsyncCatalog] = useState([]);
+  useEffect(() => {
+    if (userCompany && liveProducts.length === 0) {
+      loadCatalogAsync(userCompany).then((items) => {
+        if (items && items.length > 0) setAsyncCatalog(items);
+      });
+    }
+  }, [userCompany, liveProducts.length]);
+  const products = liveProducts.length > 0 ? liveProducts : (offlineCatalog.length > 0 ? offlineCatalog : asyncCatalog);
   useEffect(() => {
     if (liveProducts.length > 0) saveCatalog(userCompany, liveProducts);
   }, [liveProducts, userCompany]);

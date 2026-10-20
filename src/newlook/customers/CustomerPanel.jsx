@@ -13,7 +13,7 @@ import { AssignDialog, HistoryDialog, RedeemDialog } from './LoyaltyDialogs';
 import LoyaltySection from './LoyaltySection';
 import StatementSection from './StatementSection';
 import { defaultMessage, lastPurchaseDetail, shownPhone, whatsappLink } from './customersModel';
-import { useCreditLimit, useCustomerOverview, useLoyaltyBalance } from './useCustomersData';
+import { invalidateQuery, useCreditLimit, useCustomerOverview, useLoyaltyBalance } from './useCustomersData';
 import T from './strings.customers';
 
 /**
@@ -62,6 +62,7 @@ const CustomerPanel = ({ id, company, shop, summary, canSeeMoney, position, onCl
     setBusy(true);
     try {
       await updateCustomer({ id, disabled: nextDisabled, company });
+      invalidateQuery();
       toast.success(fill(nextDisabled ? T.disable.done : T.disable.undone, { name }));
       setDialog('');
       reload();

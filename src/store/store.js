@@ -1,4 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { apiSlice, initApiBridge } from './api/apiSlice';
 import authReducer from './authSlice';
 import onboardingReducer from './onboardingSlice';
 import notificationReducer from './notificationSlice';
@@ -23,6 +25,7 @@ import grnReducer from './grnSlice';
 
 export const store = configureStore({
   reducer: {
+    [apiSlice.reducerPath]: apiSlice.reducer,
     auth: authReducer,
     onboarding: onboardingReducer,
     notification: notificationReducer,
@@ -48,12 +51,15 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore these action types
+        // Ignore legacy auth action token paths if any
         ignoredActions: ['auth/register/fulfilled', 'auth/login/fulfilled'],
-        // Ignore these field paths in all actions
         ignoredActionPaths: ['payload.jwtToken'],
-        // Ignore these paths in the state
-        ignoredPaths: ['auth.user'],
       },
-    }),
+    }).concat(apiSlice.middleware),
 });
+
+// Enables refetchOnFocus and refetchOnReconnect behaviors
+setupListeners(store.dispatch);
+
+// Bridges New Look mutations to RTK Query cache invalidation
+initApiBridge(store.dispatch);
