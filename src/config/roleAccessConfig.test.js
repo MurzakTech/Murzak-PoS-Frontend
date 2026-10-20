@@ -149,4 +149,15 @@ describe('the New look switch is for owners only', () => {
     expect(canAccessRoute('/new-look', cashier)).toBe(false);
     expect(canAccessRoute('/new-look', ['Accounts Manager'])).toBe(false);
   });
+
+  it('allows access to canonical home, till, and expenses for appropriate roles', () => {
+    expect(can('Sales User', '/')).toBe(true);
+    expect(can('Sales User', '/till')).toBe(true);
+    expect(can('Sales User', '/sales/unpaid')).toBe(true);
+    expect(can('Accounts Manager', '/')).toBe(true);
+    expect(can('Accounts Manager', '/expenses')).toBe(true);
+    expect(can('Accounts Manager', '/expenses/new')).toBe(true);
+    expect(can('Stock User', '/')).toBe(true);
+    expect(can('Stock User', '/stock')).toBe(true);
+  });
 });

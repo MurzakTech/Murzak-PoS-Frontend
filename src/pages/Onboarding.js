@@ -167,7 +167,7 @@ const Onboarding = () => {
   // Redirect if onboarding is completed
   useEffect(() => {
     if (isCompleted) {
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isCompleted, navigate]);
 
@@ -329,7 +329,7 @@ const Onboarding = () => {
         setStepCompleted((prev) => ({ ...prev, step3: true }));
         // Small delay to show success notification before redirect
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate('/', { replace: true });
         }, 1500);
       }
     } else {
@@ -343,7 +343,7 @@ const Onboarding = () => {
       
       localStorage.setItem('onboarding_completed', 'true');
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }, 1500);
     }
   };

@@ -1,4 +1,5 @@
 import fill from '../labels/fill';
+import { NEW_LOOK_PREFIX } from '../redirects/engine.js';
 import T from './strings.expenses';
 
 /**
@@ -12,8 +13,8 @@ export const RECEIPT_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/web
 // What the photo chooser accepts: picture files only (the server checks the real contents again)
 export const RECEIPT_INPUT = { type: 'file', accept: RECEIPT_TYPES.join(',') };
 
-export const LIST_PATH = '/new-look/expenses';
-export const ADD_PATH = '/new-look/expenses/new';
+export const LIST_PATH = `${NEW_LOOK_PREFIX}/expenses`;
+export const ADD_PATH = `${NEW_LOOK_PREFIX}/expenses/new`;
 
 export const FIELD_IDS = Object.fromEntries([
   ['amount', 'amount'],

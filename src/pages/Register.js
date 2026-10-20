@@ -453,7 +453,7 @@ const Register = () => {
       }));
       
       localStorage.setItem('onboarding_completed', 'true');
-      navigate('/dashboard', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -490,7 +490,7 @@ const Register = () => {
       }));
       localStorage.setItem('onboarding_completed', 'true');
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }, 1500);
     }
   };

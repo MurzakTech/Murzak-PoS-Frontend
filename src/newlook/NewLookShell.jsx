@@ -95,7 +95,7 @@ export const NewLookEmptyPage = () => (
       <PageHeader title={S.shell.newLookShell.emptyTitle} subtitle={S.shell.newLookShell.emptySubtitle} />
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--space-3)' }}>
         <RouterLink
-          to="/dashboard"
+          to="/"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -111,7 +111,7 @@ export const NewLookEmptyPage = () => (
         >
           {S.shell.newLookShell.backToCurrent}
         </RouterLink>
-        <RouterLink to="/new-look/components" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>
+        <RouterLink to="/components" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>
           {S.shell.newLookShell.seeComponents}
         </RouterLink>
       </div>

@@ -71,7 +71,7 @@ const VIEWS = [
 ];
 const FILTER_KEYS = ['status', 'method'];
 const STATE_KEYS = ['open', 'view'];
-const BASE = '/new-look/components';
+const BASE = '/components';
 
 const SalesDemo = () => {
   const toast = useToast();

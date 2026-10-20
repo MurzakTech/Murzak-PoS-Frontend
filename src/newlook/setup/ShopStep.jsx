@@ -15,7 +15,7 @@ const TAX_ID = 'setup-tax-id';
 
 /** A link to a redesigned page stays in the app; a link to a current screen is an ordinary address */
 export const StepLink = ({ to, children }) =>
-  String(to).startsWith('/new-look') ? (
+  String(to).startsWith('/') && !String(to).includes('legacy=1') ? (
     <Link className="nl-setup-link" to={to}>
       {children}
     </Link>

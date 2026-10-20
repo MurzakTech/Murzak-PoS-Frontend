@@ -18,7 +18,7 @@ const NotFound = () => {
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
           {S.notFound.text}
         </Typography>
-        <Button variant="contained" startIcon={<Home />} onClick={() => navigate('/dashboard')}>
+        <Button variant="contained" startIcon={<Home />} onClick={() => navigate('/')}>
           {S.notFound.home}
         </Button>
       </Box>
@@ -48,13 +48,6 @@ const NotFound = () => {
       <Button
         variant="contained"
         startIcon={<Home />}
-        onClick={() => navigate('/dashboard')}
-        sx={{ mr: 2 }}
-      >
-        Go to Dashboard
-      </Button>
-      <Button
-        variant="outlined"
         onClick={() => navigate('/')}
       >
         Go to Home

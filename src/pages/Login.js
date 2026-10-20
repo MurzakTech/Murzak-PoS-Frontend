@@ -69,9 +69,9 @@ const CurrentLogin = () => {
   // One box for email or phone: the icon follows what is being typed
   const isPhoneEntry = looksLikePhone(watch('loginId'));
 
-  // Where to go after signing in (the page they were trying to open, or the dashboard)
-  const from = location.state?.from?.pathname || location.state?.from || '/dashboard';
-  const redirectPath = typeof from === 'string' ? from : from.pathname || '/dashboard';
+  // Where to go after signing in (the page they were trying to open, or home)
+  const from = location.state?.from?.pathname || location.state?.from || '/';
+  const redirectPath = typeof from === 'string' ? from : from.pathname || '/';
 
   // Already signed in when the page loads: skip the form
   useEffect(() => {

@@ -270,7 +270,7 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
       // (including any products that could not be saved, and why) show below
       if (!summarizeSeedResult(result).problems) {
         setUploadSuccess(true);
-        setTimeout(() => navigate('/dashboard'), 2000);
+        setTimeout(() => navigate('/'), 2000);
       }
     } catch (error) {
       // The reason is already shown from the store (createError) and in a pop-up
@@ -287,7 +287,7 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={() => navigate('/dashboard')} sx={{ color: theme.palette.text.primary }} aria-label="Back to dashboard">
+            <IconButton onClick={() => navigate('/')} sx={{ color: theme.palette.text.primary }} aria-label="Back to home">
               <ArrowBack />
             </IconButton>
             <Box>
