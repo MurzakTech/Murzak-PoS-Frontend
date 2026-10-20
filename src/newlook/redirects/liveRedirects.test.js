@@ -16,24 +16,24 @@ const go = (address) => {
 const realRoutes = newLookRoutes.filter((r) => !r.element.name || r.element.name !== 'PagePlaceholder').map((r) => r.path);
 const hasRealRoute = (address) => {
   const path = address.split('?')[0].replace(/^\/new-look/, '') || '/';
-  const full = path === '/' ? NEW_LOOK_PREFIX : `${NEW_LOOK_PREFIX}${path}`;
+  const full = path === '/' ? (NEW_LOOK_PREFIX || '/') : `${NEW_LOOK_PREFIX}${path}`;
   return realRoutes.some((route) => matchPath({ path: route, end: true }, full));
 };
 
 describe('Old addresses open the finished pages', () => {
   test.each([
-    ['/dashboard', '/new-look'],
-    ['/sales/history', '/new-look/sales'],
-    ['/sales/invoice/INV-9', '/new-look/sales?open=INV-9'],
-    ['/customers', '/new-look/customers'],
-    ['/products', '/new-look/products'],
-    ['/inventory/low-stock', '/new-look/stock/low'],
-    ['/purchases/invoices/PINV-1', '/new-look/purchases?open=PINV-1'],
-    ['/suppliers/SUP-1', '/new-look/suppliers?open=SUP-1'],
-    ['/staff', '/new-look/settings/team'],
-    ['/settings/payment-methods', '/new-look/settings/till'],
-    ['/reports/sales-analytics', '/new-look/reports/sales'],
-    ['/reports/inventory-summary', '/new-look/reports/stock-summary'],
+    ['/dashboard', '/'],
+    ['/sales/history', '/sales'],
+    ['/sales/invoice/INV-9', '/sales?open=INV-9'],
+    ['/customers', '/customers'],
+    ['/products', '/products'],
+    ['/inventory/low-stock', '/stock/low'],
+    ['/purchases/invoices/PINV-1', '/purchases?open=PINV-1'],
+    ['/suppliers/SUP-1', '/suppliers?open=SUP-1'],
+    ['/staff', '/settings/team'],
+    ['/settings/payment-methods', '/settings/till'],
+    ['/reports/sales-analytics', '/reports/sales'],
+    ['/reports/inventory-summary', '/reports/stock-summary'],
   ])('%s opens %s', (from, to) => {
     expect(go(from).to).toBe(to);
   });

@@ -80,9 +80,9 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     return <Navigate to="/onboarding" replace />;
   }
 
-  // If onboarding is completed (or user has company data) and user tries to access onboarding page, redirect to dashboard
+  // If onboarding is completed (or user has company data) and user tries to access onboarding page, redirect to home
   if (shouldSkipOnboarding && location.pathname === '/onboarding') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Check role-based access
@@ -91,29 +91,28 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     if (!hasRole(requiredRoles)) {
       // User doesn't have required role - show unauthorized message
       return (
-        <Layout>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: 'calc(100vh - 200px)',
-              p: 3,
-            }}
-          >
-            <Paper sx={{ p: 4, textAlign: 'center', maxWidth: 500 }}>
-              <Typography variant="h5" gutterBottom color="error">
-                Access Denied
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                You don't have permission to access this page. Required roles: {requiredRoles.join(', ')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Your current roles: {roles.length > 0 ? roles.join(', ') : 'None'}
-              </Typography>
-            </Paper>
-          </Box>
-        </Layout>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            p: 3,
+            bgcolor: 'background.default',
+          }}
+        >
+          <Paper sx={{ p: 4, textAlign: 'center', maxWidth: 500, borderRadius: 2 }}>
+            <Typography variant="h5" gutterBottom color="error" fontWeight={700}>
+              Access Denied
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              You don't have permission to access this page. Required roles: {requiredRoles.join(', ')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Your current roles: {roles.length > 0 ? roles.join(', ') : 'None'}
+            </Typography>
+          </Paper>
+        </Box>
       );
     }
   } else {
@@ -121,8 +120,8 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     // Skip check for public routes like /onboarding
     const publicPaths = ['/onboarding', '/login', '/register'];
     if (!publicPaths.includes(location.pathname) && !hasAccess(location.pathname)) {
-      // User doesn't have access to this route - redirect to dashboard
-      return <Navigate to="/dashboard" replace />;
+      // User doesn't have access to this route - redirect to home
+      return <Navigate to="/" replace />;
     }
   }
 
