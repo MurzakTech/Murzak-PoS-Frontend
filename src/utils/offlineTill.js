@@ -8,7 +8,7 @@
  * and localStorage cache for synchronous compatibility.
  */
 
-import { idbGet, idbSet, idbDelete } from './indexedDb';
+import { idbGet, idbSet, idbDelete } from './indexedDb.js';
 
 export const CATALOG_KEY = 'pos_offline_catalog';
 export const SHIFT_KEY = 'pos_offline_shift';
@@ -17,11 +17,17 @@ export const SHIFT_KEY = 'pos_offline_shift';
 const PRODUCT_FIELDS = [
   'name', 'item_code', 'item_name', 'description', 'image', 'item_group',
   'price', 'standard_rate', 'stock_uom', 'barcode', 'barcodes',
+  'actual_qty', 'stock_qty', 'has_batch_no', 'has_serial_no',
 ];
 
 // In-memory cache for fast synchronous access
 let memoryCatalog = null;
 let memoryShift = null;
+
+export const _resetMemoryCacheForTest = () => {
+  memoryCatalog = null;
+  memoryShift = null;
+};
 
 const readLocalStorage = (key) => {
   try {
@@ -99,6 +105,46 @@ export const loadCatalogAsync = async (company) => {
   return loadCatalog(company);
 };
 
+/**
+ * Decrement stock levels locally in pos_offline_catalog for sold items.
+ * Ensures that subsequent offline searches on this till reflect the reduced quantity.
+ */
+export const decrementOfflineCatalogStock = async (company, soldItems = []) => {
+  if (!company || !Array.isArray(soldItems) || soldItems.length === 0) return;
+  const itemQtyMap = new Map();
+  soldItems.forEach((item) => {
+    const code = item.item_code;
+    const qty = Number(item.qty) || 0;
+    if (code && qty > 0) {
+      itemQtyMap.set(code, (itemQtyMap.get(code) || 0) + qty);
+    }
+  });
+
+  if (itemQtyMap.size === 0) return;
+
+  const catalog = (await loadCatalogAsync(company)) || loadCatalog(company);
+  if (!Array.isArray(catalog) || catalog.length === 0) return;
+
+  let changed = false;
+  const updated = catalog.map((prod) => {
+    const soldQty = itemQtyMap.get(prod.item_code);
+    if (soldQty) {
+      changed = true;
+      const current = typeof prod.actual_qty === 'number' ? prod.actual_qty : 0;
+      return {
+        ...prod,
+        actual_qty: Math.max(0, current - soldQty),
+        stock_qty: Math.max(0, (typeof prod.stock_qty === 'number' ? prod.stock_qty : current) - soldQty),
+      };
+    }
+    return prod;
+  });
+
+  if (changed) {
+    await saveCatalogAsync(company, updated);
+  }
+};
+
 export const saveShift = (company, user, entry) => {
   if (!company || !user || !entry?.name) return;
   const payload = {
@@ -162,10 +208,4 @@ export const clearOfflineStorage = () => {
   }
   idbDelete(CATALOG_KEY).catch(() => {});
   idbDelete(SHIFT_KEY).catch(() => {});
-};
-
-/** Reset in-memory cache (for testing) */
-export const _resetMemoryCacheForTest = () => {
-  memoryCatalog = null;
-  memoryShift = null;
 };
