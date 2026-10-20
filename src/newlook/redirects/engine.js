@@ -1,6 +1,6 @@
 import { matchPath } from 'react-router-dom';
-import { REDIRECTS } from './redirectTable';
-import { isPageLive } from './live';
+import { REDIRECTS } from './redirectTable.js';
+import { isPageLive } from './live.js';
 
 /**
  * Sends an old address to its new page (ticket P1-7, acceptance check AC-06).

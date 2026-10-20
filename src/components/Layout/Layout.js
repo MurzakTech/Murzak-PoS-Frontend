@@ -182,7 +182,7 @@ const Layout = ({ children }) => {
           flexShrink: 0,
         }}
       >
-        <ButtonBase component={RouterLink} to="/dashboard" aria-label="Murzak POS home" sx={{ borderRadius: 2 }}>
+        <ButtonBase component={RouterLink} to="/" aria-label="Murzak POS home" sx={{ borderRadius: 2 }}>
           <BrandLogo size={isCollapsed ? 30 : 32} showText={!isCollapsed} textVariant="h5" />
         </ButtonBase>
       </Box>

@@ -1,5 +1,6 @@
 import { formatMoney } from '../components/format';
 import fill from '../labels/fill';
+import { NEW_LOOK_PREFIX } from '../redirects/engine.js';
 import T from './strings.purchases';
 
 /**
@@ -12,10 +13,10 @@ import T from './strings.purchases';
 // ---------- Tabs and addresses ----------
 export const TAB_KEYS = ['all', 'orders', 'returns'];
 export const DEFAULT_TAB = 'all';
-export const PURCHASES_PATH = '/new-look/purchases';
-export const RECEIVE_PATH = '/new-look/purchases/receive';
-export const NEW_PATH = '/new-look/purchases/new';
-export const PRODUCT_NEW_PATH = '/new-look/products/new';
+export const PURCHASES_PATH = `${NEW_LOOK_PREFIX}/purchases`;
+export const RECEIVE_PATH = `${NEW_LOOK_PREFIX}/purchases/receive`;
+export const NEW_PATH = `${NEW_LOOK_PREFIX}/purchases/new`;
+export const PRODUCT_NEW_PATH = `${NEW_LOOK_PREFIX}/products/new`;
 
 /** The tab named in the address, or All purchases when it is missing or not one of the three */
 export const tabFromParam = (value) => (TAB_KEYS.includes(value) ? value : DEFAULT_TAB);

@@ -27,7 +27,7 @@ const Settings = () => {
   // Redirect to default child route if on parent route
   useEffect(() => {
     if (location.pathname === '/settings') {
-      navigate(SETTINGS_PAGES.find((page) => hasAccess(page)) || '/dashboard', { replace: true });
+      navigate(SETTINGS_PAGES.find((page) => hasAccess(page)) || '/', { replace: true });
     }
   }, [location.pathname, navigate, hasAccess]);
 

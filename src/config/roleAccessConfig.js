@@ -14,7 +14,7 @@ import { matchRoutes } from 'react-router-dom';
 
 // Define route groups for easier management
 const ROUTE_GROUPS = {
-  DASHBOARD: ['/dashboard'],
+  DASHBOARD: ['/dashboard', '/'],
   PRODUCTS: [
     '/products',
     '/products/new',
@@ -28,6 +28,8 @@ const ROUTE_GROUPS = {
     '/products/brands',
     '/products/warranties',
     '/products/load-products',
+    '/products/import',
+    '/products/:code/edit',
   ],
   SALES: [
     '/sales',
@@ -40,6 +42,9 @@ const ROUTE_GROUPS = {
     '/sales/pos-invoice/:id',
     '/sales/invoice/:id/edit',
     '/sales/returns',
+    '/sales/unpaid',
+    '/sales/sessions',
+    '/till',
   ],
   WAREHOUSES: [
     '/warehouses',
@@ -74,15 +79,27 @@ const ROUTE_GROUPS = {
     '/inventory/recipes/new',
     '/inventory/recipes/:dish',
     '/inventory/wastage',
+    '/stock',
+    '/stock/low',
+    '/stock/movements',
+    '/stock/count',
+    '/stock/expiry',
+    '/stock/locations',
+    '/stock/transfers',
   ],
   CUSTOMERS: [
     '/customers',
     '/customers/credit',
+    '/customers/owing',
+    '/customers/new',
+    '/customers/:id/edit',
   ],
   SUPPLIERS: [
     '/suppliers',
     '/suppliers/groups',
     '/suppliers/:id',
+    '/suppliers/new',
+    '/suppliers/:id/edit',
   ],
   PURCHASES: [
     '/purchases',
@@ -99,6 +116,8 @@ const ROUTE_GROUPS = {
     '/purchases/grns/:id',
     '/purchases/invoices',
     '/purchases/invoices/:invoiceNo',
+    '/purchases/orders',
+    '/purchases/receive',
   ],
   STOCK_TRANSFERS: [
     '/stock-transfers',
@@ -110,6 +129,10 @@ const ROUTE_GROUPS = {
     '/stock-transfers/:id/dispatch',
     '/stock-transfers/:id/receive',
   ],
+  EXPENSES: [
+    '/expenses',
+    '/expenses/new',
+  ],
   STAFF: ['/staff'],
   ROLES: [
     '/roles',
@@ -120,6 +143,14 @@ const ROUTE_GROUPS = {
   ],
   REPORTS: [
     '/reports',
+    '/reports/:name',
+    '/reports/sales',
+    '/reports/profit',
+    '/reports/owed',
+    '/reports/running-costs',
+    '/reports/stock-summary',
+    '/reports/stock-value',
+    '/reports/aging-stock',
     '/reports/sales-analytics',
     '/reports/inventory-summary',
     '/reports/inventory-valuation',
@@ -130,7 +161,6 @@ const ROUTE_GROUPS = {
     '/reports/stock-movement/turnover',
     '/reports/stock-movement/days-on-hand',
     '/reports/stock-movement/movement-patterns',
-    '/reports/aging-stock',
     '/reports/aging-stock/stock-aging',
     '/reports/aging-stock/obsolescence-risk',
     '/reports/aging-stock/aging-recommendations',
@@ -159,7 +189,14 @@ const ROUTE_GROUPS = {
     '/settings/sales-people',
     '/settings/security',
     '/settings/new-look',
+    '/settings/till',
+    '/settings/tax',
+    '/settings/team',
+    '/settings/advanced',
+    '/settings/brand',
   ],
+  SETUP: ['/setup'],
+  DEV_TOOLS: ['/components', '/charts', '/redirects'],
   INDUSTRY: [
     '/industry/:industryCode/products',
   ],
@@ -170,19 +207,30 @@ const ROUTE_GROUPS = {
 // Smaller bundles for roles that should not get a whole area
 const ROUTE_BUNDLES = {
   // Ring up sales at the till and look back at them; no returns, edits or price changes
-  SALES_TILL: ['/sales', '/sales/pos', '/sales/history', '/sales/invoice/:id', '/sales/pos-invoice/:id'],
+  SALES_TILL: [
+    '/sales',
+    '/sales/pos',
+    '/sales/history',
+    '/sales/invoice/:id',
+    '/sales/pos-invoice/:id',
+    '/sales/unpaid',
+    '/sales/sessions',
+    '/till',
+  ],
   // Look at past sales only
-  SALES_VIEW: ['/sales/history', '/sales/invoice/:id', '/sales/pos-invoice/:id'],
+  SALES_VIEW: ['/sales', '/sales/history', '/sales/invoice/:id', '/sales/pos-invoice/:id', '/sales/unpaid', '/sales/sessions'],
   // Look at purchases, receipts, goods received and supplier invoices only
   PURCHASES_VIEW: [
     '/purchases',
     '/purchases/:id',
+    '/purchases/orders',
     '/purchases/receipts',
     '/purchases/receipts/:id',
     '/purchases/grns',
     '/purchases/grns/:id',
     '/purchases/invoices',
     '/purchases/invoices/:invoiceNo',
+    '/purchases/receive',
   ],
   SUPPLIERS_VIEW: ['/suppliers', '/suppliers/:id'],
   INVENTORY_VIEW: ['/inventory', '/inventory/stock-summary', '/inventory/low-stock', '/inventory/stock-ledger', '/inventory/item-details'],
@@ -217,10 +265,13 @@ export const ROLE_ACCESS_CONFIG = {
       'SUPPLIERS',
       'PURCHASES',
       'STOCK_TRANSFERS',
+      'EXPENSES',
       'STAFF',
       'ROLES',
       'REPORTS',
       'SETTINGS',
+      'SETUP',
+      'DEV_TOOLS',
       'INDUSTRY',
       'KITCHEN'
     ),
@@ -238,10 +289,13 @@ export const ROLE_ACCESS_CONFIG = {
       'SUPPLIERS',
       'PURCHASES',
       'STOCK_TRANSFERS',
+      'EXPENSES',
       'STAFF',
       'ROLES',
       'REPORTS',
       'SETTINGS',
+      'SETUP',
+      'DEV_TOOLS',
       'INDUSTRY',
       'KITCHEN'
     ),
@@ -259,10 +313,13 @@ export const ROLE_ACCESS_CONFIG = {
       'SUPPLIERS',
       'PURCHASES',
       'STOCK_TRANSFERS',
+      'EXPENSES',
       'STAFF',
       'ROLES',
       'REPORTS',
       'SETTINGS',
+      'SETUP',
+      'DEV_TOOLS',
       'INDUSTRY',
       'KITCHEN'
     ),
@@ -270,19 +327,21 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Sales roles
   'Sales Manager': [
-    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'KITCHEN'),
+    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'EXPENSES', 'KITCHEN'),
     '/inventory/stock-summary', // View stock for sales
   ],
 
   'Sales User': [
-    '/dashboard',
-    ...combineRoutes('SALES_TILL', 'RECONCILIATION_STEP'),
+    ...combineRoutes('DASHBOARD', 'SALES_TILL', 'RECONCILIATION_STEP'),
     '/sales/invoice/new',
     '/kitchen', // station screen on a tablet
     '/customers',
+    '/customers/new',
     '/products', // View products for sales
     '/inventory', // Access to inventory section
     '/inventory/stock-summary', // Check stock availability
+    '/stock',
+    '/stock/low',
   ],
 
   // Purchase roles
@@ -295,9 +354,11 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   'Purchase User': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('PURCHASES_VIEW', 'SUPPLIERS_VIEW'),
     '/purchases/new',
+    '/purchases/orders',
+    '/purchases/receive',
     '/purchases/create-order',
     '/purchases/submit-order',
     '/purchases/receipts/new',
@@ -314,7 +375,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Everyday stock work; creating stores and starting stock-count rounds stays with Stock Managers
   'Stock User': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('INVENTORY', 'WAREHOUSES', 'STOCK_TRANSFERS').filter(
       (route) => !['/warehouses/new', '/inventory/multi-level-reconciliation/new'].includes(route)
     ),
@@ -324,11 +385,16 @@ export const ROLE_ACCESS_CONFIG = {
     '/inventory/expiry-alerts',
     '/inventory/stock-ledger',
     '/inventory/item-details',
+    '/stock',
+    '/stock/low',
+    '/stock/movements',
+    '/stock/count',
+    '/stock/expiry',
   ],
 
   // Quality Manager - Can perform quality checks and stock takes in multi-level reconciliation
   'Quality Manager': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/inventory/stock-summary', // View stock for quality checks
     '/products', // View products
     // Multi-level reconciliation access (can add stock take when status is "Pending Quality Manager")
@@ -339,7 +405,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Accounts roles
   'Accounts Manager': [
-    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW'),
+    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS', 'REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW', 'EXPENSES'),
     '/sales/returns',
     // Finance settings only; payment gateways, eTIMS and business settings stay with admins
     '/settings',
@@ -351,10 +417,8 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   'Accounts User': [
-    '/dashboard',
-    '/customers',
+    ...combineRoutes('DASHBOARD', 'CUSTOMERS', 'SUPPLIERS_VIEW', 'SALES_VIEW', 'PURCHASES_VIEW', 'REPORTS', 'EXPENSES'),
     '/customers/credit',
-    ...combineRoutes('SUPPLIERS_VIEW', 'SALES_VIEW', 'PURCHASES_VIEW', 'REPORTS'),
   ],
 
   // Item/Product roles
@@ -367,7 +431,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Desk User - POS operations
   'Desk User': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
     '/products', // View products for POS
@@ -377,14 +441,14 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Guest - Limited read-only access
   Guest: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/products', // View only
     '/sales/history', // View only
   ],
 
   // Employee - Basic access
   Employee: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
     '/products',
@@ -394,7 +458,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Employee Self Service - Limited self-service access
   'Employee Self Service': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/sales/history', // View own sales
   ],
 
@@ -406,7 +470,7 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   'Delivery User': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_VIEW'),
     '/customers',
   ],
@@ -418,7 +482,7 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   Agent: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
     '/customers',
@@ -427,21 +491,21 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Customer - Very limited access (if they have desk access)
   Customer: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/products', // View products
     '/sales/history', // View own orders
   ],
 
   // Analytics - Read-only access to reports and data
   Analytics: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW', 'INVENTORY_VIEW'),
     '/products',
   ],
 
   // Auditor - Read-only access to financial and transaction data
   Auditor: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/customers',
     ...combineRoutes('SALES_VIEW', 'PURCHASES_VIEW', 'SUPPLIERS_VIEW', 'REPORTS'),
     '/settings/audit-trail',
@@ -449,7 +513,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Expense Approver - Access to financial approvals
   'Expense Approver': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD', 'EXPENSES'),
     ...combineRoutes('PURCHASES_VIEW'),
     '/reports',
     '/settings/payment-methods',
@@ -457,7 +521,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Dashboard Manager - Access to dashboard and reports
   'Dashboard Manager': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     ...combineRoutes('REPORTS', 'SALES_VIEW', 'PURCHASES_VIEW'),
     '/inventory/stock-summary',
   ],
@@ -468,7 +532,7 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 
   'Agriculture User': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/products',
     '/inventory/stock-summary',
     ...combineRoutes('PURCHASES_VIEW'),
@@ -476,14 +540,14 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Academics roles (if applicable)
   'Academics User': [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/products',
     ...combineRoutes('SALES_TILL'),
   ],
 
   // Blogger - Limited content access
   Blogger: [
-    '/dashboard',
+    ...combineRoutes('DASHBOARD'),
     '/products', // View products for content
   ],
 };

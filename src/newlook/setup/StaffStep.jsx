@@ -14,7 +14,7 @@ const STEP = 'staff';
  * set up later. The last step: its button reads Finish and ends set-up.
  */
 const StaffStep = ({ ctx }) => {
-  const inApp = String(ctx.links.team).startsWith('/new-look');
+  const inApp = String(ctx.links.team).startsWith('/') && !String(ctx.links.team).includes('legacy=1');
   return (
     <StepFrame ctx={ctx} stepKey={STEP} heading={S.title} help={S.help} saved={isPassed(ctx.state, STEP)} saveLabel={ctx.nextLabel(STEP)}>
       <div className="nl-setup-option">

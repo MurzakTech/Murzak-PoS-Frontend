@@ -1,4 +1,4 @@
-import { oldScreen } from '../redirects/engine';
+import { oldScreen, NEW_LOOK_PREFIX } from '../redirects/engine.js';
 
 /**
  * The shape of the Settings page (ticket P5-3, acceptance check AC-32): the six sections (Brand was added in P7-3), the address of each, and the
@@ -8,7 +8,7 @@ export const SECTIONS = ['business', 'brand', 'till', 'tax', 'team', 'advanced']
 /** The same names as an object, for code that names one section */
 export const SECTION = { business: 'business', brand: 'brand', till: 'till', tax: 'tax', team: 'team', advanced: 'advanced' };
 export const FIRST_SECTION = 'business';
-export const SETTINGS_PATH = '/new-look/settings';
+export const SETTINGS_PATH = `${NEW_LOOK_PREFIX}/settings`;
 
 export const sectionAddress = (key) => `${SETTINGS_PATH}/${key}`;
 

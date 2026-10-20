@@ -78,7 +78,7 @@ const ComponentPage = () => {
           <span style={{ color: 'var(--muted)' }}>Theme now: {mode}</span>
           <Button variant="secondary" size="small" onClick={() => mode !== 'light' && toggleColorMode()}>Light</Button>
           <Button variant="secondary" size="small" onClick={() => mode !== 'dark' && toggleColorMode()}>Dark</Button>
-          <RouterLink to="/new-look" className="nl-page-link" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>Back to the New look</RouterLink>
+          <RouterLink to="/" className="nl-page-link" style={{ color: 'var(--brand-text)', fontWeight: 'var(--font-weight-semibold)' }}>Back to Home</RouterLink>
         </div>
       </div>
 

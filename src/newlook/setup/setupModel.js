@@ -1,5 +1,5 @@
 import { isPageLive } from '../redirects/live';
-import { oldScreen, toNewAddress } from '../redirects/engine';
+import { oldScreen, toNewAddress, NEW_LOOK_PREFIX } from '../redirects/engine.js';
 
 /**
  * The small decisions of the first-time set-up, kept apart from the screens so they can be tested alone: the steps, where
@@ -7,8 +7,8 @@ import { oldScreen, toNewAddress } from '../redirects/engine';
  */
 export const STEP_KEYS = ['business', 'shop', 'cash', 'payments', 'products', 'staff'];
 export const KIND_KEYS = ['pharmacy', 'retail', 'services', 'other'];
-export const SETUP_PATH = '/new-look/setup';
-export const HOME_PATH = '/new-look';
+export const SETUP_PATH = `${NEW_LOOK_PREFIX}/setup`;
+export const HOME_PATH = `${NEW_LOOK_PREFIX || '/'}`;
 
 export const isStep = (key) => STEP_KEYS.includes(key);
 export const stepAddress = (key) => `${SETUP_PATH}?step=${key}`;

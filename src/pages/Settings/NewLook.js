@@ -89,8 +89,8 @@ const NewLook = () => {
         </Box>
 
         {enabled && (
-          <Button component={RouterLink} to="/new-look" variant="outlined" sx={{ mt: 1 }}>
-            Open the New look
+          <Button component={RouterLink} to="/" variant="outlined" sx={{ mt: 1 }}>
+            Open Home
           </Button>
         )}
       </Paper>

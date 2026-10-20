@@ -28,7 +28,7 @@ const purchases = {
     returns: '/purchases/returns',
     receiveByHand: '/purchases/create-grn',
     earlierNew: '/purchases/new',
-    suppliers: '/new-look/suppliers/new',
+    suppliers: '/suppliers/new',
   },
 
   summary: {

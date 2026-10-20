@@ -75,8 +75,8 @@ class ErrorBoundary extends React.Component {
               Reload page
             </Button>
             {!inline && (
-              <Button variant="outlined" startIcon={<Home />} href="/dashboard">
-                Go to dashboard
+              <Button variant="outlined" startIcon={<Home />} href="/">
+                Go to home
               </Button>
             )}
           </Stack>

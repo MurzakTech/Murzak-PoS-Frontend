@@ -16,9 +16,9 @@ import useRoleAccess from '../../hooks/useRoleAccess';
  * opens the full menu.
  */
 const TABS = [
-  { label: 'Home', path: '/dashboard', icon: SpaceDashboardOutlined },
-  { label: 'Sales', path: '/sales/history', icon: ReceiptLongOutlined },
-  { label: 'Sell', path: '/sales/pos', icon: PointOfSale, primary: true },
+  { label: 'Home', path: '/', icon: SpaceDashboardOutlined },
+  { label: 'Sales', path: '/sales', icon: ReceiptLongOutlined },
+  { label: 'Sell', path: '/till', icon: PointOfSale, primary: true },
   { label: 'Products', path: '/products', icon: Inventory2Outlined },
 ];
 

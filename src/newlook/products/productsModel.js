@@ -1,5 +1,6 @@
 import { formatMoney } from '../components/format';
 import fill from '../labels/fill';
+import { NEW_LOOK_PREFIX } from '../redirects/engine.js';
 import { quantityText, unitLabel } from './unitWords';
 import T from './strings.products';
 
@@ -9,9 +10,9 @@ import T from './strings.products';
  */
 
 export const TAB_KEYS = ['products', 'categories'];
-export const PRODUCTS_PATH = '/new-look/products';
-export const CATEGORIES_PATH = '/new-look/products/categories';
-export const NEW_PRODUCT_PATH = '/new-look/products/new';
+export const PRODUCTS_PATH = `${NEW_LOOK_PREFIX}/products`;
+export const CATEGORIES_PATH = `${NEW_LOOK_PREFIX}/products/categories`;
+export const NEW_PRODUCT_PATH = `${NEW_LOOK_PREFIX}/products/new`;
 
 /** Current screens reached from the More menu of the Products header (no redesigned form yet); each opens with the legacy marker */
 export const MORE_SCREENS = {

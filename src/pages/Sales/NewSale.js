@@ -1858,7 +1858,7 @@ const NewSale = () => {
       setLeaveDialogOpen(true);
     } else navigate(destination);
   };
-  const requestExit = () => leaveTo('/dashboard');
+  const requestExit = () => leaveTo('/');
 
   const handlePaymentModeChange = (mode) => {
     setPaymentMode(mode);
@@ -2196,7 +2196,7 @@ const NewSale = () => {
           cashierName={cashierName}
           storeName={storeName}
           currency={currency}
-          onExit={() => navigate('/dashboard')}
+          onExit={() => navigate('/')}
           openError={openTillError}
         />
       ) : (

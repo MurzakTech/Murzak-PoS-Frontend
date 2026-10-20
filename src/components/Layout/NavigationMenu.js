@@ -14,10 +14,10 @@ import useRoleAccess from '../../hooks/useRoleAccess';
  * module to routes.js never makes it disappear from the menu.
  */
 const NAV_GROUPS = [
-  { title: null, paths: ['/dashboard'] },
-  { title: 'Sell', paths: ['/sales', '/customers'] },
+  { title: null, paths: ['/', '/dashboard'] },
+  { title: 'Sell', paths: ['/sales', '/customers', '/till'] },
   { title: 'Stock', paths: ['/products', '/inventory', '/warehouses', '/stock-transfers'] },
-  { title: 'Buy', paths: ['/purchases', '/suppliers'] },
+  { title: 'Buy', paths: ['/purchases', '/suppliers', '/expenses'] },
   { title: 'Insights', paths: ['/reports'] },
   { title: 'Team', paths: ['/staff', '/roles'] },
 ];
@@ -55,7 +55,7 @@ const NavigationMenu = React.memo(({ desktopOpen, onNavigate }) => {
     (route) => {
       const path = location.pathname;
       if (path === route.path) return true;
-      if (route.path !== '/dashboard' && path.startsWith(route.path + '/')) return true;
+      if (route.path !== '/' && route.path !== '/dashboard' && path.startsWith(route.path + '/')) return true;
       if (route.pageChildren) {
         return route.pageChildren.some(
           (c) => path === c.path || (c.path !== route.path && path.startsWith(c.path + '/'))

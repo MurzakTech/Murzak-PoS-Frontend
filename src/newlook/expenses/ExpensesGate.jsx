@@ -19,8 +19,8 @@ const ExpensesGate = ({ children }) => {
   const previewOn = usePreviewRedirects();
   const allowed = access.tier === 'owner' || access.tier === 'manager';
   const waiting = !access.tier && (access.status === 'idle' || access.status === 'loading');
-  // Home is the redesigned page once it is live, otherwise the current dashboard (the same helper pattern Home itself uses)
-  const home = isPageLive('/', previewOn) ? toNewAddress('/') : '/dashboard';
+  // Home is the canonical redesigned page
+  const home = isPageLive('/', previewOn) ? toNewAddress('/') : '/';
 
   if (allowed) return children;
   if (waiting) {

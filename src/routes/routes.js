@@ -78,6 +78,7 @@ const PurchaseInvoicesList = lazy(() => import('../newlook/purchases/PurchasesPa
 const PurchaseInvoiceDetails = lazy(() => import('../pages/Purchases/PurchaseInvoiceDetails'));
 const Staff = lazy(() => import('../newlook/settings/SettingsPage'));
 const Reports = lazy(() => import('../newlook/reports/ReportsPage'));
+const Expenses = lazy(() => import('../newlook/expenses/ExpensesPage'));
 const SalesAnalytics = lazy(() => import('../pages/Reports/SalesAnalytics'));
 const InventorySummary = lazy(() => import('../pages/Reports/InventorySummary'));
 const InventoryValuation = lazy(() => import('../pages/Reports/InventoryValuation'));
@@ -185,10 +186,29 @@ export const protectedRoutesWithoutLayout = [];
 // Protected routes (with Layout)
 export const protectedRoutes = [
   {
+    path: '/',
+    element: Dashboard,
+    label: 'Home',
+    icon: 'Dashboard',
+  },
+  {
     path: '/dashboard',
     element: Dashboard,
     label: 'Dashboard',
     icon: 'Dashboard',
+    hideFromMenu: true,
+  },
+  {
+    path: '/till',
+    element: NewSale,
+    label: 'Till',
+    icon: 'PointOfSale',
+  },
+  {
+    path: '/expenses',
+    element: Expenses,
+    label: 'Expenses',
+    icon: 'AttachMoney',
   },
   {
     path: '/kitchen',

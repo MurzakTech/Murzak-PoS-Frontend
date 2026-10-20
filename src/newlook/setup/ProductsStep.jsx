@@ -9,7 +9,7 @@ const P = T.products;
 const STEP = 'products';
 
 const Option = ({ title, text, action, to, primary = false }) => {
-  const isApp = String(to).startsWith('/new-look');
+  const isApp = String(to).startsWith('/') && !String(to).includes('legacy=1');
   return (
     <li className="nl-setup-option">
       <div className="nl-setup-option__text">
