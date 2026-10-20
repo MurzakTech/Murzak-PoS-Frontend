@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
 import { friendlyErrorMessage, errorSeverity } from '../utils/friendlyError';
+import { saveOfflineCustomers, loadOfflineCustomersAsync } from '../utils/offlineCustomer';
 
 // Customer API endpoints - matching CUSTOMER_API_DOCUMENTATION.md
 const ENDPOINTS = {
@@ -91,15 +92,26 @@ export const getTerritories = createAsyncThunk(
 export const listCustomers = createAsyncThunk(
   'customer/listCustomers',
   async (params = {}, { dispatch, rejectWithValue, getState }) => {
+    const state = getState();
+    const userCompany = state?.auth?.user?.company || 
+                       state?.auth?.user?.custom_company || 
+                       state?.auth?.user?.company_name || 
+                       state?.auth?.user?.company_data?.name || 
+                       state?.auth?.user?.company_data?.company_name;
+
+    // If offline, seamlessly load cached customer directory
+    if (typeof navigator !== 'undefined' && !navigator.onLine && userCompany) {
+      const offlineList = await loadOfflineCustomersAsync(userCompany);
+      if (offlineList.length > 0) {
+        return {
+          customers: offlineList,
+          count: offlineList.length,
+          offline: true,
+        };
+      }
+    }
+
     try {
-      // Ensure company is included if available from auth state
-      const state = getState();
-      const userCompany = state?.auth?.user?.company || 
-                         state?.auth?.user?.custom_company || 
-                         state?.auth?.user?.company_name || 
-                         state?.auth?.user?.company_data?.name || 
-                         state?.auth?.user?.company_data?.company_name;
-      
       const requestParams = {
         ...params,
         // Include company if not already provided and available from state
@@ -113,11 +125,27 @@ export const listCustomers = createAsyncThunk(
         : await axiosInstance.get(ENDPOINTS.listCustomers, { params: requestParams });
       
       const data = extractResponseData(response);
+      const customersList = Array.isArray(data) ? data : (data?.data || []);
+      const effectiveCompany = requestParams.company || userCompany;
+      if (effectiveCompany && customersList.length > 0) {
+        saveOfflineCustomers(effectiveCompany, customersList);
+      }
       return {
-        customers: Array.isArray(data) ? data : (data?.data || []),
+        customers: customersList,
         count: response.data?.count || (Array.isArray(data) ? data.length : 0),
       };
     } catch (error) {
+      // If network call failed, try offline fallback before reporting error
+      if (userCompany) {
+        const offlineList = await loadOfflineCustomersAsync(userCompany);
+        if (offlineList.length > 0) {
+          return {
+            customers: offlineList,
+            count: offlineList.length,
+            offline: true,
+          };
+        }
+      }
       const errorMessage = extractErrorMessage(error);
       dispatch(showNotification({
         message: errorMessage,

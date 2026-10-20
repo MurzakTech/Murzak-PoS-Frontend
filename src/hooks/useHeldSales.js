@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as serverApi from '../api/heldSalesApi';
-import { readHeld, writeHeld, renameHeld as renameInList, cleanLabel } from '../utils/heldSales';
+import { readHeld, readHeldAsync, writeHeld, renameHeld as renameInList, cleanLabel } from '../utils/heldSales';
 import useRealtimeRefresh, { pollEvery } from './useRealtimeRefresh';
 
 /**
@@ -110,6 +110,9 @@ const useHeldSales = ({ company, warehouse, storage = window.localStorage, api =
     setStatusNow('checking');
     setServer([]);
     setLocal(readHeld(storage, company));
+    readHeldAsync(company).then((idbList) => {
+      if (Array.isArray(idbList) && idbList.length > 0) setLocal(idbList);
+    }).catch(() => {});
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, warehouse]);

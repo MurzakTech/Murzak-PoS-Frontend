@@ -13,7 +13,8 @@
  * with a given id only once, so uploading the same sale twice is harmless.
  * The queue is deliberately NOT cleared on sign-out: these are real sales.
  */
-import { MESSAGES } from './friendlyError';
+import { MESSAGES } from './friendlyError.js';
+import { idbGet, idbSet } from './indexedDb.js';
 
 export const QUEUE_KEY = 'pos_offline_sales';
 export const MAX_QUEUED_SALES = 200;
@@ -27,23 +28,86 @@ export const STATUS = {
 
 const HOUR_MS = 60 * 60 * 1000;
 
+let queueCache = null;
+
+export const resetQueueCache = () => {
+  queueCache = null;
+};
+
 const readStorage = () => {
   try {
-    const parsed = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(QUEUE_KEY) : null;
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        queueCache = parsed;
+        return queueCache;
+      }
+    }
   } catch {
-    return [];
+    // localStorage error (quota or security) - keep existing queueCache
   }
+  return queueCache || [];
 };
 
 export const loadQueue = () => readStorage();
 
-export const saveQueue = (queue) => {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+/** Asynchronously load queue from IndexedDB (with fallback to memory/localStorage) */
+export const loadQueueAsync = async () => {
   try {
-    window.dispatchEvent(new CustomEvent(QUEUE_CHANGED_EVENT));
+    const idbData = await idbGet(QUEUE_KEY);
+    if (Array.isArray(idbData)) {
+      queueCache = idbData;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(QUEUE_KEY, JSON.stringify(idbData));
+        }
+      } catch {
+        // localStorage quota exceeded; IndexedDB remains the resilient source of truth
+      }
+      return idbData;
+    }
+  } catch {
+    // IndexedDB unavailable; fallback to sync read
+  }
+  return loadQueue();
+};
+
+export const saveQueue = (queue) => {
+  queueCache = Array.isArray(queue) ? queue : [];
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queueCache));
+    }
+  } catch {
+    // Safely catches QuotaExceededError - IndexedDB guarantees persistence
+  }
+  idbSet(QUEUE_KEY, queueCache).catch(() => {});
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(QUEUE_CHANGED_EVENT));
+    }
   } catch {
     // no window (tests)
+  }
+};
+
+export const saveQueueAsync = async (queue) => {
+  queueCache = Array.isArray(queue) ? queue : [];
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queueCache));
+    }
+  } catch {
+    // safely ignore quota error
+  }
+  await idbSet(QUEUE_KEY, queueCache).catch(() => {});
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(QUEUE_CHANGED_EVENT));
+    }
+  } catch {
+    // no window
   }
 };
 
@@ -102,6 +166,11 @@ export const enqueueSale = ({ payload, receipt, company, user }, now = new Date(
   const queue = loadQueue().filter((s) => s.id !== entry.id);
   saveQueue([...queue, entry]);
   return entry;
+};
+
+export const enqueueSaleAsync = async (saleData, now = new Date()) => {
+  await loadQueueAsync();
+  return enqueueSale(saleData, now);
 };
 
 export const removeSale = (id) => saveQueue(loadQueue().filter((s) => s.id !== id));

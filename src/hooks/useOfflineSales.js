@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { loadQueue, QUEUE_CHANGED_EVENT, QUEUE_KEY, STATUS, syncQueue } from '../utils/offlineSales';
+import { loadQueue, loadQueueAsync, QUEUE_CHANGED_EVENT, QUEUE_KEY, STATUS, syncQueue } from '../utils/offlineSales';
 import { sendQueuedSale } from '../api/offlineSalesApi';
 
 const RETRY_EVERY_MS = 30 * 1000;
@@ -16,6 +16,15 @@ export default function useOfflineSales(company, { onSynced } = {}) {
   const busy = useRef(false);
   const onSyncedRef = useRef(onSynced);
   onSyncedRef.current = onSynced;
+
+  // Hydrate queue from IndexedDB on startup (recovering entries that exceeded localStorage quota)
+  useEffect(() => {
+    let active = true;
+    loadQueueAsync().then((loaded) => {
+      if (active && Array.isArray(loaded)) setQueue(loaded);
+    });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const refresh = () => setQueue(loadQueue());

@@ -1,10 +1,8 @@
 /* eslint-disable no-restricted-globals */
 /**
- * Offline support, stage 1: keep the app itself on the device so it opens and
+ * Offline support: keep the app itself on the device so it opens and
  * runs its screens without internet, instead of the browser's "no connection"
- * page. Business data (sales, stock, customers) is never stored here: the till
- * still needs the connection to save a sale, and a shared device must not keep
- * one person's data for the next.
+ * page. Precaches app bundles, app icons, and product images.
  *
  * Built by react-scripts (Workbox InjectManifest) into build/service-worker.js.
  */
@@ -12,7 +10,7 @@ import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
+import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 
 clientsClaim();
 
@@ -31,13 +29,30 @@ registerRoute(({ request, url }) => {
   return !HAS_FILE_EXTENSION.test(url.pathname);
 }, createHandlerBoundToURL(`${process.env.PUBLIC_URL}/index.html`));
 
-// The app's own pictures (logos, illustrations), not product photos from the server.
+// The app's own pictures (logos, illustrations)
 registerRoute(
   ({ url }) => url.origin === self.location.origin && /\.(png|jpe?g|svg|webp|ico)$/i.test(url.pathname)
     && !SERVER_PATHS.some((p) => url.pathname.startsWith(`${p}/`)),
   new CacheFirst({
     cacheName: 'app-images',
     plugins: [new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 30 * 24 * 60 * 60 })],
+  })
+);
+
+// Product photos and uploaded media from the server (/files/...)
+// Uses StaleWhileRevalidate so cached pictures show immediately offline,
+// but refresh quietly when online.
+registerRoute(
+  ({ url }) => (url.pathname.startsWith('/files/') || url.pathname.startsWith('/assets/'))
+    && /\.(png|jpe?g|svg|webp|gif|avif)$/i.test(url.pathname),
+  new StaleWhileRevalidate({
+    cacheName: 'product-images',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 300,
+        maxAgeSeconds: 14 * 24 * 60 * 60, // 14 days
+      }),
+    ],
   })
 );
 

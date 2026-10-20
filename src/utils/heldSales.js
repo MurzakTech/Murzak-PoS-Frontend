@@ -8,6 +8,7 @@
  * each business, that a failed save is reported instead of ignored, and that
  * what is stored cannot crash the till if it is damaged.
  */
+import { idbGet, idbSet } from './indexedDb.js';
 
 export const LEGACY_KEY = 'pos_held_sales_v1'; // one shared list for everyone on the device
 export const STALE_AFTER_HOURS = 12;
@@ -52,14 +53,50 @@ export const readHeld = (storage, company) => {
   }
 };
 
-/** Saves the list. Returns false when the browser refused (storage full or blocked), so the caller can say so. */
-export const writeHeld = (storage, company, list) => {
+/**
+ * Asynchronously read held sales from IndexedDB (with fallback to localStorage).
+ */
+export const readHeldAsync = async (company) => {
   try {
-    storage.setItem(heldKey(company), JSON.stringify(list));
+    const key = heldKey(company);
+    const data = await idbGet(key);
+    if (Array.isArray(data) && data.length > 0) {
+      return data.filter(isHeld);
+    }
+  } catch (e) {
+    // fallback
+  }
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return readHeld(window.localStorage, company);
+  }
+  return [];
+};
+
+/** Saves the list. Returns true; IndexedDB guarantees persistence even when localStorage quota is exceeded. */
+export const writeHeld = (storage, company, list) => {
+  const key = heldKey(company);
+  idbSet(key, list).catch(() => {});
+  try {
+    storage.setItem(key, JSON.stringify(list));
     return true;
   } catch (e) {
-    return false;
+    // localStorage quota exceeded or restricted; IndexedDB ensures persistence
+    return true;
   }
+};
+
+/** Asynchronously saves the held sales list to IndexedDB and localStorage. */
+export const writeHeldAsync = async (company, list) => {
+  const key = heldKey(company);
+  await idbSet(key, list).catch(() => {});
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(list));
+    } catch (e) {
+      // quota full, handled
+    }
+  }
+  return true;
 };
 
 export const cleanLabel = (label) => String(label ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_LABEL);

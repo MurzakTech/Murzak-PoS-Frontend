@@ -92,7 +92,8 @@ import { getPosPaymentOptions } from '../../api/paymentGatewayApi';
 import OfflineSalesBar from './pos/OfflineSalesBar';
 import useOfflineSales from '../../hooks/useOfflineSales';
 import { enqueueSale, isConnectionProblem, loadQueue, offlineBlocker, queueRoom } from '../../utils/offlineSales';
-import { clearShift, loadCatalog, loadCatalogAsync, loadShift, saveCatalog, saveShift } from '../../utils/offlineTill';
+import { clearShift, loadCatalog, loadCatalogAsync, loadShift, saveCatalog, saveShift, decrementOfflineCatalogStock } from '../../utils/offlineTill';
+import { createOfflineCustomer, loadOfflineCustomers } from '../../utils/offlineCustomer';
 
 // Short id for one sale, sent to M-Pesa / Pesapal / PayPal so payments can be traced to it
 const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
@@ -1200,6 +1201,19 @@ const NewSale = () => {
         grandTotal,
         timestamp: new Date(),
       });
+      // Decrement stock in offline catalog and local state
+      decrementOfflineCatalogStock(userCompany, cart).catch(() => {});
+      setProductStocks((prev) => {
+        const next = { ...prev };
+        cart.forEach((item) => {
+          const code = item.item_code;
+          const wh = item.warehouse || defaultWarehouse;
+          if (code && wh && next[code] && typeof next[code][wh] === 'number') {
+            next[code] = { ...next[code], [wh]: Math.max(0, next[code][wh] - (Number(item.qty) || 0)) };
+          }
+        });
+        return next;
+      });
       setReceiptDialogOpen(true);
       setCart([]);
       setIsCheckoutMode(false);
@@ -1500,16 +1514,17 @@ const NewSale = () => {
     }
   }, [splitPayments, paymentMode, grandTotal]);
 
-  // Filter customers based on search term
+  // Filter customers based on search term (uses cached offline customers if Redux state is empty)
   const filteredCustomers = useMemo(() => {
-    if (!customerSearchTerm) return customers;
+    const list = (customers && customers.length > 0) ? customers : loadOfflineCustomers(userCompany);
+    if (!customerSearchTerm) return list;
     const searchLower = customerSearchTerm.toLowerCase();
-    return customers.filter(customer => 
+    return list.filter(customer => 
       (customer.customer_name || customer.name || '').toLowerCase().includes(searchLower) ||
       (customer.mobile_no || '').includes(searchLower) ||
       (customer.email_id || '').toLowerCase().includes(searchLower)
     );
-  }, [customers, customerSearchTerm]);
+  }, [customers, customerSearchTerm, userCompany]);
 
   // Handle customer selection
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
@@ -1550,6 +1565,24 @@ const NewSale = () => {
         severity: 'error',
         title: 'Error',
       }));
+      return;
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const offlineCust = createOfflineCustomer({
+        company: userCompany,
+        customer_name: data.customer_name,
+        mobile_no: data.mobile_no,
+        email_id: data.email_id,
+        customer_type: data.customer_type,
+      });
+      handleSelectCustomer(offlineCust);
+      resetCustomerForm();
+      setShowAddCustomerForm(false);
+      setCustomerDialogOpen(false);
+      setSnackbarMessage(`Customer "${data.customer_name}" saved offline for this till`);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
       return;
     }
 
