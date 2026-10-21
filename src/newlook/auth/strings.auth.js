@@ -25,6 +25,28 @@ const auth = {
     signedOutIdle: 'You were signed out because the screen was not used for a while. Sign in to carry on.',
   },
 
+  signUp: {
+    title: 'Start your shop',
+    subtitle: 'Free to start. Ready for your till in seconds.',
+    fullName: 'Your full name',
+    fullNameHint: 'First and last name, e.g. Sarah Mwangi',
+    shopName: 'Shop or business name',
+    shopNameHint: 'e.g. Sarah Minimart or Westlands Chemist',
+    email: 'Email address',
+    emailHint: 'Receipts and account notifications will be sent here',
+    phone: 'Phone number',
+    phoneHint: 'e.g. 0712 345 678 (optional)',
+    password: 'Password',
+    passwordHint: 'At least 8 characters with letters, a number & a symbol',
+    confirmPassword: 'Confirm password',
+    showPassword: 'Show password',
+    submit: 'Create shop & get started',
+    submitting: 'Setting up your shop...',
+    alreadyHaveAccount: 'Already have an account?',
+    signIn: 'Sign in to your shop',
+    termsIntro: 'By signing up, you agree to our terms and privacy policy.',
+  },
+
   code: {
     title: 'Enter your code',
     intro: 'Two-step sign-in is on for this account. Open your authenticator app and type the 6-digit code shown for Murzak POS.',
@@ -44,6 +66,15 @@ const auth = {
     codeShort: 'Enter all 6 digits of the code.',
     passwordMarked: 'Check your password.',
     codeMarked: 'Check the code.',
+    fullNameEmpty: 'Enter your full name.',
+    fullNameTwoParts: 'Enter both your first and last name (e.g. Sarah Mwangi).',
+    shopNameEmpty: 'Enter your shop or business name.',
+    emailEmpty: 'Enter your email address.',
+    emailBad: 'Enter a valid email address like name@example.com.',
+    phoneBad: 'Enter a valid Kenyan mobile number like 0712 345 678, or leave it blank.',
+    passwordComplexity: 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol (!@#$).',
+    confirmPasswordEmpty: 'Confirm your password.',
+    passwordMismatch: 'Passwords do not match.',
   },
 
   // What went wrong, in plain words, and what to do next. These replace whatever the server said.
@@ -60,6 +91,7 @@ const auth = {
     busy: 'Murzak is busy or being updated. Try again in a minute.',
     server: 'Something went wrong on our side. Try again in a minute, and email support if it keeps happening.',
     other: 'We could not sign you in. Try again, and email support if it keeps happening.',
+    signUpFailed: 'Could not create your shop account. Please check your information and try again.',
     dismiss: 'Dismiss this message',
   },
 

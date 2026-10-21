@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import { SkeletonText } from '../components/Skeleton';
@@ -49,7 +50,19 @@ const PaymentMethodsCard = ({ load = getPaymentMethods, save = setPaymentMethod 
           {methods.map((m) => (
             <li key={m.key} className="nl-settings-switch">
               <Switch label={m.label} checked={m.enabled} disabled={!isOwner || !m.available} onChange={change({ key: m.key })} />
-              {!m.available ? <p className="nl-settings-hint">{P.notSetUp}</p> : m.needs_code ? <p className="nl-settings-hint">{P.needsCode}</p> : null}
+              {!m.available ? (
+                <p className="nl-settings-hint">
+                  {P.notSetUp}
+                  {m.key === 'mpesa' && (
+                    <> &bull; <Link to="/settings/payment-gateways?legacy=1" className="nl-link">Set up M-Pesa</Link></>
+                  )}
+                  {m.key === 'credit' && (
+                    <> &bull; <Link to="/settings/payment-methods?legacy=1" className="nl-link">Set up Credit</Link></>
+                  )}
+                </p>
+              ) : m.needs_code ? (
+                <p className="nl-settings-hint">{P.needsCode}</p>
+              ) : null}
             </li>
           ))}
         </ul>

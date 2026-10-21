@@ -22,6 +22,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listCashAndBankAccounts } from '../../store/purchaseSlice';
 import { showNotification } from '../../store/notificationSlice';
 import PageHeader from '../../components/Layout/PageHeader';
+import { getUserCompany } from '../../utils/getUserCompany';
 import SectionCard from '../../components/Common/SectionCard';
 import {
   SAVED_SECRET,
@@ -130,7 +131,7 @@ const PaymentGateways = () => {
   const dispatch = useAppDispatch();
   const { cashBankAccounts } = useAppSelector((state) => state.purchase);
   const { user } = useAppSelector((state) => state.auth);
-  const company = user?.company || user?.custom_company || user?.company_name || user?.company_data?.name || user?.company_data?.company_name;
+  const company = getUserCompany(user);
 
   const [overview, setOverview] = useState(null);
   const [loadError, setLoadError] = useState('');

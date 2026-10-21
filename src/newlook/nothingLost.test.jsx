@@ -58,8 +58,8 @@ const ROUTES = [...new Set(flat(protectedRoutes).map((r) => r.path))];
 const live = (page) => BUILT_PAGES.includes(page.split('?')[0]);
 const realNewRoutes = newLookRoutes.filter((r) => !r.element.name || r.element.name !== 'PagePlaceholder').map((r) => r.path);
 const isRealNewPage = (page) => {
-  const full = page === '/' ? NEW_LOOK_PREFIX : `${NEW_LOOK_PREFIX}${page}`;
-  return realNewRoutes.some((route) => matchPath({ path: route, end: true }, full));
+  const target = page || '/';
+  return realNewRoutes.some((route) => matchPath({ path: route, end: true }, target));
 };
 const goes = (address) => {
   const [p, q] = address.split('?');
@@ -177,6 +177,7 @@ const STAYS = {
   '/settings/payment-matching': { from: '/settings/payment-matching', where: 'Settings, Advanced, Payment matching' },
   '/settings/sales-people': { from: '/settings/sales-people', where: 'Settings, Advanced, Sales people' },
   '/settings/new-look': { from: '/settings/new-look', where: 'Settings, Advanced, New look' },
+  '/till': { from: '/till', where: 'Go to till (top bar)' },
   '/reports/stock-movement': { from: '/reports/stock-movement', where: 'Reports, More reports' },
   '/reports/stock-movement/turnover': { from: '/reports/stock-movement/turnover', where: 'Reports, More reports' },
   '/reports/stock-movement/days-on-hand': { from: '/reports/stock-movement/days-on-hand', where: 'Reports, More reports' },
@@ -197,6 +198,7 @@ describe('2. Every screen of the current app opens a live New look page, or is r
 
   // Where a route goes: { kind: 'page', page } for a live New look page, or { kind: 'stays', stay } for a current screen
   const homeOf = (route) => {
+    if (isRealNewPage(route) && !STAYS[route]) return { kind: 'page', real: true, alsoListedAsStaying: false };
     const hit = goes(sampleOf(route));
     if (hit) return { kind: 'page', real: isRealNewPage(hit.to.replace(NEW_LOOK_PREFIX, '').split('?')[0] || '/'), alsoListedAsStaying: Boolean(STAYS[route]) };
     const stay = STAYS[route];
@@ -220,8 +222,11 @@ describe('3. Every item of the old menu has a place', () => {
   const top = protectedRoutes.filter((r) => !r.hideFromMenu);
   // The top-level menu entries and where each lives in the New look
   const MENU_HOME = {
+    '/': 'home',
     '/dashboard': 'home',
+    '/expenses': 'expenses',
     '/products': 'products',
+    '/appointments': 'appointments',
     '/sales': 'sales',
     '/warehouses': 'stock-levels',
     '/inventory': 'stock-levels',
