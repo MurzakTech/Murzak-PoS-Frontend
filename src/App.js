@@ -5,6 +5,7 @@ import { NewLookProvider } from './newlook/NewLookProvider';
 import NewLookGate from './newlook/NewLookGate';
 import UnitWordsLoader from './newlook/products/UnitWordsLoader';
 import { BrandProvider } from './newlook/brand/BrandProvider';
+import { ToastProvider } from './newlook/components';
 
 function App() {
   return (
@@ -12,7 +13,9 @@ function App() {
       <UnitWordsLoader />
       <BrandProvider>
         <NewLookGate>
+          <ToastProvider>
           <AppRouter />
+        </ToastProvider>
         </NewLookGate>
       </BrandProvider>
       <UpdateReadyNotice />
