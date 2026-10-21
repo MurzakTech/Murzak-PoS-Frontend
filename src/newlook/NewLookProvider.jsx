@@ -7,28 +7,23 @@ import { writeDeviceFlag } from './auth/deviceFlag';
 /**
  * Whether this shop is using the redesigned screens (the "New look").
  *
- * The truth is on the server, one switch per business, ON by default (an owner can switch it off). The last
- * answer is also kept on this device, so a till that opens without a connection shows the same look it showed
- * last time. An answer from the server always replaces the saved one. With no answer at all (the server could
- * not be asked and nothing is saved, for example a shop whose back end has not been updated yet), the look is
- * OFF, which is the app exactly as it was before the redesign, so nothing breaks on a shop that is not ready.
+ * The New look is ON by default everywhere across the application to bring uniformity.
+ * An owner can toggle it from settings. The setting is stored both in server per company
+ * and cached in localStorage.
  *
  * status: 'idle' (nobody signed in), 'loading' (asking the server and nothing saved yet),
- *         'ready' (known), 'error' (the server could not be asked; the saved answer, or off, is used)
+ *         'ready' (known), 'error' (the server could not be asked; on is used by default)
  */
 
 const CACHE_PREFIX = 'murzak_new_look:';
 
 const cacheKey = (company) => `${CACHE_PREFIX}${company || 'default'}`;
 
-// Only a saved "on" is trusted before the server answers. Before the New look became the default, every device saved "off" from the
-// server's answer, so a saved "off" may be left over from then and must not show the earlier screens for a moment (the "flash")
-// before the real answer arrives. A saved "off" therefore counts as not known yet: the app waits for the server (see NewLookGate).
 const readCache = (company) => {
   try {
-    return localStorage.getItem(cacheKey(company)) === '1' ? true : null;
+    return localStorage.getItem(cacheKey(company)) === '0' ? false : true;
   } catch (e) {
-    return null; // storage can be unavailable (private mode); carry on without it
+    return true; // storage can be unavailable (private mode); default to on
   }
 };
 
@@ -43,10 +38,10 @@ const writeCache = (company, enabled) => {
 };
 
 export const NewLookContext = createContext({
-  enabled: false,
-  status: 'idle',
+  enabled: true,
+  status: 'ready',
   company: null,
-  setEnabled: async () => false,
+  setEnabled: async () => true,
 });
 
 export const useNewLook = () => useContext(NewLookContext);
@@ -54,19 +49,19 @@ export const useNewLook = () => useContext(NewLookContext);
 export const NewLookProvider = ({ children }) => {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const company = isAuthenticated ? getUserCompany(user) : null;
-  const [state, setState] = useState({ enabled: false, status: 'idle' });
+  const [state, setState] = useState({ enabled: true, status: 'ready' });
   // A late answer for a person who has since signed out or changed shop must not be applied
   const current = useRef(null);
 
   useEffect(() => {
     current.current = isAuthenticated ? company || 'default' : null;
     if (!isAuthenticated) {
-      setState({ enabled: false, status: 'idle' });
+      setState({ enabled: true, status: 'ready' });
       return undefined;
     }
     const asked = current.current;
     const saved = readCache(company);
-    setState(saved === null ? { enabled: false, status: 'loading' } : { enabled: saved, status: 'ready' });
+    setState({ enabled: saved !== false, status: 'ready' });
     let cancelled = false;
     getNewLook(company)
       .then((enabled) => {
@@ -76,8 +71,8 @@ export const NewLookProvider = ({ children }) => {
       })
       .catch(() => {
         if (cancelled || current.current !== asked) return;
-        // Keep what this device last knew (or off); the page can say it could not check
-        setState((prev) => ({ enabled: prev.enabled, status: 'error' }));
+        // Keep what this device last knew (or true by default)
+        setState((prev) => ({ enabled: prev.enabled ?? true, status: 'error' }));
       });
     return () => {
       cancelled = true;

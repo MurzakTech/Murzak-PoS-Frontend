@@ -227,6 +227,16 @@ const ForgotPassword = () => {
                   error={problems.password}
                   disabled={busy}
                 />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-1)' }}>
+                  <button
+                    type="button"
+                    className="nl-auth__link"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 'var(--caption-size)' }}
+                    onClick={() => setShowPassword((s) => !s)}
+                  >
+                    {showPassword ? 'Hide password' : 'Show password'}
+                  </button>
+                </div>
                 <PasswordChecklist password={password} />
               </div>
               <Button type="submit" size="till" loading={busy} className="nl-auth__submit">
