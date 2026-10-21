@@ -12,9 +12,9 @@ import { getExpiryAlerts } from '../../api/expiryApi';
 import { money } from '../Sales/pos/money';
 
 export const STATUS_COLORS = {
-  Expired: '#EF4444',
-  'Expires within 7 days': '#F59E0B',
-  'Expiring soon': '#3B82F6',
+  Expired: 'error.main',
+  'Expires within 7 days': 'warning.main',
+  'Expiring soon': 'info.main',
 };
 
 const WINDOWS = [7, 14, 30, 60, 90];
@@ -159,7 +159,7 @@ const ExpiryAlerts = () => {
       header: 'Status',
       width: '12%',
       render: (value) => (
-        <StatusChip status={(value || '').toLowerCase()} label={value} color={STATUS_COLORS[value] || '#64748B'} />
+        <StatusChip status={(value || '').toLowerCase()} label={value} />
       ),
     },
     {

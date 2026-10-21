@@ -19,6 +19,7 @@ import { useSyncExternalStore } from 'react';
 //   /reports/stock-movement, /reports/performance  they only link to the current screens
 export const BUILT_PAGES = [
   '/',
+  '/appointments',
   // Sales (P3-8)
   '/sales',
   '/sales/unpaid',

@@ -114,7 +114,7 @@ const Shot = ({ src, alt, width, height, eager }) => (
 const BrowserFrame = ({ children, sx }) => (
   <Box sx={{ borderRadius: 3, overflow: 'hidden', border: 1, borderColor: 'divider', bgcolor: 'background.paper', boxShadow: (t) => `0 24px 60px ${alpha(t.palette.common.black, t.palette.mode === 'dark' ? 0.55 : 0.16)}`, ...sx }}>
     <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', px: 1.5, height: 28, borderBottom: 1, borderColor: 'divider', bgcolor: (t) => t.custom.surface.subtle }}>
-      {['#f87171', '#fbbf24', '#4ade80'].map((c) => (
+      {['error.main', 'warning.main', 'success.main'].map((c) => (
         <Box key={c} sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: c }} />
       ))}
     </Box>
@@ -124,8 +124,8 @@ const BrowserFrame = ({ children, sx }) => (
 
 // A phone around a screenshot
 const PhoneFrame = ({ children, sx }) => (
-  <Box sx={{ p: '7px', borderRadius: '30px', bgcolor: '#0f1222', boxShadow: (t) => `0 24px 50px ${alpha(t.palette.common.black, 0.35)}`, ...sx }}>
-    <Box sx={{ borderRadius: '24px', overflow: 'hidden', bgcolor: '#fff' }}>{children}</Box>
+  <Box sx={{ p: '7px', borderRadius: '30px', bgcolor: 'grey.900', boxShadow: (t) => `0 24px 50px ${alpha(t.palette.common.black, 0.35)}`, ...sx }}>
+    <Box sx={{ borderRadius: '24px', overflow: 'hidden', bgcolor: 'common.white' }}>{children}</Box>
   </Box>
 );
 
@@ -188,8 +188,8 @@ const ProductStrip = () => {
       aria-hidden="true"
       sx={{
         overflow: 'hidden',
-        maskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)',
-        WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)',
+        maskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)',
+        WebkitMaskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)',
       }}
     >
       <Box sx={{ display: 'flex', gap: 2, width: 'max-content', animation: 'murzak-marquee 60s linear infinite', ...noMotion, '&:hover': { animationPlayState: 'paused' } }}>
@@ -235,8 +235,8 @@ const Spotlight = ({ eyebrow, title, text, points, visual, flip }) => (
 
 // A caption sitting on the bottom of a photo
 const PhotoCaption = ({ children }) => (
-  <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, px: 2, pb: 1.75, pt: 6, color: '#fff', background: 'linear-gradient(to top, rgba(10,12,30,.72), rgba(10,12,30,0))' }}>
-    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'inherit', textShadow: '0 1px 6px rgba(0,0,0,.35)' }}>{children}</Typography>
+  <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, px: 2, pb: 1.75, pt: 6, color: 'common.white', background: (t) => `linear-gradient(to top, ${alpha(t.palette.common.black, 0.72)}, ${alpha(t.palette.common.black, 0)})` }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'inherit', textShadow: (t) => `0 1px 6px ${alpha(t.palette.common.black, 0.35)}` }}>{children}</Typography>
   </Box>
 );
 
@@ -459,7 +459,7 @@ const Landing = () => {
           {STEPS.map(({ icon: Icon, title, text }, i) => (
             <Card key={title} sx={{ p: 3, bgcolor: 'background.default' }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 3, display: 'grid', placeItems: 'center', color: '#fff', background: (t) => t.custom.gradient }}>
+                <Box sx={{ width: 44, height: 44, borderRadius: 3, display: 'grid', placeItems: 'center', color: 'common.white', background: (t) => t.custom.gradient }}>
                   <Icon />
                 </Box>
                 <Typography variant="overline" color="text.secondary">
@@ -519,18 +519,18 @@ const Landing = () => {
 
       {/* Closing call to action */}
       <Section sx={{ pt: 0 }}>
-        <Box sx={{ position: 'relative', overflow: 'hidden', textAlign: 'center', p: { xs: 4, md: 7 }, borderRadius: 5, color: '#fff', background: (t) => t.custom.gradient }}>
+        <Box sx={{ position: 'relative', overflow: 'hidden', textAlign: 'center', p: { xs: 4, md: 7 }, borderRadius: 5, color: 'common.white', background: (t) => t.custom.gradient }}>
           {/* Optional photo behind the colour; nothing shows until cta-banner has been added */}
           <Photo name="cta-banner" ratio="auto" position="50% 40%" sx={{ position: 'absolute', inset: 0, opacity: 0.3, mixBlendMode: 'luminosity', bgcolor: 'transparent' }} />
-          <Box aria-hidden="true" sx={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', top: -120, right: -60, bgcolor: 'rgba(255,255,255,.12)' }} />
-          <Box aria-hidden="true" sx={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', bottom: -90, left: -40, bgcolor: 'rgba(255,255,255,.1)' }} />
-          <Typography variant="h2" sx={{ position: 'relative', color: '#fff', mb: 1.5 }}>
+          <Box aria-hidden="true" sx={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', top: -120, right: -60, bgcolor: (t) => alpha(t.palette.common.white, 0.12) }} />
+          <Box aria-hidden="true" sx={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', bottom: -90, left: -40, bgcolor: (t) => alpha(t.palette.common.white, 0.1) }} />
+          <Typography variant="h2" sx={{ position: 'relative', color: 'common.white', mb: 1.5 }}>
             Your shop, under control by this evening
           </Typography>
           <Typography variant="body1" sx={{ position: 'relative', opacity: 0.9, mb: 3.5, maxWidth: 520, mx: 'auto' }}>
             Create your account, load a starter catalogue for your industry and ring up your first sale today.
           </Typography>
-          <Button size="large" variant="contained" endIcon={<ArrowForward />} onClick={() => navigate('/register')} sx={{ position: 'relative', bgcolor: '#fff', color: 'primary.dark', '&:hover': { bgcolor: '#f1f1ff' } }}>
+          <Button size="large" variant="contained" endIcon={<ArrowForward />} onClick={() => navigate('/register')} sx={{ position: 'relative', bgcolor: 'common.white', color: 'primary.dark', '&:hover': { bgcolor: (t) => alpha(t.palette.common.white, 0.9) } }}>
             Create your account
           </Button>
         </Box>

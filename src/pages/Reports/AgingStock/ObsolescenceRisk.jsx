@@ -242,7 +242,7 @@ const ObsolescenceRisk = () => {
                 {
                   dataKey: 'risk_score',
                   name: 'Risk Score',
-                  color: '#d32f2f',
+                  color: 'var(--bad)',
                   format: 'number',
                 },
               ]}

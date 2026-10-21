@@ -149,7 +149,7 @@ const TurnoverReport = () => {
                 {
                   dataKey: 'turnover_rate',
                   name: 'Turnover Rate',
-                  color: '#1976d2',
+                  color: 'var(--brand)',
                   format: 'number',
                 },
               ]}
@@ -168,7 +168,7 @@ const TurnoverReport = () => {
                 {
                   dataKey: 'turnover_days',
                   name: 'Turnover Days',
-                  color: '#ff9800',
+                  color: 'var(--series-2)',
                   format: 'number',
                 },
               ]}

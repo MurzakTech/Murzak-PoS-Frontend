@@ -9,6 +9,7 @@ import {
   CardContent,
   CardActionArea,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Autorenew,
   CalendarToday,
@@ -27,7 +28,7 @@ const StockMovement = () => {
       title: 'Inventory Turnover',
       description: 'Calculate turnover rates for inventory items to identify fast and slow-moving stock',
       icon: Autorenew,
-      color: '#1976d2',
+      color: 'primary.main',
       path: '/reports/stock-movement/turnover',
       features: [
         'Turnover rate calculation',
@@ -40,7 +41,7 @@ const StockMovement = () => {
       title: 'Days on Hand',
       description: 'Calculate days of stock remaining based on current stock and average consumption',
       icon: CalendarToday,
-      color: '#2e7d32',
+      color: 'success.main',
       path: '/reports/stock-movement/days-on-hand',
       features: [
         'Current stock levels',
@@ -53,7 +54,7 @@ const StockMovement = () => {
       title: 'Movement Patterns',
       description: 'Analyze movement trends and patterns over time including seasonal and forecast analysis',
       icon: ShowChart,
-      color: '#ed6c02',
+      color: 'warning.main',
       path: '/reports/stock-movement/movement-patterns',
       features: [
         'Trend analysis',
@@ -117,7 +118,11 @@ const StockMovement = () => {
                   >
                     <Box
                       sx={{
-                        bgcolor: `${report.color}15`,
+                        bgcolor: (theme) => {
+                          const parts = report.color.split('.');
+                          const c = parts.length === 2 ? theme.palette[parts[0]]?.[parts[1]] : report.color;
+                          return alpha(c || theme.palette.primary.main, 0.12);
+                        },
                         color: report.color,
                         borderRadius: 2,
                         p: 1.5,

@@ -184,18 +184,18 @@ const InventoryDiscounts = () => {
 
   const getRuleStatus = (rule) => {
     if (rule.is_active === 0 || rule.is_active === false) {
-      return { label: 'Inactive', color: '#64748B' };
+      return { label: 'Inactive' };
     }
     
     const today = new Date();
     if (rule.valid_from || rule.valid_upto) {
       const isValid = isDiscountRuleValidForDate(rule, today);
       if (!isValid) {
-        return { label: 'Expired', color: '#EF4444' };
+        return { label: 'Expired' };
       }
     }
     
-    return { label: 'Active', color: '#10B981' };
+    return { label: 'Active' };
   };
 
   // Prepare table columns
@@ -297,7 +297,6 @@ const InventoryDiscounts = () => {
           <StatusChip
             status={status.label.toLowerCase().replace(/\s+/g, '_')}
             label={status.label}
-            color={status.color}
           />
         );
       },

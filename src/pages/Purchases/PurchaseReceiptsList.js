@@ -110,20 +110,6 @@ const PurchaseReceiptsList = () => {
     dispatch(listPurchaseReceipts(params));
   };
 
-  // Helper function for doc status color
-  const getDocStatusColor = (docstatus) => {
-    switch (docstatus) {
-      case 0:
-        return '#64748B'; // default gray
-      case 1:
-        return '#10B981'; // success green
-      case 2:
-        return '#EF4444'; // error red
-      default:
-        return undefined;
-    }
-  };
-
   // Prepare table columns
   const columns = useMemo(() => [
     {
@@ -158,7 +144,6 @@ const PurchaseReceiptsList = () => {
           <StatusChip
             status={labels[value]?.toLowerCase() || 'unknown'}
             label={labels[value] || 'Unknown'}
-            color={getDocStatusColor(value)}
           />
         );
       },

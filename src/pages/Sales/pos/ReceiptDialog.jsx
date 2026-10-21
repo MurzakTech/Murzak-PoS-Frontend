@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert, Box, Button, Dialog, DialogActions, Divider, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { CheckCircle, Print, Receipt } from '@mui/icons-material';
 import { fmt, money, round2 } from './money';
 import PrintButton from '../../../components/Common/PrintButton';
@@ -19,11 +20,11 @@ export const invoiceDoctype = (invoice) =>
 const PRINT_CSS = `
 @media print {
   @page { margin: 3mm; }
-  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  html, body { height: auto !important; overflow: visible !important; background: white !important; }
   #root, .MuiBackdrop-root, .no-print { display: none !important; }
-  .MuiDialog-root, .MuiDialog-container, .MuiDialog-paper { position: static !important; display: block !important; overflow: visible !important; box-shadow: none !important; max-height: none !important; height: auto !important; margin: 0 !important; background: #fff !important; transform: none !important; }
-  .receipt-printable { width: 76mm !important; max-width: 76mm !important; padding: 0 !important; margin: 0 !important; color: #000 !important; }
-  .receipt-printable * { color: #000 !important; }
+  .MuiDialog-root, .MuiDialog-container, .MuiDialog-paper { position: static !important; display: block !important; overflow: visible !important; box-shadow: none !important; max-height: none !important; height: auto !important; margin: 0 !important; background: white !important; transform: none !important; }
+  .receipt-printable { width: 76mm !important; max-width: 76mm !important; padding: 0 !important; margin: 0 !important; color: black !important; }
+  .receipt-printable * { color: black !important; }
 }`;
 
 const Row = ({ label, value, bold, tone }) => (
@@ -57,7 +58,7 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
         <CheckCircle sx={{ fontSize: 48, color: 'success.main' }} />
         <Typography id="receipt-title" variant="h4" sx={{ mt: 0.5 }}>Sale complete</Typography>
         {change > 0 ? (
-          <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 3, bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(74,222,128,.14)' : 'rgba(34,197,94,.12)') }}>
+          <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 3, bgcolor: (t) => alpha(t.palette.success.main, t.palette.mode === 'dark' ? 0.14 : 0.12) }}>
             <Typography variant="overline" color="text.secondary">Give change</Typography>
             <Typography variant="h2" sx={{ fontWeight: 800, color: 'success.main', fontVariantNumeric: 'tabular-nums' }}>{money(change, currency)}</Typography>
           </Box>

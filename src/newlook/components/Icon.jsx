@@ -60,6 +60,12 @@ const SHAPES = {
   ),
   menu: <path d="M3 5h12M3 9h12M3 13h12" />,
   home: <path d="M3 8.5L9 3.5l6 5V15a.5.5 0 0 1-.5.5H11v-4H7v4H3.5A.5.5 0 0 1 3 15V8.5z" />,
+  calendar: (
+    <>
+      <rect x="3" y="4" width="12" height="11" rx="1.5" />
+      <path d="M3 7.5h12M6 2.5v3M12 2.5v3" />
+    </>
+  ),
   receipt: (
     <>
       <path d="M4.5 2.5h9v13l-2-1.3-2.5 1.3-2.5-1.3-2 1.3v-13z" />

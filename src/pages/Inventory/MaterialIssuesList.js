@@ -24,6 +24,7 @@ import {
   IconButton,
   Collapse,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ArrowBack, Visibility, FilterList, Clear, Add } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -261,7 +262,7 @@ const MaterialIssuesList = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                backgroundColor: (t) => alpha(t.palette.background.paper, 0.7),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -112,7 +112,7 @@ const Security = () => {
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>1. Scan this code with your authenticator app</Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
-              <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 1, width: 'fit-content', border: 1, borderColor: 'divider' }}>
+              <Box sx={{ p: 1.5, bgcolor: 'common.white', borderRadius: 1, width: 'fit-content', border: 1, borderColor: 'divider' }}>
                 <QRCodeSVG value={setup.otpauth_uri} size={168} />
               </Box>
               <Box>

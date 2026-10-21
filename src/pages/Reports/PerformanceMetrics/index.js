@@ -9,6 +9,7 @@ import {
   CardContent,
   CardActionArea,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   CheckCircle,
   CompareArrows,
@@ -28,7 +29,7 @@ const PerformanceMetrics = () => {
       title: 'Inventory Accuracy',
       description: 'Get stock accuracy metrics comparing book vs actual inventory counts',
       icon: CheckCircle,
-      color: '#2e7d32',
+      color: 'success.main',
       path: '/reports/performance-metrics/accuracy',
       features: [
         'Accuracy rate calculation',
@@ -41,7 +42,7 @@ const PerformanceMetrics = () => {
       title: 'Inventory Variance',
       description: 'Get detailed variance analysis from stock counts with threshold filtering',
       icon: CompareArrows,
-      color: '#1976d2',
+      color: 'primary.main',
       path: '/reports/performance-metrics/variance',
       features: [
         'Book vs counted quantities',
@@ -54,7 +55,7 @@ const PerformanceMetrics = () => {
       title: 'Adjustment Trends',
       description: 'Track trends in stock adjustments over time with increase/decrease analysis',
       icon: TrendingUp,
-      color: '#ed6c02',
+      color: 'warning.main',
       path: '/reports/performance-metrics/adjustment-trends',
       features: [
         'Adjustment count trends',
@@ -67,7 +68,7 @@ const PerformanceMetrics = () => {
       title: 'Transfer Efficiency',
       description: 'Get metrics on stock transfer performance including completion rates and accuracy',
       icon: LocalShipping,
-      color: '#9c27b0',
+      color: 'secondary.main',
       path: '/reports/performance-metrics/transfer-efficiency',
       features: [
         'Completion rate tracking',
@@ -131,7 +132,11 @@ const PerformanceMetrics = () => {
                   >
                     <Box
                       sx={{
-                        bgcolor: `${report.color}15`,
+                        bgcolor: (theme) => {
+                          const parts = report.color.split('.');
+                          const c = parts.length === 2 ? theme.palette[parts[0]]?.[parts[1]] : report.color;
+                          return alpha(c || theme.palette.primary.main, 0.12);
+                        },
                         color: report.color,
                         borderRadius: 2,
                         p: 1.5,

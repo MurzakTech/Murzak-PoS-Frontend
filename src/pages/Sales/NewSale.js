@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Alert, Backdrop, Box, CircularProgress, Drawer, IconButton, Snackbar, Typography, useMediaQuery } from '@mui/material';
@@ -79,6 +79,8 @@ import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
 import KitchenTicketDialog from './pos/KitchenTicketDialog';
 import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import PrescriptionDialog from './pos/PrescriptionDialog';
+import ClinicalPrescriptionModal from './pos/ClinicalPrescriptionModal';
+import { recordDispense } from '../../api/pharmacyHealthApi';
 import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
@@ -165,6 +167,7 @@ const exactCodeMatch = (p, t) => (p.item_code || '').toLowerCase() === t || barc
 
 const NewSale = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const { mode: themeMode, toggleColorMode } = useThemeMode();
 
@@ -290,6 +293,7 @@ const NewSale = () => {
   // Prescription-only medicines on the sale: who it is for and who prescribed it (kept on the invoice)
   const [dispensing, setDispensing] = useState(null);
   const [rxOpen, setRxOpen] = useState(false);
+  const [clinicalRxOpen, setClinicalRxOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const { enabled: newLook } = useNewLook(); // the redesigned till pieces show only while the shop's New look is on
   // New look: a class on the page body, so the keyboard focus ring (till-controls.css) also reaches dialogs and menus that open outside the till
@@ -307,6 +311,72 @@ const NewSale = () => {
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
   const [showPictures, setShowPictures] = useState(readShowPictures);
   
+  // Ingest appointment cart or clinical prescription cart from navigation
+  useEffect(() => {
+    const apt = location.state?.appointmentCart;
+    if (apt) {
+      if (apt.customer_name) {
+        setCustomer(apt.customer_name);
+      }
+      const staffMember = (apt.items && apt.items[0]?.staff) || apt.staff;
+      if (staffMember) {
+        setSalesPerson(staffMember);
+      }
+      const incomingItems = apt.items || apt.services || [];
+      if (Array.isArray(incomingItems) && incomingItems.length > 0) {
+        setCart((prev) => {
+          const formatted = incomingItems.map((item) => ({
+            item_code: item.item_code,
+            item_name: item.item_name || item.item_code,
+            qty: Number(item.qty) || 1,
+            rate: Number(item.rate) || 0,
+            uom: 'Nos',
+            warehouse: defaultWarehouse,
+            description: item.description || '',
+            subtotal: (Number(item.qty) || 1) * (Number(item.rate) || 0),
+            staff: item.staff || staffMember || '',
+            discount_amount: 0,
+          }));
+          return [...prev, ...formatted];
+        });
+      }
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+
+    const rx = location.state?.prescriptionCart;
+    if (rx) {
+      if (rx.patient_name) {
+        setCustomer(rx.patient_name);
+      }
+      setDispensing({
+        patient: rx.patient_name || '',
+        prescriber: rx.doctor || '',
+        reference: rx.reference || '',
+      });
+      const incomingItems = rx.items || [];
+      if (Array.isArray(incomingItems) && incomingItems.length > 0) {
+        setCart((prev) => {
+          const formatted = incomingItems.map((item) => ({
+            item_code: item.item_code,
+            item_name: item.item_name || item.item_code,
+            qty: Number(item.qty) || 1,
+            rate: Number(item.rate) || 0,
+            uom: 'Nos',
+            warehouse: defaultWarehouse,
+            batch_no: item.batch_no || '',
+            expiry_date: item.expiry_date || '',
+            prescription_only: true,
+            description: item.dosage ? `Dosage: ${item.dosage}` : '',
+            subtotal: (Number(item.qty) || 1) * (Number(item.rate) || 0),
+            discount_amount: 0,
+          }));
+          return [...prev, ...formatted];
+        });
+      }
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, defaultWarehouse, navigate, location.pathname]);
+
   // Loyalty redemption state
   const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState(0);
   const [loyaltyDiscountAmount, setLoyaltyDiscountAmount] = useState(0);
@@ -1252,6 +1322,21 @@ const NewSale = () => {
           if (result.type === 'sales/createSalesInvoice/fulfilled') {
             const createdInvoice = result.payload.salesInvoice || result.payload.data;
             setCompletedInvoice(createdInvoice);
+            if (dispensing && isDispensingComplete(dispensing)) {
+              recordDispense({
+                patient_name: dispensing.patient,
+                prescriber: dispensing.prescriber,
+                prescription_reference: dispensing.reference,
+                invoice_id: createdInvoice?.name || createdInvoice?.id,
+                items: cart.filter(isPrescriptionOnly).map((i) => ({
+                  item_code: i.item_code,
+                  item_name: i.item_name,
+                  qty: i.qty,
+                  batch_no: i.batch_no || '',
+                })),
+                company: userCompany,
+              }).catch(() => {});
+            }
             // Store sale data for receipt before clearing cart
             setCompletedSaleData({
               items: cart,
@@ -2135,6 +2220,7 @@ const NewSale = () => {
       kitchenPending={kitchenPending}
       onSendKitchen={startSend}
       onEditNote={setNoteCode}
+      onOpenClinicalRx={() => setClinicalRxOpen(true)}
     />
   );
 
@@ -2454,6 +2540,25 @@ const NewSale = () => {
         }}
       />
 
+      <ClinicalPrescriptionModal
+        open={clinicalRxOpen}
+        onClose={() => setClinicalRxOpen(false)}
+        defaultWarehouse={defaultWarehouse}
+        onLoadPrescriptionToCart={(rxData) => {
+          if (rxData.patient_name) {
+            setCustomer(rxData.patient_name);
+          }
+          setDispensing({
+            patient: rxData.patient_name || '',
+            prescriber: rxData.doctor || '',
+            reference: rxData.reference || '',
+          });
+          if (Array.isArray(rxData.items) && rxData.items.length > 0) {
+            setCart((prev) => [...prev, ...rxData.items]);
+          }
+        }}
+      />
+
       <ReadyTicketsDialog open={readyOpen} tickets={kitchenTickets.ready} onServe={serveTicket} onClose={() => setReadyOpen(false)} />
 
       <UnsentItemsDialog
@@ -2568,7 +2673,7 @@ const NewSale = () => {
         </Alert>
       </Snackbar>
 
-      <Backdrop sx={{ color: '#fff', zIndex: (t) => t.zIndex.modal + 1 }} open={isCreatingInvoice}>
+      <Backdrop sx={{ color: 'common.white', zIndex: (t) => t.zIndex.modal + 1 }} open={isCreatingInvoice}>
         <CircularProgress color="inherit" />
       </Backdrop>
     </Box>

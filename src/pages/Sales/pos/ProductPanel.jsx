@@ -114,7 +114,7 @@ const ProductTile = React.memo(({ product, price, originalPrice, discountLabel, 
       {cartQty > 0 && (
         <Box
           aria-hidden="true"
-          sx={{ position: 'absolute', top: 8, right: 8, minWidth: 26, height: 26, px: 0.75, borderRadius: 999, display: 'grid', placeItems: 'center', bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 800, fontSize: '0.8125rem', boxShadow: '0 0 0 2px rgba(255,255,255,.9)' }}
+          sx={{ position: 'absolute', top: 8, right: 8, minWidth: 26, height: 26, px: 0.75, borderRadius: 999, display: 'grid', placeItems: 'center', bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 800, fontSize: '0.8125rem', boxShadow: (t) => `0 0 0 2px ${alpha(t.palette.common.white, 0.9)}` }}
         >
           {cartQty}
         </Box>

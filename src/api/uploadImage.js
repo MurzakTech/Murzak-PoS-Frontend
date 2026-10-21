@@ -40,7 +40,7 @@ export const shrinkImage = async (file) => {
   canvas.height = Math.round(img.naturalHeight * ratio);
   const ctx = canvas.getContext('2d');
   // White behind transparent PNGs, otherwise they turn black as JPEG
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 

@@ -96,19 +96,19 @@ const InventorySummary = () => {
             value: data ? data.length : 0,
             label: 'Total Warehouses',
             icon: Inventory2,
-            color: '#1976d2',
+            color: 'primary.main',
           },
           {
             value: formatNumber(totals.totalQty),
             label: 'Total Quantity',
             icon: ShoppingCart,
-            color: '#2e7d32',
+            color: 'success.main',
           },
           {
             value: formatCurrency(totals.totalValue),
             label: 'Total Value',
             icon: AttachMoney,
-            color: '#ed6c02',
+            color: 'warning.main',
           },
         ]}
         loading={loading && !data}

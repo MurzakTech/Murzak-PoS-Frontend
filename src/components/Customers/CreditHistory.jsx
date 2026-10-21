@@ -20,6 +20,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { getCustomerCreditHistory } from '../../store/customerSlice';
 
@@ -224,7 +225,7 @@ const CreditHistory = ({ customer, company, onRefresh }) => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.6)',
+              backgroundColor: (t) => alpha(t.palette.background.paper, 0.6),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

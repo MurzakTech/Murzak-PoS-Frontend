@@ -10,6 +10,7 @@ import {
   CardActionArea,
   Paper,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Category,
   CompareArrows,
@@ -28,7 +29,7 @@ const InventoryValuation = () => {
       title: 'Value by Category',
       description: 'View inventory value breakdown by item category/group',
       icon: Category,
-      color: '#2e7d32',
+      color: 'success.main',
       path: '/reports/inventory-valuation/value-by-category',
       features: [
         'Total value by category',
@@ -41,7 +42,7 @@ const InventoryValuation = () => {
       title: 'Cost Method Comparison',
       description: 'Compare inventory valuation using different cost methods (FIFO, LIFO, Weighted Average)',
       icon: CompareArrows,
-      color: '#1976d2',
+      color: 'primary.main',
       path: '/reports/inventory-valuation/cost-method-comparison',
       features: [
         'FIFO valuation',
@@ -54,7 +55,7 @@ const InventoryValuation = () => {
       title: 'Value Trends',
       description: 'Track historical inventory values over time with period grouping',
       icon: TrendingUp,
-      color: '#ed6c02',
+      color: 'warning.main',
       path: '/reports/inventory-valuation/value-trends',
       features: [
         'Daily/Weekly/Monthly trends',
@@ -118,7 +119,11 @@ const InventoryValuation = () => {
                   >
                     <Box
                       sx={{
-                        bgcolor: `${report.color}15`,
+                        bgcolor: (theme) => {
+                          const parts = report.color.split('.');
+                          const c = parts.length === 2 ? theme.palette[parts[0]]?.[parts[1]] : report.color;
+                          return alpha(c || theme.palette.primary.main, 0.12);
+                        },
                         color: report.color,
                         borderRadius: 2,
                         p: 1.5,

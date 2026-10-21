@@ -425,6 +425,9 @@ export const REDIRECTS = [
 
   // Outside the redesign
   { from: '/', to: null, status: 'keep', note: 'Landing or sign-in, not part of the redesign.' },
+  { from: '/till', to: null, status: 'keep', note: 'Till stays on the till screen.' },
+  { from: '/expenses', to: '/expenses', status: 'sure', note: 'Expenses page.' },
+  { from: '/appointments', to: '/appointments', status: 'sure', note: 'Appointments page for salon, barber and service bookings.' },
   { from: '/login', to: null, status: 'keep' },
   { from: '/register', to: null, status: 'keep' },
   { from: '/forgot-password', to: null, status: 'keep' },
@@ -450,6 +453,7 @@ const TRACKS_EXPIRY = 'tracks-expiry';
 
 const PAGES = [
   { path: '/', title: 'Home' },
+  { path: '/appointments', title: 'Appointments' },
   { path: '/till', title: 'Till' },
 
   { path: '/sales', title: 'Sales' },

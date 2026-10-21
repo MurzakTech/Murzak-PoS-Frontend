@@ -75,7 +75,7 @@ const MobileBottomNav = ({ pathname, onNavigate, onMore, moreOpen }) => {
                   borderRadius: 999,
                   display: 'grid',
                   placeItems: 'center',
-                  color: '#fff',
+                  color: 'common.white',
                   background: (t) => t.custom.gradient,
                   boxShadow: (t) => `0 4px 12px ${alpha(t.palette.primary.main, 0.35)}`,
                 }}

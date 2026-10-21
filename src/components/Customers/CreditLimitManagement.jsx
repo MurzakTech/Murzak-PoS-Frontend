@@ -171,11 +171,11 @@ const CreditLimitManagement = ({ customer, company, onUpdate }) => {
 
   // Get utilization color for display
   const getUtilizationDisplayColor = (percent) => {
-    if (!percent && percent !== 0) return '#757575';
-    if (percent > 100) return '#d32f2f'; // Red - over limit
-    if (percent > 80) return '#ed6c02'; // Orange - high
-    if (percent > 50) return '#0288d1'; // Blue - medium
-    return '#2e7d32'; // Green - low
+    if (!percent && percent !== 0) return 'text.secondary';
+    if (percent > 100) return 'error.main'; // Red - over limit
+    if (percent > 80) return 'warning.main'; // Orange - high
+    if (percent > 50) return 'info.main'; // Blue - medium
+    return 'success.main'; // Green - low
   };
 
   if (isLoadingCreditLimit && !creditLimit) {

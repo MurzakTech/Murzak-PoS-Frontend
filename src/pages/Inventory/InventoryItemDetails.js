@@ -29,6 +29,7 @@ import {
   Autocomplete,
   Chip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Search, Clear, Edit, Visibility, ArrowBack } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -275,7 +276,7 @@ const InventoryItemDetails = () => {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                backgroundColor: (t) => alpha(t.palette.background.paper, 0.7),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

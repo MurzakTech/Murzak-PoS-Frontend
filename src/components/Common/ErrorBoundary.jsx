@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ErrorOutline, Refresh, Home } from '@mui/icons-material';
 
 /**
@@ -58,7 +59,7 @@ class ErrorBoundary extends React.Component {
               display: 'grid',
               placeItems: 'center',
               color: 'error.main',
-              bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(248,113,113,.14)' : 'rgba(220,38,38,.08)'),
+              bgcolor: (t) => alpha(t.palette.error.main, t.palette.mode === 'dark' ? 0.14 : 0.08),
             }}
           >
             <ErrorOutline sx={{ fontSize: 32 }} />

@@ -85,6 +85,9 @@ const getStockLevelPercentage = (actualQty, maxQty) => {
 
 const StatCard = ({ title, value, subtitle, icon, color, trend, trendValue, vector, loading = false, compact = false }) => {
   const theme = useTheme();
+  const cardColor = typeof color === 'string' && color.includes('.')
+    ? color.split('.').reduce((obj, key) => obj?.[key], theme.palette) || theme.palette.primary.main
+    : (color || theme.palette.primary.main);
 
   return (
     <Card
@@ -110,18 +113,18 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, trendValue, vect
         height: '100%',
         minHeight: compact ? 120 : 160, // Reduced height for compact
         borderRadius: compact ? 2 : 3, // Smaller border radius
-        boxShadow: '0 4px 16px rgba(0,0,0,0.04)', // Reduced shadow
+        boxShadow: theme.shadows[compact ? 1 : 2],
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         background: theme.palette.mode === 'dark'
           ? theme.palette.background.paper
-          : 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+          : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.action.hover} 100%)`,
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', // Faster transition
         '&:hover': {
           transform: compact ? 'translateY(-2px)' : 'translateY(-4px)', // Smaller hover lift
-          boxShadow: compact ? '0 8px 24px rgba(0,0,0,0.06)' : '0 16px 48px rgba(0,0,0,0.08)',
-          borderColor: alpha(color, 0.3),
+          boxShadow: theme.shadows[compact ? 3 : 6],
+          borderColor: alpha(cardColor, 0.3),
         },
         '&::before': {
           content: '""',
@@ -130,7 +133,7 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, trendValue, vect
           left: 0,
           right: 0,
           height: compact ? 3 : 4, // Thinner gradient bar
-          background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
+          background: `linear-gradient(90deg, ${cardColor} 0%, ${alpha(cardColor, 0.8)} 100%)`,
           borderRadius: compact ? '2px 2px 0 0' : '3px 3px 0 0',
         },
       }}
@@ -182,8 +185,8 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, trendValue, vect
               sx={{
                 p: compact ? 1 : 1.5, // Smaller padding
                 borderRadius: compact ? 1.5 : 2, // Smaller radius
-                background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
-                color: color,
+                background: `linear-gradient(135deg, ${alpha(cardColor, 0.1)} 0%, ${alpha(cardColor, 0.05)} 100%)`,
+                color: cardColor,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -738,22 +741,22 @@ const StockSummary = () => {
     {
       value: stockSummary.length,
       label: 'Total Items',
-      color: '#2196f3',
+      color: 'primary.main',
     },
     {
       value: stockSummary.reduce((sum, item) => sum + (item.stock_value || 0), 0).toLocaleString(),
       label: 'Total Value',
-      color: '#4caf50',
+      color: 'success.main',
     },
     {
       value: stockSummary.filter((item) => item.actual_qty <= 0).length,
       label: 'Out of Stock',
-      color: '#f44336',
+      color: 'error.main',
     },
     {
       value: stockSummary.filter((item) => item.min_qty != null && item.actual_qty <= item.min_qty).length,
       label: 'Low Stock',
-      color: '#ff9800',
+      color: 'warning.main',
     },
   ]}
   actions={[
@@ -781,7 +784,7 @@ const StockSummary = () => {
       value: stockSummary.length,
       subtitle: `Total: ${stockSummary.length.toLocaleString()} items`,
       icon: <TrendingUp />,
-      color: '#2196f3',
+      color: 'primary.main',
       trend: 'up',
       vector: blue,
       trendValue: 12.5, // optional / static unless you calculate it
@@ -799,7 +802,7 @@ const StockSummary = () => {
         )
         .toLocaleString()}`,
       icon: <Inventory />,
-      color: '#4caf50',
+      color: 'success.main',
       trend: 'up',
       vector: green,
       trendValue: 3.2,
@@ -813,7 +816,7 @@ const StockSummary = () => {
         stockSummary.filter((item) => item.actual_qty <= 0).length
       } items`,
       icon: <Warning />,
-      color: '#f44336',
+      color: 'error.main',
       vector: orange,
     },
     {
@@ -831,7 +834,7 @@ const StockSummary = () => {
         ).length
       } items`,
       icon: <Warning />,
-      color: '#ff9800',
+      color: 'warning.main',
       vector: orange,
     },
   ].map((stat, index) => (
@@ -1257,7 +1260,7 @@ const StockSummary = () => {
 
         {/* Export Progress Backdrop */}
         <Backdrop
-          sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          sx={{ color: 'common.white', zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={exportProgress > 0 && exportProgress < 100}
         >
           <Box sx={{ textAlign: 'center' }}>

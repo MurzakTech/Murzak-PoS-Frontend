@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { AddAPhotoOutlined, DeleteOutline, AutoAwesomeOutlined } from '@mui/icons-material';
 import ProductImage from '../Common/ProductImage';
 import { uploadProductImage } from '../../api/uploadImage';
@@ -49,7 +50,7 @@ const ProductPhotoField = ({ value, onChange, product, disabled }) => {
         <Box sx={{ position: 'relative', width: 112, flexShrink: 0 }}>
           <ProductImage product={product} src={preview} shape="square" rounded={3} sx={{ width: 112, border: 1, borderColor: 'divider' }} />
           {busy && (
-            <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', borderRadius: 3, bgcolor: 'rgba(255,255,255,.65)' }}>
+            <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', borderRadius: 3, bgcolor: (t) => alpha(t.palette.common.white, 0.65) }}>
               <CircularProgress size={28} />
             </Box>
           )}

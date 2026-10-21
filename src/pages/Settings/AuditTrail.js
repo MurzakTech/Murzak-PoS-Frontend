@@ -15,14 +15,14 @@ const PAGE_SIZE = 50;
 
 // Colours group actions by how much attention they deserve.
 export const ACTION_COLORS = {
-  Created: '#10B981',
-  Updated: '#3B82F6',
-  Submitted: '#6366F1',
-  Cancelled: '#F59E0B',
-  Deleted: '#EF4444',
-  'Signed in': '#64748B',
-  'Signed out': '#64748B',
-  'Sign-in failed': '#EF4444',
+  Created: 'success.main',
+  Updated: 'info.main',
+  Submitted: 'primary.main',
+  Cancelled: 'warning.main',
+  Deleted: 'error.main',
+  'Signed in': 'text.secondary',
+  'Signed out': 'text.secondary',
+  'Sign-in failed': 'error.main',
 };
 
 // Documents that have their own page in the app, so the audit row can link to them.
@@ -158,7 +158,7 @@ const AuditTrail = () => {
       header: 'Action',
       width: '12%',
       render: (value) => (
-        <StatusChip status={(value || '').toLowerCase()} label={value} color={ACTION_COLORS[value] || '#64748B'} />
+        <StatusChip status={(value || '').toLowerCase()} label={value} />
       ),
     },
     {
