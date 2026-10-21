@@ -90,6 +90,16 @@ describe('The menu', () => {
     expect(isActive(sales, '/sales-report')).toBe(false);
     expect(isActive(sales, '/customers')).toBe(false);
   });
+
+  test('for service/salon businesses, resolveNavigation adds Appointments to the Sell group', () => {
+    const serviceNav = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p, business: { kind: 'services' } });
+    const sellItems = serviceNav.groups.find((g) => g.key === 'sell').items.map((i) => i.label);
+    expect(sellItems).toEqual(['Sales', 'Appointments', 'Customers']);
+
+    const retailNav = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p, business: { kind: 'retail' } });
+    const retailSellItems = retailNav.groups.find((g) => g.key === 'sell').items.map((i) => i.label);
+    expect(retailSellItems).toEqual(['Sales', 'Customers']);
+  });
 });
 
 describe('Sidebar', () => {

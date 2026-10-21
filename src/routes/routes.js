@@ -217,6 +217,7 @@ export const protectedRoutes = [
     element: Appointments,
     label: 'Appointments',
     icon: 'CalendarToday',
+    hideFromMenu: true,
   },
   {
     path: '/kitchen',

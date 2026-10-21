@@ -24,7 +24,6 @@ export const NAVIGATION = {
       label: S.shell.nav.groups.sell,
       items: [
         { key: 'sales', label: S.shell.nav.items.sales, icon: 'receipt', page: '/sales', old: '/sales/history', match: ['/sales', '/new-look/sales'] },
-        { key: 'appointments', label: S.shell.nav.items.appointments, icon: 'calendar', page: '/appointments', match: ['/appointments', '/new-look/appointments'] },
         { key: 'customers', label: S.shell.nav.items.customers, icon: 'users', page: '/customers', old: '/customers', match: ['/customers', '/new-look/customers'] },
       ],
     },
@@ -62,9 +61,36 @@ export const NAVIGATION = {
  * Gives every item its `to`: the new page once that page is live, otherwise the current screen that does the same
  * job (see redirects/live.js). `toNew` turns an unprefixed page address into the real one.
  */
-export const resolveNavigation = (navigation, { isLive, toNew }) => {
+export const APPOINTMENTS_NAV_ITEM = {
+  key: 'appointments',
+  label: S.shell.nav.items.appointments || 'Appointments',
+  icon: 'calendar',
+  page: '/appointments',
+  match: ['/appointments', '/new-look/appointments'],
+};
+
+export const isServiceBusiness = (business, user) => {
+  if (business?.kind === 'services' || business?.features?.servicesFirst) return true;
+  const ind = (business?.industryCode || user?.pos_industry_code || user?.pos_industry?.industry_code || user?.pos_industry?.name || '').toUpperCase();
+  return ['SALON', 'SERVICES', 'BARBER', 'SPA', 'BEAUTY'].includes(ind);
+};
+
+export const resolveNavigation = (navigation, { isLive, toNew, business, user, showAppointments } = {}) => {
+  const includeAppointments = showAppointments ?? isServiceBusiness(business, user);
   const resolve = (item) => ({ ...item, to: item.soon ? undefined : item.page && (isLive(item.page) || !item.old) ? toNew(item.page) : item.old });
-  return { home: resolve(navigation.home), groups: navigation.groups.map((g) => ({ ...g, items: g.items.map(resolve) })), settings: resolve(navigation.settings) };
+  return {
+    home: resolve(navigation.home),
+    groups: navigation.groups.map((g) => {
+      if (g.key === 'sell' && includeAppointments) {
+        return {
+          ...g,
+          items: [resolve(g.items[0]), resolve(APPOINTMENTS_NAV_ITEM), ...g.items.slice(1).map(resolve)],
+        };
+      }
+      return { ...g, items: g.items.map(resolve) };
+    }),
+    settings: resolve(navigation.settings),
+  };
 };
 
 /** Every item in menu order, for the search box and for tests */

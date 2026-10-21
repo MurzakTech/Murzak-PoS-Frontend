@@ -81,6 +81,7 @@ import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import PrescriptionDialog from './pos/PrescriptionDialog';
 import ClinicalPrescriptionModal from './pos/ClinicalPrescriptionModal';
 import { recordDispense } from '../../api/pharmacyHealthApi';
+import useBusinessFeatures from '../../newlook/setup/useBusinessFeatures';
 import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
@@ -2183,6 +2184,14 @@ const NewSale = () => {
     const stock = productStocks[item.item_code]?.[item.warehouse || defaultWarehouse];
     return stockNote(item.qty, stock === undefined ? null : stock);
   };
+  const business = useBusinessFeatures();
+  const isPharmacy =
+    business?.kind === 'pharmacy' ||
+    business?.features?.prescriptionOnly ||
+    user?.pos_industry_code?.toLowerCase() === 'pharmacy' ||
+    user?.pos_industry?.industry_code?.toLowerCase() === 'pharmacy' ||
+    cart.some(isPrescriptionOnly);
+
   const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
 
   // The pay screen: the redesigned one while the New look is on (same props, so nothing the old one did is lost)
@@ -2220,7 +2229,7 @@ const NewSale = () => {
       kitchenPending={kitchenPending}
       onSendKitchen={startSend}
       onEditNote={setNoteCode}
-      onOpenClinicalRx={() => setClinicalRxOpen(true)}
+      onOpenClinicalRx={isPharmacy ? () => setClinicalRxOpen(true) : undefined}
     />
   );
 

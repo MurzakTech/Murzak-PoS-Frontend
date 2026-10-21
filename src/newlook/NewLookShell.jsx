@@ -8,6 +8,7 @@ import { isPageLive, usePreviewRedirects } from './redirects/live';
 import { toNewAddress } from './redirects/engine';
 import { useThemeMode } from '../theme/ThemeProvider';
 import LanguageDialog from './shell/LanguageDialog';
+import useBusinessFeatures from './setup/useBusinessFeatures';
 import LT from './shell/strings.language';
 import S from './strings';
 
@@ -41,9 +42,10 @@ const Inner = ({ user, onSignOut, hasAccess, children }) => {
   // Where each menu item goes now: the new page once it is live, otherwise the current screen (see redirects/live.js)
   const open = (address) => address && navigate(address);
   const destination = (item) => (isPageLive(item.page, previewRedirects) ? toNewAddress(item.page) : item.old);
+  const business = useBusinessFeatures();
   const navigation = useMemo(
-    () => resolveNavigation(NAVIGATION, { isLive: (page) => isPageLive(page, previewRedirects), toNew: toNewAddress }),
-    [previewRedirects]
+    () => resolveNavigation(NAVIGATION, { isLive: (page) => isPageLive(page, previewRedirects), toNew: toNewAddress, business, user }),
+    [previewRedirects, business, user]
   );
   const searchActions = useMemo(
     () => searchActionsFor({ hasAccess, open: (a) => navigate(a), destination }),
