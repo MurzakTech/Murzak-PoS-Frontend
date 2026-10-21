@@ -7,7 +7,7 @@ const Landing = lazy(() => import('../pages/Landing'));
 const ToLogin = () => <Navigate to="/login" replace />;
 const Login = lazy(() => import('../pages/Login'));
 const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
-const Register = lazy(() => import('../pages/Register'));
+const Register = lazy(() => import('../newlook/auth/SignUpPage'));
 const Dashboard = lazy(() => import('../newlook/home/HomePage'));
 const Products = lazy(() => import('../newlook/products/ProductsPage'));
 const NewProduct = lazy(() => import('../newlook/products/NewProductPage'));
@@ -79,6 +79,7 @@ const PurchaseInvoiceDetails = lazy(() => import('../pages/Purchases/PurchaseInv
 const Staff = lazy(() => import('../newlook/settings/SettingsPage'));
 const Reports = lazy(() => import('../newlook/reports/ReportsPage'));
 const Expenses = lazy(() => import('../newlook/expenses/ExpensesPage'));
+const Appointments = lazy(() => import('../newlook/appointments/AppointmentsPage'));
 const SalesAnalytics = lazy(() => import('../pages/Reports/SalesAnalytics'));
 const InventorySummary = lazy(() => import('../pages/Reports/InventorySummary'));
 const InventoryValuation = lazy(() => import('../pages/Reports/InventoryValuation'));
@@ -159,7 +160,7 @@ export const publicRoutes = [
   },
   {
     path: '/register',
-    element: Register,
+    element: IS_TENANT_BUILD ? ToLogin : Register,
     label: 'Register',
   },
   {
@@ -203,12 +204,19 @@ export const protectedRoutes = [
     element: NewSale,
     label: 'Till',
     icon: 'PointOfSale',
+    hideFromMenu: true,
   },
   {
     path: '/expenses',
     element: Expenses,
     label: 'Expenses',
     icon: 'AttachMoney',
+  },
+  {
+    path: '/appointments',
+    element: Appointments,
+    label: 'Appointments',
+    icon: 'CalendarToday',
   },
   {
     path: '/kitchen',

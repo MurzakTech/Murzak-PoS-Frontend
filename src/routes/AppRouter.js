@@ -82,10 +82,10 @@ const AppRouter = () => {
               );
             })}
             
-            {/* Redirect old onboarding route to register */}
+            {/* Redirect old onboarding route to modern setup wizard */}
             <Route
               path="/onboarding"
-              element={<Navigate to="/register" replace />}
+              element={<Navigate to="/setup" replace />}
             />
             
             {/* Protected routes without Layout (e.g., onboarding) */}

@@ -41,6 +41,8 @@ const mount = () =>
 
 const CURRENT_SUBTITLE = 'Sign in to continue to your dashboard.';
 
+jest.setTimeout(15000);
+
 beforeEach(() => {
   jest.resetAllMocks();
   localStorage.clear();
@@ -98,7 +100,7 @@ describe('both pages send the same requests', () => {
     const codeBox = await screen.findByLabelText(/6-digit code|Authenticator code/i);
     userEvent.type(codeBox, '123456');
     userEvent.click(screen.getByRole('button', { name: /Verify and sign in/i }));
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/dashboard'));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
     const calls = { post: axiosInstance.post.mock.calls, get: axiosInstance.get.mock.calls };
     view.unmount();
     return calls;

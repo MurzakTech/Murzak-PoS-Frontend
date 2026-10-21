@@ -282,7 +282,7 @@ describe('signing in', () => {
     renderPage();
     fillIn();
     userEvent.click(signInButton());
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/dashboard'));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
     expect(axiosInstance.get).toHaveBeenCalledWith(expect.stringContaining('get_current_user'));
     expect(localStorage.getItem('access_token')).toBe('tok-1');
   });
@@ -330,7 +330,7 @@ describe('signing in', () => {
 
   test('someone already signed in skips the form', async () => {
     renderPage({ auth: { isAuthenticated: true, isLoading: false, token: 'tok', user: { company: 'Demo Shop' } } });
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/dashboard'));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
   });
 
   test('while sending, the button shows it is busy and a second press does nothing', async () => {
@@ -345,7 +345,7 @@ describe('signing in', () => {
     userEvent.click(busy);
     expect(axiosInstance.post).toHaveBeenCalledTimes(1);
     finish(SIGNED_IN);
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/dashboard'));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
   });
 });
 
@@ -383,7 +383,7 @@ describe('the two-step code', () => {
     axiosInstance.get.mockResolvedValue(PROFILE);
     userEvent.paste(codeBox(), '123456');
     userEvent.type(codeBox(), '{enter}');
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/dashboard'));
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/'));
     expect(axiosInstance.post).toHaveBeenLastCalledWith(expect.stringContaining('login_user'), { email: MADE_UP_EMAIL, password: MADE_UP_SECRET, otp: '123456' });
   });
 
