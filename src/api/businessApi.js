@@ -80,13 +80,35 @@ export const toCompanyPayload = (company) => ({
 /** The business details. `company` is the name of the signed-in person's business. */
 export const getCompany = async (company) => {
   let response;
+  const params = company ? { company, company_name: company } : undefined;
   try {
-    response = await axiosInstance.get(`${ONBOARDING}.get_company`, { params: { company, company_name: company } });
+    response = await axiosInstance.get(`${ONBOARDING}.get_company`, params ? { params } : undefined);
   } catch (error) {
-    throw new Error(friendlyErrorMessage(error));
+    if (company) {
+      try {
+        response = await axiosInstance.get(`${ONBOARDING}.get_company`);
+      } catch (fallbackError) {
+        throw new Error(friendlyErrorMessage(fallbackError));
+      }
+    } else {
+      throw new Error(friendlyErrorMessage(error));
+    }
   }
   const reply = bodyOf(response);
-  if (!reply || reply.success === false) throw failure(reply, 'The business details could not be loaded.');
+  if (!reply || reply.success === false) {
+    if (company) {
+      try {
+        const fallbackRes = await axiosInstance.get(`${ONBOARDING}.get_company`);
+        const fallbackReply = bodyOf(fallbackRes);
+        if (fallbackReply && fallbackReply.success !== false) {
+          return readCompany(fallbackReply);
+        }
+      } catch (e) {
+        // ignore fallback error and throw original
+      }
+    }
+    throw failure(reply, 'The business details could not be loaded.');
+  }
   return readCompany(reply);
 };
 

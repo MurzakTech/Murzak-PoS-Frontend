@@ -15,7 +15,7 @@ import { createExpense } from '../../api/expensesApi';
 import { useAppSelector } from '../../store/hooks';
 import './expenses.css';
 import ExpensesGate from './ExpensesGate';
-import { useExpenseOptions } from './useExpensesData';
+import { invalidateQuery, useExpenseOptions } from './useExpensesData';
 import {
   categoryChoices,
   checkExpense,
@@ -184,6 +184,8 @@ const ExpenseFormBody = ({ options, company }) => {
     setSaving(true);
     try {
       await createExpense(expenseRequest(values, requestId.current, company));
+      invalidateQuery('expenses');
+      invalidateQuery();
       toast.success(fill(andAdd ? F.savedAdd : F.saved, { amount: formatMoney(values.amount) }));
       setSaved(true);
       requestId.current = newRequestId();

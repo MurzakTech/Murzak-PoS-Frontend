@@ -15,6 +15,7 @@ import fill from '../labels/fill';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
 import { getPurchase, receiveGoods } from '../../api/purchasesListApi';
+import { invalidateQuery } from './usePurchasesData';
 import './purchases.css';
 import PurchaseStatus from './PurchaseStatus';
 import { usePurchasesList, useSuppliers } from './usePurchasesData';
@@ -244,6 +245,8 @@ const ReceiveGoodsPage = () => {
         warehouse: store || undefined,
         requestId: requestId.current,
       });
+      invalidateQuery('purchases');
+      invalidateQuery('stock');
       setResult(data);
     } catch (error) {
       setFailure(fill(R.failed, { reason: error.message }));

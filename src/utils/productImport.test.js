@@ -56,7 +56,7 @@ describe('checkProductSheet', () => {
     const r = check(H + 'B001,Tusker Lager 500ml,Beer,Nos,250\nB002,Fanta,Soda,Nos,80');
     expect(r.valid).toHaveLength(2);
     expect(r.invalid).toHaveLength(0);
-    expect(r.valid[0].product).toMatchObject({ item_code: 'B001', item_name: 'Tusker Lager 500ml', standard_rate: 250, stock_uom: 'Nos', is_stock_item: true, is_sales_item: true, is_purchase_item: false });
+    expect(r.valid[0].product).toMatchObject({ item_code: 'B001', item_name: 'Tusker Lager 500ml', standard_rate: 250, stock_uom: 'Nos', is_stock_item: true, is_sales_item: true, is_purchase_item: true });
   });
 
   it('imports a name with a comma and a price with a thousands separator correctly', () => {

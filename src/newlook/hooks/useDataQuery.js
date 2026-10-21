@@ -50,7 +50,7 @@ class QueryCache {
         // ignore bridge errors
       }
     }
-    this.notify();
+    this.notify(keyOrPrefix);
   }
 
   mutate(key, updaterOrData) {
@@ -64,10 +64,10 @@ class QueryCache {
     return () => this.listeners.delete(listener);
   }
 
-  notify() {
+  notify(invalidatedKeyOrPrefix) {
     this.listeners.forEach((listener) => {
       try {
-        listener();
+        listener(invalidatedKeyOrPrefix);
       } catch {
         // ignore subscriber errors
       }
@@ -86,7 +86,7 @@ export const queryCache = new QueryCache();
 export const invalidateQuery = (keyOrPrefix) => queryCache.invalidate(keyOrPrefix);
 export const mutateQuery = (key, updaterOrData) => queryCache.mutate(key, updaterOrData);
 
-const DEFAULT_TTL_MS = 60 * 1000; // 1 minute fresh TTL before revalidation
+const DEFAULT_TTL_MS = 5 * 1000; // 1 minute fresh TTL before revalidation
 
 /**
  * Unified data querying hook with caching, deduplication, and stale-while-revalidate.
@@ -150,6 +150,16 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
         }
       });
   }, [key]);
+
+  useEffect(() => {
+    if (!enabled || !key) return undefined;
+    const unsubscribe = queryCache.subscribe((invalidatedKeyOrPrefix) => {
+      if (!invalidatedKeyOrPrefix || key === invalidatedKeyOrPrefix || key.startsWith(invalidatedKeyOrPrefix)) {
+        run(true);
+      }
+    });
+    return unsubscribe;
+  }, [key, enabled, run]);
 
   useEffect(() => {
     if (!enabled || !key) {

@@ -13,7 +13,7 @@ import fill from '../labels/fill';
 import { createSupplier, updateSupplier } from '../../api/suppliersListApi';
 import { useAppSelector } from '../../store/hooks';
 import { emptyForm, formFromSupplier, formProblems, isDirty, listAddress, toServerValues, TYPES } from './suppliersModel';
-import { useSupplierGroups, useSupplierOverview } from './useSuppliersData';
+import { invalidateQuery, useSupplierGroups, useSupplierOverview } from './useSuppliersData';
 import './suppliers.css';
 import T from './strings.suppliers';
 
@@ -80,6 +80,8 @@ const SupplierForm = ({ mode, id }) => {
       } else {
         savedId = (await createSupplier({ ...send, company })).id;
       }
+      invalidateQuery('suppliers');
+      invalidateQuery();
       toast.success(fill(andAdd ? T.form.savedAdd : T.form.saved, { name: send.name }));
       setSaved(true);
       if (andAdd) {

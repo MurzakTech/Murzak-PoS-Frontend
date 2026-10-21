@@ -10,7 +10,7 @@ import fill from '../labels/fill';
 import { updateSupplier } from '../../api/suppliersListApi';
 import DueStatus from './DueStatus';
 import { dayWords, nextBillText, owes, purchasesAddress } from './suppliersModel';
-import { useSupplierOverview } from './useSuppliersData';
+import { invalidateQuery, useSupplierOverview } from './useSuppliersData';
 import T from './strings.suppliers';
 
 /**
@@ -55,6 +55,7 @@ const SupplierPanel = ({ id, company, summary, canSeeMoney, position, onClose, o
       toast.success(fill(nextDisabled ? T.disable.done : T.disable.undone, { name }));
       setDialog('');
       reload();
+      invalidateQuery('suppliers');
       if (onChanged) onChanged();
     } catch (e) {
       toast.error(T.disable.failed);

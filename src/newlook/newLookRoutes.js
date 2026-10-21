@@ -85,7 +85,8 @@ const CANONICAL_ROUTES = [
   // Stock levels (P4-3, P4-4)
   { path: '/stock/*', element: StockLevelsPage },
   // Products (P4-1, P4-2)
-  { path: '/products/*', element: ProductsPage },
+  { path: '/products', element: ProductsPage },
+  { path: '/products/categories', element: ProductsPage },
   { path: '/products/new', element: NewProductPage },
   { path: '/products/import', element: ImportProductsPage },
   { path: '/products/:code/edit', element: EditProductPage },

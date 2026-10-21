@@ -18,7 +18,7 @@ import { listWarehouses } from '../../store/warehouseSlice';
 import { addPurchaseNote, createDirectBill, getProductToBuy, saveOrder } from '../../api/purchasesListApi';
 import './purchases.css';
 import PurchaseProductPicker from './PurchaseProductPicker';
-import { usePaymentModes, useSuppliers } from './usePurchasesData';
+import { invalidateQuery, usePaymentModes, useSuppliers } from './usePurchasesData';
 import {
   addProductLine,
   billRequest,
@@ -197,6 +197,9 @@ const NewPurchasePage = () => {
       if (isDirectBill(values)) {
         const result = await createDirectBill(billRequest(values, lines, requestId.current));
         toast.success(fill(F.savedBill, { number: result.invoice_number }));
+        invalidateQuery('purchases');
+        invalidateQuery('stock');
+        invalidateQuery('products');
         navigate(openAddress(result.invoice));
       } else {
         const result = await saveOrder(orderRequest(values, lines, requestId.current));
@@ -208,6 +211,9 @@ const NewPurchasePage = () => {
           }
         }
         toast.success(fill(result.waitingForApproval ? F.savedApproval : F.savedOrder, { number: result.order, supplier: supplierName }));
+        invalidateQuery('purchases');
+        invalidateQuery('stock');
+        invalidateQuery('products');
         navigate(openAddress(result.order));
       }
     } catch (error) {

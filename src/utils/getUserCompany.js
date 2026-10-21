@@ -17,8 +17,14 @@ export function getUserCompany(user) {
   try {
     const companyStr = localStorage.getItem('company');
     if (companyStr) {
-      const company = JSON.parse(companyStr);
-      return company.name || company.company_name || null;
+      try {
+        const company = JSON.parse(companyStr);
+        if (typeof company === 'string') return company;
+        return company.name || company.company_name || null;
+      } catch {
+        const cleaned = companyStr.replace(/^["']|["']$/g, '').trim();
+        if (cleaned) return cleaned;
+      }
     }
   } catch (error) {
     console.error('Error parsing company from localStorage:', error);
@@ -41,4 +47,3 @@ export function getUserCompany(user) {
   
   return null;
 }
-

@@ -263,7 +263,7 @@ export const checkProductSheet = (sheet) => {
     }
 
     const flags = {};
-    [['is_stock_item', true], ['is_sales_item', true], ['is_purchase_item', false]].forEach(([field, fallback]) => {
+    [['is_stock_item', true], ['is_sales_item', true], ['is_purchase_item', true]].forEach(([field, fallback]) => {
       const flag = parseFlag(get(cells, field));
       if (flag === null) problems.push(`${field} must be yes/no, 1/0 or true/false (found "${get(cells, field)}").`);
       flags[field] = flag === undefined || flag === null ? fallback : flag;

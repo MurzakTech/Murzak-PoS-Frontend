@@ -14,7 +14,7 @@ import { readProductFile } from '../../../utils/readProductFile';
 import { problemRowsCsv } from '../../../utils/productImport';
 import { saveTextFile } from '../../../utils/saveTextFile';
 import { PRODUCTS_PATH } from '../productsModel';
-import { useUnits } from '../useProductsData';
+import { invalidateQuery, useUnits } from '../useProductsData';
 import '../products.css';
 import './import.css';
 import { COLUMNS, checkSheet, templateCsv } from './importSheet';
@@ -152,6 +152,8 @@ const ImportProductsPage = () => {
     setPhase('importing');
     try {
       setResult(await importProducts({ rows: rowsToSend(check), photosFile }));
+      invalidateQuery('products');
+      invalidateQuery();
       setCheck(null);
       setPreview(null);
       setFileName('');

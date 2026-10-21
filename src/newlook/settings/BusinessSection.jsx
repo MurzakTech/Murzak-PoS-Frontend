@@ -26,19 +26,23 @@ const B = T.business;
 const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' }) => {
   const access = useAccess();
   const { company: name } = useSettingsUser();
-  const [state, setState] = useState({ status: name ? 'loading' : 'nocompany', company: null });
+  const [state, setState] = useState({ status: 'loading', company: null });
   const owner = access.tier === 'owner';
   const wanted = cardFromSearch(search);
 
   const reload = useCallback(() => {
-    if (!name) {
-      setState({ status: 'nocompany', company: null });
-      return;
-    }
     setState({ status: 'loading', company: null });
-    load(name)
+    load(name || undefined)
       .then((company) => setState({ status: 'ready', company }))
-      .catch(() => setState({ status: 'error', company: null }));
+      .catch(() => {
+        if (name) {
+          load(undefined)
+            .then((company) => setState({ status: 'ready', company }))
+            .catch(() => setState({ status: 'error', company: null }));
+        } else {
+          setState({ status: 'error', company: null });
+        }
+      });
   }, [load, name]);
   useEffect(reload, [reload]);
 
