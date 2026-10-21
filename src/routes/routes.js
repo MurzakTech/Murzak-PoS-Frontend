@@ -164,6 +164,11 @@ export const publicRoutes = [
     label: 'Register',
   },
   {
+    path: '/signup',
+    element: IS_TENANT_BUILD ? ToLogin : Register,
+    label: 'Sign Up',
+  },
+  {
     path: '/terms-of-service',
     element: TermsOfService,
     label: 'Terms of Service',

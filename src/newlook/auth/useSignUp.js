@@ -72,6 +72,8 @@ export const useSignUp = () => {
 
     const registerResult = await dispatch(registerUser(userPayload));
     if (!registerUser.fulfilled.match(registerResult)) {
+      const msg = registerResult.payload?.message || registerResult.error?.message || 'Registration failed';
+      setInternalError(msg);
       return 'failed';
     }
 

@@ -30,6 +30,15 @@ export const lookupPatient = async ({ term, company } = {}) => {
 };
 
 /**
+ * Search patients by name, phone, or ID.
+ */
+export const searchPatients = async (query) => {
+  const term = typeof query === 'string' ? query : query?.term || '';
+  const reply = await lookupPatient({ term });
+  return Array.isArray(reply) ? reply : reply ? [reply] : [];
+};
+
+/**
  * Get active, pending prescriptions for a patient.
  *
  * Each prescription line includes drug code, dosage, frequency, duration,
@@ -64,6 +73,15 @@ export const getItemBatches = async ({ item_code, warehouse } = {}) => {
     { get: true, fallback: 'Could not load medicine batches.' }
   );
   return reply.data || [];
+};
+
+/**
+ * Fetch available batches for a drug item sorted by FEFO (First-Expiry, First-Out).
+ */
+export const getBatchesFEFO = async (itemCodeOrObj, maybeWarehouse) => {
+  const item_code = typeof itemCodeOrObj === 'string' ? itemCodeOrObj : itemCodeOrObj?.item_code;
+  const warehouse = typeof itemCodeOrObj === 'string' ? maybeWarehouse : itemCodeOrObj?.warehouse;
+  return getItemBatches({ item_code, warehouse });
 };
 
 /**
@@ -126,4 +144,47 @@ export const getDispensingRegister = async ({ company, from_date, to_date, poiso
     { get: true, fallback: 'Could not load dispensing register.' }
   );
   return reply.data || [];
+};
+
+
+/**
+ * Cross-references patient allergy profile against prescription medication lines.
+ *
+ * @param {Object} params
+ * @param {Array<string|Object>} params.patientAllergies
+ * @param {Array<Object>} params.prescriptionItems
+ * @returns {{ safe: boolean, warnings: Array<Object> }}
+ */
+export const validatePrescriptionSafety = ({ patientAllergies = [], prescriptionItems = [] } = {}) => {
+  const warnings = [];
+  const normalizedAllergies = patientAllergies
+    .map((a) => (typeof a === 'string' ? a : a.allergy || a.substance || '').trim())
+    .filter(Boolean);
+
+  for (const item of prescriptionItems) {
+    const drugName = item.drug_name || item.item_name || item.item_code || '';
+    const lowerDrug = drugName.toLowerCase();
+
+    for (const allergen of normalizedAllergies) {
+      const lowerAllergen = allergen.toLowerCase();
+      const isMatch =
+        lowerDrug.includes(lowerAllergen) ||
+        (lowerAllergen.includes('penicillin') &&
+          (lowerDrug.includes('amox') || lowerDrug.includes('ampic') || lowerDrug.includes('penic')));
+
+      if (isMatch) {
+        warnings.push({
+          drug: drugName,
+          allergen,
+          severity: 'critical',
+          message: `Patient has recorded allergy to ${allergen}. Prescribed ${drugName} may trigger an adverse reaction!`,
+        });
+      }
+    }
+  }
+
+  return {
+    safe: warnings.length === 0,
+    warnings,
+  };
 };

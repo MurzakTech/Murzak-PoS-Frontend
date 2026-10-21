@@ -206,9 +206,7 @@ describe('SignUpPage', () => {
 
     userEvent.click(screen.getByRole('button', { name: T.signUp.submit }));
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByText(/already exists/i)).toBeInTheDocument();
-    });
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/already exists/i);
   });
 });
