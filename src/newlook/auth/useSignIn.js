@@ -29,7 +29,8 @@ export const useSignIn = () => {
 
   // Where to go after signing in (the page they were trying to open, or home)
   const from = location.state?.from?.pathname || location.state?.from || '/';
-  const redirectPath = typeof from === 'string' ? from : from.pathname || '/';
+  const rawPath = typeof from === 'string' ? from : from.pathname || '/';
+  const redirectPath = (!rawPath || rawPath === '/login' || rawPath === '/register' || rawPath === '/signup') ? '/' : rawPath;
 
   // Already signed in when the page loads: skip the form
   useEffect(() => {

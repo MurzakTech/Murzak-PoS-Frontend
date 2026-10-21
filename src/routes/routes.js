@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { IS_TENANT_BUILD } from '../config/deployment';
 
 // Lazy load pages for code splitting
+const RootRoute = lazy(() => import('./RootRoute'));
 const Landing = lazy(() => import('../pages/Landing'));
 const ToLogin = () => <Navigate to="/login" replace />;
 const Login = lazy(() => import('../pages/Login'));
@@ -144,8 +145,8 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 export const publicRoutes = [
   {
     path: '/',
-    // A shop's own POS has no marketing audience — open straight on sign-in.
-    element: IS_TENANT_BUILD ? ToLogin : Landing,
+    // Dynamic entrypoint: renders POS dashboard when authenticated, or Landing/Login when unauthenticated
+    element: RootRoute,
     label: 'Home',
   },
   {
