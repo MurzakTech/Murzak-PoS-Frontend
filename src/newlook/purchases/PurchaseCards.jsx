@@ -11,7 +11,7 @@ import T from './strings.purchases';
 const PurchaseCards = ({ rows, label, onOpen, selectedKey }) => (
   <ul className="nl-purchases-cards" aria-label={label}>
     {rows.map((row) => {
-      const selected = selectedKey !== undefined && selectedKey !== '' && selectedKey === row.id;
+      const selected = selectedKey !== undefined && selectedKey !== '' && (selectedKey === row.id || selectedKey === row.number || (row.number && row.number.replace(/^#/, '') === String(selectedKey).replace(/^#/, '')));
       const due = dueInfo(row);
       return (
         <li key={row.id}>

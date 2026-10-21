@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Alert, Box, Button, Chip, CircularProgress, IconButton, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import { ArrowBack, Fullscreen, FullscreenExit, NotificationsActive, NotificationsOff, SwapHoriz } from '@mui/icons-material';
 import { useAppSelector } from '../../store/hooks';
@@ -132,8 +132,17 @@ const KitchenStation = () => {
   const warehouse = activeWarehouse?.name || activeWarehouse?.warehouse_name || '';
   const waitingForStore = warehouses.length > 0 && !warehouse;
 
-  const { settings, status: settingsStatus } = useKitchenSettings({ company });
-  const [chosen, setChosen] = useState(() => readValue(stationKey(company)));
+  const location = useLocation();
+  const { settings, status: settingsStatus, save } = useKitchenSettings({ company });
+  const queryStation = useMemo(() => {
+    try {
+      return new URLSearchParams(location.search).get('station') || '';
+    } catch (e) {
+      return '';
+    }
+  }, [location.search]);
+
+  const [chosen, setChosen] = useState(() => queryStation || readValue(stationKey(company)));
   const [tab, setTab] = useState('orders');
   const [sound, setSound] = useState(() => readValue(soundKey) === 'on');
   const [now, setNow] = useState(Date.now());
@@ -141,8 +150,13 @@ const KitchenStation = () => {
   const audio = useRef(null);
 
   useEffect(() => {
-    setChosen(readValue(stationKey(company)));
-  }, [company]);
+    if (queryStation) {
+      setChosen(queryStation);
+      writeValue(stationKey(company), queryStation);
+    } else {
+      setChosen(readValue(stationKey(company)));
+    }
+  }, [company, queryStation]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30000);
@@ -228,7 +242,19 @@ const KitchenStation = () => {
   } else if (settingsStatus === 'unavailable') {
     body = notReady('Station screens are not available yet', 'This server cannot show tickets on station screens yet, so orders print only.');
   } else if (!settings.enabled || !settings.screens) {
-    body = notReady('Station screens are switched off', 'Open Kitchen tickets in the till menu, switch on "Also show tickets on station screens" and save.');
+    body = notReady(
+      'Station screens are switched off',
+      'Turn on station screens so orders sent from the till appear here in real time.',
+      <Button
+        variant="contained"
+        size="large"
+        onClick={async () => {
+          await save({ ...settings, enabled: true, screens: true });
+        }}
+      >
+        Turn on station screens
+      </Button>
+    );
   } else if (!station) {
     body = (
       <Box sx={{ maxWidth: 520, mx: 'auto', textAlign: 'center', p: 4 }}>
@@ -281,6 +307,25 @@ const KitchenStation = () => {
           <IconButton onClick={() => navigate('/sales/pos')} aria-label="Back to the till"><ArrowBack /></IconButton>
         </Tooltip>
         <Typography variant="h6" sx={{ fontWeight: 900 }}>{station ? station.name : 'Station screen'}</Typography>
+        {station && settings.stations && settings.stations.length > 1 && (
+          <Stack direction="row" spacing={0.5} sx={{ ml: 1 }}>
+            {settings.stations.map((s) => {
+              const isSelected = station?.name?.toLowerCase() === s.name.toLowerCase();
+              return (
+                <Button
+                  key={s.id || s.name}
+                  size="small"
+                  variant={isSelected ? 'contained' : 'outlined'}
+                  color={isSelected ? 'primary' : 'inherit'}
+                  onClick={() => choose(s.name)}
+                  sx={{ borderRadius: 2, fontWeight: 700 }}
+                >
+                  {s.name}
+                </Button>
+              );
+            })}
+          </Stack>
+        )}
         {station && (
           <Tooltip title="Change station">
             <IconButton size="small" onClick={() => choose('')} aria-label="Change station"><SwapHoriz /></IconButton>

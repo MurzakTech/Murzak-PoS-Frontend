@@ -101,7 +101,13 @@ const PurchasesPage = () => {
   }, [ready, rows.length, total, page, size]);
 
   const openId = state.open;
-  const openIndex = rows.findIndex((r) => r.id === openId);
+  const openIndex = rows.findIndex(
+    (r) =>
+      r.id === openId ||
+      r.number === openId ||
+      (r.number && r.number.replace(/^#/, '') === String(openId).replace(/^#/, '')) ||
+      (r.id && r.id.toLowerCase() === String(openId).toLowerCase())
+  );
   const open = (id) => params.set({ open: id, page });
   const close = () => {
     refocus.current = openId;
@@ -225,7 +231,7 @@ const PurchasesPage = () => {
   const detail = openId ? (
     <PurchasePanel
       key={openId}
-      id={openId}
+      id={openIndex >= 0 ? rows[openIndex].id : openId}
       doctype={openIndex >= 0 ? rows[openIndex].doctype : undefined}
       summary={rows[openIndex]}
       position={openIndex >= 0 ? fill(T.panel.position, { current: openIndex + 1, total: rows.length }) : undefined}

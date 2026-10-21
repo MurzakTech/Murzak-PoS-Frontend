@@ -433,6 +433,7 @@ const NewSale = () => {
     if (userCompany) {
       dispatch(getProducts({ 
         company: userCompany,
+        page_size: 1000,
         limit: 1000,
         is_sales_item: true,
         disabled: false,
@@ -525,6 +526,7 @@ const NewSale = () => {
   // No need for local state management
 
   // Fetch stock quantities for all products when warehouse changes
+  const productCodesKey = React.useMemo(() => products.map(p => p.item_code).filter(Boolean).sort().join(','), [products]);
   useEffect(() => {
     if (!navigator.onLine) return; // offline: keep the last known stock figures
     if (defaultWarehouse && products.length > 0 && userCompany) {
@@ -548,7 +550,7 @@ const NewSale = () => {
         });
       }
     }
-  }, [defaultWarehouse, products.length, userCompany, dispatch]);
+  }, [defaultWarehouse, productCodesKey, userCompany, dispatch]);
 
   // Set POS profile from user data on mount
   useEffect(() => {

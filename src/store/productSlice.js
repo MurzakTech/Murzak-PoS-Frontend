@@ -90,12 +90,13 @@ export const getProducts = createAsyncThunk(
         warehouse: params.warehouse || '',
         ...(params.item_group && params.item_group !== '' ? { item_group: params.item_group } : {}),
         ...(params.brand && params.brand !== '' ? { brand: params.brand } : {}),
-        is_stock_item: params.is_stock_item !== undefined ? params.is_stock_item : true,
-        is_sales_item: params.is_sales_item !== undefined ? params.is_sales_item : true,
-        disabled: params.disabled !== undefined ? params.disabled : true,
+        ...(params.is_stock_item !== undefined ? { is_stock_item: params.is_stock_item } : {}),
+        ...(params.is_sales_item !== undefined ? { is_sales_item: params.is_sales_item } : {}),
+        ...(params.disabled !== undefined ? { disabled: params.disabled } : {}),
         search_term: params.search_term || '',
         page: params.page || 1,
-        page_size: params.page_size || 20,
+        page_size: params.page_size || params.limit || 50,
+        limit: params.limit || params.page_size || 50,
         price_list: params.price_list || 'Standard Selling',
       };
       

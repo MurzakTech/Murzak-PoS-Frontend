@@ -570,6 +570,12 @@ describe('the purchase panel', () => {
     expect(getPurchase).toHaveBeenCalledWith('ACC-PINV-2026-00099', undefined);
   });
 
+  test('a link with a short number opens the purchase matching that number in the list', async () => {
+    await renderPage('/new-look/purchases?open=%23O0045');
+    expect(await screen.findByRole('heading', { level: 2, name: 'Purchase #O0045' })).toBeInTheDocument();
+    expect(getPurchase).toHaveBeenCalledWith('PUR-ORD-2026-00045', 'Purchase Order');
+  });
+
   test('shows the status, supplier, lines and totals', async () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#O0045\b/ }));

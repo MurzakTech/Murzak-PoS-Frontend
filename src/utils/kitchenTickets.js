@@ -62,7 +62,7 @@ export const normalizeSettings = (raw) => {
     defaultStation: stations.some((s) => s.id === raw.defaultStation) ? raw.defaultStation : '',
     quickNotes: Array.isArray(raw.quickNotes) ? raw.quickNotes.map(cleanNote).filter(Boolean).slice(0, 12) : base.quickNotes,
     printNow: raw.printNow !== false,
-    screens: raw.screens === true,
+    screens: raw.screens !== undefined ? raw.screens === true : true,
     lastOrderType: ORDER_TYPES.includes(raw.lastOrderType) ? raw.lastOrderType : 'table',
     ticketDate: typeof raw.ticketDate === 'string' ? raw.ticketDate : '',
     nextTicket: Number.isInteger(raw.nextTicket) && raw.nextTicket > 0 ? raw.nextTicket : 1,
@@ -88,15 +88,35 @@ export const writeSettings = (storage, company, settings) => {
   }
 };
 
-/** The station an item goes to: the one its category is set to, else the default station, else none */
-export const stationFor = (settings, group) => {
-  const direct = settings.stations.find((s) => s.groups.some((g) => same(g, group)));
-  if (direct) return direct;
-  return settings.stations.find((s) => s.id === settings.defaultStation) || null;
-};
-
 const FOOD = /food|meal|dish|snack|bakery|kitchen|breakfast|lunch|dinner|grill|pizza|burger|dessert|starter|main|side|salad|soup|chicken|meat|fish|nyama/i;
 const DRINK = /drink|beverage|beer|lager|wine|spirit|whisk|vodka|gin|rum|cocktail|soda|juice|water|tea|coffee|liquor|bar\b|cider|tonic/i;
+
+/** The station an item goes to: the one its category is set to, else the default station, else none */
+export const stationFor = (settings, group) => {
+  if (!settings || !Array.isArray(settings.stations) || settings.stations.length === 0) return null;
+  const direct = settings.stations.find((s) => s.groups && s.groups.some((g) => same(g, group)));
+  if (direct) return direct;
+  if (settings.defaultStation) {
+    const def = settings.stations.find((s) => s.id === settings.defaultStation);
+    if (def) return def;
+  }
+  // Smart routing by category name keyword
+  if (group && DRINK.test(group)) {
+    const bar = settings.stations.find((s) => /bar|drink|beverage/i.test(s.name || s.id));
+    if (bar) return bar;
+  }
+  if (group && FOOD.test(group)) {
+    const kitchen = settings.stations.find((s) => /kitchen|food|cook|grill|chef/i.test(s.name || s.id));
+    if (kitchen) return kitchen;
+  }
+  // If stations have no configured categories at all, route to kitchen or first station so items are not dropped
+  const noGroupsConfigured = settings.stations.every((s) => !s.groups || s.groups.length === 0);
+  if (noGroupsConfigured) {
+    const kitchen = settings.stations.find((s) => /kitchen|food/i.test(s.name || s.id));
+    return kitchen || settings.stations[0] || null;
+  }
+  return null;
+};
 
 /** A starting point for non-technical users: categories that sound like food go to the Kitchen, drinks to the Bar */
 export const suggestStations = (groupNames, stations = defaultSettings().stations) => {
