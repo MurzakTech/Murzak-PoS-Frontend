@@ -47,7 +47,7 @@ const OWN_ROUTES = [
   '/customers', '/customers/owing', '/customers/new',
   '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry',
   '/products', '/products/categories', '/products/import', '/products/new',
-  '/suppliers', '/suppliers/new',
+  '/suppliers', '/suppliers/new', '/suppliers/:id/edit',
   '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns',
   '/reports', '/reports/sales', '/reports/profit', '/reports/owed', '/reports/running-costs', '/reports/stock-summary', '/reports/stock-value', '/reports/aging-stock',
   '/setup', '/expenses', '/expenses/new',

@@ -47,6 +47,8 @@ export const BUILT_PAGES = [
   '/purchases/new',
   // Suppliers (P4-6)
   '/suppliers',
+  '/suppliers/new',
+  '/suppliers/:id/edit',
   // Expenses (P5-1)
   '/expenses',
   // Reports (P5-2); Stock movement and Performance only link to the current screens, so they stay out

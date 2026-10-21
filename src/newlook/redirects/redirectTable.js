@@ -239,6 +239,8 @@ export const REDIRECTS = [
 
   // Suppliers
   { from: '/suppliers', to: '/suppliers', status: 'sure' },
+  { from: '/suppliers/new', to: '/suppliers/new', status: 'sure' },
+  { from: '/suppliers/:id/edit', to: '/suppliers/:id/edit', status: 'sure' },
   { from: '/suppliers/groups', to: '/settings/advanced?section=supplier-groups', status: 'sure' },
   { from: '/suppliers/:id', to: '/suppliers?open=:id', status: 'sure' },
 
@@ -486,6 +488,8 @@ const PAGES = [
   { path: '/purchases/new', title: 'New purchase' },
 
   { path: '/suppliers', title: 'Suppliers' },
+  { path: '/suppliers/new', title: 'New supplier' },
+  { path: '/suppliers/:id/edit', title: 'Edit supplier' },
   { path: '/expenses', title: 'Expenses' },
 
   { path: '/reports', title: 'Reports' },

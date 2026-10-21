@@ -59,6 +59,8 @@ const Customers = lazy(() => import('../newlook/customers/CustomersPage'));
 const CustomerCredit = lazy(() => import('../newlook/customers/CustomersPage'));
 const Suppliers = lazy(() => import('../newlook/suppliers/SuppliersPage'));
 const SupplierDetails = lazy(() => import('../newlook/suppliers/SuppliersPage'));
+const NewSupplier = lazy(() => import('../newlook/suppliers/NewSupplierPage'));
+const EditSupplier = lazy(() => import('../newlook/suppliers/EditSupplierPage'));
 const SupplierGroups = lazy(() => import('../newlook/settings/SettingsPage'));
 const Purchases = lazy(() => import('../newlook/purchases/PurchasesPage'));
 const NewPurchase = lazy(() => import('../newlook/purchases/NewPurchasePage'));
@@ -682,6 +684,18 @@ export const protectedRoutes = [
         icon: 'Group',
       },
       // Dynamic routes (not in sidebar, accessed via links)
+      {
+        path: '/suppliers/new',
+        element: NewSupplier,
+        label: 'New Supplier',
+        hideFromMenu: true,
+      },
+      {
+        path: '/suppliers/:id/edit',
+        element: EditSupplier,
+        label: 'Edit Supplier',
+        hideFromMenu: true,
+      },
       {
         path: '/suppliers/:id',
         element: SupplierDetails,
