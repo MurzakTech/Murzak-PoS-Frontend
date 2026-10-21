@@ -1,0 +1,113 @@
+.nl-legal-page {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--ink);
+  padding: 0 var(--page-gutter);
+}
+
+.nl-legal-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+}
+
+.nl-legal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.nl-legal-logo {
+  height: 32px;
+  cursor: pointer;
+}
+
+.nl-legal-title {
+  font-size: var(--page-title-size);
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.nl-legal-subtitle {
+  font-size: var(--body-size);
+  color: var(--muted);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.nl-legal-divider {
+  height: 1px;
+  background-color: var(--line);
+  border: none;
+  margin: var(--space-6) 0;
+}
+
+.nl-legal-section {
+  margin-bottom: var(--space-6);
+}
+
+.nl-legal-section__title {
+  font-size: var(--card-title-size);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.nl-legal-section__body {
+  font-size: var(--body-size);
+  color: var(--ink-2);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.nl-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--card-gap);
+  margin-top: var(--space-6);
+}
+
+.nl-contact-card {
+  padding: var(--card-padding);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.nl-contact-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-button);
+  background: var(--soft);
+  color: var(--brand);
+  margin-bottom: var(--space-4);
+}
+
+.nl-contact-card__title {
+  font-size: var(--card-title-size);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.nl-contact-card__body {
+  font-size: var(--body-size);
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 var(--space-4) 0;
+}
+
+.nl-contact-card__link {
+  font-size: var(--body-size);
+  font-weight: 600;
+  color: var(--brand-text);
+  text-decoration: none;
+}
+
+.nl-contact-card__link:hover {
+  text-decoration: underline;
+}

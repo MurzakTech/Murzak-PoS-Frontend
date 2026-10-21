@@ -1,27 +1,6 @@
 import React from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { AppBar, Box, Button, Card, Container, IconButton, Link, Stack, Toolbar, Tooltip, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import {
-  ArrowForward,
-  DarkModeOutlined,
-  LightModeOutlined,
-  PointOfSaleOutlined,
-  Inventory2Outlined,
-  LocalShippingOutlined,
-  PeopleAltOutlined,
-  InsightsOutlined,
-  VerifiedUserOutlined,
-  DevicesOutlined,
-  AdminPanelSettingsOutlined,
-  PersonAddAltOutlined,
-  CategoryOutlined,
-  ReceiptLongOutlined,
-  CheckCircle,
-  WarningAmberRounded,
-  PhoneAndroidOutlined,
-  Check,
-} from '@mui/icons-material';
+import { Button, Icon } from '../newlook/components';
 import { useThemeMode } from '../theme/ThemeProvider';
 import BrandLogo from '../components/Common/BrandLogo';
 import ProductImage from '../components/Common/ProductImage';
@@ -31,32 +10,25 @@ import tillDesktop from '../assets/landing/till-desktop.jpg';
 import tillPhone from '../assets/landing/till-phone.jpg';
 import payPhone from '../assets/landing/pay-phone.jpg';
 import dashboardShot from '../assets/landing/dashboard.jpg';
-
-/**
- * Public landing page. Written around what a shop owner wants to know:
- * what does it do, how fast can I start, and what will it cost me in effort.
- * The pictures are real screens from the product (with sample shop data), so
- * what people see here is what they get. Nothing is hidden until scrolled to.
- */
+import '../newlook/landing/landing.css';
 
 const STEPS = [
-  { icon: PersonAddAltOutlined, title: 'Create your account', text: 'Tell us about your business. It takes a few minutes and we apply sensible defaults for you.' },
-  { icon: CategoryOutlined, title: 'Add your products', text: 'Load a starter catalogue for your industry, import a spreadsheet, or add items one at a time.' },
-  { icon: ReceiptLongOutlined, title: 'Start selling', text: 'Open the till and ring up your first sale. Stock, takings and reports update as you go.' },
+  { icon: 'user', title: 'Create your account', text: 'Tell us about your business. It takes a few minutes and we apply sensible defaults for you.' },
+  { icon: 'layers', title: 'Add your products', text: 'Load a starter catalogue for your industry, import a spreadsheet, or add items one at a time.' },
+  { icon: 'receipt', title: 'Start selling', text: 'Open the till and ring up your first sale. Stock, takings and reports update as you go.' },
 ];
 
 const FEATURES = [
-  { icon: PointOfSaleOutlined, title: 'A till for busy counters', text: 'Scan or tap to add items, apply offers automatically, and take cash, M-Pesa, card or a mix.' },
-  { icon: Inventory2Outlined, title: 'Stop stock going missing', text: 'Track every store, get warned before you run out, and run stock counts with sign-off at each step.' },
-  { icon: LocalShippingOutlined, title: 'Buying and suppliers', text: 'Raise purchase orders, receive goods and keep supplier invoices and payments in one place.' },
-  { icon: PeopleAltOutlined, title: 'Customers and loyalty', text: 'Sell on credit up to a limit you set, see who owes you, and reward regulars with points.' },
-  { icon: InsightsOutlined, title: 'Reports you will read', text: 'Sales, money owed, stock value and slow movers, ready to view or export. No spreadsheets to build.' },
-  { icon: VerifiedUserOutlined, title: 'KRA eTIMS built in', text: 'Add your eTIMS details once and your sales can be sent to KRA, so compliance is not a month-end scramble.' },
-  { icon: AdminPanelSettingsOutlined, title: 'Staff you can trust', text: 'Every person has their own login. Cashiers sell; price changes, refunds and stock adjustments stay with managers.' },
-  { icon: DevicesOutlined, title: 'Works on your devices', text: 'Use the computer, tablet or phone you already have. All you need is an internet connection.' },
+  { icon: 'till', title: 'A till for busy counters', text: 'Scan or tap to add items, apply offers automatically, and take cash, M-Pesa, card or a mix.' },
+  { icon: 'box', title: 'Stop stock going missing', text: 'Track every store, get warned before you run out, and run stock counts with sign-off at each step.' },
+  { icon: 'truck', title: 'Buying and suppliers', text: 'Raise purchase orders, receive goods and keep supplier invoices and payments in one place.' },
+  { icon: 'users', title: 'Customers and loyalty', text: 'Sell on credit up to a limit you set, see who owes you, and reward regulars with points.' },
+  { icon: 'chart', title: 'Reports you will read', text: 'Sales, money owed, stock value and slow movers, ready to view or export. No spreadsheets to build.' },
+  { icon: 'check', title: 'KRA eTIMS built in', text: 'Add your eTIMS details once and your sales can be sent to KRA, so compliance is not a month-end scramble.' },
+  { icon: 'settings', title: 'Staff you can trust', text: 'Every person has their own login. Cashiers sell; price changes, refunds and stock adjustments stay with managers.' },
+  { icon: 'store', title: 'Works on your devices', text: 'Use the computer, tablet or phone you already have. All you need is an internet connection.' },
 ];
 
-// The automatic product pictures, shown off in a slowly moving strip
 const SHOWCASE = [
   ['Brookside Milk 1L', 'Dairy'],
   ['Exe Bread 400g', 'Bakery'],
@@ -76,8 +48,6 @@ const SHOWCASE = [
   ['Coca-Cola 500ml', 'Drinks'],
 ].map(([item_name, item_group], i) => ({ item_code: `showcase-${i}`, item_name, item_group }));
 
-// The industries we serve. Each one shows up only once its photo has been added
-// to src/assets/photos (see PHOTOS.md), so the strip grows as the library does.
 const INDUSTRIES = [
   ['restaurant', 'Restaurants and bars'],
   ['grocery', 'Groceries and supermarkets'],
@@ -89,221 +59,185 @@ const INDUSTRIES = [
   ['bookstore', 'Bookshops and stationery'],
 ].map(([key, label]) => ({ key, label, photo: `industry-${key}` }));
 
-const noMotion ={ '@media (prefers-reduced-motion: reduce)': { animation: 'none' } };
-
-const Section = ({ children, sx, id }) => (
-  <Box id={id} component="section" sx={{ py: { xs: 7, md: 10 }, ...sx }}>
-    <Container maxWidth="lg">{children}</Container>
-  </Box>
-);
-
 const Shot = ({ src, alt, width, height, eager }) => (
-  <Box
-    component="img"
+  <img
     src={src}
     alt={alt}
     width={width}
     height={height}
     loading={eager ? 'eager' : 'lazy'}
     decoding="async"
-    sx={{ display: 'block', width: '100%', height: 'auto' }}
+    style={{ display: 'block', width: '100%', height: 'auto' }}
   />
 );
 
-// A computer screen around a screenshot
-const BrowserFrame = ({ children, sx }) => (
-  <Box sx={{ borderRadius: 3, overflow: 'hidden', border: 1, borderColor: 'divider', bgcolor: 'background.paper', boxShadow: (t) => `0 24px 60px ${alpha(t.palette.common.black, t.palette.mode === 'dark' ? 0.55 : 0.16)}`, ...sx }}>
-    <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', px: 1.5, height: 28, borderBottom: 1, borderColor: 'divider', bgcolor: (t) => t.custom.surface.subtle }}>
-      {['error.main', 'warning.main', 'success.main'].map((c) => (
-        <Box key={c} sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: c }} />
-      ))}
-    </Box>
+const BrowserFrame = ({ children, className = '', style }) => (
+  <div className={`nl-browser-frame ${className}`.trim()} style={style}>
+    <div className="nl-browser-frame__bar">
+      <span className="nl-browser-frame__dot" style={{ backgroundColor: 'var(--bad)' }} />
+      <span className="nl-browser-frame__dot" style={{ backgroundColor: 'var(--warn)' }} />
+      <span className="nl-browser-frame__dot" style={{ backgroundColor: 'var(--good)' }} />
+    </div>
     {children}
-  </Box>
+  </div>
 );
 
-// A phone around a screenshot
-const PhoneFrame = ({ children, sx }) => (
-  <Box sx={{ p: '7px', borderRadius: '30px', bgcolor: 'grey.900', boxShadow: (t) => `0 24px 50px ${alpha(t.palette.common.black, 0.35)}`, ...sx }}>
-    <Box sx={{ borderRadius: '24px', overflow: 'hidden', bgcolor: 'common.white' }}>{children}</Box>
-  </Box>
+const PhoneFrame = ({ children, className = '', style }) => (
+  <div className={`nl-phone-frame ${className}`.trim()} style={style}>
+    <div className="nl-phone-frame__inner">{children}</div>
+  </div>
 );
 
-const FloatingCard = ({ icon, title, text, color, sx }) => (
-  <Card
-    aria-hidden="true"
-    sx={{
-      position: 'absolute',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 1.25,
-      px: 1.75,
-      py: 1.25,
-      borderRadius: 3,
-      boxShadow: (t) => t.shadows[10],
-      animation: 'murzak-float 6s ease-in-out infinite',
-      ...noMotion,
-      ...sx,
-    }}
-  >
-    <Box sx={{ width: 34, height: 34, borderRadius: 2, display: 'grid', placeItems: 'center', color: `${color}.main`, bgcolor: (t) => alpha(t.palette[color].main, 0.14) }}>{icon}</Box>
-    <Box>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{title}</Typography>
-      <Typography variant="caption" color="text.secondary">{text}</Typography>
-    </Box>
-  </Card>
+const FloatingCard = ({ icon, title, text, tone = 'success', style }) => (
+  <div className="nl-floating-card" aria-hidden="true" style={style}>
+    <div className={`nl-floating-card__icon is-${tone}`}>
+      <Icon name={icon} />
+    </div>
+    <div>
+      <p className="nl-floating-card__title">{title}</p>
+      <p className="nl-floating-card__text">{text}</p>
+    </div>
+  </div>
 );
 
 const HeroVisual = () => (
-  <Box sx={{ position: 'relative', pb: { xs: 6, md: 4 }, pl: { xs: 4, md: 6 } }}>
-    {/* Soft colour behind the screens */}
-    <Box aria-hidden="true" sx={{ position: 'absolute', inset: '-10% -8% 0 10%', borderRadius: '50%', filter: 'blur(60px)', opacity: 0.55, background: (t) => t.custom.gradient }} />
-    <BrowserFrame sx={{ position: 'relative' }}>
+  <div className="nl-hero-visual">
+    <BrowserFrame>
       <Shot src={tillDesktop} alt="The Murzak POS till: product pictures on the left, the current sale and a Charge button on the right" width={1280} height={800} eager />
     </BrowserFrame>
-    <PhoneFrame sx={{ position: 'absolute', left: 0, bottom: 0, width: { xs: '30%', md: '27%' } }}>
+    <PhoneFrame style={{ position: 'absolute', left: 0, bottom: 0, width: '28%' }}>
       <Shot src={tillPhone} alt="The same till on a phone" width={780} height={1688} eager />
     </PhoneFrame>
     <FloatingCard
-      icon={<CheckCircle fontSize="small" />}
-      color="success"
+      icon="check"
+      tone="success"
       title="Sale complete"
       text="KES 802 paid by M-Pesa"
-      sx={{ right: { xs: -4, md: -24 }, bottom: { xs: 8, md: 28 } }}
+      style={{ position: 'absolute', right: -12, bottom: 20 }}
     />
     <FloatingCard
-      icon={<WarningAmberRounded fontSize="small" />}
-      color="warning"
+      icon="alert"
+      tone="warning"
       title="Running low"
       text="Brookside Milk 1L: 3 left"
-      sx={{ display: { xs: 'none', sm: 'flex' }, right: { sm: 24, md: -36 }, top: { sm: -18, md: 40 }, animationDelay: '-3s' }}
+      style={{ position: 'absolute', right: -20, top: 30, animationDelay: '-3s' }}
     />
-  </Box>
+  </div>
 );
 
 const ProductStrip = () => {
-  const items = [...SHOWCASE, ...SHOWCASE]; // twice, so the loop is seamless
+  const items = [...SHOWCASE, ...SHOWCASE];
   return (
-    <Box
-      aria-hidden="true"
-      sx={{
-        overflow: 'hidden',
-        maskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)',
-        WebkitMaskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)',
-      }}
-    >
-      <Box sx={{ display: 'flex', gap: 2, width: 'max-content', animation: 'murzak-marquee 60s linear infinite', ...noMotion, '&:hover': { animationPlayState: 'paused' } }}>
+    <div className="nl-product-strip-wrapper" aria-hidden="true">
+      <div className="nl-product-strip">
         {items.map((p, i) => (
-          <Card key={`${p.item_code}-${i}`} sx={{ width: 168, flexShrink: 0, overflow: 'hidden', borderRadius: 3 }}>
+          <div key={`${p.item_code}-${i}`} className="nl-product-card">
             <ProductImage product={p} rounded={0} />
-            <Box sx={{ px: 1.5, py: 1.25 }}>
-              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 650 }}>{p.item_name}</Typography>
-              <Typography variant="caption" color="text.secondary">{p.item_group}</Typography>
-            </Box>
-          </Card>
+            <div className="nl-product-card__meta">
+              <p className="nl-product-card__name">{p.item_name}</p>
+              <p className="nl-product-card__group">{p.item_group}</p>
+            </div>
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
 const Ticks = ({ items }) => (
-  <Stack spacing={1.25} component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+  <ul className="nl-ticks">
     {items.map((text) => (
-      <Box component="li" key={text} sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start' }}>
-        <Box sx={{ mt: '2px', width: 22, height: 22, flexShrink: 0, borderRadius: '50%', display: 'grid', placeItems: 'center', color: 'success.main', bgcolor: (t) => alpha(t.palette.success.main, 0.14) }}>
-          <Check sx={{ fontSize: 15 }} />
-        </Box>
-        <Typography variant="body1">{text}</Typography>
-      </Box>
+      <li key={text} className="nl-ticks__item">
+        <span className="nl-ticks__icon">
+          <Icon name="check" />
+        </span>
+        <span>{text}</span>
+      </li>
     ))}
-  </Stack>
+  </ul>
 );
 
-// Picture on one side, explanation on the other
 const Spotlight = ({ eyebrow, title, text, points, visual, flip }) => (
-  <Box sx={{ display: 'grid', gap: { xs: 4, md: 8 }, alignItems: 'center', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
-    <Box sx={{ order: { md: flip ? 2 : 1 } }}>{visual}</Box>
-    <Box sx={{ order: { md: flip ? 1 : 2 } }}>
-      <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>{eyebrow}</Typography>
-      <Typography variant="h3" sx={{ mt: 0.5, mb: 1.5 }}>{title}</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 480 }}>{text}</Typography>
+  <div className={`nl-spotlight ${flip ? 'is-flipped' : ''}`}>
+    <div className="nl-spotlight__visual">{visual}</div>
+    <div className="nl-spotlight__content">
+      <div className="nl-landing-overline">{eyebrow}</div>
+      <h2 className="nl-spotlight__title">{title}</h2>
+      <p className="nl-spotlight__text">{text}</p>
       <Ticks items={points} />
-    </Box>
-  </Box>
+    </div>
+  </div>
 );
 
-// A caption sitting on the bottom of a photo
-const PhotoCaption = ({ children }) => (
-  <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, px: 2, pb: 1.75, pt: 6, color: 'common.white', background: (t) => `linear-gradient(to top, ${alpha(t.palette.common.black, 0.72)}, ${alpha(t.palette.common.black, 0)})` }}>
-    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'inherit', textShadow: (t) => `0 1px 6px ${alpha(t.palette.common.black, 0.35)}` }}>{children}</Typography>
-  </Box>
-);
-
-// Real counters, real devices: ties the screens above to the place they are used
 const CounterStory = () => (
-  <Section id="counter" sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
-    <Box sx={{ display: 'grid', gap: { xs: 4, md: 7 }, alignItems: 'center', gridTemplateColumns: { xs: '1fr', md: '5fr 6fr' } }}>
-      <Photo
-        name="counter-cashier"
-        alt="A cashier tapping the card reader at a till that shows the items in the current sale"
-        ratio={4 / 5}
-        position="50% 45%"
-        sx={{ borderRadius: 4, boxShadow: (t) => t.shadows[8] }}
-      >
-        <PhotoCaption>Ring up the sale on the till</PhotoCaption>
-      </Photo>
-      <Box>
-        <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>Built around your counter</Typography>
-        <Typography variant="h3" sx={{ mt: 0.5, mb: 1.5 }}>From the first item to the last payment</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 520 }}>
-          Murzak POS runs in a web browser, so it fits what is already on your counter: a tablet, a touchscreen computer or a phone. Ring up the sale, then take payment the way your customer prefers.
-        </Typography>
+  <section id="counter" className="nl-landing-section is-surface">
+    <div className="nl-landing-container">
+      <div className="nl-spotlight">
         <Photo
-          name="counter-card-reader"
-          alt="A counter with a till screen showing the total and a card machine ready for payment"
-          ratio={3 / 2}
-          position="50% 55%"
-          sx={{ borderRadius: 4, mb: 3, boxShadow: (t) => t.shadows[6] }}
-        >
-          <PhotoCaption>Cash, M-Pesa, card machine or credit, recorded at the till</PhotoCaption>
-        </Photo>
-        <Ticks items={['Works in any modern browser, nothing to install', 'Card machine sales are recorded at the till like any other payment', 'Receipts print on a till roll, or skip printing']} />
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2.5 }}>
-          Illustrative photos. Murzak POS is software: it runs on the devices you already own.
-        </Typography>
-      </Box>
-    </Box>
-  </Section>
+          name="counter-cashier"
+          alt="A cashier tapping the card reader at a till that shows the items in the current sale"
+          ratio={4 / 5}
+          position="50% 45%"
+          style={{ borderRadius: 'var(--radius-card)' }}
+        />
+        <div className="nl-spotlight__content">
+          <div className="nl-landing-overline">Built around your counter</div>
+          <h2 className="nl-spotlight__title">From the first item to the last payment</h2>
+          <p className="nl-spotlight__text">
+            Murzak POS runs in a web browser, so it fits what is already on your counter: a tablet, a touchscreen computer or a phone. Ring up the sale, then take payment the way your customer prefers.
+          </p>
+          <Photo
+            name="counter-card-reader"
+            alt="A counter with a till screen showing the total and a card machine ready for payment"
+            ratio={3 / 2}
+            position="50% 55%"
+            style={{ borderRadius: 'var(--radius-card)', marginBottom: 'var(--space-4)' }}
+          />
+          <Ticks items={['Works in any modern browser, nothing to install', 'Card machine sales are recorded at the till like any other payment', 'Receipts print on a till roll, or skip printing']} />
+          <p style={{ fontSize: 'var(--caption-size)', color: 'var(--muted)', marginTop: 'var(--space-3)' }}>
+            Illustrative photos. Murzak POS is software: it runs on the devices you already own.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 );
 
-// Photos per row: all of them up to four, then three across for five or six, otherwise four
-const stripColumns = (count) => (count <= 4 ? count : count <= 6 ? 3 : 4);
-
-// "Made for your kind of shop": appears once at least three industry photos exist
 const IndustryStrip = () => {
   const shown = INDUSTRIES.filter((i) => photoUrl(i.photo));
   if (shown.length < 3) return null;
   return (
-    <Section id="industries">
-      <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h2" sx={{ mb: 1.5 }}>Made for your kind of business</Typography>
-        <Typography variant="body1" color="text.secondary">
-          Pick your industry when you sign up and start with a ready-made product list.
-        </Typography>
-      </Box>
-      {/* One column on a phone, then columns chosen so the last row is not left with a lone photo */}
-      <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${stripColumns(shown.length)}, 1fr)` } }}>
-        {shown.map((i) => (
-          <Photo key={i.key} name={i.photo} alt={i.label} ratio={4 / 5} position="50% 20%" sx={{ borderRadius: 3, aspectRatio: { xs: '1 / 1', sm: '4 / 5' } }}>
-            <PhotoCaption>{i.label}</PhotoCaption>
-          </Photo>
-        ))}
-      </Box>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 2.5 }}>
-        Illustrative photos.
-      </Typography>
-    </Section>
+    <section id="industries" className="nl-landing-section">
+      <div className="nl-landing-container">
+        <div className="nl-landing-section__header">
+          <h2 className="nl-landing-section__title">Made for your kind of business</h2>
+          <p className="nl-landing-section__subtitle">
+            Pick your industry when you sign up and start with a ready-made product list.
+          </p>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gap: 'var(--space-4)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          }}
+        >
+          {shown.map((i) => (
+            <Photo
+              key={i.key}
+              name={i.photo}
+              alt={i.label}
+              ratio={4 / 5}
+              position="50% 20%"
+              style={{ borderRadius: 'var(--radius-card)' }}
+            />
+          ))}
+        </div>
+        <p style={{ textAlign: 'center', fontSize: 'var(--caption-size)', color: 'var(--muted)', marginTop: 'var(--space-4)' }}>
+          Illustrative photos.
+        </p>
+      </div>
+    </section>
   );
 };
 
@@ -312,251 +246,240 @@ const Landing = () => {
   const { mode, toggleColorMode } = useThemeMode();
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', overflowX: 'hidden' }}>
-      <AppBar position="sticky" sx={{ bgcolor: (t) => alpha(t.palette.background.default, 0.85), backdropFilter: 'blur(10px)', borderBottom: 1, borderColor: 'divider' }}>
-        <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ gap: 1 }}>
+    <div className="nl-landing">
+      {/* Navbar */}
+      <header className="nl-landing-nav">
+        <div className="nl-landing-container">
+          <div className="nl-landing-nav__inner">
             <RouterLink to="/" aria-label="Murzak POS home" style={{ textDecoration: 'none' }}>
-              <BrandLogo size={34} textVariant="h5" />
+              <BrandLogo size={32} />
             </RouterLink>
-            <Box sx={{ flexGrow: 1 }} />
-            <Link href="#features" underline="none" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' }, px: 1.5, fontWeight: 600, '&:hover': { color: 'text.primary' } }}>
-              Features
-            </Link>
-            <Link href="#how-it-works" underline="none" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' }, px: 1.5, fontWeight: 600, '&:hover': { color: 'text.primary' } }}>
-              How it works
-            </Link>
-            <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-              <IconButton onClick={toggleColorMode} aria-label="Toggle colour theme" sx={{ color: 'text.secondary' }}>
-                {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
-              </IconButton>
-            </Tooltip>
-            <Button color="inherit" onClick={() => navigate('/login')} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
-              Sign in
-            </Button>
-            <Button variant="contained" onClick={() => navigate('/register')}>
-              Get started
-            </Button>
-          </Toolbar>
-        </Container>
-      </AppBar>
+
+            <nav className="nl-landing-nav__links">
+              <a href="#features" className="nl-landing-nav__link">
+                Features
+              </a>
+              <a href="#how-it-works" className="nl-landing-nav__link">
+                How it works
+              </a>
+            </nav>
+
+            <div className="nl-landing-nav__actions">
+              <Button
+                variant="ghost"
+                icon={mode === 'dark' ? 'sun' : 'moon'}
+                aria-label={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                onClick={toggleColorMode}
+              />
+              <Button variant="secondary" onClick={() => navigate('/login')}>
+                Sign in
+              </Button>
+              <Button variant="primary" onClick={() => navigate('/register')}>
+                Get started
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Hero */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', background: (t) => t.custom.gradientSoft }}>
-        <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
-          <Box sx={{ display: 'grid', gap: { xs: 6, md: 6 }, gridTemplateColumns: { xs: '1fr', md: '0.9fr 1.1fr' }, alignItems: 'center' }}>
-            <Box sx={{ animation: 'murzak-fade-up .5s ease both' }}>
-              <Typography variant="overline" color="primary" sx={{ fontWeight: 700 }}>
+      <section className="nl-landing-hero">
+        <div className="nl-landing-container">
+          <div className="nl-landing-hero__grid">
+            <div>
+              <div className="nl-landing-overline">
                 Point of sale built for Kenyan businesses
-              </Typography>
-              <Typography variant="h1" sx={{ mt: 1, mb: 2.5, fontSize: { xs: '2.25rem', md: '3.25rem' } }}>
-                Sell faster. Stay compliant. <Box component="span" sx={{ background: (t) => t.custom.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>See every shilling.</Box>
-              </Typography>
-              <Typography variant="h6" component="p" color="text.secondary" sx={{ fontWeight: 400, lineHeight: 1.6, maxWidth: 520, mb: 4 }}>
+              </div>
+              <h1 className="nl-landing-hero__title">
+                Sell faster. Stay compliant.{' '}
+                <span className="nl-landing-highlight">See every shilling.</span>
+              </h1>
+              <p className="nl-landing-hero__text">
                 Murzak POS puts your till, stock, buying and reports in one place. Take cash and M-Pesa at the counter, send sales to KRA eTIMS, and know what is selling in every store, from any phone, tablet or computer.
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                <Button variant="contained" size="large" endIcon={<ArrowForward />} onClick={() => navigate('/register')}>
+              </p>
+              <div className="nl-landing-hero__cta">
+                <Button variant="primary" icon="chevronRight" iconEnd onClick={() => navigate('/register')}>
                   Create your account
                 </Button>
-                <Button variant="outlined" size="large" onClick={() => navigate('/login')}>
+                <Button variant="secondary" onClick={() => navigate('/login')}>
                   Sign in
                 </Button>
-              </Stack>
-              <Stack direction="row" spacing={2.5} useFlexGap flexWrap="wrap" sx={{ mt: 3.5, color: 'text.secondary' }}>
-                {[
-                  [DevicesOutlined, 'Computer, tablet or phone'],
-                  [PhoneAndroidOutlined, 'Cash, M-Pesa, card and credit'],
-                  [VerifiedUserOutlined, 'Connects to KRA eTIMS'],
-                ].map(([Icon, label]) => (
-                  <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Icon sx={{ fontSize: 18, color: 'primary.main' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Box>
+              </div>
+              <div className="nl-landing-hero__badges">
+                <div className="nl-landing-badge-item">
+                  <Icon name="store" />
+                  <span>Computer, tablet or phone</span>
+                </div>
+                <div className="nl-landing-badge-item">
+                  <Icon name="till" />
+                  <span>Cash, M-Pesa, card and credit</span>
+                </div>
+                <div className="nl-landing-badge-item">
+                  <Icon name="check" />
+                  <span>Connects to KRA eTIMS</span>
+                </div>
+              </div>
+            </div>
             <HeroVisual />
-          </Box>
-        </Container>
-      </Box>
+          </div>
+        </div>
+      </section>
 
-      {/* Product pictures */}
-      <Box component="section" sx={{ py: { xs: 6, md: 8 }, borderBottom: 1, borderColor: 'divider' }}>
-        <Container maxWidth="md" sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h3" sx={{ mb: 1.25 }}>Every product looks the part</Typography>
-          <Typography variant="body1" color="text.secondary">
-            Add your own product photos, or let Murzak POS draw a picture for each one automatically. Your till looks finished from the first day.
-          </Typography>
-        </Container>
+      {/* Product Strip */}
+      <section className="nl-landing-section" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div className="nl-landing-container">
+          <div className="nl-landing-section__header">
+            <h2 className="nl-landing-section__title">Every product looks the part</h2>
+            <p className="nl-landing-section__subtitle">
+              Add your own product photos, or let Murzak POS draw a picture for each one automatically. Your till looks finished from the first day.
+            </p>
+          </div>
+        </div>
         <ProductStrip />
-      </Box>
+      </section>
 
-      {/* The counter: where the product is used */}
+      {/* Counter Story */}
       <CounterStory />
 
       {/* Spotlights */}
-      <Section>
-        <Stack spacing={{ xs: 9, md: 12 }}>
-          <Spotlight
-            eyebrow="At the counter"
-            title="A till your staff learn in minutes"
-            text="Big product pictures, a search box that also takes barcode scans, and one large button to charge. Nothing on screen that leads away from the sale."
-            points={[
-              'Tap a picture or scan a barcode to add it',
-              'Offers and discounts are applied for you',
-              'Put a sale on hold and bring it back later',
-              'Prints a till-roll receipt, or skip printing',
-            ]}
-            visual={
-              <BrowserFrame>
-                <Shot src={tillDesktop} alt="The till with product pictures and the current sale" width={1280} height={800} />
-              </BrowserFrame>
-            }
-          />
-          <Spotlight
-            flip
-            eyebrow="On the move"
-            title="Sell from your phone"
-            text="The same till fits a phone. The Charge button sits under your thumb, and payment takes the whole screen so nothing gets mixed up."
-            points={['Cash, M-Pesa, card, credit or a mix', 'Change to give is worked out for you', 'Works on the phones your team already has']}
-            visual={
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 2, sm: 4 }, px: { xs: 1, sm: 4 } }}>
-                <PhoneFrame sx={{ width: '44%', maxWidth: 240, transform: 'translateY(24px)' }}>
-                  <Shot src={tillPhone} alt="Choosing products on a phone" width={780} height={1688} />
-                </PhoneFrame>
-                <PhoneFrame sx={{ width: '44%', maxWidth: 240 }}>
-                  <Shot src={payPhone} alt="Taking an M-Pesa payment on a phone" width={780} height={1688} />
-                </PhoneFrame>
-              </Box>
-            }
-          />
-          <Spotlight
-            eyebrow="Behind the counter"
-            title="Know how your shop is doing"
-            text="Your sales, money owed to you, purchases and stock alerts on one page, for one store or all of them. Check it from home, not just from behind the counter."
-            points={['Sales trend for any period', 'See who owes you and how much', 'Low-stock alerts before you run out', 'Export a summary to a spreadsheet']}
-            visual={
-              <BrowserFrame>
-                <Shot src={dashboardShot} alt="The owner dashboard with sales, money owed and charts" width={1280} height={800} />
-              </BrowserFrame>
-            }
-          />
-        </Stack>
-      </Section>
+      <section className="nl-landing-section">
+        <div className="nl-landing-container">
+          <div className="nl-spotlight-list">
+            <Spotlight
+              eyebrow="At the counter"
+              title="A till your staff learn in minutes"
+              text="Big product pictures, a search box that also takes barcode scans, and one large button to charge. Nothing on screen that leads away from the sale."
+              points={[
+                'Tap a picture or scan a barcode to add it',
+                'Offers and discounts are applied for you',
+                'Put a sale on hold and bring it back later',
+                'Prints a till-roll receipt, or skip printing',
+              ]}
+              visual={
+                <BrowserFrame>
+                  <Shot src={tillDesktop} alt="The till with product pictures and the current sale" width={1280} height={800} />
+                </BrowserFrame>
+              }
+            />
+            <Spotlight
+              flip
+              eyebrow="On the move"
+              title="Sell from your phone"
+              text="The same till fits a phone. The Charge button sits under your thumb, and payment takes the whole screen so nothing gets mixed up."
+              points={['Cash, M-Pesa, card, credit or a mix', 'Change to give is worked out for you', 'Works on the phones your team already has']}
+              visual={
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-4)' }}>
+                  <PhoneFrame style={{ width: '45%', maxWidth: 220, transform: 'translateY(24px)' }}>
+                    <Shot src={tillPhone} alt="Choosing products on a phone" width={780} height={1688} />
+                  </PhoneFrame>
+                  <PhoneFrame style={{ width: '45%', maxWidth: 220 }}>
+                    <Shot src={payPhone} alt="Taking an M-Pesa payment on a phone" width={780} height={1688} />
+                  </PhoneFrame>
+                </div>
+              }
+            />
+            <Spotlight
+              eyebrow="Behind the counter"
+              title="Know how your shop is doing"
+              text="Your sales, money owed to you, purchases and stock alerts on one page, for one store or all of them. Check it from home, not just from behind the counter."
+              points={['Sales trend for any period', 'See who owes you and how much', 'Low-stock alerts before you run out', 'Export a summary to a spreadsheet']}
+              visual={
+                <BrowserFrame>
+                  <Shot src={dashboardShot} alt="The owner dashboard with sales, money owed and charts" width={1280} height={800} />
+                </BrowserFrame>
+              }
+            />
+          </div>
+        </div>
+      </section>
 
       {/* How it works */}
-      <Section id="how-it-works" sx={{ bgcolor: 'background.paper', borderTop: 1, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h2" sx={{ mb: 1.5 }}>
-            Up and running in three steps
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            No long training or complicated setup.
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
-          {STEPS.map(({ icon: Icon, title, text }, i) => (
-            <Card key={title} sx={{ p: 3, bgcolor: 'background.default' }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 3, display: 'grid', placeItems: 'center', color: 'common.white', background: (t) => t.custom.gradient }}>
-                  <Icon />
-                </Box>
-                <Typography variant="overline" color="text.secondary">
-                  Step {i + 1}
-                </Typography>
-              </Stack>
-              <Typography variant="h5" gutterBottom>
-                {title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {text}
-              </Typography>
-            </Card>
-          ))}
-        </Box>
-      </Section>
+      <section id="how-it-works" className="nl-landing-section is-surface">
+        <div className="nl-landing-container">
+          <div className="nl-landing-section__header">
+            <h2 className="nl-landing-section__title">Up and running in three steps</h2>
+            <p className="nl-landing-section__subtitle">No long training or complicated setup.</p>
+          </div>
+          <div className="nl-landing-grid-3">
+            {STEPS.map(({ icon, title, text }, i) => (
+              <div key={title} className="nl-step-card">
+                <div className="nl-step-card__top">
+                  <div className="nl-step-card__icon">
+                    <Icon name={icon} />
+                  </div>
+                  <span className="nl-step-card__step">Step {i + 1}</span>
+                </div>
+                <h3 className="nl-step-card__title">{title}</h3>
+                <p className="nl-step-card__text">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Features */}
-      <Section id="features">
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Typography variant="h2" sx={{ mb: 1.5 }}>
-            Everything your business needs day to day
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            One system instead of a till, a notebook and three spreadsheets.
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
-          {FEATURES.map(({ icon: Icon, title, text }) => (
-            <Box
-              key={title}
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                border: 1,
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                transition: 'transform .2s ease, box-shadow .2s ease, border-color .2s ease',
-                '&:hover': { transform: 'translateY(-3px)', boxShadow: (t) => t.shadows[6], borderColor: 'primary.main' },
-              }}
-            >
-              <Box sx={{ width: 40, height: 40, mb: 1.75, borderRadius: 2.5, display: 'grid', placeItems: 'center', color: 'primary.main', bgcolor: (t) => alpha(t.palette.primary.main, 0.1) }}>
-                <Icon />
-              </Box>
-              <Typography variant="h6" gutterBottom>
-                {title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {text}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Section>
+      <section id="features" className="nl-landing-section">
+        <div className="nl-landing-container">
+          <div className="nl-landing-section__header">
+            <h2 className="nl-landing-section__title">Everything your business needs day to day</h2>
+            <p className="nl-landing-section__subtitle">
+              One system instead of a till, a notebook and three spreadsheets.
+            </p>
+          </div>
+          <div className="nl-landing-grid-4">
+            {FEATURES.map(({ icon, title, text }) => (
+              <div key={title} className="nl-feature-card">
+                <div className="nl-feature-card__icon">
+                  <Icon name={icon} />
+                </div>
+                <h3 className="nl-feature-card__title">{title}</h3>
+                <p className="nl-feature-card__text">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* Industry Strip */}
       <IndustryStrip />
 
-      {/* Closing call to action */}
-      <Section sx={{ pt: 0 }}>
-        <Box sx={{ position: 'relative', overflow: 'hidden', textAlign: 'center', p: { xs: 4, md: 7 }, borderRadius: 5, color: 'common.white', background: (t) => t.custom.gradient }}>
-          {/* Optional photo behind the colour; nothing shows until cta-banner has been added */}
-          <Photo name="cta-banner" ratio="auto" position="50% 40%" sx={{ position: 'absolute', inset: 0, opacity: 0.3, mixBlendMode: 'luminosity', bgcolor: 'transparent' }} />
-          <Box aria-hidden="true" sx={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', top: -120, right: -60, bgcolor: (t) => alpha(t.palette.common.white, 0.12) }} />
-          <Box aria-hidden="true" sx={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', bottom: -90, left: -40, bgcolor: (t) => alpha(t.palette.common.white, 0.1) }} />
-          <Typography variant="h2" sx={{ position: 'relative', color: 'common.white', mb: 1.5 }}>
-            Your shop, under control by this evening
-          </Typography>
-          <Typography variant="body1" sx={{ position: 'relative', opacity: 0.9, mb: 3.5, maxWidth: 520, mx: 'auto' }}>
-            Create your account, load a starter catalogue for your industry and ring up your first sale today.
-          </Typography>
-          <Button size="large" variant="contained" endIcon={<ArrowForward />} onClick={() => navigate('/register')} sx={{ position: 'relative', bgcolor: 'common.white', color: 'primary.dark', '&:hover': { bgcolor: (t) => alpha(t.palette.common.white, 0.9) } }}>
-            Create your account
-          </Button>
-        </Box>
-      </Section>
+      {/* Closing CTA */}
+      <section className="nl-landing-section" style={{ paddingTop: 0 }}>
+        <div className="nl-landing-container">
+          <div className="nl-landing-cta">
+            <h2 className="nl-landing-cta__title">Your shop, under control by this evening</h2>
+            <p className="nl-landing-cta__text">
+              Create your account, load a starter catalogue for your industry and ring up your first sale today.
+            </p>
+            <Button variant="primary" icon="chevronRight" iconEnd onClick={() => navigate('/register')}>
+              Create your account
+            </Button>
+          </div>
+        </div>
+      </section>
 
-      <Box component="footer" sx={{ borderTop: 1, borderColor: 'divider', py: 3 }}>
-        <Container maxWidth="lg">
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={1.5}>
-            <Typography variant="body2" color="text.secondary">
+      {/* Footer */}
+      <footer className="nl-landing-footer">
+        <div className="nl-landing-container">
+          <div className="nl-landing-footer__inner">
+            <p style={{ margin: 0 }}>
               &copy; {new Date().getFullYear()} Murzak Technologies. All rights reserved.
-            </Typography>
-            <Stack direction="row" spacing={3}>
-              {[
-                ['Privacy Policy', '/privacy-policy'],
-                ['Terms of Service', '/terms-of-service'],
-                ['Contact Us', '/contact-us'],
-              ].map(([label, to]) => (
-                <Link key={to} component={RouterLink} to={to} underline="hover" color="text.secondary" variant="body2">
-                  {label}
-                </Link>
-              ))}
-            </Stack>
-          </Stack>
-        </Container>
-      </Box>
-    </Box>
+            </p>
+            <div className="nl-landing-footer__links">
+              <RouterLink to="/privacy-policy" className="nl-landing-footer__link">
+                Privacy Policy
+              </RouterLink>
+              <RouterLink to="/terms-of-service" className="nl-landing-footer__link">
+                Terms of Service
+              </RouterLink>
+              <RouterLink to="/contact-us" className="nl-landing-footer__link">
+                Contact Us
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 

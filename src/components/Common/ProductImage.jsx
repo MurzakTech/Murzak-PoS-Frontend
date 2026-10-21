@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, useTheme } from '@mui/material';
 import ProductArt from './ProductArt';
 import { artColors, productImageUrl } from '../../utils/productArt';
+import { useThemeMode } from '../../theme/ThemeProvider';
 
 /**
  * A product's picture: its own photo when it has one, otherwise an
@@ -10,9 +10,8 @@ import { artColors, productImageUrl } from '../../utils/productArt';
  *
  * shape "wide" (2:1) is for product tiles, "square" for list thumbnails.
  */
-const ProductImage = ({ product, shape = 'wide', src: srcOverride, sx, rounded = 2, alt }) => {
-  const theme = useTheme();
-  const mode = theme.palette.mode;
+const ProductImage = ({ product, shape = 'wide', src: srcOverride, style, className = '', rounded = 'var(--radius-card)', alt }) => {
+  const { mode } = useThemeMode();
   const src = srcOverride !== undefined ? srcOverride : productImageUrl(product);
   const [failed, setFailed] = useState(false);
 
@@ -28,34 +27,41 @@ const ProductImage = ({ product, shape = 'wide', src: srcOverride, sx, rounded =
   const name = alt ?? (product?.item_name || product?.name || product?.item_code || 'Product');
 
   return (
-    <Box
-      sx={{
+    <div
+      className={className}
+      style={{
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: rounded,
-        bgcolor: colors.bg2,
+        borderRadius: typeof rounded === 'number' ? `${rounded * 4}px` : rounded,
+        backgroundColor: colors.bg2,
         flexShrink: 0,
-        ...(shape === 'square' ? { aspectRatio: '1 / 1' } : { aspectRatio: '2 / 1' }),
-        ...sx,
+        aspectRatio: shape === 'square' ? '1 / 1' : '2 / 1',
+        ...style,
       }}
     >
       {src && !failed ? (
-        <Box
-          component="img"
+        <img
           src={src}
           alt={name}
           loading="lazy"
           decoding="async"
           draggable={false}
           onError={() => setFailed(true)}
-          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
         />
       ) : (
-        <Box sx={{ position: 'absolute', inset: 0 }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
           <ProductArt colors={colors} shape={shape} />
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 

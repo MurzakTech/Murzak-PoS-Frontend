@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Box, Button, Chip, CircularProgress, FormControlLabel, Paper, Stack, Switch, Typography } from '@mui/material';
-import { AutoAwesome } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
-import PageHeader from '../../components/Layout/PageHeader';
-import { ConfirmDialog } from '../../components/Common';
+import PageHeader from '../../newlook/shell/PageHeader';
+import { Button, Card, Switch, ConfirmDialog, Icon, Badge } from '../../newlook/components';
 import { useNewLook } from '../../newlook/NewLookProvider';
 
 /**
- * Settings > New look. Owners only (the menu hides it from everyone else and the server refuses anyone
- * else). One switch for the whole shop: off shows the app as it has always been, on shows the redesigned
- * screens that are ready and leaves every other screen as it is. Switching back is instant and changes
- * no sale, stock figure or account.
+ * Settings > New look. Owners only.
+ * Migrated to NewLook design tokens and components (0 MUI imports).
  */
 const NewLook = () => {
   const { enabled, status, company, setEnabled } = useNewLook();
@@ -36,64 +32,108 @@ const NewLook = () => {
     }
   };
 
-  const onToggle = (event) => {
-    // Turning it on changes what every person in the shop sees, so it asks first. Turning it off does not.
-    if (event.target.checked) setConfirmOn(true);
+  const onToggle = (checked) => {
+    if (checked) setConfirmOn(true);
     else save(false);
   };
 
   return (
-    <Box>
-      <PageHeader title="New look" subtitle="Show this shop the redesigned screens" icon={AutoAwesome} />
+    <div style={{ padding: '0 var(--page-gutter)', maxWidth: 840 }}>
+      <PageHeader
+        title="New look"
+        subtitle="Show this shop the redesigned screens"
+      />
 
       {status === 'error' && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          We could not check the setting just now, so this page may be out of date. Reload to try again.
-        </Alert>
-      )}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} role="alert">
-          {error}
-        </Alert>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-3) var(--space-4)',
+            borderRadius: 'var(--radius-input)',
+            backgroundColor: 'var(--soft)',
+            color: 'var(--warn)',
+            border: '1px solid var(--line)',
+            marginBottom: 'var(--space-4)',
+            fontSize: 'var(--body-size)',
+          }}
+        >
+          <Icon name="alert" />
+          <span>We could not check the setting just now, so this page may be out of date. Reload to try again.</span>
+        </div>
       )}
 
-      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 2, maxWidth: 760 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
-          <Typography variant="h6" sx={{ fontSize: '1.05rem' }}>
+      {error && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-3) var(--space-4)',
+            borderRadius: 'var(--radius-input)',
+            backgroundColor: 'var(--soft)',
+            color: 'var(--bad)',
+            border: '1px solid var(--bad)',
+            marginBottom: 'var(--space-4)',
+            fontSize: 'var(--body-size)',
+          }}
+          role="alert"
+        >
+          <Icon name="alert" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <Card style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+          <h2 style={{ fontSize: 'var(--card-title-size)', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
             New look{company ? ` for ${company}` : ''}
-          </Typography>
+          </h2>
           {known ? (
-            <Chip size="small" label={enabled ? 'On' : 'Off'} color={enabled ? 'success' : 'default'} />
+            <Badge tone={enabled ? 'positive' : 'neutral'}>
+              {enabled ? 'On' : 'Off'}
+            </Badge>
           ) : (
-            <CircularProgress size={16} aria-label="Checking" />
+            <span style={{ fontSize: 'var(--caption-size)', color: 'var(--muted)' }}>Checking...</span>
           )}
-        </Stack>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        </div>
+
+        <p style={{ fontSize: 'var(--body-size)', color: 'var(--muted)', lineHeight: 1.6, margin: '0 0 var(--space-6) 0' }}>
           The New look is on by default. While it is on, people see the redesigned screens, and the few screens that have not
           been redesigned stay as they were. If you turn it off, everyone in the shop sees the app exactly as it was before. You
           can switch back at any time; no sale, stock figure or account changes either way.
-        </Typography>
+        </p>
 
-        <FormControlLabel
-          control={<Switch checked={enabled} onChange={onToggle} disabled={!known || busy} />}
-          label="Use the New look in this shop"
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
+          <Switch
+            id="toggle-newlook"
+            checked={enabled}
+            onChange={onToggle}
+            disabled={!known || busy}
+          />
+          <label htmlFor="toggle-newlook" style={{ fontSize: 'var(--body-size)', fontWeight: 600, color: 'var(--ink)', cursor: 'pointer' }}>
+            Use the New look in this shop
+          </label>
+        </div>
 
-        <Box sx={{ minHeight: 28, mt: 1 }} aria-live="polite">
-          {busy && <CircularProgress size={16} aria-label="Saving" />}
+        <div style={{ minHeight: 28, marginTop: 'var(--space-2)' }} aria-live="polite">
+          {busy && <span style={{ fontSize: 'var(--caption-size)', color: 'var(--muted)' }}>Saving...</span>}
           {saved && !busy && (
-            <Typography variant="body2" color="success.main">
+            <span style={{ fontSize: 'var(--body-size)', color: 'var(--good)', fontWeight: 600 }}>
               Saved. The change reaches each device the next time it signs in or reloads.
-            </Typography>
+            </span>
           )}
-        </Box>
+        </div>
 
         {enabled && (
-          <Button component={RouterLink} to="/" variant="outlined" sx={{ mt: 1 }}>
-            Open Home
-          </Button>
+          <div style={{ marginTop: 'var(--space-4)' }}>
+            <Button as={RouterLink} to="/" variant="secondary">
+              Open Home
+            </Button>
+          </div>
         )}
-      </Paper>
+      </Card>
 
       <ConfirmDialog
         open={confirmOn}
@@ -104,9 +144,8 @@ const NewLook = () => {
         message="Everyone who signs in at this shop will see the redesigned screens that are ready. It is best to do this when the till is closed or no cashier has items in the cart. You can switch it off again here at any time."
         confirmText="Turn on"
         cancelText="Keep it off"
-        variant="info"
       />
-    </Box>
+    </div>
   );
 };
 
