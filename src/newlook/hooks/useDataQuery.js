@@ -21,15 +21,15 @@ class QueryCache {
     return this.cache.get(key) || null;
   }
 
-  set(key, data, error = '') {
+  set(key, data, error = '', errorType = '') {
     const entry = {
       data,
       error,
+      errorType,
       status: error ? 'error' : 'ready',
       timestamp: Date.now(),
     };
     this.cache.set(key, entry);
-    this.notify();
     return entry;
   }
 
@@ -109,9 +109,9 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
   const isFresh = cached && (Date.now() - cached.timestamp < ttlMs);
 
   const [state, setState] = useState(() => {
-    if (!enabled) return { status: 'idle', data: null, error: '', isFetching: false };
-    if (cached) return { status: cached.status, data: cached.data, error: cached.error, isFetching: !isFresh };
-    return { status: 'loading', data: null, error: '', isFetching: true };
+    if (!enabled) return { status: 'idle', data: null, error: '', errorType: '', isFetching: false };
+    if (cached) return { status: cached.status, data: cached.data, error: cached.error, errorType: cached.errorType || '', isFetching: !isFresh };
+    return { status: 'loading', data: null, error: '', errorType: '', isFetching: true };
   });
 
   const run = useCallback((keepPrevious = true) => {
@@ -123,6 +123,7 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
       status: currentCached?.data !== undefined ? 'ready' : (keepPrevious && prev.data ? 'ready' : 'loading'),
       data: currentCached?.data !== undefined ? currentCached.data : (keepPrevious ? prev.data : null),
       error: '',
+      errorType: '',
       isFetching: true,
     }));
 
@@ -138,15 +139,16 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
         queryCache.inFlight.delete(key);
         queryCache.set(key, data);
         if (ticket.current === mine) {
-          setState({ status: 'ready', data, error: '', isFetching: false });
+          setState({ status: 'ready', data, error: '', errorType: '', isFetching: false });
         }
       })
       .catch((err) => {
         queryCache.inFlight.delete(key);
         const errorMsg = err?.message || 'Failed to fetch data';
-        queryCache.set(key, null, errorMsg);
+        const errorType = err?.errorType || '';
+        queryCache.set(key, null, errorMsg, errorType);
         if (ticket.current === mine) {
-          setState({ status: 'error', data: null, error: errorMsg, isFetching: false });
+          setState({ status: 'error', data: null, error: errorMsg, errorType, isFetching: false });
         }
       });
   }, [key]);
@@ -154,7 +156,7 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
   useEffect(() => {
     if (!enabled || !key) return undefined;
     const unsubscribe = queryCache.subscribe((invalidatedKeyOrPrefix) => {
-      if (!invalidatedKeyOrPrefix || key === invalidatedKeyOrPrefix || key.startsWith(invalidatedKeyOrPrefix)) {
+      if (invalidatedKeyOrPrefix === undefined || invalidatedKeyOrPrefix === '' || key === invalidatedKeyOrPrefix || key.startsWith(invalidatedKeyOrPrefix)) {
         run(true);
       }
     });
@@ -164,7 +166,7 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
   useEffect(() => {
     if (!enabled || !key) {
       ticket.current += 1;
-      setState({ status: 'idle', data: null, error: '', isFetching: false });
+      setState({ status: 'idle', data: null, error: '', errorType: '', isFetching: false });
       return undefined;
     }
 
@@ -173,7 +175,7 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
 
     if (entry && stillFresh) {
       // Data is already fresh in cache, no network call needed
-      setState({ status: entry.status, data: entry.data, error: entry.error, isFetching: false });
+      setState({ status: entry.status, data: entry.data, error: entry.error, errorType: entry.errorType || '', isFetching: false });
     } else {
       // If stale or absent, fetch in background (keeping cached data if available)
       run(true);
@@ -190,6 +192,7 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
     status: state.status,
     data: state.data,
     error: state.error,
+    errorType: state.errorType,
     reload,
     isFetching: state.isFetching,
   };
