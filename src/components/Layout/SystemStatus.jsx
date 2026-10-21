@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Chip, Tooltip, Box } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { WifiOff } from '@mui/icons-material';
 
 /**
@@ -45,7 +46,7 @@ const SystemStatus = () => {
           height: 9,
           borderRadius: '50%',
           bgcolor: 'success.light',
-          boxShadow: (t) => `0 0 0 3px ${t.palette.mode === 'dark' ? 'rgba(74,222,128,.18)' : 'rgba(34,197,94,.2)'}`,
+          boxShadow: (t) => `0 0 0 3px ${alpha(t.palette.success.main, t.palette.mode === 'dark' ? 0.18 : 0.2)}`,
           mx: 0.5,
         }}
       />

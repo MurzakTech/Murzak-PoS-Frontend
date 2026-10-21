@@ -365,7 +365,7 @@ const Layout = ({ children }) => {
               sx={{
                 display: { xs: 'none', sm: 'inline-flex' },
                 background: (t) => t.custom.gradient,
-                color: '#fff',
+                color: 'common.white',
                 boxShadow: (t) => `0 4px 14px ${alpha(t.palette.primary.main, 0.35)}`,
                 '&:hover': { background: (t) => t.custom.gradient, filter: 'brightness(1.08)' },
               }}
@@ -376,7 +376,7 @@ const Layout = ({ children }) => {
               <IconButton
                 aria-label="Open point of sale"
                 onClick={() => handleNavigation('/sales/pos')}
-                sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: '#fff', background: (t) => t.custom.gradient }}
+                sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: 'common.white', background: (t) => t.custom.gradient }}
               >
                 <PointOfSale />
               </IconButton>

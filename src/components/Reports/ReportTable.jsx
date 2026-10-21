@@ -65,7 +65,7 @@ const ReportTable = ({ data = [], columns = [], title }) => {
   };
 
   return (
-    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: (theme) => theme.shadows[2] }}>
       {title && (
         <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ mb: 2 }}>
           {title}

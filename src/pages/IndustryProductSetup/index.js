@@ -283,7 +283,7 @@ const IndustryProductSetup = ({ industryCode: propIndustryCode = null }) => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: (t) => t.shadows[1] }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

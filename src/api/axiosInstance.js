@@ -53,7 +53,7 @@ const redirectToLogin = () => {
     const isPublicPage = currentPath.includes('/login') || 
                         currentPath.includes('/register') || 
                         currentPath === '/';
-    const isOnboardingPage = currentPath.includes('/onboarding');
+    const isOnboardingPage = currentPath.includes('/onboarding') || currentPath.includes('/setup');
     
     // Don't redirect during onboarding - let the error be displayed
     if (!isPublicPage && !isOnboardingPage) {

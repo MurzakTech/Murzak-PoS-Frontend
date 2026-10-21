@@ -110,7 +110,7 @@ const SalesPeople = () => {
     { field: 'user', header: 'Till login', width: '30%', render: (v) => v || <Typography variant="body2" color="text.secondary">Not linked</Typography> },
     {
       field: 'enabled', header: 'Status', width: '14%',
-      render: (v) => <StatusChip status={v ? 'active' : 'inactive'} label={v ? 'Active' : 'Switched off'} color={v ? '#10B981' : '#64748B'} />,
+      render: (v) => <StatusChip status={v ? 'active' : 'inactive'} label={v ? 'Active' : 'Switched off'} />,
     },
     { field: 'name', header: '', render: (_v, row) => <Button size="small" onClick={() => open(row)}>Change</Button> },
   ], []); // eslint-disable-line react-hooks/exhaustive-deps

@@ -56,7 +56,7 @@ const PhoneSaleBar = ({ itemCount, total, currency, onViewSale, onCharge, disabl
           fontSize: '1.125rem',
           fontWeight: 750,
           borderRadius: 3,
-          color: empty ? undefined : '#fff',
+          color: empty ? undefined : 'common.white',
           background: (t) => (empty ? undefined : t.custom.gradient),
           whiteSpace: 'nowrap',
         }}

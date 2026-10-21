@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chip, alpha } from '@mui/material';
+import { Chip, alpha, useTheme } from '@mui/material';
 import { Circle } from '@mui/icons-material';
 
 /**
@@ -7,41 +7,77 @@ import { Circle } from '@mui/icons-material';
  * Consistent status indicator with color-coded dot
  */
 
-// Predefined status colors
-const statusColors = {
+// Semantic intent mapping for statuses
+const statusSemanticIntent = {
   // Generic statuses
-  enabled: '#10B981',
-  disabled: '#64748B',
-  active: '#10B981',
-  inactive: '#64748B',
+  enabled: 'success',
+  disabled: 'default',
+  active: 'success',
+  inactive: 'default',
+  expired: 'error',
 
   // Document statuses
-  draft: '#64748B',
-  submitted: '#3B82F6',
-  approved: '#10B981',
-  rejected: '#EF4444',
-  cancelled: '#EF4444',
-  completed: '#059669',
-  pending: '#F59E0B',
+  draft: 'default',
+  submitted: 'info',
+  approved: 'success',
+  rejected: 'error',
+  cancelled: 'error',
+  completed: 'success',
+  pending: 'warning',
 
   // Transaction statuses
-  paid: '#10B981',
-  unpaid: '#EF4444',
-  partial: '#F59E0B',
-  overdue: '#DC2626',
+  paid: 'success',
+  unpaid: 'error',
+  partial: 'warning',
+  partly_paid: 'warning',
+  overdue: 'error',
+  return: 'warning',
+  credit_note_issued: 'warning',
 
   // Inventory statuses
-  in_stock: '#10B981',
-  low_stock: '#F59E0B',
-  out_of_stock: '#EF4444',
+  in_stock: 'success',
+  low_stock: 'warning',
+  out_of_stock: 'error',
+  expires_within_7_days: 'warning',
+  expiring_soon: 'info',
 
   // Transfer statuses
-  in_transit: '#8B5CF6',
-  partially_in_transit: '#A78BFA',
-  partially_received: '#F59E0B',
+  in_transit: 'info',
+  partially_in_transit: 'info',
+  partially_received: 'warning',
+
+  // Purchase / Procurement statuses
+  received: 'success',
+  to_bill: 'warning',
+  to_receive: 'warning',
+  to_receive_and_bill: 'warning',
+  billed: 'success',
+
+  // Audit actions
+  created: 'success',
+  updated: 'info',
+  deleted: 'error',
+  signed_in: 'default',
+  signed_out: 'default',
+  sign_in_failed: 'error',
 
   // Default
-  default: '#64748B',
+  default: 'default',
+};
+
+const resolveIntentColor = (theme, intent) => {
+  switch (intent) {
+    case 'success':
+      return theme.palette?.success?.main || 'currentColor';
+    case 'error':
+      return theme.palette?.error?.main || 'currentColor';
+    case 'warning':
+      return theme.palette?.warning?.main || 'currentColor';
+    case 'info':
+      return theme.palette?.info?.main || 'currentColor';
+    default:
+      return theme.palette?.text?.secondary || 'currentColor';
+  }
 };
 
 const StatusChip = ({
@@ -53,11 +89,15 @@ const StatusChip = ({
   showDot = true,
   sx = {},
 }) => {
+  const theme = useTheme();
+
   // Normalize status key for lookup
   const normalizedStatus = status?.toLowerCase().replace(/[\s-]/g, '_') || 'default';
 
-  // Get color from predefined colors or use custom color
-  const chipColor = color || statusColors[normalizedStatus] || statusColors.default;
+  // Get color from predefined semantic intent or use custom color
+  const intent = statusSemanticIntent[normalizedStatus] || 'default';
+  const resolvedColor = resolveIntentColor(theme, intent);
+  const chipColor = color || resolvedColor;
 
   // Display label
   const displayLabel = label || status || 'Unknown';
@@ -99,6 +139,5 @@ const StatusChip = ({
   );
 };
 
-// Export status colors for external use
-export { statusColors };
+export const statusColors = statusSemanticIntent;
 export default StatusChip;

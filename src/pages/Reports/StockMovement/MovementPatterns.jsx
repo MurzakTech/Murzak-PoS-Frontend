@@ -196,19 +196,19 @@ const MovementPatterns = () => {
                 {
                   dataKey: 'received',
                   name: 'Received',
-                  color: '#4caf50',
+                  color: 'var(--good)',
                   format: 'number',
                 },
                 {
                   dataKey: 'issued',
                   name: 'Issued',
-                  color: '#f44336',
+                  color: 'var(--bad)',
                   format: 'number',
                 },
                 {
                   dataKey: 'net_movement',
                   name: 'Net Movement',
-                  color: '#2196f3',
+                  color: 'var(--brand)',
                   format: 'number',
                 },
               ]}
@@ -227,7 +227,7 @@ const MovementPatterns = () => {
                 {
                   dataKey: 'change_percentage',
                   name: 'Change Percentage',
-                  color: '#ed6c02',
+                  color: 'var(--series-2)',
                   format: 'percentage',
                 },
               ]}

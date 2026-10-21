@@ -124,32 +124,6 @@ const GRNList = () => {
     dispatch(listGRNs(params));
   };
 
-  // Helper functions for status
-  const getStatusColor = (status) => {
-    if (!status) return undefined;
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('received') || statusLower.includes('completed')) {
-      return '#10B981'; // success green
-    }
-    if (statusLower.includes('to bill') || statusLower.includes('pending')) {
-      return '#F59E0B'; // warning orange
-    }
-    return undefined;
-  };
-
-  const getDocStatusColor = (docstatus) => {
-    switch (docstatus) {
-      case 0:
-        return '#64748B'; // default gray
-      case 1:
-        return '#10B981'; // success green
-      case 2:
-        return '#EF4444'; // error red
-      default:
-        return undefined;
-    }
-  };
-
   // Prepare table columns
   const columns = useMemo(() => [
     {
@@ -210,7 +184,6 @@ const GRNList = () => {
           <StatusChip
             status={value.toLowerCase().replace(/\s+/g, '_')}
             label={value}
-            color={getStatusColor(value)}
           />
         );
       },
@@ -225,7 +198,6 @@ const GRNList = () => {
           <StatusChip
             status={labels[value]?.toLowerCase() || 'unknown'}
             label={labels[value] || 'Unknown'}
-            color={getDocStatusColor(value)}
           />
         );
       },

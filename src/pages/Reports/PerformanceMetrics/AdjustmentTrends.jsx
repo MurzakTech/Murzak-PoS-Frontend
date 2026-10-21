@@ -220,7 +220,7 @@ const AdjustmentTrends = () => {
                 {
                   dataKey: 'adjustment_count',
                   name: 'Adjustment Count',
-                  color: '#ed6c02',
+                  color: 'var(--series-2)',
                   format: 'number',
                 },
               ]}
@@ -239,13 +239,13 @@ const AdjustmentTrends = () => {
                 {
                   dataKey: 'increase_count',
                   name: 'Increases',
-                  color: '#4caf50',
+                  color: 'var(--good)',
                   format: 'number',
                 },
                 {
                   dataKey: 'decrease_count',
                   name: 'Decreases',
-                  color: '#f44336',
+                  color: 'var(--bad)',
                   format: 'number',
                 },
               ]}
@@ -264,7 +264,7 @@ const AdjustmentTrends = () => {
                 {
                   dataKey: 'total_adjusted_value',
                   name: 'Total Adjusted Value',
-                  color: '#1976d2',
+                  color: 'var(--brand)',
                   format: 'currency',
                 },
               ]}

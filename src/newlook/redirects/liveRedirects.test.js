@@ -3,7 +3,7 @@
  * a finished page with no real screen behind it, and a link back to a current screen that bounces straight to the new page.
  */
 import { matchPath } from 'react-router-dom';
-import { oldScreen, resolveRedirect, NEW_LOOK_PREFIX } from './engine';
+import { oldScreen, resolveRedirect, toNewAddress, NEW_LOOK_PREFIX } from './engine';
 import { BUILT_PAGES } from './live';
 import { REDIRECTS } from './redirectTable';
 import { newLookRoutes } from '../newLookRoutes';
@@ -72,7 +72,7 @@ describe('Links from a new page to a current screen', () => {
   });
 
   test('the supplier groups address opens Advanced, and the current screen still opens with the marker', () => {
-    expect(go('/suppliers/groups').to).toBe('/new-look/settings/advanced?section=supplier-groups');
+    expect(go('/suppliers/groups').to).toBe(toNewAddress('/settings/advanced?section=supplier-groups'));
     expect(go(oldScreen('/suppliers/groups'))).toBeNull();
   });
 });

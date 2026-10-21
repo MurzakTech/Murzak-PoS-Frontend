@@ -101,24 +101,6 @@ const PurchaseInvoiceDetails = () => {
 
   const invoice = selectedPurchaseInvoice;
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'paid':
-        return '#10B981';
-      case 'draft':
-        return '#64748B';
-      case 'unpaid':
-      case 'overdue':
-        return '#F59E0B';
-      case 'cancelled':
-        return '#EF4444';
-      case 'partly paid':
-        return '#3B82F6';
-      default:
-        return undefined;
-    }
-  };
-
   // Format currency
   const formatCurrency = (amount, currency = 'KES') => {
     return new Intl.NumberFormat('en-KE', {
@@ -165,7 +147,7 @@ const PurchaseInvoiceDetails = () => {
             </Typography>
             <StatusChip
               label={invoice.status}
-              color={getStatusColor(invoice.status)}
+              status={invoice.status}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>

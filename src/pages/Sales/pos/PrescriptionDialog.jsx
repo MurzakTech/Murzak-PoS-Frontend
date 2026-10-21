@@ -5,8 +5,9 @@ import { cleanDispensing, isDispensingComplete } from '../../../utils/prescripti
 /**
  * Shown before charging a sale that includes prescription-only medicines. The pharmacist says who the medicine
  * is for and who prescribed it, and confirms the prescription was seen. The record is kept on the invoice.
+ * Supports clinical safety allergy alerts (Frappe Health integration).
  */
-const PrescriptionDialog = ({ open, items, initial, onConfirm, onClose }) => {
+const PrescriptionDialog = ({ open, items, initial, onConfirm, onClose, clinicalSafety }) => {
   const [form, setForm] = useState(cleanDispensing(initial));
   const [seen, setSeen] = useState(false);
 
@@ -25,10 +26,20 @@ const PrescriptionDialog = ({ open, items, initial, onConfirm, onClose }) => {
     if (ready) onConfirm(cleanDispensing(form));
   };
 
+  const warnings = clinicalSafety?.warnings || initial?.warnings || [];
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" aria-labelledby="rx-title" slotProps={{ paper: { component: 'form', onSubmit: submit } }}>
       <DialogTitle id="rx-title">Prescription-only medicines</DialogTitle>
       <DialogContent>
+        {warnings.length > 0 && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <strong>Clinical Safety Warning:</strong>
+            {warnings.map((w, i) => (
+              <div key={i}>• {w.message || w}</div>
+            ))}
+          </Alert>
+        )}
         <Alert severity="info" sx={{ mb: 2 }}>
           This sale includes: <strong>{(items || []).join(', ')}</strong>. These are only sold against a valid prescription. The details below are kept on the invoice.
         </Alert>

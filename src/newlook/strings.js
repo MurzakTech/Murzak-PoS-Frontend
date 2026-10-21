@@ -74,6 +74,7 @@ const shell = {
     },
     items: {
       sales: 'Sales',
+      appointments: 'Appointments',
       customers: 'Customers',
       products: 'Products',
       stockLevels: 'Stock levels',

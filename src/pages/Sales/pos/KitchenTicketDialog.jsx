@@ -7,11 +7,11 @@ import { orderTypeOf, ticketTitle } from '../../../utils/kitchenTickets';
 const PRINT_CSS = `
 @media print {
   @page { margin: 3mm; }
-  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  html, body { height: auto !important; overflow: visible !important; background: white !important; }
   #root, .MuiBackdrop-root, .no-print { display: none !important; }
-  .MuiDialog-root, .MuiDialog-container, .MuiDialog-paper { position: static !important; display: block !important; overflow: visible !important; box-shadow: none !important; max-height: none !important; height: auto !important; margin: 0 !important; background: #fff !important; transform: none !important; }
-  .ticket-printable { width: 76mm !important; max-width: 76mm !important; padding: 0 !important; margin: 0 !important; color: #000 !important; }
-  .ticket-printable * { color: #000 !important; }
+  .MuiDialog-root, .MuiDialog-container, .MuiDialog-paper { position: static !important; display: block !important; overflow: visible !important; box-shadow: none !important; max-height: none !important; height: auto !important; margin: 0 !important; background: white !important; transform: none !important; }
+  .ticket-printable { width: 76mm !important; max-width: 76mm !important; padding: 0 !important; margin: 0 !important; color: black !important; }
+  .ticket-printable * { color: black !important; }
   .ticket-page { break-after: page; page-break-after: always; border: 0 !important; }
   .ticket-page:last-child { break-after: auto; page-break-after: auto; }
 }`;
@@ -22,7 +22,7 @@ const mono = { fontFamily: 'ui-monospace, Menlo, Consolas, "Liberation Mono", mo
 export const TicketSheet = ({ ticket }) => {
   const counter = orderTypeOf(ticket.orderType, ticket.label) === 'counter';
   return (
-  <Box className="ticket-page" data-testid={`ticket-${ticket.station}`} sx={{ ...mono, p: 1.5, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: '#fff', color: '#000' }}>
+  <Box className="ticket-page" data-testid={`ticket-${ticket.station}`} sx={{ ...mono, p: 1.5, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'common.white', color: 'common.black' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
       <Typography sx={{ ...mono, fontSize: 22, fontWeight: 900, textTransform: 'uppercase', color: 'inherit' }}>{ticket.station}</Typography>
       {/* A counter order is called out by its number, so it is printed large */}
@@ -32,7 +32,7 @@ export const TicketSheet = ({ ticket }) => {
     <Typography sx={{ ...mono, fontSize: 12, color: 'inherit', mb: 0.5 }}>
       {ticket.time}{ticket.waiter ? `  ${ticket.waiter}` : ''}  Round {ticket.round}
     </Typography>
-    <Divider sx={{ borderStyle: 'dashed', borderColor: '#000', my: 0.75 }} />
+    <Divider sx={{ borderStyle: 'dashed', borderColor: 'common.black', my: 0.75 }} />
 
     {ticket.adds.map((a, i) => (
       <Box key={`a${i}`} sx={{ mb: 0.75 }}>
@@ -54,7 +54,7 @@ export const TicketSheet = ({ ticket }) => {
     )}
 
     {ticket.voids.length > 0 && (
-      <Box sx={{ mt: 1, p: 0.75, border: '2px solid #000' }}>
+      <Box sx={{ mt: 1, p: 0.75, border: '2px solid black' }}>
         <Typography sx={{ ...mono, fontSize: 15, fontWeight: 900, color: 'inherit' }}>CANCELLED, DO NOT MAKE</Typography>
         {ticket.voids.map((v, i) => (
           <Typography key={`v${i}`} sx={{ ...mono, fontSize: 16, fontWeight: 800, color: 'inherit' }}>

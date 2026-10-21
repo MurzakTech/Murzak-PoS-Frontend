@@ -10,7 +10,7 @@ const LoadingSplash = () => (
       minHeight: '100vh',
       display: 'grid',
       placeItems: 'center',
-      background: 'var(--surface-sunken, #f8fafc)',
+      background: 'var(--surface-sunken)',
       fontFamily: 'var(--font-sans, system-ui, sans-serif)',
     }}
     role="status"
@@ -33,7 +33,7 @@ const LoadingSplash = () => (
         style={{
           width: 96,
           height: 4,
-          background: 'var(--brand-primary, #4f46e5)',
+          background: 'var(--brand-primary)',
           borderRadius: 4,
           margin: '0 auto',
           opacity: 0.8,
@@ -50,9 +50,9 @@ const AccessDenied = ({ requiredRoles, currentRoles }) => (
       display: 'grid',
       placeItems: 'center',
       padding: 'var(--space-4, 16px)',
-      background: 'var(--surface-sunken, #f8fafc)',
+      background: 'var(--surface-sunken)',
       fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-      color: 'var(--ink, #0f172a)',
+      color: 'var(--ink)',
     }}
   >
     <div
@@ -61,10 +61,10 @@ const AccessDenied = ({ requiredRoles, currentRoles }) => (
         width: '100%',
         padding: '32px 24px',
         textAlign: 'center',
-        background: 'var(--surface, #ffffff)',
-        border: 'var(--card-border, 1px solid #e2e8f0)',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
         borderRadius: 'var(--radius-card, 12px)',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+        boxShadow: 'var(--card-shadow, none)',
       }}
     >
       <div
@@ -73,8 +73,8 @@ const AccessDenied = ({ requiredRoles, currentRoles }) => (
           height: 52,
           margin: '0 auto 16px',
           borderRadius: '50%',
-          background: 'rgba(239, 68, 68, 0.1)',
-          color: '#ef4444',
+          background: 'var(--line)',
+          color: 'var(--bad)',
           display: 'grid',
           placeItems: 'center',
           fontSize: 24,
@@ -82,10 +82,10 @@ const AccessDenied = ({ requiredRoles, currentRoles }) => (
       >
         🔒
       </div>
-      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: 'var(--ink, #0f172a)' }}>
+      <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: 'var(--ink)' }}>
         Access Denied
       </h2>
-      <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--muted, #64748b)', lineHeight: 1.5 }}>
+      <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>
         You do not have permission to access this page.
         {requiredRoles?.length > 0 && (
           <span style={{ display: 'block', marginTop: 4 }}>
@@ -94,7 +94,7 @@ const AccessDenied = ({ requiredRoles, currentRoles }) => (
         )}
       </p>
       {currentRoles?.length > 0 && (
-        <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--muted, #94a3b8)' }}>
+        <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--muted)' }}>
           Your current roles: {currentRoles.join(', ')}
         </p>
       )}
@@ -107,8 +107,8 @@ const AccessDenied = ({ requiredRoles, currentRoles }) => (
           padding: '10px 20px',
           fontSize: 14,
           fontWeight: 600,
-          color: '#ffffff',
-          background: 'var(--brand-primary, #4f46e5)',
+          color: 'var(--on-brand, inherit)',
+          background: 'var(--brand-primary)',
           borderRadius: 'var(--radius-button, 8px)',
           textDecoration: 'none',
         }}

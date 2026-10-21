@@ -78,6 +78,12 @@ const CartLine = React.memo(({ note, item, readOnly, currency, warehouses, defau
             </Typography>
           )}
           {item.prescription_only && <Chip size="small" color="warning" variant="outlined" label="Rx only" sx={{ height: 18, fontSize: '0.6875rem', ml: 0.75 }} />}
+          {item.batch_no && (
+            <Chip size="small" color="info" variant="outlined" label={`Batch: ${item.batch_no}${item.expiry_date ? ` (Exp: ${item.expiry_date})` : ''}`} sx={{ height: 18, fontSize: '0.6875rem', ml: 0.75 }} />
+          )}
+          {item.staff && (
+            <Chip size="small" variant="outlined" label={`Staff: ${item.staff}`} sx={{ height: 18, fontSize: '0.6875rem', ml: 0.75 }} />
+          )}
           {kitchenEnabled && (item.note || item.sentQty > 0) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.25 }}>
               {item.sentQty > 0 && <Chip size="small" color="success" variant="outlined" label={`${item.sentQty} sent`} sx={{ height: 18, fontSize: '0.6875rem' }} />}
@@ -187,6 +193,7 @@ const OrderPanel = ({
   onSendKitchen,
   onEditNote,
   stockNoteFor, // New look: (item) => words such as "Only 13 left", or null
+  onOpenClinicalRx,
 }) => {
   const { enabled: newLook } = useNewLook(); // the New look words a few labels differently
   const [discountAnchor, setDiscountAnchor] = useState(null);
@@ -208,25 +215,38 @@ const OrderPanel = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, bgcolor: 'background.paper', borderLeft: 1, borderColor: 'divider' }}>
       {/* Who is buying */}
-      <ButtonBase
-        onClick={onCustomerClick}
-        disabled={readOnly}
-        aria-label={`Customer: ${customer.name}. Tap to change.`}
-        sx={{ m: 1.5, p: 1.25, borderRadius: 3, border: 1, borderColor: 'divider', justifyContent: 'flex-start', gap: 1.25, textAlign: 'left', flexShrink: 0, '&:hover': { bgcolor: 'action.hover' } }}
-      >
-        <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: (t) => alpha(t.palette.primary.main, 0.12), color: 'primary.main' }}>
-          <PersonOutline />
-        </Box>
-        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>
-            {customer.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
-            {customer.detail}
-          </Typography>
-        </Box>
-        {!readOnly && <ChevronRight sx={{ color: 'text.disabled' }} />}
-      </ButtonBase>
+      <Box sx={{ m: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <ButtonBase
+          onClick={onCustomerClick}
+          disabled={readOnly}
+          aria-label={`Customer: ${customer.name}. Tap to change.`}
+          sx={{ p: 1.25, borderRadius: 3, border: 1, borderColor: 'divider', justifyContent: 'flex-start', gap: 1.25, textAlign: 'left', flexGrow: 1, minWidth: 0, '&:hover': { bgcolor: 'action.hover' } }}
+        >
+          <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: (t) => alpha(t.palette.primary.main, 0.12), color: 'primary.main', flexShrink: 0 }}>
+            <PersonOutline />
+          </Box>
+          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700 }}>
+              {customer.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+              {customer.detail}
+            </Typography>
+          </Box>
+          {!readOnly && <ChevronRight sx={{ color: 'text.disabled', flexShrink: 0 }} />}
+        </ButtonBase>
+        {onOpenClinicalRx && !readOnly && (
+          <Button
+            size="small"
+            variant="outlined"
+            color="primary"
+            onClick={onOpenClinicalRx}
+            sx={{ borderRadius: 2.5, textTransform: 'none', px: 1.25, py: 1, fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, height: 46 }}
+          >
+            Clinical Rx
+          </Button>
+        )}
+      </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pb: 0.5, flexShrink: 0 }}>
         <Typography variant="h6">{readOnly ? 'Order' : 'Current sale'}</Typography>
@@ -271,7 +291,7 @@ const OrderPanel = ({
       </Box>
 
       {/* Totals and the one big action */}
-      <Box sx={{ flexShrink: 0, p: 2, borderTop: 1, borderColor: 'divider', bgcolor: (t) => t.custom.surface.subtle }}>
+      <Box sx={{ flexShrink: 0, p: 2, borderTop: 1, borderColor: 'divider', bgcolor: (t) => t.custom?.surface?.subtle || t.palette.background.default }}>
         <Stack spacing={0.75} sx={{ mb: 1.5 }}>
           {totals.itemDiscount > 0 || totals.manualDiscount > 0 || totals.loyaltyDiscount > 0 ? (
             <SummaryRow label="Items" value={money(totals.itemsTotal, currency)} />
@@ -329,7 +349,7 @@ const OrderPanel = ({
               disabled={empty || isBusy}
               onClick={onCheckout}
               endIcon={isBusy ? <CircularProgress size={20} color="inherit" /> : <ArrowForward />}
-              sx={{ height: 64, fontSize: '1.25rem', fontWeight: 750, borderRadius: 3, color: empty ? undefined : '#fff', background: (t) => (empty ? undefined : t.custom.gradient), boxShadow: (t) => (empty ? 'none' : `0 8px 22px ${alpha(t.palette.primary.main, 0.32)}`) }}
+              sx={{ height: 64, fontSize: '1.25rem', fontWeight: 750, borderRadius: 3, color: empty ? undefined : 'common.white', background: (t) => (empty ? undefined : t.custom.gradient), boxShadow: (t) => (empty ? 'none' : `0 8px 22px ${alpha(t.palette.primary.main, 0.32)}`) }}
             >
               {empty ? (newLook ? tillText.labels.pay : 'Charge') : newLook ? fill(tillText.labels.payAmount, { amount: money(totals.grandTotal, currency) }) : `Charge ${money(totals.grandTotal, currency)}`}
             </Button>

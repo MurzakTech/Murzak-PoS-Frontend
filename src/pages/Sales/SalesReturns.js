@@ -60,14 +60,6 @@ const today = () => new Date().toISOString().split('T')[0];
 // Credit notes carry negative totals; the list shows the refund as a positive amount.
 const refundAmount = (row) => Math.abs(Number(row?.rounded_total || row?.grand_total || 0));
 
-const STATUS_STYLES = {
-  Draft: '#64748B',
-  Return: '#F59E0B',
-  'Credit Note Issued': '#F59E0B',
-  Paid: '#10B981',
-  Cancelled: '#EF4444',
-};
-
 const statusLabel = (row) => {
   if (row.docstatus === 0) return 'Draft';
   if (row.docstatus === 2) return 'Cancelled';
@@ -483,7 +475,7 @@ const SalesReturns = () => {
       header: 'Status',
       render: (value, row) => {
         const label = statusLabel(row);
-        return <StatusChip status={label.toLowerCase()} label={label} color={STATUS_STYLES[label] || '#64748B'} />;
+        return <StatusChip status={label.toLowerCase()} label={label} />;
       },
     },
     {

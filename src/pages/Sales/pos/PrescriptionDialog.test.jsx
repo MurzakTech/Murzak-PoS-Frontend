@@ -44,6 +44,17 @@ describe('PrescriptionDialog', () => {
     expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeDisabled();
   });
 
+  it('renders clinical safety allergy warning if provided', () => {
+    open({
+      clinicalSafety: {
+        safe: false,
+        warnings: [{ message: 'Patient has severe allergy to Penicillin!' }],
+      },
+    });
+    expect(screen.getByText('Clinical Safety Warning:')).toBeInTheDocument();
+    expect(screen.getByText(/Patient has severe allergy to Penicillin!/)).toBeInTheDocument();
+  });
+
   it('can be cancelled', () => {
     const { onClose } = open();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));

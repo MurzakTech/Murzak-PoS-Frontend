@@ -352,26 +352,11 @@ const StockTransfersList = () => {
       width: '14%',
       render: (value, row) => {
         const status = value || 'Draft';
-        const statusColor = getStatusColor(status);
-        const statusMap = {
-          'Draft': '#64748B',
-          'Submitted': '#3B82F6',
-          'Pending': '#F59E0B',
-          'Approved': '#10B981',
-          'In Transit': '#8B5CF6',
-          'Partially In Transit': '#A855F7',
-          'Completed': '#10B981',
-          'Partially Received': '#F59E0B',
-          'Cancelled': '#EF4444',
-        };
-        const color = statusMap[status] || statusColor?.main || '#64748B';
-        
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <StatusChip
-              status={status.toLowerCase().replace(/\s+/g, '_')}
+              status={status}
               label={status}
-              color={color}
             />
             {(row.is_approved || row.approval_status === 'Approved') && (
               <Chip

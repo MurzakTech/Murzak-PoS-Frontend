@@ -10,6 +10,7 @@ const HomePage = lazyPage(() => import('./home/HomePage'), 'HomePage');
 const SetupWizard = lazyPage(() => import('./setup/SetupWizard'), 'SetupWizard');
 const TillSettingsPage = lazyPage(() => import('./settings/TillSettingsPage'), 'TillSettingsPage');
 const SettingsPage = lazyPage(() => import('./settings/SettingsPage'), 'SettingsPage');
+const AppointmentsPage = lazyPage(() => import('./appointments/AppointmentsPage'), 'AppointmentsPage');
 const SalesPage = lazyPage(() => import('./sales/SalesPage'), 'SalesPage');
 const UnpaidRedirect = lazyNamed(() => import('./sales/SalesTabRedirect'), 'UnpaidRedirect');
 const SalesReturnsRedirect = lazyNamed(() => import('./sales/SalesTabRedirect'), 'ReturnsRedirect', 'SalesReturnsRedirect');
@@ -41,7 +42,7 @@ const RedirectsPage = lazyPage(() => import('./redirects/RedirectsPage'), 'Redir
 
 // Pages that have their own route, so they get no placeholder
 const OWN_ROUTES = [
-  '/', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions',
+  '/', '/appointments', '/sales', '/sales/unpaid', '/sales/returns', '/sales/sessions',
   '/settings/till', '/settings/business', '/settings/brand', '/settings/tax', '/settings/team', '/settings/advanced',
   '/customers', '/customers/owing', '/customers/new',
   '/stock', '/stock/low', '/stock/movements', '/stock/count', '/stock/locations', '/stock/transfers', '/stock/expiry',
@@ -69,6 +70,8 @@ const CANONICAL_ROUTES = [
   { path: '/settings/tax', element: SettingsPage },
   { path: '/settings/team', element: SettingsPage },
   { path: '/settings/advanced', element: SettingsPage },
+  // Appointments (Native Frappe & Salon/Barber bookings)
+  { path: '/appointments', element: AppointmentsPage },
   // Sales (P3-8)
   { path: '/sales', element: SalesPage },
   { path: '/sales/unpaid', element: UnpaidRedirect },

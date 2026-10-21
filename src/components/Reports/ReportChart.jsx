@@ -55,10 +55,10 @@ const ReportChart = ({
         return (
           <ResponsiveContainer width="100%" height={height}>
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
               <XAxis
                 dataKey={dataKey}
-                stroke="#666"
+                stroke="var(--muted)"
                 tickFormatter={(value) => {
                   if (typeof value === 'string' && value.includes('-')) {
                     return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -66,7 +66,7 @@ const ReportChart = ({
                   return value;
                 }}
               />
-              <YAxis stroke="#666" />
+              <YAxis stroke="var(--muted)" />
               <Tooltip
                 formatter={(value, name) => {
                   const seriesConfig = series.find((s) => s.dataKey === name);
@@ -88,10 +88,10 @@ const ReportChart = ({
                   key={s.dataKey}
                   type="monotone"
                   dataKey={s.dataKey}
-                  stroke={s.color || '#2196f3'}
+                  stroke={s.color || 'var(--brand-primary)'}
                   strokeWidth={s.strokeWidth || 3}
-                  dot={{ fill: s.color || '#2196f3', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, fill: s.color || '#2196f3' }}
+                  dot={{ fill: s.color || 'var(--brand-primary)', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: s.color || 'var(--brand-primary)' }}
                   name={s.name || s.dataKey}
                 />
               ))}
@@ -103,9 +103,9 @@ const ReportChart = ({
         return (
           <ResponsiveContainer width="100%" height={height}>
             <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey={dataKey} stroke="#666" />
-              <YAxis stroke="#666" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+              <XAxis dataKey={dataKey} stroke="var(--muted)" />
+              <YAxis stroke="var(--muted)" />
               <Tooltip
                 formatter={(value, name) => {
                   const seriesConfig = series.find((s) => s.dataKey === name);
@@ -120,7 +120,7 @@ const ReportChart = ({
                 <Bar
                   key={s.dataKey}
                   dataKey={s.dataKey}
-                  fill={s.color || '#2196f3'}
+                  fill={s.color || 'var(--brand-primary)'}
                   radius={[4, 4, 0, 0]}
                   name={s.name || s.dataKey}
                 />
@@ -130,7 +130,7 @@ const ReportChart = ({
         );
 
       case 'pie':
-        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+        const COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)', 'var(--brand)', 'var(--compare)'];
         return (
           <ResponsiveContainer width="100%" height={height}>
             <PieChart>
@@ -141,7 +141,7 @@ const ReportChart = ({
                 labelLine={false}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 outerRadius={80}
-                fill="#8884d8"
+                fill="var(--brand)"
                 dataKey={series[0]?.dataKey || 'value'}
               >
                 {data.map((entry, index) => (
@@ -168,7 +168,7 @@ const ReportChart = ({
   };
 
   return (
-    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: (theme) => theme.shadows[2] }}>
       {title && (
         <Typography variant="h6" gutterBottom fontWeight="bold">
           {title}

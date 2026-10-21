@@ -243,13 +243,13 @@ const ValueTrends = () => {
                 {
                   dataKey: 'total_value',
                   name: 'Total Value',
-                  color: '#ed6c02',
+                  color: 'var(--series-2)',
                   format: 'currency',
                 },
                 {
                   dataKey: 'change',
                   name: 'Change',
-                  color: '#2e7d32',
+                  color: 'var(--good)',
                   format: 'currency',
                 },
               ]}
@@ -268,7 +268,7 @@ const ValueTrends = () => {
                 {
                   dataKey: 'total_value',
                   name: 'Total Value',
-                  color: '#ed6c02',
+                  color: 'var(--series-2)',
                   format: 'currency',
                   strokeWidth: 3,
                 },

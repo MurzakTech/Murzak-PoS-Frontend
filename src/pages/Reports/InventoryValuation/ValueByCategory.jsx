@@ -204,7 +204,7 @@ const ValueByCategory = () => {
                 {
                   dataKey: 'value',
                   name: 'Total Value',
-                  color: '#2e7d32',
+                  color: 'success.main',
                   format: 'currency',
                 },
               ]}

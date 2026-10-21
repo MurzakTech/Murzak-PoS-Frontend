@@ -24,6 +24,7 @@ export const NAVIGATION = {
       label: S.shell.nav.groups.sell,
       items: [
         { key: 'sales', label: S.shell.nav.items.sales, icon: 'receipt', page: '/sales', old: '/sales/history', match: ['/sales', '/new-look/sales'] },
+        { key: 'appointments', label: S.shell.nav.items.appointments, icon: 'calendar', page: '/appointments', match: ['/appointments', '/new-look/appointments'] },
         { key: 'customers', label: S.shell.nav.items.customers, icon: 'users', page: '/customers', old: '/customers', match: ['/customers', '/new-look/customers'] },
       ],
     },

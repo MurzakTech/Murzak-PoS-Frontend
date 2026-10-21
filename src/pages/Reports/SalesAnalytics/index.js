@@ -205,13 +205,13 @@ const SalesAnalytics = () => {
                 {
                   dataKey: 'total_amount',
                   name: 'Total Sales',
-                  color: '#2196f3',
+                  color: 'var(--brand)',
                   format: 'currency',
                 },
                 {
                   dataKey: 'invoice_count',
                   name: 'Invoice Count',
-                  color: '#ff9800',
+                  color: 'var(--series-2)',
                   format: 'number',
                 },
               ]}
@@ -247,7 +247,7 @@ const SalesAnalytics = () => {
                 {
                   dataKey: 'value',
                   name: 'Total Revenue',
-                  color: '#4caf50',
+                  color: 'var(--good)',
                   format: 'currency',
                 },
               ]}

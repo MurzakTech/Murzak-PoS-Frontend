@@ -410,7 +410,7 @@ const OnlineCollect = ({ kind, option, mode, amount, currency, company, saleRefe
     const converted = txn.charged_currency && txn.charged_currency !== txn.currency;
     return (
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'auto 1fr' }, gap: 2.5, alignItems: 'center' }}>
-        <Box sx={{ p: 1.5, bgcolor: '#fff', borderRadius: 2, border: 1, borderColor: 'divider', justifySelf: { xs: 'center', sm: 'start' } }}>
+        <Box sx={{ p: 1.5, bgcolor: 'common.white', borderRadius: 2, border: 1, borderColor: 'divider', justifySelf: { xs: 'center', sm: 'start' } }}>
           <QRCodeSVG value={txn.checkout_url} size={196} level="M" />
         </Box>
         <Stack spacing={1.25}>

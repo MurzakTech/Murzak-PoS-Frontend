@@ -9,6 +9,7 @@ import {
   CardContent,
   CardActionArea,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Schedule,
   Warning,
@@ -27,7 +28,7 @@ const AgingStock = () => {
       title: 'Stock Aging',
       description: 'View stock aging report with movement rate and slow-moving threshold analysis',
       icon: Schedule,
-      color: '#ed6c02',
+      color: 'warning.main',
       path: '/reports/aging-stock/stock-aging',
       features: [
         'Age brackets (0-30, 31-60, 61-90, 90+ days)',
@@ -40,7 +41,7 @@ const AgingStock = () => {
       title: 'Obsolescence Risk',
       description: 'Identify items with high obsolescence risk based on age and movement patterns',
       icon: Warning,
-      color: '#d32f2f',
+      color: 'error.main',
       path: '/reports/aging-stock/obsolescence-risk',
       features: [
         'Risk score calculation',
@@ -53,7 +54,7 @@ const AgingStock = () => {
       title: 'Aging Recommendations',
       description: 'Get recommended actions for aging stock items to optimize inventory',
       icon: Lightbulb,
-      color: '#9c27b0',
+      color: 'secondary.main',
       path: '/reports/aging-stock/aging-recommendations',
       features: [
         'Action recommendations',
@@ -117,7 +118,11 @@ const AgingStock = () => {
                   >
                     <Box
                       sx={{
-                        bgcolor: `${report.color}15`,
+                        bgcolor: (theme) => {
+                          const parts = report.color.split('.');
+                          const c = parts.length === 2 ? theme.palette[parts[0]]?.[parts[1]] : report.color;
+                          return alpha(c || theme.palette.primary.main, 0.12);
+                        },
                         color: report.color,
                         borderRadius: 2,
                         p: 1.5,

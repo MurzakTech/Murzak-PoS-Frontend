@@ -169,7 +169,7 @@ const CostMethodComparison = () => {
                 {
                   dataKey: 'total_value',
                   name: 'Total Value',
-                  color: '#1976d2',
+                  color: 'primary.main',
                   format: 'currency',
                 },
               ]}

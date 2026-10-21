@@ -14,7 +14,7 @@ import {
   approveRequest, getApprovalSettings, listApprovals, rejectRequest, saveApprovalSettings, STATUSES,
 } from '../../api/approvalsApi';
 
-export const STATUS_COLORS = { Pending: '#F59E0B', Approved: '#10B981', Rejected: '#EF4444' };
+export const STATUS_COLORS = { Pending: 'warning.main', Approved: 'success.main', Rejected: 'error.main' };
 
 export const formatAmount = (value) =>
   Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -146,7 +146,7 @@ const Approvals = () => {
       field: 'status', header: 'Status', width: '12%',
       render: (v, row) => (
         <Box>
-          <StatusChip status={(v || '').toLowerCase()} label={v} color={STATUS_COLORS[v] || '#64748B'} />
+          <StatusChip status={(v || '').toLowerCase()} label={v} />
           {row.decided_by && <Typography variant="caption" color="text.secondary" display="block">{row.decided_by}</Typography>}
         </Box>
       ),

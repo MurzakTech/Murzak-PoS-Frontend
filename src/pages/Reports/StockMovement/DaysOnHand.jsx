@@ -229,7 +229,7 @@ const DaysOnHand = () => {
                 {
                   dataKey: 'days_on_hand',
                   name: 'Days on Hand',
-                  color: '#2e7d32',
+                  color: 'var(--good)',
                   format: 'number',
                 },
               ]}
