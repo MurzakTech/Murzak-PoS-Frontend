@@ -79,7 +79,24 @@ export const listPurchases = async ({ tab = 'all', period = '30d', from, to, sea
 };
 
 /** One purchase for the panel. doctype is 'Purchase Order', 'Purchase Invoice' or 'Purchase Receipt'; leave it out when only the number is known. */
-export const getPurchase = (id, doctype) => call('get_purchase', (url) => axiosInstance.get(url, { params: compact({ id, doctype }) }));
+export const getPurchase = (id, doctype, company) => call('get_purchase', (url) => axiosInstance.get(url, { params: compact({ id, doctype, company }) }));
+
+export const createPurchaseReturn = ({ returnAgainst, items, remarks, company }) =>
+  send(() =>
+    axiosInstance.post(
+      'murzak_pos.api.purchase_receipts_api.create_purchase_return',
+      compact({
+        return_against: returnAgainst,
+        items: typeof items === 'string' ? items : JSON.stringify(items),
+        remarks,
+        company,
+      })
+    )
+  ).then((r) => {
+    const data = body(r);
+    if (!data || data.success === false) throw failure(data, 'Could not create purchase return.');
+    return data;
+  });
 
 /** The ways the shop pays a supplier: [{ name, kind }] with kind cash, mpesa, card or other */
 export const getPaymentModes = async () => {

@@ -7,7 +7,7 @@ export { useFetched, useDataQuery, invalidateQuery };
 export const usePurchasesList = (query, enabled = true) => useFetched(`purchases:list:${JSON.stringify(query)}`, () => listPurchases(query), enabled);
 
 /** One purchase; nothing is asked while id is empty */
-export const usePurchase = (id, doctype) => useFetched(`purchases:doc:${id}|${doctype || ''}`, () => getPurchase(id, doctype), Boolean(id));
+export const usePurchase = (id, doctype, company) => useFetched(`purchases:doc:${id}|${doctype || ''}|${company || ''}`, () => (company ? getPurchase(id, doctype, company) : getPurchase(id, doctype)), Boolean(id));
 
 /** The suppliers for the choosers */
 export const useSuppliers = () => useFetched('purchases:suppliers', () => listSuppliers());

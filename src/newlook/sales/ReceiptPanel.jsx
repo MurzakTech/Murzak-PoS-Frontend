@@ -14,6 +14,7 @@ import Receipt from '../receipt/Receipt';
 import { fromSale } from '../receipt/receiptModel';
 import { useSale } from './useSalesData';
 import { detailsFor, statusView, whatsappLink, whenLabel } from './salesModel';
+import SalesReturnDialog from './SalesReturnDialog';
 import T from './strings.sales';
 
 const PRINT_CLASS = 'nl-printing-receipt';
@@ -133,6 +134,7 @@ const ReceiptPanel = ({ id, doctype, summary, position, onClose, onPrevious, onN
   const toast = useToast();
   const [paying, setPaying] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [returning, setReturning] = useState(false);
 
   // Printing: the print block is drawn first and measures its own length (a till roll is as long as the receipt), then the browser's
   // print window opens a moment later, then the block goes away
@@ -207,6 +209,18 @@ const ReceiptPanel = ({ id, doctype, summary, position, onClose, onPrevious, onN
         ) : null}
       </DetailPanel>
 
+      {returning && shown ? (
+        <SalesReturnDialog
+          sale={shown}
+          onClose={() => setReturning(false)}
+          onDone={() => {
+            setReturning(false);
+            toast.success('Sales return created successfully');
+            reload();
+            if (onChanged) onChanged();
+          }}
+        />
+      ) : null}
       {paying && canTakePayment ? (
         <PaymentDialog
           sale={shown}

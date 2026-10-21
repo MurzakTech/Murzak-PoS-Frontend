@@ -57,6 +57,24 @@ const extractResponseData = (response) => {
 // Helper function to extract error message
 const extractErrorMessage = (error) => friendlyErrorMessage(error);
 
+const enrichItemError = (msg, items) => {
+  if (!msg || typeof msg !== 'string') return msg;
+  return msg.replace(/\bItem\s+([A-Za-z0-9_\-./]+)\b/g, (fullMatch, code) => {
+    let list = [];
+    if (typeof items === 'string') {
+      try { list = JSON.parse(items); } catch (_) {}
+    } else if (Array.isArray(items)) {
+      list = items;
+    }
+    const found = list.find((it) => it && (it.item_code === code || it.code === code || it.id === code));
+    const name = found?.item_name || found?.name;
+    if (name && name !== code) {
+      return `Item ${name} (${code})`;
+    }
+    return fullMatch;
+  });
+};
+
 // Many sales endpoints report a refusal inside a normal reply: { message: { success: false,
 // message: "..." } }. Without this check the till treated "could not open the shift" as
 // success, let the cashier sell without a shift, and only failed later at payment.
@@ -145,12 +163,13 @@ export const createSalesInvoice = createAsyncThunk(
       // Backend returns HTTP 200 even on failure, as { success: false, message: "..." }.
       // Treat that as a real failure instead of trusting the HTTP status alone.
       if (data && data.success === false) {
+        const enriched = enrichItemError(data.message || 'Failed to create sales invoice', invoiceData?.items);
         dispatch(showNotification({
-          message: data.message || 'Failed to create sales invoice',
+          message: enriched,
           severity: 'warning',
           title: 'Failed to create sales invoice',
         }));
-        return rejectWithValue(data.message || 'Failed to create sales invoice');
+        return rejectWithValue(enriched);
       }
 
       const successMessage = extractSuccessMessage(response) || 'Sales Invoice created successfully';
@@ -165,7 +184,7 @@ export const createSalesInvoice = createAsyncThunk(
         salesInvoice: data?.data || data,
       };
     } catch (error) {
-      const errorMessage = extractErrorMessage(error);
+      const errorMessage = enrichItemError(extractErrorMessage(error), invoiceData?.items);
       dispatch(showNotification({
         message: errorMessage,
         severity: getErrorSeverity(error),
@@ -324,12 +343,13 @@ export const createPOSInvoice = createAsyncThunk(
       const data = extractResponseData(response);
 
       if (data && data.success === false) {
+        const enriched = enrichItemError(data.message || 'Failed to create POS invoice', invoiceData?.items);
         dispatch(showNotification({
-          message: data.message || 'Failed to create POS invoice',
+          message: enriched,
           severity: 'warning',
           title: 'Failed to create POS invoice',
         }));
-        return rejectWithValue(data.message || 'Failed to create POS invoice');
+        return rejectWithValue(enriched);
       }
 
       // The till shows its own "Sale complete" screen; this is just a short confirmation
@@ -343,7 +363,7 @@ export const createPOSInvoice = createAsyncThunk(
         posInvoice: data?.data || data,
       };
     } catch (error) {
-      const errorMessage = extractErrorMessage(error);
+      const errorMessage = enrichItemError(extractErrorMessage(error), invoiceData?.items);
       dispatch(showNotification({
         message: errorMessage,
         severity: getErrorSeverity(error),

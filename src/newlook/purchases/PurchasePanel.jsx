@@ -12,6 +12,7 @@ import { cancelBill, cancelOrder, sendOrder } from '../../api/purchasesListApi';
 import NoteDialog from './NoteDialog';
 import MakeBillDialog from './MakeBillDialog';
 import PayBillDialog from './PayBillDialog';
+import PurchaseReturnDialog from './PurchaseReturnDialog';
 import PurchaseStatus from './PurchaseStatus';
 import { usePurchase } from './usePurchasesData';
 import { billLine, cancelCopy, dateCell, detailsFor, dueInfo, openAddress, qtyText, receiveAddress } from './purchasesModel';
@@ -192,8 +193,9 @@ const PrintBlock = ({ purchase }) =>
  *   id, doctype   which purchase; summary is the list row, used for the title while the purchase loads
  *   onChanged()   called after something is saved, so the list can refresh
  */
-const PurchasePanel = ({ id, doctype, summary, position, onClose, onPrevious, onNext, onChanged }) => {
-  const { status, data: purchase, errorType, reload } = usePurchase(id, doctype);
+const PurchasePanel = ({ id, doctype, company, summary, position, onClose, onPrevious, onNext, onChanged }) => {
+  const { status, data: purchase, errorType, reload } = usePurchase(id, doctype, company);
+  const [returning, setReturning] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
   const [paying, setPaying] = useState(false);
@@ -351,6 +353,18 @@ const PurchasePanel = ({ id, doctype, summary, position, onClose, onPrevious, on
           onDone={() => {
             setBilling(false);
             toast.success(T.makeBill.done);
+            changed();
+          }}
+        />
+      ) : null}
+      {returning && shown ? (
+        <PurchaseReturnDialog
+          purchase={shown}
+          company={company}
+          onClose={() => setReturning(false)}
+          onDone={() => {
+            setReturning(false);
+            toast.success(T.returns?.created || 'Purchase return created successfully');
             changed();
           }}
         />

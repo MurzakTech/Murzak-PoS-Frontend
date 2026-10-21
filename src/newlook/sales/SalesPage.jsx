@@ -24,6 +24,7 @@ import './sales.css';
 import CardList from './CardList';
 import DifferenceLabel from './DifferenceLabel';
 import ReceiptPanel from './ReceiptPanel';
+import SalesReturnDialog from './SalesReturnDialog';
 import { sellingLocations } from '../till/sellingLocations';
 import { useSalesList } from './useSalesData';
 import { csvFor, csvName, customerName, doctypeOf, isoDay, isSessionsTab, methodsOf, salesTabs, sessionClosed, sessionOpened, statusView, tabAddress, tabFromParam, whenLabel } from './salesModel';
@@ -76,6 +77,7 @@ const SalesPage = () => {
   const tab = tabFromParam(state.tab);
   const sessions = isSessionsTab(tab);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [standaloneReturn, setStandaloneReturn] = useState(false);
   const listRef = useRef(null);
   const refocus = useRef('');
 
@@ -114,6 +116,7 @@ const SalesPage = () => {
   }, [ready, rows.length, total, page, size]);
 
   const openId = sessions ? '' : state.open;
+  const returnInvoice = state.invoice || (new URLSearchParams(location.search).get('invoice'));
   const openIndex = rows.findIndex((r) => r.id === openId);
   const open = (id) => params.set({ open: id, page });
   const close = () => {
@@ -277,12 +280,28 @@ const SalesPage = () => {
             <Button variant="secondary" icon="arrowDown" disabled={!ready || rows.length === 0} onClick={exportCsv}>
               {T.export}
             </Button>
+            {tab === 'returns' ? (
+              <Button variant="secondary" icon="undo" onClick={() => setStandaloneReturn(true)}>
+                Record return
+              </Button>
+            ) : null}
             {isCashier ? null : <Menu label={T.more.label} items={[{ label: T.more.newInvoice, onClick: () => navigate(oldScreen(T.links.newInvoice)) }]} />}
           </>
         }
         tabs={{ label: T.tabsLabel, tabs, value: tab }}
       />
       <ListWithDetail list={list} detail={detail} />
+      {(standaloneReturn || returnInvoice) ? (
+        <SalesReturnDialog
+          invoiceId={returnInvoice}
+          onClose={() => { setStandaloneReturn(false); if (returnInvoice) params.set({ invoice: '' }); }}
+          onDone={() => {
+            setStandaloneReturn(false);
+            toast.success('Sales return created successfully');
+            reload();
+          }}
+        />
+      ) : null}
     </div>
   );
 };

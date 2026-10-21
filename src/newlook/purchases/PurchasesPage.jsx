@@ -13,8 +13,10 @@ import { HeaderActions, PageHeader, useViewportBand } from '../shell';
 import fill from '../labels/fill';
 import { saveTextFile } from '../../utils/saveTextFile';
 import './purchases.css';
+import { getUserCompany } from '../../utils/getUserCompany';
 import PurchaseCards from './PurchaseCards';
 import PurchasePanel from './PurchasePanel';
+import PurchaseReturnDialog from './PurchaseReturnDialog';
 import PurchaseStatus from './PurchaseStatus';
 import { usePurchasesList, useSuppliers } from './usePurchasesData';
 import {
@@ -81,13 +83,21 @@ const PurchasesPage = () => {
   const refocus = useRef('');
   const suppliers = useSuppliers();
 
+  let user = null;
+  try {
+    const stored = localStorage.getItem('user');
+    if (stored) user = JSON.parse(stored);
+  } catch (_) {}
+  const userCompany = getUserCompany(user) || undefined;
+  const [standaloneReturn, setStandaloneReturn] = useState(false);
+
   // The old Create GRN address redirects here with ?action=receive: go straight to the Receive goods steps
   useEffect(() => {
     if (state.action === 'receive') navigate(RECEIVE_PATH, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.action]);
 
-  const query = useMemo(() => ({ tab, kind, period, from, to, search: q, supplier: filters.supplier, page, pageSize: size }), [tab, kind, period, from, to, q, filters.supplier, page, size]);
+  const query = useMemo(() => ({ tab, kind, period, from, to, search: q, supplier: filters.supplier, page, pageSize: size, ...(userCompany ? { company: userCompany } : {}) }), [tab, kind, period, from, to, q, filters.supplier, page, size, userCompany]);
   const { status, data, error, reload } = usePurchasesList(query, state.action !== 'receive');
   const loading = status === 'loading';
   const ready = status === 'ready' && data;
@@ -106,7 +116,9 @@ const PurchasesPage = () => {
       r.id === openId ||
       r.number === openId ||
       (r.number && r.number.replace(/^#/, '') === String(openId).replace(/^#/, '')) ||
-      (r.id && r.id.toLowerCase() === String(openId).toLowerCase())
+      (r.id && r.id.toLowerCase() === String(openId).toLowerCase()) ||
+      (r.number && r.number.replace(/^#[A-Za-z]?0*/, '') === String(openId).replace(/^#[A-Za-z]?0*/, '')) ||
+      (r.id && r.id.replace(/^.*?0*/, '') === String(openId).replace(/^.*?0*/, ''))
   );
   const open = (id) => params.set({ open: id, page });
   const close = () => {
@@ -233,6 +245,7 @@ const PurchasesPage = () => {
       key={openId}
       id={openIndex >= 0 ? rows[openIndex].id : openId}
       doctype={openIndex >= 0 ? rows[openIndex].doctype : undefined}
+      company={userCompany}
       summary={rows[openIndex]}
       position={openIndex >= 0 ? fill(T.panel.position, { current: openIndex + 1, total: rows.length }) : undefined}
       onClose={close}
@@ -255,22 +268,39 @@ const PurchasesPage = () => {
         subtitle={T.subtitle}
         actions={
           // New purchase is the main button; Receive goods, Export and the other purchase screens are in More, so the header holds two controls
-          <HeaderActions
-            primary={
-              <Button icon="plus" onClick={() => navigate(NEW_PATH)}>
-                {T.newPurchase}
+          <>
+            {tab === 'returns' ? (
+              <Button variant="secondary" icon="undo" onClick={() => setStandaloneReturn(true)}>
+                Record return
               </Button>
-            }
-            items={[
-              { label: T.receiveGoods, icon: 'truck', onClick: () => navigate(RECEIVE_PATH) },
-              { label: T.export, icon: 'arrowDown', disabled: !ready || rows.length === 0, onClick: exportCsv },
-              ...moreItems,
-            ]}
-          />
+            ) : null}
+            <HeaderActions
+              primary={
+                <Button icon="plus" onClick={() => navigate(NEW_PATH)}>
+                  {T.newPurchase}
+                </Button>
+              }
+              items={[
+                { label: T.receiveGoods, icon: 'truck', onClick: () => navigate(RECEIVE_PATH) },
+                { label: T.export, icon: 'arrowDown', disabled: !ready || rows.length === 0, onClick: exportCsv },
+                ...moreItems,
+              ]}
+            />
+          </>
         }
         tabs={{ label: T.tabsLabel, tabs, value: tab }}
       />
       <ListWithDetail list={list} detail={detail} />
+      {standaloneReturn ? (
+        <PurchaseReturnDialog
+          company={userCompany}
+          onClose={() => setStandaloneReturn(false)}
+          onDone={() => {
+            setStandaloneReturn(false);
+            reload();
+          }}
+        />
+      ) : null}
     </div>
   );
 };

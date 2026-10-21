@@ -1036,6 +1036,18 @@ const NewSale = () => {
     startCheckoutMode();
   };
 
+  const enrichItemError = (msg, currentCart = cart) => {
+    if (!msg || typeof msg !== 'string') return msg;
+    return msg.replace(/\bItem\s+([A-Za-z0-9_\-./]+)\b/g, (fullMatch, code) => {
+      const found = (currentCart || []).find((c) => c.item_code === code || c.code === code || c.id === code);
+      const name = found?.item_name || found?.name;
+      if (name && name !== code) {
+        return `Item ${name} (${code})`;
+      }
+      return fullMatch;
+    });
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setSnackbarMessage('Cart is empty');
@@ -1375,7 +1387,7 @@ const NewSale = () => {
           return;
         } else {
           // Other error - show it
-          setSnackbarMessage(errorMessage || 'Failed to create invoice');
+          setSnackbarMessage(enrichItemError(errorMessage) || 'Failed to create invoice');
           setSnackbarSeverity('error');
           setSnackbarOpen(true);
           return;
@@ -1415,7 +1427,8 @@ const NewSale = () => {
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
-      setSnackbarMessage('An error occurred while creating the invoice');
+      const msg = error?.message || 'An error occurred while creating the invoice';
+      setSnackbarMessage(enrichItemError(msg));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
