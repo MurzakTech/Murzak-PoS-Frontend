@@ -121,3 +121,39 @@ export const submitCount = async ({ counts, store }) => {
     reconciliation: data.reconciliation || null,
   };
 };
+
+const INVENTORY = 'murzak_pos.api.inventory_api';
+
+/**
+ * Bulk update or adjust stock balances for multiple items:
+ * items is [{ item_code, qty, valuation_rate }].
+ * mode is 'set' (default, physical count) or 'adjust' (+/- delta).
+ */
+export const bulkUpdateStock = async ({ items, store, mode = 'set', note, company }) => {
+  const data = await send(() =>
+    axiosInstance.post(
+      `${INVENTORY}.bulk_update_stock`,
+      compact({
+        items: list(items).map((it) => ({
+          item_code: it.item_code,
+          qty: it.qty,
+          valuation_rate: it.valuation_rate,
+        })),
+        warehouse: store,
+        mode,
+        note,
+        company,
+      }),
+      { allowRefusal: true }
+    )
+  );
+  return {
+    warehouse: data.warehouse || store || '',
+    reconciliation: data.reconciliation || null,
+    totalItems: number(data.total_items),
+    updatedCount: number(data.updated_count),
+    unchangedCount: number(data.unchanged_count),
+    items: list(data.items),
+    failedItems: list(data.failed_items),
+  };
+};

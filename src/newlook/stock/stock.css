@@ -291,3 +291,70 @@
     min-height: var(--control-height-till);
   }
 }
+
+
+/* ---------- Bulk Stock Update Dialog ---------- */
+.nl-bulk-stock {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-bulk-stock__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  align-items: end;
+}
+.nl-bulk-stock__upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  background: var(--surface);
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+.nl-bulk-stock__preview {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: var(--space-3);
+}
+.nl-bulk-stock__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background: var(--soft);
+  border-radius: var(--radius-input);
+  font-size: var(--caption-size);
+}
+.nl-diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--caption-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.nl-diff-badge--plus {
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;
+}
+.nl-diff-badge--minus {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+.nl-diff-badge--zero {
+  background: var(--soft);
+  color: var(--muted);
+}

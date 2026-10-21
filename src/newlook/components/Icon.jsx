@@ -99,6 +99,12 @@ const SHAPES = {
       <circle cx="12.5" cy="13.2" r="1.3" />
     </>
   ),
+  globe: (
+    <>
+      <circle cx="9" cy="9" r="6.5" />
+      <path d="M2.5 9h13M9 2.5a10 10 0 0 1 0 13 10 10 0 0 1 0-13z" />
+    </>
+  ),
   store: (
     <>
       <path d="M3.2 7.5l1-4h9.6l1 4" />

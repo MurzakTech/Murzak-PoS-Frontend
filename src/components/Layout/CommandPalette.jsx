@@ -26,6 +26,8 @@ const QUICK_ACTIONS = [
   { label: 'Add a product', path: '/products/new', icon: 'Add', keywords: 'new item create stock' },
   { label: 'Load starter products for my industry', path: '/products/load-products', icon: 'CloudDownload', keywords: 'import seed template catalogue' },
   { label: 'Import products from a spreadsheet', path: '/products/bulk-import', icon: 'Upload', keywords: 'csv excel bulk' },
+  { label: 'Bulk stock update', path: '/stock', icon: 'Upload', keywords: 'bulk stock update inventory spreadsheet adjust reconciliation' },
+  { label: 'E-Commerce & Online Store (WooCommerce)', path: '/ecommerce', icon: 'Store', keywords: 'woocommerce online store ecommerce website shop sync' },
   { label: 'Create a purchase order', path: '/purchases/create-order', icon: 'AddShoppingCart', keywords: 'buy order supplier restock' },
   { label: 'Transfer stock between stores', path: '/stock-transfers/create', icon: 'SwapHoriz', keywords: 'move branch' },
   { label: 'Add a store', path: '/warehouses/new', icon: 'Warehouse', keywords: 'branch warehouse location' },

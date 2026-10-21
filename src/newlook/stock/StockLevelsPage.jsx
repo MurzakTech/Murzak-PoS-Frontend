@@ -25,6 +25,7 @@ import { EntryStatus, ExpiryLabel, LevelLabel } from './Labels';
 import StockCards from './StockCards';
 import StockInDialog from './StockInDialog';
 import StockOutDialog from './StockOutDialog';
+import BulkStockUpdateDialog from './BulkStockUpdateDialog';
 import StockTiles from './StockTiles';
 import { useStockLevels } from './useStockData';
 import {
@@ -149,7 +150,7 @@ const StockLevelsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, listTab, rows.length, total, page, size]);
 
-  const action = state.action === 'in' || state.action === 'out' ? state.action : '';
+  const action = state.action === 'in' || state.action === 'out' || state.action === 'bulk' ? state.action : '';
   const openForm = (kind, product = null) => {
     setPreset(product);
     params.set({ action: kind, page });
@@ -404,6 +405,9 @@ const StockLevelsPage = () => {
               <Button variant="secondary" icon="arrowUp" onClick={() => openForm('out')}>
                 {T.stockOut}
               </Button>
+              <Button variant="primary" icon="upload" onClick={() => openForm('bulk')}>
+                {T.bulkUpdate}
+              </Button>
             </>
           ) : undefined
         }
@@ -412,6 +416,7 @@ const StockLevelsPage = () => {
       {body}
       {action === 'in' ? <StockInDialog open key={`in-${preset ? preset.item_code : ''}`} onClose={closeForm} stores={storeList} initialProduct={preset} showCost={showValue} onSaved={reload} /> : null}
       {action === 'out' ? <StockOutDialog open key={`out-${preset ? preset.item_code : ''}`} onClose={closeForm} stores={storeList} initialProduct={preset} onSaved={reload} /> : null}
+      {action === 'bulk' ? <BulkStockUpdateDialog open onClose={closeForm} stores={storeList} activeStore={filters.store} onSaved={reload} /> : null}
     </div>
   );
 };

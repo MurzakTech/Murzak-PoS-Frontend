@@ -82,6 +82,7 @@ const shell = {
       suppliers: 'Suppliers',
       expenses: 'Expenses',
       reports: 'Reports',
+      ecommerce: 'Online store',
     },
   },
 

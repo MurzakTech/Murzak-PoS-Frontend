@@ -39,6 +39,7 @@ const ReportPage = lazyPage(() => import('./reports/ReportPage'), 'ReportPage');
 const ComponentPage = lazyPage(() => import('./ComponentPage'), 'ComponentPage');
 const ChartsPage = lazyPage(() => import('./charts/ChartsPage'), 'ChartsPage');
 const RedirectsPage = lazyPage(() => import('./redirects/RedirectsPage'), 'RedirectsPage');
+const EcommercePage = lazyPage(() => import('./ecommerce/EcommercePage'), 'EcommercePage');
 
 // Pages that have their own route, so they get no placeholder
 const OWN_ROUTES = [
@@ -50,7 +51,7 @@ const OWN_ROUTES = [
   '/suppliers', '/suppliers/new', '/suppliers/:id/edit',
   '/purchases', '/purchases/new', '/purchases/orders', '/purchases/returns',
   '/reports', '/reports/sales', '/reports/profit', '/reports/owed', '/reports/running-costs', '/reports/stock-summary', '/reports/stock-value', '/reports/aging-stock',
-  '/setup', '/expenses', '/expenses/new',
+  '/setup', '/expenses', '/expenses/new', '/ecommerce', '/settings/ecommerce',
 ];
 
 // Canonical routes: top-level paths directly served by the New look shell
@@ -110,6 +111,9 @@ const CANONICAL_ROUTES = [
   { path: '/reports/:name', element: ReportPage },
   // Redirects table review
   { path: '/redirects', element: RedirectsPage },
+  // E-Commerce & Online Store (WooCommerce)
+  { path: '/ecommerce', element: EcommercePage },
+  { path: '/settings/ecommerce', element: EcommercePage },
   // Placeholders for un-migrated pages
   ...NEW_PAGES.filter((page) => !OWN_ROUTES.includes(page.path) && !BUILT_PAGES.includes(page.path)).map((page) => ({ path: page.path, element: PagePlaceholder })),
 ];
