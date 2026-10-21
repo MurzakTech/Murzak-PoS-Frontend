@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@mui/material';
 import { photoUrl } from '../../assets/photos';
 
 /**
@@ -12,7 +11,7 @@ import { photoUrl } from '../../assets/photos';
  * position which part stays in view when the frame crops the picture
  *          (CSS object-position, e.g. "50% 40%"), so the product is the focus
  */
-const Photo = ({ name, alt = '', ratio = 3 / 2, position = 'center', fallback = null, eager = false, sx, children }) => {
+const Photo = ({ name, alt = '', ratio = 3 / 2, position = 'center', fallback = null, eager = false, style, className = '', children }) => {
   const src = photoUrl(name);
   const [failed, setFailed] = useState(false);
 
@@ -21,19 +20,35 @@ const Photo = ({ name, alt = '', ratio = 3 / 2, position = 'center', fallback = 
   if (!src || failed) return fallback;
 
   return (
-    <Box sx={{ position: 'relative', overflow: 'hidden', aspectRatio: String(ratio), bgcolor: 'action.hover', ...sx }}>
-      <Box
-        component="img"
+    <div
+      className={className}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        aspectRatio: String(ratio),
+        backgroundColor: 'var(--soft)',
+        ...style,
+      }}
+    >
+      <img
         src={src}
         alt={alt}
         loading={eager ? 'eager' : 'lazy'}
         decoding="async"
         draggable={false}
         onError={() => setFailed(true)}
-        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: position, display: 'block' }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: position,
+          display: 'block',
+        }}
       />
       {children}
-    </Box>
+    </div>
   );
 };
 

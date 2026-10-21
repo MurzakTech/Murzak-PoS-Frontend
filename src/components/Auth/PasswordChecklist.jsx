@@ -1,33 +1,63 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { CheckCircle, RadioButtonUnchecked } from '@mui/icons-material';
+import Icon from '../../newlook/components/Icon';
 import { PASSWORD_RULES } from '../../utils/passwordRules';
 
 /**
  * A live list of the password rules, ticked off as the person types.
- * Each line says met or not met in words too, for screen readers.
+ * Styled with NewLook tokens without MUI.
  */
-const PasswordChecklist = ({ password = '', sx }) => (
-  <Box component="ul" aria-label="Password requirements" sx={{ listStyle: 'none', p: 0, m: 0, mt: 0.75, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 0.25, ...sx }}>
+const PasswordChecklist = ({ password = '', className = '' }) => (
+  <ul
+    aria-label="Password requirements"
+    className={className}
+    style={{
+      listStyle: 'none',
+      padding: 0,
+      margin: 'var(--space-2) 0 0 0',
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      gap: 'var(--space-1) var(--space-2)',
+    }}
+  >
     {PASSWORD_RULES.map((rule) => {
       const met = rule.test(password);
       return (
-        <Box component="li" key={rule.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <li
+          key={rule.id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-1)',
+            fontSize: 'var(--caption-size)',
+            color: met ? 'var(--good)' : 'var(--muted)',
+            fontWeight: met ? 600 : 400,
+          }}
+        >
           {met ? (
-            <CheckCircle sx={{ fontSize: 15, color: 'success.main' }} />
+            <span style={{ display: 'inline-flex', color: 'var(--good)' }}>
+              <Icon name="check" />
+            </span>
           ) : (
-            <RadioButtonUnchecked sx={{ fontSize: 15, color: 'text.disabled' }} />
+            <span
+              style={{
+                display: 'inline-block',
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                border: '1.5px solid var(--base)',
+                margin: '3px',
+              }}
+              aria-hidden="true"
+            />
           )}
-          <Typography variant="caption" sx={{ color: met ? 'success.dark' : 'text.secondary' }}>
-            {rule.label}
-            <Box component="span" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
-              {met ? ' (done)' : ' (not yet)'}
-            </Box>
-          </Typography>
-        </Box>
+          <span>{rule.label}</span>
+          <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+            {met ? ' (done)' : ' (not yet)'}
+          </span>
+        </li>
       );
     })}
-  </Box>
+  </ul>
 );
 
 export default PasswordChecklist;
