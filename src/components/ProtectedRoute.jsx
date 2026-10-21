@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
+import { isTokenValid } from '../store/authSlice';
 import useRoleAccess from '../hooks/useRoleAccess';
 import logoMark from '../assets/logo_mark.png';
 
@@ -125,6 +126,11 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
   const { isCompleted: onboardingCompleted } = useAppSelector((state) => state.onboarding);
   const { hasAccess, hasRole, roles } = useRoleAccess();
   const [isInitializing, setIsInitializing] = useState(true);
+
+  // Read stored access token directly to guard against race conditions during initial hydration
+  const storedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
+  const hasValidStoredToken = Boolean(storedToken && isTokenValid(storedToken));
+  const isAuth = isAuthenticated || hasValidStoredToken;
   
   // Check if user has company data (staff users have company data but may not have onboarding_completed flag)
   const hasCompanyData = user?.company || user?.company_name || user?.company_data;
@@ -138,8 +144,7 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
 
   // Wait for initial auth check to complete before making routing decisions
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    if (storedToken) {
       const timer = setTimeout(() => {
         setIsInitializing(false);
       }, 50);
@@ -147,22 +152,22 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     } else {
       setIsInitializing(false);
     }
-  }, []);
+  }, [storedToken]);
 
-  // Also stop initializing once auth state is determined (not loading)
+  // Also stop initializing once auth state is determined
   useEffect(() => {
     if (!isLoading) {
       setIsInitializing(false);
     }
   }, [isLoading]);
 
-  // Show loading while initializing auth state
-  if (isInitializing || isLoading) {
+  // Show loading while initializing auth state or loading user profile
+  if (isInitializing || (isLoading && hasValidStoredToken && !isAuthenticated)) {
     return <LoadingSplash />;
   }
 
   // If not authenticated → redirect to login (preserving intended destination)
-  if (!isAuthenticated) {
+  if (!isAuth) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
@@ -186,8 +191,8 @@ const ProtectedRoute = ({ children, requireOnboarding = true, requiredRoles = nu
     }
   } else {
     // Check if user has access to the current route path
-    const publicPaths = ['/onboarding', '/login', '/register', '/forgot-password'];
-    if (!publicPaths.includes(location.pathname) && !hasAccess(location.pathname)) {
+    const publicPaths = ['/', '/dashboard', '/onboarding', '/setup', '/login', '/register', '/forgot-password'];
+    if (location.pathname !== '/' && location.pathname !== '/dashboard' && !publicPaths.includes(location.pathname) && !hasAccess(location.pathname)) {
       return <Navigate to="/" replace />;
     }
   }

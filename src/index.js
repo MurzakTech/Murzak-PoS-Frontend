@@ -7,6 +7,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeProvider } from './theme/ThemeProvider';
 import NotificationProvider from './components/Notification/NotificationProvider';
+import { ErrorBoundary } from './components/Common';
 import { store } from './store/store';
 import { checkAuth, fetchCurrentUser } from './store/authSlice';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
@@ -43,13 +44,15 @@ const AuthInitializer = ({ children }) => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+  <React.StrictMode>
     <Provider store={store}>
       <ThemeProvider>
         <NotificationProvider>
-          <AuthInitializer>
-            <App />
-          </AuthInitializer>
+          <ErrorBoundary>
+            <AuthInitializer>
+              <App />
+            </AuthInitializer>
+          </ErrorBoundary>
         </NotificationProvider>
       </ThemeProvider>
     </Provider>

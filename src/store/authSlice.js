@@ -90,14 +90,25 @@ export const sanitizeUser = (user) => {
   }
 };
 
-const isTokenValid = (token) => {
-  if (!token) return false;
-  try {
-    const { exp } = jwtDecode(token);
-    return exp > Date.now() / 1000;
-  } catch (error) {
-    return false;
+export const isTokenValid = (token) => {
+  if (!token || typeof token !== 'string') return false;
+  const trimmed = token.trim();
+  if (!trimmed) return false;
+
+  // Check if token is a standard 3-segment JWT
+  const parts = trimmed.split('.');
+  if (parts.length === 3) {
+    try {
+      const { exp } = jwtDecode(trimmed);
+      return typeof exp === 'number' ? exp > Date.now() / 1000 : true;
+    } catch {
+      return false;
+    }
   }
+
+  // Frappe OAuth Bearer tokens are opaque strings (oauthlib)
+  // An opaque token is valid if non-empty and reasonably sized (>= 8 chars)
+  return trimmed.length >= 8;
 };
 
 /**

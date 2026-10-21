@@ -47,18 +47,21 @@ const processQueue = (error, token = null) => {
 };
 
 const redirectToLogin = () => {
-  clearSession();
-  if (typeof window !== 'undefined') {
-    const currentPath = window.location.pathname || '';
-    const isPublicPage = currentPath.includes('/login') || 
-                        currentPath.includes('/register') || 
-                        currentPath === '/';
-    const isOnboardingPage = currentPath.includes('/onboarding') || currentPath.includes('/setup');
-    
-    // Don't redirect during onboarding - let the error be displayed
-    if (!isPublicPage && !isOnboardingPage) {
-      window.location.href = '/login';
-    }
+  if (typeof window === 'undefined') return;
+  const currentPath = window.location.pathname || '';
+  const isPublicPage = currentPath.includes('/login') || 
+                      currentPath.includes('/register') || 
+                      currentPath.includes('/signup') ||
+                      currentPath.includes('/forgot-password') ||
+                      currentPath.includes('/terms-of-service') ||
+                      currentPath.includes('/privacy-policy') ||
+                      currentPath.includes('/contact-us');
+  const isOnboardingPage = currentPath.includes('/onboarding') || currentPath.includes('/setup');
+  
+  // Only clear session and redirect when an authenticated request fails on a protected route
+  if (!isPublicPage && !isOnboardingPage) {
+    clearSession();
+    window.location.href = '/login';
   }
 };
 
@@ -149,8 +152,16 @@ axiosInstance.interceptors.response.use(
           originalRequest.url?.includes(endpoint)
         );
 
-        // If no refresh token exists, or request was already retried, or request was to an auth endpoint
-        if (!refreshTokenValue || originalRequest._retry || isAuthEndpoint) {
+        // If the 401 was returned by an authentication endpoint (e.g., bad credentials or registration conflict),
+        // do not trigger session wiping or redirect loops; reject so the calling form displays the error.
+        if (isAuthEndpoint) {
+          error.rawMessage = error.message;
+          error.message = friendlyErrorMessage(error);
+          return Promise.reject(error);
+        }
+
+        // If no refresh token exists, or request was already retried
+        if (!refreshTokenValue || originalRequest._retry) {
           redirectToLogin();
           error.rawMessage = error.message;
           error.message = friendlyErrorMessage(error);

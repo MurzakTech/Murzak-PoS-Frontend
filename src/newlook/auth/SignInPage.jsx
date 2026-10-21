@@ -63,7 +63,7 @@ const SignInPage = () => {
   const lastError = useRef(null);
   useEffect(() => {
     if (error && error !== lastError.current) {
-      const field = sentence.field || (step === 'code' ? 'code' : 'loginId');
+      const field = sentence?.field || (step === 'code' ? 'code' : 'loginId');
       focusById(IDS[field]);
     }
     lastError.current = error;
