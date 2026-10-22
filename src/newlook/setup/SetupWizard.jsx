@@ -6,6 +6,7 @@ import { useToast } from '../components/Toast';
 import { PageHeader } from '../shell';
 import { usePreviewRedirects } from '../redirects/live';
 import { useNewLook } from '../NewLookProvider';
+import { getUserCompany } from '../../utils/getUserCompany';
 import { getSetupState, saveSetupProgress } from '../../api/setupApi';
 import BusinessStep from './BusinessStep';
 import CashStep from './CashStep';
@@ -35,7 +36,8 @@ const SetupWizard = ({ load = getSetupState }) => {
   const [search, setSearch] = useSearchParams();
   const toast = useToast();
   const previewOn = usePreviewRedirects();
-  const { company } = useNewLook();
+  const { company: newLookCompany } = useNewLook();
+  const company = newLookCompany || getUserCompany() || undefined;
   const [loaded, setLoaded] = useState({ status: 'loading', state: null });
   const [step, setStep] = useState(null);
   const links = useMemo(() => linksFor(previewOn), [previewOn]);
@@ -47,7 +49,10 @@ const SetupWizard = ({ load = getSetupState }) => {
         setLoaded({ status: 'ready', state });
         setStep(startStep(state, search.get('step')));
       })
-      .catch(() => setLoaded({ status: 'error', state: null }));
+      .catch((err) => {
+        console.error('Failed to open set-up:', err);
+        setLoaded({ status: 'error', state: null });
+      });
     // The address is read once, when set-up opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, company]);
@@ -80,29 +85,31 @@ const SetupWizard = ({ load = getSetupState }) => {
     navigate(HOME_PATH);
   };
 
+  const resolvedCompany = company || state?.company;
+
   const finishAll = async () => {
-    const progress = await saveSetupProgress('finish', { company });
+    const progress = await saveSetupProgress('finish', { company: resolvedCompany });
     apply(progress);
     end(T.finished, 'success');
   };
 
   const ctx = state && {
     state,
-    company,
+    company: resolvedCompany,
     links,
     goTo,
     leave: () => navigate(HOME_PATH),
     nextLabel: (key) => (key === LAST ? T.actions.finish : T.actions.nextPlain),
     // The step was saved (by its own call, which hands back `progress`) or just needs marking done; then on to the next
     complete: async (key, { progress, patch } = {}) => {
-      const result = progress || (await saveSetupProgress(key, { company }));
+      const result = progress || (await saveSetupProgress(key, { company: resolvedCompany }));
       apply(result, patch);
       const next = nextKey(key);
       if (next) goTo(next);
       else await finishAll();
     },
     skip: async (key) => {
-      const result = await saveSetupProgress(key, { skipped: true, company });
+      const result = await saveSetupProgress(key, { skipped: true, company: resolvedCompany });
       apply(result);
       const next = nextKey(key);
       if (next) goTo(next);
@@ -110,7 +117,7 @@ const SetupWizard = ({ load = getSetupState }) => {
     },
     // The last step's Finish: mark it done, then end set-up
     finishWith: async (key) => {
-      apply(await saveSetupProgress(key, { company }));
+      apply(await saveSetupProgress(key, { company: resolvedCompany }));
       await finishAll();
     },
     // "Skip for now": ends set-up without going through the other steps

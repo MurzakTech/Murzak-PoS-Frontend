@@ -22,6 +22,7 @@ const show = (answer, props = {}) => {
       <Routes>
         <Route path="/new-look" element={<SetupBanner load={load} {...props} />} />
         <Route path="/new-look/setup" element={<p>The wizard</p>} />
+        <Route path="/setup" element={<p>The wizard</p>} />
       </Routes>
     </MemoryRouter>
   );

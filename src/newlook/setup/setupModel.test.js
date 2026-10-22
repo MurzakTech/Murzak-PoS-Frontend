@@ -12,7 +12,7 @@ describe('the steps', () => {
     expect(nextKey('staff')).toBeNull();
     expect(previousKey('business')).toBeNull();
     expect(previousKey('cash')).toBe('shop');
-    expect(stepAddress('cash')).toBe('/new-look/setup?step=cash');
+    expect(stepAddress('cash')).toBe('/setup?step=cash');
   });
 
   test('the wizard opens at the first step not passed, so a refresh continues where it stopped', () => {
@@ -112,7 +112,7 @@ describe('where the links go', () => {
 
   test('a current screen carries legacy=1 so it does not bounce back; a finished page does not', () => {
     const links = linksFor(false);
-    expect(links.newProduct).toBe('/new-look/products/new');
+    expect(links.newProduct).toBe('/products/new');
     expect(links.starter('PHARMACY')).toBe('/industry/PHARMACY/products?legacy=1');
     expect(links.fromFile).toBe('/products/bulk-import?legacy=1');
     expect(links.openingStock).toBe('/products/bulk-stock-import?legacy=1');
@@ -120,8 +120,8 @@ describe('where the links go', () => {
   });
 
   test('Team and Tax open the new Settings pages, which are finished', () => {
-    expect(linksFor(false).team).toBe('/new-look/settings/team');
-    expect(linksFor(true).team).toBe('/new-look/settings/team');
-    expect(linksFor(false).tax).toBe('/new-look/settings/tax');
+    expect(linksFor(false).team).toBe('/settings/team');
+    expect(linksFor(true).team).toBe('/settings/team');
+    expect(linksFor(false).tax).toBe('/settings/tax');
   });
 });

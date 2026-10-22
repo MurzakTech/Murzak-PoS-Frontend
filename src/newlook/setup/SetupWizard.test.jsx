@@ -55,8 +55,11 @@ const show = (initial = state(), address = '/new-look/setup') => {
       <ToastProvider>
         <Routes>
           <Route path="/new-look/setup" element={<SetupWizard />} />
+          <Route path="/setup" element={<SetupWizard />} />
           <Route path="/new-look" element={<p>Home page</p>} />
+          <Route path="/" element={<p>Home page</p>} />
           <Route path="/new-look/products/new" element={<p>New product page</p>} />
+          <Route path="/products/new" element={<p>New product page</p>} />
         </Routes>
         <Where />
       </ToastProvider>
@@ -256,7 +259,7 @@ describe('step 5, the first products', () => {
   test('links to New product and to the current starter products screen of the kind', async () => {
     open();
     await heading('Add your first products');
-    expect(screen.getByRole('link', { name: 'Add a product' })).toHaveAttribute('href', '/new-look/products/new');
+    expect(screen.getByRole('link', { name: 'Add a product' })).toHaveAttribute('href', '/products/new');
     expect(screen.getByRole('link', { name: 'See starter products' })).toHaveAttribute('href', '/industry/PHARMACY/products?legacy=1');
     expect(screen.getByRole('link', { name: 'Add from a file' })).toHaveAttribute('href', '/products/bulk-import?legacy=1');
     expect(screen.getByRole('link', { name: 'Add opening stock' })).toHaveAttribute('href', '/products/bulk-stock-import?legacy=1');
@@ -288,8 +291,8 @@ describe('step 6, your team, and finishing', () => {
   test('links to Settings, Team and Settings, Tax', async () => {
     open();
     await heading('Add your team');
-    expect(screen.getByRole('link', { name: 'Add your team' })).toHaveAttribute('href', '/new-look/settings/team');
-    expect(screen.getByRole('link', { name: 'Tax and eTIMS' })).toHaveAttribute('href', '/new-look/settings/tax');
+    expect(screen.getByRole('link', { name: 'Add your team' })).toHaveAttribute('href', '/settings/team');
+    expect(screen.getByRole('link', { name: 'Tax and eTIMS' })).toHaveAttribute('href', '/settings/tax');
   });
 
   test('Finish marks the step and the whole set-up done, and returns to Home', async () => {
