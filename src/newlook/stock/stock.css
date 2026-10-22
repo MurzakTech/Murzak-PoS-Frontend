@@ -347,12 +347,12 @@
   font-variant-numeric: tabular-nums;
 }
 .nl-diff-badge--plus {
-  background: rgba(34, 197, 94, 0.15);
-  color: #15803d;
+  background: var(--soft);
+  color: var(--good);
 }
 .nl-diff-badge--minus {
-  background: rgba(239, 68, 68, 0.15);
-  color: #b91c1c;
+  background: var(--soft);
+  color: var(--bad);
 }
 .nl-diff-badge--zero {
   background: var(--soft);

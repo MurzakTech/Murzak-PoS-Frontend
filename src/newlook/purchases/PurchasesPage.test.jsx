@@ -13,8 +13,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import PurchasesPage from './PurchasesPage';
+import { NEW_PATH, PURCHASES_PATH, RECEIVE_PATH, openAddress, receiveAddress } from './purchasesModel';
 import { addPurchaseNote, cancelBill, cancelOrder, getPurchase, listPurchases, listSuppliers, makeBillFromNote, payBill, sendOrder } from '../../api/purchasesListApi';
 import { saveTextFile } from '../../utils/saveTextFile';
+import { _resetQueryCacheForTest } from '../hooks/useDataQuery';
 
 jest.mock('../../api/purchasesListApi', () => ({
   listPurchases: jest.fn(),
@@ -122,7 +124,7 @@ const Where = () => {
   return <p data-testid="where">{location.pathname + location.search}</p>;
 };
 
-const renderPage = async (url = '/new-look/purchases') => {
+const renderPage = async (url = PURCHASES_PATH) => {
   const view = render(
     <MemoryRouter initialEntries={[url]}>
       <ToastProvider>
@@ -140,6 +142,7 @@ const rowOf = (number) => screen.getByRole('row', { name: new RegExp(`${number}\
 
 beforeEach(() => {
   jest.resetAllMocks();
+  _resetQueryCacheForTest();
   listPurchases.mockImplementation(async (query) => answer(query));
   listSuppliers.mockResolvedValue(SUPPLIERS.map((name, i) => ({ id: `SUP-${i + 1}`, name })));
   getPurchase.mockImplementation(async (id) => {
@@ -419,7 +422,7 @@ describe('the Show filter: goods received notes and every supplier bill', () => 
     userEvent.click(await screen.findByRole('row', { name: /#G0004\b/ }));
     expect(await screen.findByRole('heading', { level: 2, name: 'Purchase #G0004' })).toBeInTheDocument();
     expect(getPurchase).toHaveBeenCalledWith('MAT-PRE-2026-00004', 'Purchase Receipt');
-    expect(await screen.findByRole('link', { name: '#O0012' })).toHaveAttribute('href', '/new-look/purchases?open=PUR-ORD-2026-00012');
+    expect(await screen.findByRole('link', { name: '#O0012' })).toHaveAttribute('href', openAddress('PUR-ORD-2026-00012'));
   });
 
   test('a view ignores the tab: All purchases is the one marked', async () => {
@@ -479,7 +482,7 @@ describe('Export, empty and error states, and the header', () => {
     const buttons = screen.getAllByRole('button', { name: 'New purchase' });
     expect(buttons).toHaveLength(2); // the header and the empty state
     userEvent.click(buttons[1]);
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
   });
 
   test('an empty Returns tab offers to show all purchases', async () => {
@@ -511,7 +514,7 @@ describe('Export, empty and error states, and the header', () => {
     const header = screen.getByRole('heading', { level: 1, name: 'Purchases' }).closest('.nl-page-header');
     expect(within(header).getAllByRole('button').map((b) => b.textContent)).toEqual(['More', 'New purchase']);
     userEvent.click(inMore('Receive goods'));
-    expect(where()).toBe('/new-look/purchases/receive');
+    expect(where()).toBe(RECEIVE_PATH);
   });
 
   test('New purchase opens the form', async () => {
@@ -519,7 +522,7 @@ describe('Export, empty and error states, and the header', () => {
     await screen.findByRole('row', { name: /#O0045\b/ });
     const header = screen.getByRole('heading', { level: 1, name: 'Purchases' }).closest('.nl-page-header');
     userEvent.click(within(header).getByRole('button', { name: 'New purchase' }));
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
   });
 
   test('the other purchase lists stay one menu away: goods received notes, all supplier bills, and recording goods with no order', async () => {
@@ -542,14 +545,14 @@ describe('Export, empty and error states, and the header', () => {
   test('the old Create GRN address (?action=receive) goes straight to Receive goods', async () => {
     listPurchases.mockImplementation(async (query) => answer(query));
     render(
-      <MemoryRouter initialEntries={['/new-look/purchases?action=receive']}>
+      <MemoryRouter initialEntries={[`${PURCHASES_PATH}?action=receive`]}>
         <ToastProvider>
           <PurchasesPage />
           <Where />
         </ToastProvider>
       </MemoryRouter>
     );
-    await waitFor(() => expect(where()).toBe('/new-look/purchases/receive'));
+    await waitFor(() => expect(where()).toBe(RECEIVE_PATH));
   });
 });
 
@@ -603,7 +606,7 @@ describe('the purchase panel', () => {
     await screen.findByText('Sugar 1kg');
     const panel = screen.getByRole('heading', { level: 2, name: 'Purchase #O0045' }).closest('section');
     userEvent.click(within(panel).getByRole('button', { name: 'Receive goods' }));
-    expect(where()).toBe('/new-look/purchases/receive?order=PUR-ORD-2026-00045');
+    expect(where()).toBe(receiveAddress('PUR-ORD-2026-00045'));
   });
 
   test('Receive goods is not offered when the server says nothing is left to arrive', async () => {
@@ -789,8 +792,8 @@ describe('the purchase panel', () => {
     );
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /#O0045\b/ }));
-    expect(await screen.findByRole('link', { name: /#B0060/ })).toHaveAttribute('href', '/new-look/purchases?open=ACC-PINV-2026-00060');
-    expect(screen.getByRole('link', { name: /#G0004/ })).toHaveAttribute('href', '/new-look/purchases?open=MAT-PRE-2026-00004');
+    expect(await screen.findByRole('link', { name: /#B0060/ })).toHaveAttribute('href', openAddress('ACC-PINV-2026-00060'));
+    expect(screen.getByRole('link', { name: /#G0004/ })).toHaveAttribute('href', openAddress('MAT-PRE-2026-00004'));
   });
 
   test('a purchase that cannot load says so with Try again', async () => {
@@ -808,6 +811,11 @@ describe('the purchase panel', () => {
     getPurchase.mockRejectedValue(error);
     await renderPage('/new-look/purchases?open=NOPE');
     expect(await screen.findByText('We could not find this purchase')).toBeInTheDocument();
+  });
+
+  test('opening a purchase by sequence number matches the full ID in the rows', async () => {
+    await renderPage(`${PURCHASES_PATH}?open=00045`);
+    expect(await screen.findByRole('heading', { level: 2, name: 'Purchase #O0045' })).toBeInTheDocument();
   });
 
   test('Previous and Next move between purchases, and Escape closes the panel and returns to the row', async () => {

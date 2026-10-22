@@ -66,6 +66,8 @@ const firstProblem = (found) => {
   return ['dueDate', 'paidAmount', 'paidHow', 'paidCode'].find((k) => found[k]) || 'supplier';
 };
 
+const LegacyNewPurchase = React.lazy(() => import('../../pages/Purchases/NewPurchase'));
+
 /**
  * The New purchase form (ticket P4-5, acceptance check AC-26): supplier, date, the items (product, quantity, cost each)
  * and, under More options, notes, the store when the shop keeps stock in more than one place, and "I already have the
@@ -73,7 +75,7 @@ const firstProblem = (found) => {
  * sent to the supplier (the stock goes up later, in Receive goods); with one it saves a bill and the stock goes up at once.
  * An address with ?item=<product code> starts with that product on the list (the Reorder links use it).
  */
-const NewPurchasePage = () => {
+const NewPurchaseForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -225,7 +227,7 @@ const NewPurchasePage = () => {
 
   const errors = useMemo(() => summaryOf(problems, lines), [problems, lines]);
   const total = linesTotal(lines);
-  const supplierChoices = suppliers.status === 'ready' ? suppliers.data.map((s) => ({ value: s.id, label: s.name })) : [];
+  const supplierChoices = suppliers.status === 'ready' && Array.isArray(suppliers.data) ? suppliers.data.map((s) => ({ value: s.id, label: s.name })) : [];
   const storeChoices = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const modeChoices = modes.map((m) => ({ value: m.name, label: m.name }));
   const cancel = () => (dirty ? setAskCancel(true) : navigate(PURCHASES_PATH));
@@ -352,7 +354,7 @@ const NewPurchasePage = () => {
           <Checkbox id="np-have-bill" label={F.haveBill} checked={values.haveBill} onChange={set('haveBill')} />
           <p className="nl-helper">{F.haveBillHelper}</p>
           <p className="nl-helper">
-            {F.earlierScreen} <a href={oldScreen(T.links.earlierNew)}>{F.earlierScreenLink}</a>
+            {F.earlierScreen} <Link to={oldScreen(T.links.earlierNew)}>{F.earlierScreenLink}</Link>
           </p>
           {values.haveBill ? (
             <div className="nl-newpurchase__bill">
@@ -423,6 +425,21 @@ const NewPurchasePage = () => {
       />
     </>
   );
+};
+
+const NewPurchasePage = () => {
+  const location = useLocation();
+  const isLegacy = new URLSearchParams(location.search).get('legacy') === '1';
+
+  if (isLegacy) {
+    return (
+      <React.Suspense fallback={<div className="nl-form-loading" style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>Loading earlier screen...</div>}>
+        <LegacyNewPurchase />
+      </React.Suspense>
+    );
+  }
+
+  return <NewPurchaseForm />;
 };
 
 export default NewPurchasePage;

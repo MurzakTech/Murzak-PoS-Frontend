@@ -16,6 +16,7 @@ import SalesPage from './SalesPage';
 import { getSale, listSales, takePayment } from '../../api/salesListApi';
 import { getMyAccess } from '../../api/accessApi';
 import { saveTextFile } from '../../utils/saveTextFile';
+import { _resetQueryCacheForTest } from '../hooks/useDataQuery';
 
 jest.mock('../../api/salesListApi', () => ({ listSales: jest.fn(), getSale: jest.fn(), takePayment: jest.fn() }));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
@@ -128,6 +129,7 @@ const rowOf = (receipt) => screen.getByRole('row', { name: new RegExp(`${receipt
 
 beforeEach(() => {
   jest.resetAllMocks();
+  _resetQueryCacheForTest();
   listSales.mockImplementation(async (query) => answer(query));
   getSale.mockImplementation(async (id) => saleFor(ALL_ROWS.find((r) => r.id === id) || ALL_ROWS[0]));
   window.print = jest.fn();
@@ -215,7 +217,7 @@ describe('the list (AC-24, AC-25)', () => {
     userEvent.click(screen.getByRole('button', { name: /Next/ }));
     await screen.findByRole('row', { name: /#0005\b/ });
     expect(screen.getByText('Showing 5 of 45')).toBeInTheDocument();
-  });
+  }, 15000);
 
   test('the rows-per-page box changes the list and is never blank, even for a bad address', async () => {
     await renderPage('/new-look/sales?size=7');

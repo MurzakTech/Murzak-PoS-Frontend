@@ -220,7 +220,7 @@ describe('no redesigned file hard-codes a colour', () => {
     });
   const files = walk(NEWLOOK)
     .filter((f) => /\.(js|jsx|css)$/.test(f) && !/\.test\.(js|jsx)$/.test(f) && path.basename(f) !== 'tokens.css')
-    .map((f) => path.relative(NEWLOOK, f));
+    .map((f) => path.relative(NEWLOOK, f).replace(/\\/g, '/'));
 
   test('the redesigned files, including the components folder, are found', () => {
     expect(files).toEqual(expect.arrayContaining(['NewLookShell.jsx', 'NewLookGate.jsx', 'NewLookProvider.jsx', 'ComponentPage.jsx', 'components/components.css', 'components/Button.jsx']));

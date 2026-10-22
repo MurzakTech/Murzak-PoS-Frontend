@@ -159,7 +159,7 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
           <div style={{ display: 'grid', gap: '8px' }}>
             <Field
               label="Invoice or Receipt number"
-              placeholder="e.g. #0001, POS-INV-2026-00001"
+              placeholder="e.g. 0001, POS-INV-2026-00001"
               value={invoiceLookup}
               onChange={setInvoiceLookup}
               data-autofocus=""

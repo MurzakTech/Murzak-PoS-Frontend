@@ -11,6 +11,8 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import NewPurchasePage from './NewPurchasePage';
+import { NEW_PATH, PRODUCT_NEW_PATH, PURCHASES_PATH, openAddress } from './purchasesModel';
+import T from './strings.purchases';
 import { addPurchaseNote, createDirectBill, findProductsToBuy, getPaymentModes, getProductToBuy, listSuppliers, saveOrder } from '../../api/purchasesListApi';
 
 jest.mock('../../api/purchasesListApi', () => ({
@@ -28,6 +30,7 @@ jest.mock('../../store/hooks', () => ({
   useAppSelector: (select) => select({ auth: { user: { company: 'Demo Shop' } }, warehouse: { warehouses: mockStores.current } }),
 }));
 jest.mock('../../store/warehouseSlice', () => ({ listWarehouses: jest.fn(() => ({ type: 'x' })) }));
+jest.mock('../../pages/Purchases/NewPurchase', () => () => <div data-testid="legacy-new-purchase">Legacy New Purchase</div>);
 
 // ---------- Fixtures: made-up shop data, never real ----------
 const SUGAR = { item_code: 'SUG', item_name: 'Sugar 1kg', unit: 'Nos', cost: 95.5 };
@@ -42,7 +45,7 @@ const Where = () => {
   return <p data-testid="where">{location.pathname + location.search}</p>;
 };
 
-const renderPage = async (url = '/new-look/purchases/new') => {
+const renderPage = async (url = NEW_PATH) => {
   const view = render(
     <MemoryRouter initialEntries={[url]}>
       <ToastProvider>
@@ -119,7 +122,7 @@ describe('the form (AC-26)', () => {
     listSuppliers.mockResolvedValue([]);
     await renderPage();
     expect(screen.getByText(/You have no suppliers yet./)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add a supplier' })).toHaveAttribute('href', '/new-look/suppliers/new');
+    expect(screen.getByRole('link', { name: 'Add a supplier' })).toHaveAttribute('href', T.links.suppliers);
   });
 
   test('suppliers that cannot load say so, with Try again', async () => {
@@ -188,7 +191,7 @@ describe('the items', () => {
 
   test('Create a new product links to the New product form', async () => {
     await renderPage();
-    expect(screen.getByRole('link', { name: 'Create a new product' })).toHaveAttribute('href', '/new-look/products/new');
+    expect(screen.getByRole('link', { name: 'Create a new product' })).toHaveAttribute('href', PRODUCT_NEW_PATH);
   });
 
   test('a link to the New product form asks first once something is typed, and Leave goes there', async () => {
@@ -196,42 +199,42 @@ describe('the items', () => {
     await addProduct('Sugar 1kg');
     userEvent.click(screen.getByRole('link', { name: 'Create a new product' }));
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
     userEvent.click(within(dialog).getByRole('button', { name: 'Leave without saving' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products/new'));
+    await waitFor(() => expect(where()).toBe(PRODUCT_NEW_PATH));
   });
 
   test('the link goes straight there when nothing has been typed', async () => {
     await renderPage();
     userEvent.click(screen.getByRole('link', { name: 'Create a new product' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products/new'));
+    await waitFor(() => expect(where()).toBe(PRODUCT_NEW_PATH));
   });
 });
 
 describe('a product filled in from ?item= (Reorder)', () => {
   test('starts with that product, quantity 1 and its current cost', async () => {
-    await renderPage('/new-look/purchases/new?item=SUG');
+    await renderPage(`${NEW_PATH}?item=SUG`);
     expect(await screen.findByRole('textbox', { name: 'Quantity of Sugar 1kg' })).toHaveValue('1');
     expect(screen.getByRole('textbox', { name: 'Cost each of Sugar 1kg (KES)' })).toHaveValue('95.5');
     expect(getProductToBuy).toHaveBeenCalledWith('SUG');
   });
 
   test('a form that arrives filled in is not "dirty": Cancel leaves without a question', async () => {
-    await renderPage('/new-look/purchases/new?item=SUG');
+    await renderPage(`${NEW_PATH}?item=SUG`);
     await screen.findByRole('textbox', { name: 'Quantity of Sugar 1kg' });
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(where()).toBe('/new-look/purchases');
+    expect(where()).toBe(PURCHASES_PATH);
   });
 
   test('an unknown product says so and leaves the list empty', async () => {
     getProductToBuy.mockResolvedValue(null);
-    await renderPage('/new-look/purchases/new?item=NOPE');
+    await renderPage(`${NEW_PATH}?item=NOPE`);
     expect(await screen.findByText('We could not find that product, so the list is empty. Add it below.')).toBeInTheDocument();
     expect(screen.getByText('No items yet. Search for a product below to add it.')).toBeInTheDocument();
   });
 
   test('saving a reorder saves the order with the product and its cost', async () => {
-    await renderPage('/new-look/purchases/new?item=SUG');
+    await renderPage(`${NEW_PATH}?item=SUG`);
     await screen.findByRole('textbox', { name: 'Quantity of Sugar 1kg' });
     await chooseSupplier();
     save();
@@ -313,7 +316,7 @@ describe('saving an order (stock comes later, in Receive goods)', () => {
       requestId: expect.stringMatching(/^buy-/),
     });
     expect(createDirectBill).not.toHaveBeenCalled();
-    await waitFor(() => expect(where()).toBe('/new-look/purchases?open=PUR-ORD-2026-00050'));
+    await waitFor(() => expect(where()).toBe(openAddress('PUR-ORD-2026-00050')));
     expect(await screen.findByText('Order PUR-ORD-2026-00050 saved and sent to Bidco Africa')).toBeInTheDocument();
   });
 
@@ -366,7 +369,7 @@ describe('saving an order (stock comes later, in Receive goods)', () => {
     save();
     await alertWith('We could not save this purchase. Choose a warehouse for SUG.');
     expect(screen.getByRole('textbox', { name: 'Quantity of Sugar 1kg' })).toHaveValue('10');
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
     saveOrder.mockResolvedValue({ order: 'PO-2' });
     save();
     await waitFor(() => expect(saveOrder).toHaveBeenCalledTimes(2));
@@ -443,7 +446,7 @@ describe('"I already have the bill" (the direct bill)', () => {
         requestId: expect.stringMatching(/^buy-/),
       })
     );
-    await waitFor(() => expect(where()).toBe('/new-look/purchases?open=ACC-PINV-2026-00070'));
+    await waitFor(() => expect(where()).toBe(openAddress('ACC-PINV-2026-00070')));
     expect(await screen.findByText('Bill #B0070 saved and the stock added')).toBeInTheDocument();
   });
 
@@ -513,7 +516,7 @@ describe('"I already have the bill" (the direct bill)', () => {
     await fillIn();
     save();
     await alertWith('nothing was changed');
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
   });
 });
 
@@ -521,7 +524,7 @@ describe('leaving the form', () => {
   test('Cancel with nothing typed goes straight back', async () => {
     await renderPage();
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(where()).toBe('/new-look/purchases');
+    expect(where()).toBe(PURCHASES_PATH);
   });
 
   test('Cancel with typed changes asks first; Stay keeps the form', async () => {
@@ -530,7 +533,7 @@ describe('leaving the form', () => {
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
     userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
     expect(screen.getByRole('textbox', { name: 'Quantity of Sugar 1kg' })).toBeInTheDocument();
   });
 
@@ -539,6 +542,19 @@ describe('leaving the form', () => {
     await chooseSupplier();
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Leave without saving' }));
-    expect(where()).toBe('/new-look/purchases');
+    expect(where()).toBe(PURCHASES_PATH);
+  });
+});
+
+describe('earlier legacy screen routing', () => {
+  test('rendering with ?legacy=1 renders the earlier New Purchase screen fallback', async () => {
+    render(
+      <MemoryRouter initialEntries={[`${NEW_PATH}?legacy=1`]}>
+        <ToastProvider>
+          <NewPurchasePage />
+        </ToastProvider>
+      </MemoryRouter>
+    );
+    expect(await screen.findByTestId('legacy-new-purchase')).toBeInTheDocument();
   });
 });

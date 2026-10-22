@@ -61,6 +61,16 @@ const StatusCell = ({ row }) => {
   );
 };
 
+const seqOf = (val) => {
+  const m = String(val || '').match(/(\d+)$/);
+  return m ? parseInt(m[1], 10) : null;
+};
+
+const letterOf = (val) => {
+  const m = String(val || '').match(/^#?([OBR])\d+/i);
+  return m ? m[1].toUpperCase() : null;
+};
+
 /**
  * The Purchases page (ticket P4-5, acceptance checks AC-25 and AC-29): one list of orders, bills and returns with the tabs
  * All purchases, Orders and Returns, a summary row, filters that live in the address, 20 rows to a page, a purchase panel
@@ -111,15 +121,24 @@ const PurchasesPage = () => {
   }, [ready, rows.length, total, page, size]);
 
   const openId = state.open;
-  const openIndex = rows.findIndex(
-    (r) =>
-      r.id === openId ||
-      r.number === openId ||
-      (r.number && r.number.replace(/^#/, '') === String(openId).replace(/^#/, '')) ||
-      (r.id && r.id.toLowerCase() === String(openId).toLowerCase()) ||
-      (r.number && r.number.replace(/^#[A-Za-z]?0*/, '') === String(openId).replace(/^#[A-Za-z]?0*/, '')) ||
-      (r.id && r.id.replace(/^.*?0*/, '') === String(openId).replace(/^.*?0*/, ''))
-  );
+  const openSeq = seqOf(openId);
+  const openLetter = letterOf(openId);
+  const openIndex = rows.findIndex((r) => {
+    if (!openId) return false;
+    if (r.id === openId || r.number === openId) return true;
+    if (r.number && r.number.replace(/^#/, '') === String(openId).replace(/^#/, '')) return true;
+    if (r.id && r.id.toLowerCase() === String(openId).toLowerCase()) return true;
+    if (openSeq !== null) {
+      const rSeq = seqOf(r.id) ?? seqOf(r.number);
+      if (rSeq === openSeq) {
+        if (!openLetter) return true;
+        const doctypeLetter = r.doctype === 'Purchase Order' ? 'O' : r.doctype === 'Purchase Invoice' ? 'B' : r.doctype === 'Purchase Receipt' ? 'R' : null;
+        const rLetter = letterOf(r.number) || doctypeLetter;
+        if (!rLetter || rLetter === openLetter) return true;
+      }
+    }
+    return false;
+  });
   const open = (id) => params.set({ open: id, page });
   const close = () => {
     refocus.current = openId;
@@ -218,7 +237,7 @@ const PurchasesPage = () => {
       ) : null}
 
       {useCards ? (
-        <PurchaseCards rows={rows} label={T.list.cardsLabel} onOpen={open} selectedKey={openId} />
+        <PurchaseCards rows={rows} label={T.list.cardsLabel} onOpen={open} selectedKey={(openIndex >= 0 ? rows[openIndex].id : openId) || undefined} />
       ) : (
         <Table
           caption={captions[kind || tab]}
@@ -228,7 +247,7 @@ const PurchasesPage = () => {
           error={status === 'error'}
           onRetry={reload}
           empty={emptyStates[emptyKey]}
-          selectedKey={openId || undefined}
+          selectedKey={(openIndex >= 0 ? rows[openIndex].id : openId) || undefined}
           onRowOpen={(row) => open(row.id)}
         />
       )}
@@ -242,11 +261,11 @@ const PurchasesPage = () => {
 
   const detail = openId ? (
     <PurchasePanel
-      key={openId}
+      key={`${openId}-${openIndex >= 0 ? rows[openIndex].id : 'pending'}`}
       id={openIndex >= 0 ? rows[openIndex].id : openId}
       doctype={openIndex >= 0 ? rows[openIndex].doctype : undefined}
       company={userCompany}
-      summary={rows[openIndex]}
+      summary={openIndex >= 0 ? rows[openIndex] : undefined}
       position={openIndex >= 0 ? fill(T.panel.position, { current: openIndex + 1, total: rows.length }) : undefined}
       onClose={close}
       onPrevious={openIndex > 0 ? () => open(rows[openIndex - 1].id) : undefined}

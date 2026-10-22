@@ -154,7 +154,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
           <div style={{ display: 'grid', gap: '8px' }}>
             <Field
               label="Purchase or Bill number"
-              placeholder="e.g. #B0001, #O0001, PUR-ORD-2026-00001"
+              placeholder="e.g. 0001, PINV-2026-00001, PUR-ORD-2026-00001"
               value={purchaseLookup}
               onChange={setPurchaseLookup}
               data-autofocus=""
