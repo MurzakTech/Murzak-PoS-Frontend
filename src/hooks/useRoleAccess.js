@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useAppSelector } from '../store/hooks';
-import { canAccessRoute, getAllowedRoutes, isRouteAllowed } from '../config/roleAccessConfig';
+import { FULL_ACCESS_ROLES, canAccessRoute, getAllowedRoutes, isRouteAllowed } from '../config/roleAccessConfig';
 
 /**
  * Hook to check role-based access
@@ -148,7 +148,7 @@ export const useRoleAccess = () => {
     filterRoutes,
     hasRole,
     hasAllRoles,
-    isAdmin: roles.includes('Administrator') || roles.includes('System Manager'),
+    isAdmin: roles.some((role) => FULL_ACCESS_ROLES.includes(role)),
   };
 };
 

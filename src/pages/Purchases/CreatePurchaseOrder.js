@@ -76,7 +76,7 @@ const CreatePurchaseOrder = () => {
     user?.company_data?.company_name;
 
   // Check role-based access
-  const canCreatePO = hasRole(['Purchase Manager', 'Purchase User', 'Administrator', 'System Manager']) || 
+  const canCreatePO = hasRole(['Purchase Manager', 'Purchase User', 'Administrator', 'System Manager', 'Business Owner']) || 
                       hasAccess('/purchases/new');
 
   const {
