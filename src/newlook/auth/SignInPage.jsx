@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Card, Checkbox, Field, Icon } from '../components';
 import { useThemeMode } from '../../theme/ThemeProvider';
 import { classifyLoginId, looksLikePhone } from '../../utils/phone';
-import { IS_TENANT_BUILD, MURZAK_PORTAL_URL } from '../../config/deployment';
+import { IS_TENANT_BUILD, MURZAK_PORTAL_URL, MURZAK_SIGNUP_URL, SIGNUP_OPEN } from '../../config/deployment';
 import logoMark from '../../assets/logo_mark.png';
 import { productImageUrl } from '../../utils/productArt';
 import { applyAccent, readDeviceBrand } from '../brand/deviceBrand';
@@ -213,12 +213,19 @@ const SignInPage = () => {
                   {T.footer.portal}
                 </a>
               </>
-            ) : (
+            ) : SIGNUP_OPEN ? (
               <>
                 <p>{T.footer.newHere}</p>
                 <Link to="/register" className="nl-auth__link">
                   {T.footer.create}
                 </Link>
+              </>
+            ) : (
+              <>
+                <p>{T.footer.newHere}</p>
+                <a href={MURZAK_SIGNUP_URL} className="nl-auth__link">
+                  {T.footer.getShop}
+                </a>
               </>
             )}
           </div>

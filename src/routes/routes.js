@@ -1,13 +1,22 @@
-import React, { lazy } from 'react';
+import React, { lazy, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { IS_TENANT_BUILD } from '../config/deployment';
+import { IS_TENANT_BUILD, MURZAK_SIGNUP_URL, SIGNUP_OPEN } from '../config/deployment';
 
 // Lazy load pages for code splitting
 const RootRoute = lazy(() => import('./RootRoute'));
 const ToLogin = () => <Navigate to="/login" replace />;
+// Sign-up is closed here; a new business signs up on the website and gets its own site
+export const ToSignUpSite = () => {
+  useEffect(() => {
+    window.location.replace(MURZAK_SIGNUP_URL);
+  }, []);
+  return null;
+};
 const Login = lazy(() => import('../pages/Login'));
 const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
 const Register = lazy(() => import('../newlook/auth/SignUpPage'));
+// Sign-up open: the form. A shop's own site: its sign-in. Otherwise: the website, where each business gets its own site
+const SignUpRoute = SIGNUP_OPEN ? Register : IS_TENANT_BUILD ? ToLogin : ToSignUpSite;
 const Dashboard = lazy(() => import('../newlook/home/HomePage'));
 const Products = lazy(() => import('../newlook/products/ProductsPage'));
 const NewProduct = lazy(() => import('../newlook/products/NewProductPage'));
@@ -162,12 +171,12 @@ export const publicRoutes = [
   },
   {
     path: '/register',
-    element: IS_TENANT_BUILD ? ToLogin : Register,
+    element: SignUpRoute,
     label: 'Register',
   },
   {
     path: '/signup',
-    element: IS_TENANT_BUILD ? ToLogin : Register,
+    element: SignUpRoute,
     label: 'Sign Up',
   },
   {
