@@ -552,6 +552,13 @@ export const ROLE_ACCESS_CONFIG = {
   ],
 };
 
+// A business owner holds Business Owner instead of System Manager (which reaches every business on a shared
+// server), with the same screens.
+ROLE_ACCESS_CONFIG['Business Owner'] = ROLE_ACCESS_CONFIG['System Manager'];
+
+// Roles that open every page
+export const FULL_ACCESS_ROLES = ['Administrator', 'System Manager', 'Business Owner'];
+
 // Every screen the app knows, so a web address can be traced to the one screen it opens
 const KNOWN_ROUTES = Array.from(new Set(Object.values(ROUTE_GROUPS).flat())).map((path) => ({ path }));
 
@@ -610,14 +617,14 @@ export const getAllowedRoutes = (roles) => {
 };
 
 /**
- * Sensitive pages open only to the roles named here (plus Administrator and System Manager).
+ * Sensitive pages open only to the roles named here (plus FULL_ACCESS_ROLES).
  * Frappe gives every signed-in user the "All" role, and a parent route such as '/sales'
  * covers every page under it, so these pages cannot rely on the route lists above.
  */
 export const RESTRICTED_ROUTES = {
   '/sales/returns': ['Sales Manager', 'Accounts Manager'],
   '/settings/audit-trail': ['Accounts Manager', 'Auditor'],
-  // The New look switch: owners only. Administrator and System Manager always pass, so no other role is listed.
+  // The New look switch: owners only. FULL_ACCESS_ROLES always pass, so no other role is listed.
   '/settings/new-look': [],
   // Money checks: who may decide, who may match the bank statement, who manages sales people
   '/settings/approvals': ['Accounts Manager', 'Purchase Manager'],
@@ -639,9 +646,9 @@ export const canAccessRoute = (routePath, roles) => {
     return false;
   }
 
-  // Administrator and System Manager roles have full access
+  // Administrator, System Manager and Business Owner have full access
   // Note: "All" role is treated as a normal role and only grants access to explicitly configured routes
-  if (roles.some(role => ['Administrator', 'System Manager'].includes(role))) {
+  if (roles.some(role => FULL_ACCESS_ROLES.includes(role))) {
     return true;
   }
 

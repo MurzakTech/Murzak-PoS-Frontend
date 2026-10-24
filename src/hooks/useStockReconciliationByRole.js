@@ -28,6 +28,7 @@ const ROLE_MAPPING = {
   // Administrative roles - full access (Stock Manager privileges)
   'Administrator': 'Stock Manager', // Full access
   'System Manager': 'Stock Manager', // Full access
+  'Business Owner': 'Stock Manager', // Full access
   'All': 'Stock Manager', // Full access - can do all functions
 };
 
@@ -78,7 +79,7 @@ export const useStockReconciliationByRole = (options = {}) => {
     }
 
     // Check for 'All' role first - grants full access
-    if (hasRole(['System Manager'])) {
+    if (hasRole(['System Manager', 'Business Owner'])) {
       return 'Stock Manager'; // 'All' role gets Stock Manager privileges
     }
     
@@ -94,7 +95,8 @@ export const useStockReconciliationByRole = (options = {}) => {
       'Purchase Manager',
       'Purchase Master Manager',
       'Administrator',
-      'System Manager'
+      'System Manager',
+      'Business Owner'
     ])) {
       return 'Stock Manager';
     }

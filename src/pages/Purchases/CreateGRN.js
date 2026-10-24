@@ -75,7 +75,7 @@ const CreateGRN = () => {
     user?.company_data?.company_name;
 
   // Check role-based access - allow if user has role or access to create GRN
-  const canCreateGRN = hasRole(['Purchase Manager', 'Warehouse Manager', 'Administrator', 'System Manager']) || 
+  const canCreateGRN = hasRole(['Purchase Manager', 'Warehouse Manager', 'Administrator', 'System Manager', 'Business Owner']) || 
                        hasAccess('/purchases/grn/new');
 
   const {

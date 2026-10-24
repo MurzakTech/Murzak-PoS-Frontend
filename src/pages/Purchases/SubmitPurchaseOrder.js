@@ -52,7 +52,7 @@ const SubmitPurchaseOrder = () => {
     user?.company_data?.company_name;
 
   // Check role-based access - allow if user has role or access to submit purchases
-  const canSubmitPO = hasRole(['Purchase Manager', 'Purchase User', 'Administrator', 'System Manager']) || 
+  const canSubmitPO = hasRole(['Purchase Manager', 'Purchase User', 'Administrator', 'System Manager', 'Business Owner']) || 
                       hasAccess('/purchases/submit');
 
   // Filter to show only Draft purchase orders (docstatus === 0)

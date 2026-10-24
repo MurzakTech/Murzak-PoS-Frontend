@@ -161,3 +161,21 @@ describe('the New look switch is for owners only', () => {
     expect(can('Stock User', '/stock')).toBe(true);
   });
 });
+
+describe('Business Owner', () => {
+  // Owners hold Business Owner instead of System Manager, with exactly the same screens
+  const { canAccessRoute: canOpen, FULL_ACCESS_ROLES, ROLE_ACCESS_CONFIG: config } = jest.requireActual('./roleAccessConfig');
+
+  test('opens every page System Manager opens, sensitive ones included', () => {
+    expect(FULL_ACCESS_ROLES).toContain('Business Owner');
+    for (const path of ['/sales/returns', '/settings/audit-trail', '/settings/new-look', '/staff', '/products', '/purchases']) {
+      expect(canOpen(path, ['Business Owner'])).toBe(canOpen(path, ['System Manager']));
+      expect(canOpen(path, ['Business Owner'])).toBe(true);
+    }
+    expect(config['Business Owner']).toEqual(config['System Manager']);
+  });
+
+  test('a cashier still does not', () => {
+    expect(canOpen('/settings/audit-trail', ['Sales User'])).toBe(false);
+  });
+});
