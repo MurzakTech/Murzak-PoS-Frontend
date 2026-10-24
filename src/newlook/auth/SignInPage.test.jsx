@@ -107,12 +107,14 @@ describe('the page', () => {
     expect(idBox()).toHaveFocus();
   });
 
-  test('keeps the links of the current page: Forgot password, Terms, Privacy, Create account and help', () => {
+  test('keeps the links of the current page: Forgot password, Terms, Privacy, Get your own shop and help', () => {
     renderPage();
     expect(screen.getByRole('link', { name: T.signIn.forgot })).toHaveAttribute('href', '/forgot-password');
     expect(screen.getByRole('link', { name: T.footer.terms })).toHaveAttribute('href', '/terms-of-service');
     expect(screen.getByRole('link', { name: T.footer.privacy })).toHaveAttribute('href', '/privacy-policy');
-    expect(screen.getByRole('link', { name: T.footer.create })).toHaveAttribute('href', '/register');
+    // Sign-up is closed on the shared site: a new business is sent to the website for its own site
+    expect(screen.getByRole('link', { name: T.footer.getShop })).toHaveAttribute('href', 'https://murzaktech.tech');
+    expect(screen.queryByRole('link', { name: T.footer.create })).toBeNull();
     expect(screen.getByRole('link', { name: T.footer.supportEmail })).toHaveAttribute('href', `mailto:${T.footer.supportEmail}`);
   });
 

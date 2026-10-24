@@ -98,6 +98,7 @@ const auth = {
   footer: {
     newHere: 'New to Murzak POS?',
     create: 'Create your free account',
+    getShop: 'Get your own shop at murzaktech.tech',
     ownerLogin: 'Your owner login is in your Murzak portal. Staff accounts are added by the owner from inside the POS.',
     portal: 'Open the Murzak portal',
     termsIntro: 'By signing in, you agree to our terms and privacy policy.',
