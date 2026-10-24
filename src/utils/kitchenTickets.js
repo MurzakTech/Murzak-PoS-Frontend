@@ -109,12 +109,8 @@ export const stationFor = (settings, group) => {
     const kitchen = settings.stations.find((s) => /kitchen|food|cook|grill|chef/i.test(s.name || s.id));
     if (kitchen) return kitchen;
   }
-  // If stations have no configured categories at all, route to kitchen or first station so items are not dropped
-  const noGroupsConfigured = settings.stations.every((s) => !s.groups || s.groups.length === 0);
-  if (noGroupsConfigured) {
-    const kitchen = settings.stations.find((s) => /kitchen|food/i.test(s.name || s.id));
-    return kitchen || settings.stations[0] || null;
-  }
+  // Anything else is not sent anywhere: it is listed as unrouted so the cashier notices, and is never marked as sent.
+  // (Sending it to the first station instead put airtime, bleach and pads on the kitchen screen.)
   return null;
 };
 

@@ -52,6 +52,17 @@ describe('routing items to stations', () => {
     expect(stationFor(settingsWith({ defaultStation: 'bar' }), 'Cigarettes').id).toBe('bar');
   });
 
+  it('does not push shop goods onto a station just because no categories are set up yet', () => {
+    // The default stations have no categories at all, and no default station is chosen
+    const fresh = { ...defaultSettings(), enabled: true };
+    ['Airtime', 'Household', 'Sanitary Pads', 'Cleaning', 'Mobile Money', 'Stationery', 'Cosmetics'].forEach((group) => {
+      expect(stationFor(fresh, group)).toBeNull();
+    });
+    // Food and drink names still find their station
+    expect(stationFor(fresh, 'Food').id).toBe('kitchen');
+    expect(stationFor(fresh, 'Soda').id).toBe('bar');
+  });
+
   it('suggests stations from category names, for people who would rather not set them up by hand', () => {
     const s = suggestStations(['Food', 'Beer', 'Soda', 'Starters', 'Stationery', 'Spirits', 'Hot Drinks']);
     expect(s[0].groups).toEqual(['Food', 'Starters']);
