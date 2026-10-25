@@ -6,6 +6,7 @@ import NewLookGate from './newlook/NewLookGate';
 import UnitWordsLoader from './newlook/products/UnitWordsLoader';
 import { BrandProvider } from './newlook/brand/BrandProvider';
 import { ToastProvider } from './newlook/components';
+import OnlineOrderAlert from './newlook/ecommerce/OnlineOrderAlert';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <BrandProvider>
         <NewLookGate>
           <ToastProvider>
+          <OnlineOrderAlert />
           <AppRouter />
         </ToastProvider>
         </NewLookGate>

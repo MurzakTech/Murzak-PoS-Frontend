@@ -12,7 +12,19 @@ import {
   testWooCommerceConnection,
   getEcommerceProducts,
 } from '../../api/ecommerceApi';
+import { getOnlineStore } from '../../api/onlineStoreApi';
 
+jest.mock('../../api/onlineStoreApi', () => ({
+  getOnlineStore: jest.fn(),
+  checkStoreSlug: jest.fn(),
+  saveOnlineStore: jest.fn(),
+  setItemsOnline: jest.fn(),
+  listOnlineOrders: jest.fn(),
+  getOnlineOrder: jest.fn(),
+  setOnlineOrderStatus: jest.fn(),
+  markOnlineOrderPaid: jest.fn(),
+  createInvoiceForOnlineOrder: jest.fn(),
+}));
 jest.mock('../../api/ecommerceApi', () => ({
   getEcommerceSettings: jest.fn(),
   saveEcommerceSettings: jest.fn(),
@@ -94,10 +106,11 @@ describe('EcommercePage', () => {
     });
   });
 
-  test('switches to Digital Catalog & WhatsApp tab', async () => {
+  test('the online store tab gives the real store link to share', async () => {
+    getOnlineStore.mockResolvedValue({ slug: 'duka-ya-amina', enabled: true, mpesa_ready: false, product_count: 42, links: {} });
     renderPage(['/ecommerce?tab=digital_store']);
 
-    expect(await screen.findByText(/Your Storefront Link/i)).toBeInTheDocument();
+    expect(await screen.findByText(`${window.location.origin}/shop/duka-ya-amina`)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Copy link/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Share on WhatsApp/i })).toBeInTheDocument();
   });

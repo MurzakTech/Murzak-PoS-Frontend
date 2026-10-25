@@ -97,6 +97,8 @@ The login token sits in `localStorage`, where any injected script can read it. U
 
 `Strict-Transport-Security` makes browsers insist on HTTPS for a year. Enable it only once the main site and every shop site work over HTTPS. If a future feature needs the camera (for example scanning barcodes with a phone), loosen the `Permissions-Policy` line to `camera=(self)`.
 
+The line already allows `geolocation=(self)`, added for the online store: a shopper can share their location to get a delivery fee by distance (the owner uses it once to set where the shop is). It works only for the site's own pages, and the browser asks the person every time. Without this change that button silently does nothing on a live site.
+
 ### 9. Role grants that needed an owner decision (Medium)
 
 These grants were written explicitly in the config, so they were only changed after the owner decided. All four were removed:

@@ -15,6 +15,9 @@ export const ToSignUpSite = () => {
 const Login = lazy(() => import('../pages/Login'));
 const ForgotPassword = lazy(() => import('../pages/ForgotPassword'));
 const Register = lazy(() => import('../newlook/auth/SignUpPage'));
+// The online store a shopper sees: no sign-in (see newlook/storefront)
+const ShopApp = lazy(() => import('../newlook/storefront/ShopApp'));
+const TrackPage = lazy(() => import('../newlook/storefront/TrackPage'));
 // Sign-up open: the form. A shop's own site: its sign-in. Otherwise: the website, where each business gets its own site
 const SignUpRoute = SIGNUP_OPEN ? Register : IS_TENANT_BUILD ? ToLogin : ToSignUpSite;
 const Dashboard = lazy(() => import('../newlook/home/HomePage'));
@@ -193,6 +196,18 @@ export const publicRoutes = [
     path: '/contact-us',
     element: ContactUs,
     label: 'Contact Us',
+  },
+  // The online store of a business: /shop/<name>, and /shop/<name>/checkout
+  {
+    path: '/shop/:slug/*',
+    element: ShopApp,
+    label: 'Online store',
+  },
+  // Where a shopper's order is, opened from the link they were given
+  {
+    path: '/track/:token',
+    element: TrackPage,
+    label: 'Order tracking',
   },
 ];
 
