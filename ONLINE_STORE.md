@@ -1,5 +1,7 @@
 # Online store: the pages shoppers see and the screens that run it
 
+> The backend team's list of everything this needs from them is in `BACKEND_HANDOVER_ONLINE_STORE.md`.
+
 The backend (Murzak-PoS-Backend, `docs/ONLINE_STORE.md`) provides the online store, the website (WooCommerce) connection,
 delivery fees and online orders. This repository has the screens for it.
 
