@@ -507,3 +507,11 @@
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
+
+.sf-header__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--radius-button);
+  flex: none;
+}

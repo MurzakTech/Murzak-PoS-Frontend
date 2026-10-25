@@ -12,6 +12,7 @@ import { formatMoney } from '../components/format';
 import { emptyCart, orderLines, saveCart } from './cart';
 import Frame from './Frame';
 import { rememberOrder } from './orderMemory';
+import { logoUrl } from './shopMeta';
 import { useShop } from './ShopProvider';
 
 const LOCATION_TIMEOUT_MS = 15000;
@@ -98,7 +99,7 @@ const CheckoutPage = () => {
   }
 
   const homeTo = `/shop/${slug}`;
-  const frameProps = { t, language, onLanguage: setLanguage, title: shop.store_name, homeTo };
+  const frameProps = { t, language, onLanguage: setLanguage, title: shop.store_name, homeTo, logo: logoUrl(shop.logo) };
 
   if (cart.lines.length === 0) {
     return (

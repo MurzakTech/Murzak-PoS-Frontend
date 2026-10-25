@@ -8,6 +8,7 @@ import { Skeleton } from '../components/Skeleton';
 import { formatMoney } from '../components/format';
 import BasketDialog from './BasketDialog';
 import Frame from './Frame';
+import { logoUrl } from './shopMeta';
 import ProductCard from './ProductCard';
 import ProductDialog from './ProductDialog';
 import { useShop, useToggle } from './ShopProvider';
@@ -103,6 +104,7 @@ const CataloguePage = () => {
       onLanguage={setLanguage}
       title={title}
       subtitle={shop.tagline}
+      logo={logoUrl(shop.logo)}
       homeTo={home}
       whatsapp={whatsapp}
       actions={

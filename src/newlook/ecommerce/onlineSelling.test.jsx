@@ -18,6 +18,7 @@ import { getEcommerceProducts, getOrderWebhook, regenerateOrderWebhook } from '.
 import OnlineOrdersTab from './OnlineOrdersTab';
 import OnlineStoreTab from './OnlineStoreTab';
 import { showAllProducts } from './GoOnlineWizard';
+import { uploadProductImage } from '../../api/uploadImage';
 import WebhookCard from './WebhookCard';
 
 jest.mock('../../api/onlineStoreApi', () => ({
@@ -31,6 +32,7 @@ jest.mock('../../api/onlineStoreApi', () => ({
   markOnlineOrderPaid: jest.fn(),
   createInvoiceForOnlineOrder: jest.fn(),
 }));
+jest.mock('../../api/uploadImage', () => ({ uploadProductImage: jest.fn() }));
 jest.mock('../../api/ecommerceApi', () => ({ getOrderWebhook: jest.fn(), regenerateOrderWebhook: jest.fn(), getEcommerceProducts: jest.fn() }));
 // No live connection in tests; the screen falls back to polling
 jest.mock('../../hooks/useRealtimeRefresh', () => ({ __esModule: true, default: () => false, pollEvery: (ms) => ms }));
@@ -460,5 +462,18 @@ describe('getting the store ready and sharing it', () => {
     getEcommerceProducts.mockResolvedValue({ rows: [], total: 0, page: 1 });
     expect(await showAllProducts({ company: 'Duka Ltd' })).toBe(0);
     expect(setItemsOnline).not.toHaveBeenCalled();
+  });
+
+  test('a logo can be added, is saved with the store, and can be taken away', async () => {
+    uploadProductImage.mockResolvedValue('/files/logo.png');
+    await openStore({ ...STORE, slug: 'duka', enabled: true, product_count: 3 });
+    expect(screen.getByRole('button', { name: 'Add a logo' })).toBeInTheDocument();
+    userEvent.upload(screen.getByLabelText('Add a logo', { selector: 'input' }), new File(['x'], 'logo.png', { type: 'image/png' }));
+    expect(await screen.findByRole('img', { name: 'Your shop logo' })).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Save store settings' }));
+    await waitFor(() => expect(saveOnlineStore).toHaveBeenCalled());
+    expect(saveOnlineStore.mock.calls[0][0]).toMatchObject({ logo: '/files/logo.png' });
+    userEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
+    expect(screen.queryByRole('img', { name: 'Your shop logo' })).not.toBeInTheDocument();
   });
 });

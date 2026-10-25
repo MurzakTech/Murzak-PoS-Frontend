@@ -52,6 +52,22 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 - The app sends nothing itself: every message opens WhatsApp with the words ready, and the owner presses send. Code:
   `src/newlook/ecommerce/shareModel.js`.
 
+## Shop logo and link previews
+
+- **Logo:** My online store (and the guided setup, step 1) has **Add a logo**. It is shrunk and uploaded like a product photo and
+  saved with the store settings as `logo`. The shop shows it in its header on every shop page.
+- **Name in the tab and share tags:** while a shop page is open the browser tab shows the shop's name, and the page carries the
+  name, line and logo as `description` and `og:` tags (`storefront/shopMeta.js`). They are put back when the shopper leaves.
+- **Preview in WhatsApp:** WhatsApp and similar apps do **not** run the page, so the tags above never reach them. They need the
+  server to send the tags. This needs two things that are NOT built or tested yet:
+  1. The backend call `storefront_api.share_page(slug)` returning a small HTML page with `og:title` (shop name), `og:description`
+     (line), `og:image` (the logo as a full web address) and `og:url`; 404 for a shop that is not open.
+  2. The web server rule in `deploy/nginx/shop-share-preview.conf`, which sends those apps that page and everyone else the app.
+  Test with `curl -A "WhatsApp/2.23" https://<shop>/shop/<name>`, then share a real link in a chat (previews are cached by the
+  app; add `?v=2` to see a change).
+- The backend settings must also accept and return `logo` (a file address) in `save_online_store`, `get_online_store` and the
+  shopper's `get_store`.
+
 ## Go online: the guided setup
 
 The checklist at the top of My online store has **Start guided setup** (or **Continue guided setup** when some steps are done). It

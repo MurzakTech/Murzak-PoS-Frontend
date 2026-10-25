@@ -388,3 +388,23 @@ describe('a product up close', () => {
     expect(screen.queryByRole('button', { name: /About/ })).not.toBeInTheDocument();
   });
 });
+
+describe('the shop\'s name and logo', () => {
+  test('the logo is in the header and the shop\'s name is in the tab, and the tab goes back when the shop is left', async () => {
+    const before = document.title;
+    getShop.mockResolvedValue({ ...SHOP, logo: '/files/logo.png' });
+    const { unmount } = renderAt('/shop/duka');
+    await screen.findByRole('heading', { level: 1, name: 'Duka ya Amina' });
+    expect(document.querySelector('.sf-header__logo').getAttribute('src')).toBe(`${window.location.origin}/files/logo.png`);
+    expect(document.title).toBe('Duka ya Amina');
+    expect(document.head.querySelector('meta[property="og:image"]').getAttribute('content')).toBe(`${window.location.origin}/files/logo.png`);
+    unmount();
+    expect(document.title).toBe(before);
+  });
+
+  test('a shop without a logo keeps the plain icon', async () => {
+    renderAt('/shop/duka');
+    await screen.findByRole('heading', { level: 1, name: 'Duka ya Amina' });
+    expect(document.querySelector('.sf-header__logo')).toBeNull();
+  });
+});

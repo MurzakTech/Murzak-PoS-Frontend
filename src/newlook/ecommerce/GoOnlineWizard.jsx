@@ -9,6 +9,7 @@ import Dialog from '../components/Dialog';
 import Field from '../components/Field';
 import Segmented from '../components/Segmented';
 import fill from '../labels/fill';
+import LogoField from './LogoField';
 import S from './strings.ecommerce';
 import { shopLink } from './shareModel';
 import { firstOpenStep, isSimpleDelivery, stepProblems, WIZARD_DELIVERY_MODES, WIZARD_STEPS } from './wizardModel';
@@ -169,6 +170,7 @@ const GoOnlineWizard = ({ open, onClose, form, set, saved, slugCheck, extra, com
               autoComplete="off"
             />
             <Field label={T.whatsapp} helper={T.whatsappHelp} value={form.whatsapp_number} onChange={(whatsapp_number) => set({ whatsapp_number })} inputMode="tel" />
+            <LogoField value={form.logo} onChange={(logo) => set({ logo })} />
           </>
         ) : null}
 

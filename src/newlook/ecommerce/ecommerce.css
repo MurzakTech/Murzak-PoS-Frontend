@@ -297,3 +297,24 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+.nl-logofield {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.nl-logofield__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.nl-logofield__img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button);
+  background: var(--surface);
+}

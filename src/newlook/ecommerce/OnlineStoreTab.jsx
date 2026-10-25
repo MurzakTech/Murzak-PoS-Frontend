@@ -14,6 +14,7 @@ import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import S from './strings.ecommerce';
 import GoOnlineWizard from './GoOnlineWizard';
+import LogoField from './LogoField';
 import { SLUG_PATTERN } from './wizardModel';
 import { catalogueMessage, posterHtml, printHtml, setupSteps, shopLink, waLink } from './shareModel';
 
@@ -36,6 +37,7 @@ const toForm = (d) => ({
   slug: text(d.slug),
   store_name: text(d.store_name),
   tagline: text(d.tagline),
+  logo: text(d.logo),
   whatsapp_number: text(d.whatsapp_number),
   minimum_order: money(d.minimum_order),
   warehouse: text(d.warehouse),
@@ -64,6 +66,7 @@ const toPayload = (f) => ({
   slug: f.slug.trim().toLowerCase(),
   store_name: f.store_name.trim(),
   tagline: f.tagline.trim(),
+  logo: f.logo,
   whatsapp_number: f.whatsapp_number.trim(),
   minimum_order: number(f.minimum_order),
   warehouse: f.warehouse,
@@ -268,6 +271,7 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
             <Field label={T.slug} helper={slugHelper} error={slugError} value={form.slug} onChange={(value) => set({ slug: value.toLowerCase() })} autoComplete="off" />
             <Field label={T.storeName} value={form.store_name} onChange={(store_name) => set({ store_name })} />
             <Field label={T.tagline} value={form.tagline} onChange={(tagline) => set({ tagline })} />
+            <LogoField value={form.logo} onChange={(logo) => set({ logo })} />
             <Field label={T.whatsapp} helper={T.whatsappHelp} value={form.whatsapp_number} onChange={(whatsapp_number) => set({ whatsapp_number })} inputMode="tel" />
             <Field label={T.minimum} helper={T.minimumHelp} kind="money" value={form.minimum_order} onChange={(minimum_order) => set({ minimum_order })} />
             {locationOptions.length ? (
