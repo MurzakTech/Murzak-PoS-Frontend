@@ -156,7 +156,11 @@ export const expenseRequest = (values, requestId, company) => ({
   receipt: values.receipt ? values.receipt.dataUrl : undefined,
   company,
   requestId,
+  fromTill: values.fromTill === false ? false : undefined,
 });
+
+/** True when the way of paying is Cash, the only one that can come out of a till's drawer */
+export const isCash = (key) => key === 'cash';
 
 // The names the server uses for the fields, and ours
 const SERVER_FIELDS = Object.fromEntries([['amount'], ['category'], ['paid_from', 'paidFrom'], ['date'], ['note'], ['receipt']].map(([server, ours]) => [server, ours || server]));

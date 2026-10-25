@@ -270,3 +270,8 @@
     padding: var(--space-4);
   }
 }
+.nl-cash__expense {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}

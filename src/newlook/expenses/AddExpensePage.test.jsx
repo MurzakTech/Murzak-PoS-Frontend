@@ -162,6 +162,42 @@ describe('the form (Form page pattern)', () => {
   });
 });
 
+describe('paying from the till drawer', () => {
+  test('a cash expense offers to take the money from the till drawer, ticked, and asks nothing special when left ticked', async () => {
+    await renderForm();
+    await fillGood();
+    expect(screen.getByRole('checkbox', { name: 'Take it from the till drawer' })).toBeChecked();
+    save();
+    await waitFor(() => expect(createExpense).toHaveBeenCalled());
+    expect(createExpense.mock.calls[0][0].fromTill).toBeUndefined();
+  });
+
+  test('unticking it sends that the cash did not come from the drawer', async () => {
+    await renderForm();
+    await fillGood();
+    userEvent.click(screen.getByRole('checkbox', { name: 'Take it from the till drawer' }));
+    save();
+    await waitFor(() => expect(createExpense).toHaveBeenCalled());
+    expect(createExpense).toHaveBeenCalledWith(expect.objectContaining({ paidFrom: 'cash', fromTill: false }));
+  });
+
+  test('only cash can come out of a drawer, so the choice goes away for the bank', async () => {
+    await renderForm();
+    await screen.findByLabelText('Amount');
+    expect(screen.getByRole('checkbox', { name: 'Take it from the till drawer' })).toBeInTheDocument();
+    pick('Paid from', 'Bank');
+    expect(screen.queryByRole('checkbox', { name: 'Take it from the till drawer' })).not.toBeInTheDocument();
+  });
+
+  test('after saving it says what the drawer should now hold', async () => {
+    createExpense.mockResolvedValue({ expense: { id: 'ACC-JV-1' }, repeat: false, till: { shift: 'POS-OPE-1', cashInTill: 250 } });
+    await renderForm();
+    await fillGood();
+    save();
+    expect(await screen.findByText('Expense of KES 1,500 saved Taken from the till. The drawer should now hold KES 250.')).toBeInTheDocument();
+  });
+});
+
 describe('saving', () => {
   test('saves one expense with what was typed and goes back to the list', async () => {
     await renderForm();

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import Checkbox from '../components/Checkbox';
 import EmptyState from '../components/EmptyState';
 import Field from '../components/Field';
 import Icon from '../components/Icon';
@@ -24,6 +25,7 @@ import {
   FIELD_IDS,
   firstProblem,
   freshForm,
+  isCash,
   isDirty,
   LIST_PATH,
   MAX_NOTE,
@@ -106,6 +108,7 @@ const ExpenseFormBody = ({ options, company }) => {
   const [reading, setReading] = useState(false);
   const [focusKey, setFocusKey] = useState('');
   const [forceOpen, setForceOpen] = useState(false);
+  const [fromTill, setFromTill] = useState(true); // a cash expense comes out of the open till's drawer unless this is unticked
 
   const { today, paidFrom } = options;
 
@@ -183,10 +186,11 @@ const ExpenseFormBody = ({ options, company }) => {
     setProblems({});
     setSaving(true);
     try {
-      await createExpense(expenseRequest(values, requestId.current, company));
+      const reply = await createExpense(expenseRequest({ ...values, fromTill }, requestId.current, company));
       invalidateQuery('expenses');
       invalidateQuery();
-      toast.success(fill(andAdd ? F.savedAdd : F.saved, { amount: formatMoney(values.amount) }));
+      const savedWords = fill(andAdd ? F.savedAdd : F.saved, { amount: formatMoney(values.amount) });
+      toast.success(reply && reply.till && reply.till.cashInTill !== null ? `${savedWords} ${fill(F.savedFromTill, { amount: formatMoney(reply.till.cashInTill) })}` : savedWords);
       setSaved(true);
       requestId.current = newRequestId();
       if (andAdd) {
@@ -239,6 +243,8 @@ const ExpenseFormBody = ({ options, company }) => {
       <Field id={FIELD_IDS.amount} kind="money" label={F.amount} helper={F.amountHelp} value={values.amount} error={problems.amount} aria-required={true} onChange={set('amount')} />
       <Select id={FIELD_IDS.category} label={F.category} placeholder={F.categoryPlaceholder} helper={F.categoryHelp} options={categoryChoices(categories)} value={values.category} error={problems.category} onChange={set('category')} />
       <Select id={FIELD_IDS.paidFrom} label={F.paidFrom} helper={paidHelper} options={paidFromChoices(paidFrom)} value={values.paidFrom} error={problems.paidFrom} onChange={set('paidFrom')} />
+      {isCash(values.paidFrom) ? <Checkbox label={F.fromTill} checked={fromTill} onChange={setFromTill} /> : null}
+      {isCash(values.paidFrom) ? <p className="nl-helper">{F.fromTillHelp}</p> : null}
       <Field id={FIELD_IDS.date} kind="date" label={F.date} helper={F.dateHelp} value={values.date} error={problems.date} onChange={set('date')} />
       <Field id={FIELD_IDS.note} label={F.note} helper={fill(F.noteHelp, { max: MAX_NOTE, left: Math.max(left, 0) })} value={values.note} error={problems.note} autoComplete="off" onChange={set('note')} />
       <MoreOptions key={forceOpen ? 'open' : 'closed'} defaultOpen={forceOpen}>

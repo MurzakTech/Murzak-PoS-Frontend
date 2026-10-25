@@ -114,6 +114,16 @@ describe('cash in or out', () => {
     expect(await screen.findByText('Nothing has been recorded in this shift yet.')).toBeInTheDocument();
   });
 
+  test('under Take out it points to Expenses for petty cash, and only under Take out', async () => {
+    const onAddExpense = jest.fn();
+    render(<CashMovementDialog open onClose={() => {}} session={session} load={jest.fn().mockResolvedValue(listing())} save={jest.fn()} onAddExpense={onAddExpense} />);
+    expect(await screen.findByText(/Petty cash, supplies and paying a supplier are expenses/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Add an expense' }));
+    expect(onAddExpense).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole('radio', { name: 'Put in' }));
+    expect(screen.queryByRole('button', { name: 'Add an expense' })).not.toBeInTheDocument();
+  });
+
   test('it shows nothing while closed', () => {
     const { container } = render(<CashMovementDialog open={false} onClose={() => {}} session={session} />);
     expect(container).toBeEmptyDOMElement();
