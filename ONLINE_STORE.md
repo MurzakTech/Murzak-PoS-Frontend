@@ -40,6 +40,18 @@ now the real store settings):
 
 A new online order shows a message wherever the person is in the app (`OnlineOrderAlert`, mounted in `App.js`).
 
+## Getting online and sharing (owner and staff)
+
+- **Get your store ready** checklist at the top of My online store: name and address saved, delivery or pickup, payment, products
+  chosen, store open. It disappears when all five are done.
+- **Share your store:** copy the link, a **QR code**, **Print a poster** (shop name, "Scan to shop online", QR, link) and **Share on
+  WhatsApp** (a ready message with the shop name and link).
+- **Online products:** a **Share on WhatsApp** button per product (name, price, link) while the store is open.
+- **Order details:** **Message the customer on WhatsApp** (ready-made words for Confirmed, Ready for pickup or delivery,
+  Delivered, Cancelled, sent to the order's phone number) and **Print packing slip** (tick boxes for each item).
+- The app sends nothing itself: every message opens WhatsApp with the words ready, and the owner presses send. Code:
+  `src/newlook/ecommerce/shareModel.js`.
+
 ## Who can do what (the online store is a module)
 
 The menu item **Online store** (under Sell) shows only to a person whose role holds some part of the module. Each tab needs its

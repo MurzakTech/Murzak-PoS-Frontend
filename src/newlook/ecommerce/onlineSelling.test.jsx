@@ -337,3 +337,56 @@ describe('the website order connection', () => {
     expect(screen.getByText(/Website order 501 could not be recorded/)).toBeInTheDocument();
   });
 });
+
+describe('getting the store ready and sharing it', () => {
+  const openStore = async (store) => {
+    getOnlineStore.mockResolvedValue(store);
+    renderIn(<OnlineStoreTab company="Duka Ltd" locations={[]} />);
+    await screen.findByLabelText('Web address name');
+  };
+
+  test('a new store shows what is left to do', async () => {
+    await openStore({ ...STORE, product_count: 0 });
+    expect(screen.getByText('Get your store ready')).toBeInTheDocument();
+    expect(screen.getByText(/steps done/)).toBeInTheDocument();
+    expect(screen.getByText('Choose the products to show')).toBeInTheDocument();
+  });
+
+  test('a store that is ready shows no checklist', async () => {
+    await openStore({ ...STORE, slug: 'duka', enabled: true, accept_mpesa: false, product_count: 3 });
+    expect(screen.queryByText('Get your store ready')).not.toBeInTheDocument();
+  });
+
+  test('a saved store offers a QR code, a poster and the link on WhatsApp', async () => {
+    await openStore({ ...STORE, slug: 'duka', enabled: true, product_count: 3 });
+    expect(screen.getByRole('img', { name: 'QR code for your store link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Print a poster' })).toBeInTheDocument();
+    const open = jest.spyOn(window, 'open').mockReturnValue({});
+    userEvent.click(screen.getByRole('button', { name: 'Share on WhatsApp' }));
+    const url = open.mock.calls[0][0];
+    expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+    expect(decodeURIComponent(url)).toContain(`${window.location.origin}/shop/duka`);
+    open.mockRestore();
+  });
+
+  test('the owner can message the customer about their order, ready to send', async () => {
+    listOnlineOrders.mockResolvedValue({
+      rows: [{ name: 'SO-1', customer_name: 'Amina Wanjiru', status: 'Confirmed', delivery_method: 'Pickup', grand_total: 500, paid: 0, channel: 'Website' }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    getOnlineOrder.mockResolvedValue({ name: 'SO-1', customer_name: 'Amina Wanjiru', phone: '0712345678', address: '', grand_total: 500, lines: [{ item_code: 'R', item_name: 'Rice', qty: 2, rate: 250, amount: 500 }] });
+    renderIn(<OnlineOrdersTab company="Duka Ltd" />);
+    userEvent.click(await screen.findByRole('button', { name: 'More actions for order SO-1' }));
+    userEvent.click(await screen.findByRole('menuitem', { name: 'View' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Order SO-1' });
+    const open = jest.spyOn(window, 'open').mockReturnValue({});
+    userEvent.click(await within(dialog).findByRole('button', { name: 'Message the customer on WhatsApp' }));
+    const url = open.mock.calls[0][0];
+    expect(url.startsWith('https://wa.me/254712345678?text=')).toBe(true);
+    expect(decodeURIComponent(url)).toContain('Hello Amina');
+    expect(within(dialog).getByRole('button', { name: 'Print packing slip' })).toBeInTheDocument();
+    open.mockRestore();
+  });
+});

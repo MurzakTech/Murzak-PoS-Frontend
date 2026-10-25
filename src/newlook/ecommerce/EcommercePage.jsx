@@ -27,7 +27,8 @@ import OnlineStoreTab from './OnlineStoreTab';
 import WebhookCard from './WebhookCard';
 import S from './strings.ecommerce';
 import fill from '../labels/fill';
-import { setItemsOnline } from '../../api/onlineStoreApi';
+import { getOnlineStore, setItemsOnline } from '../../api/onlineStoreApi';
+import { productMessage, shopLink, waLink } from './shareModel';
 import './ecommerce.css';
 
 // Each tab needs one of the online store's four permissions (see onlineStoreAccess)
@@ -79,6 +80,9 @@ const EcommercePage = () => {
   const [lastOrder, setLastOrder] = useState({ message: '', at: '' });
   // The settings as last loaded from, or saved to, the server: used to tell whether the form has unsaved changes
   const savedSettings = useRef('');
+
+  // The store's link, for sharing one product (empty until the store has a web address name and is open)
+  const [shop, setShop] = useState({ link: '' });
 
   // Products table
   const [products, setProducts] = useState([]);
@@ -148,6 +152,18 @@ const EcommercePage = () => {
       loadProducts();
     }
   }, [activeTab, loadProducts]);
+
+  useEffect(() => {
+    if (activeTab !== 'products' || !company) return;
+    (async () => {
+      try {
+        const data = await getOnlineStore(company);
+        setShop({ link: data && data.enabled ? shopLink(data.slug) : '' });
+      } catch (err) {
+        setShop({ link: '' });
+      }
+    })();
+  }, [activeTab, company]);
 
   // What the form holds now, as the server stores it
   const currentSettings = () => ({
@@ -220,6 +236,10 @@ const EcommercePage = () => {
     }
   };
 
+  const shareProduct = (row) => {
+    window.open(waLink(productMessage({ product: row, link: shop.link })), '_blank', 'noopener,noreferrer');
+  };
+
   const productColumns = [
     {
       key: 'product',
@@ -263,6 +283,17 @@ const EcommercePage = () => {
           {r.sync_status === 'ready' ? 'Ready to sync' : 'Missing price'}
         </span>
       ),
+    },
+    {
+      key: 'share',
+      header: '',
+      align: 'right',
+      render: (r) =>
+        shop.link && r.show_online !== false ? (
+          <Button variant="ghost" size="small" aria-label={fill(S.products.shareName, { name: r.item_name })} onClick={() => shareProduct(r)}>
+            {S.products.shareOnWhatsApp}
+          </Button>
+        ) : null,
     },
   ];
 

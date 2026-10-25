@@ -20,6 +20,7 @@ import { formatDate } from '../components/dates';
 import { formatMoney } from '../components/format';
 import fill from '../labels/fill';
 import S from './strings.ecommerce';
+import { orderMessage, printHtml, slipHtml, waLink } from './shareModel';
 
 const T = S.orders;
 const STATUSES = ['New', 'Confirmed', 'Ready', 'Delivered', 'Cancelled'];
@@ -95,6 +96,31 @@ const OnlineOrdersTab = ({ company }) => {
     const row = cancelling;
     await run(row, () => setOnlineOrderStatus({ order: row.name, status: 'Cancelled', company }), fill(T.statusChanged, { order: row.name, status: T.statuses.Cancelled }));
     setCancelling(null);
+  };
+
+  const messageCustomer = () => {
+    const { row, order } = detail;
+    const text = orderMessage({ order: row.name, customer: order.customer_name || order.customer, status: row.status, delivery: row.delivery_method });
+    if (!text) {
+      toast.info(T.noMessage);
+      return;
+    }
+    window.open(waLink(text, order.phone), '_blank', 'noopener,noreferrer');
+  };
+  const printSlip = () => {
+    const { row, order } = detail;
+    const ok = printHtml(
+      slipHtml({
+        order: row.name,
+        customer: order.customer_name || order.customer,
+        phone: order.phone,
+        address: order.address,
+        delivery: row.delivery_method,
+        lines: order.lines,
+        total: order.grand_total,
+      })
+    );
+    if (!ok) toast.error(T.slipBlocked);
   };
 
   const openDetail = async (row) => {
@@ -244,9 +270,21 @@ const OnlineOrdersTab = ({ company }) => {
         title={detail ? fill(T.detailTitle, { order: detail.row.name }) : ''}
         closeLabel={T.close}
         footer={
-          <Button variant="secondary" onClick={() => setDetail(null)}>
-            {T.close}
-          </Button>
+          <>
+            {detail && detail.order ? (
+              <>
+                <Button variant="secondary" onClick={printSlip}>
+                  {T.printSlip}
+                </Button>
+                <Button variant="secondary" onClick={messageCustomer}>
+                  {T.messageCustomer}
+                </Button>
+              </>
+            ) : null}
+            <Button variant="secondary" onClick={() => setDetail(null)}>
+              {T.close}
+            </Button>
+          </>
         }
       >
         {detail && detail.order ? (

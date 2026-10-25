@@ -249,3 +249,30 @@
   display: grid;
   gap: var(--space-1);
 }
+
+.nl-store__steps {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.nl-store__steps li.is-done {
+  color: var(--ink-2);
+}
+
+.nl-store__qr {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.nl-store__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

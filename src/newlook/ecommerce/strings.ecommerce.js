@@ -101,6 +101,19 @@ const ecommerce = {
     saveFirst: 'Choose a web address name and save to get your link.',
     productsShown: '{count} products are shown in your store.',
     chooseProducts: 'Choose which products appear',
+    qrLabel: 'QR code for your store link',
+    printPoster: 'Print a poster',
+    posterBlocked: 'Your browser blocked the poster. Allow pop-ups for this site and try again.',
+
+    setupTitle: 'Get your store ready',
+    setupDone: '{done} of {total} steps done',
+    setupSteps: {
+      link: 'Choose a web address name and a store name, then save',
+      receive: 'Choose how customers get their orders: delivery, pickup or both',
+      pay: 'Choose how customers pay',
+      products: 'Choose the products to show',
+      open: 'Open the store and save',
+    },
   },
 
   orders: {
@@ -141,6 +154,10 @@ const ecommerce = {
     cancelKeep: 'Keep order',
 
     detailTitle: 'Order {order}',
+    messageCustomer: 'Message the customer on WhatsApp',
+    noMessage: 'There is no message for this step.',
+    printSlip: 'Print packing slip',
+    slipBlocked: 'Your browser blocked the slip. Allow pop-ups for this site and try again.',
     close: 'Close',
     customer: 'Customer',
     phone: 'Phone',
@@ -150,6 +167,25 @@ const ecommerce = {
     price: 'Price',
     amount: 'Amount',
     total: 'Total',
+  },
+
+  share: {
+    ourShop: 'our shop',
+    customerFallback: 'there',
+    catalogue: 'Shop {name} online. See what we have and order from your phone: {link}',
+    product: '{name}, {price}. Order it here: {link}',
+    order: {
+      Confirmed: 'Hello {name}, we have confirmed your order {order}. We will let you know when it is ready.',
+      readyPickup: 'Hello {name}, your order {order} is ready. You can collect it now.',
+      readyDelivery: 'Hello {name}, your order {order} is ready and on its way to you.',
+      Delivered: 'Hello {name}, your order {order} is complete. Thank you for shopping with us.',
+      Cancelled: 'Hello {name}, we are sorry, we could not complete your order {order}. Please get in touch with us.',
+    },
+    posterTitle: 'Shop poster',
+    posterCall: 'Scan to shop online',
+    slipTitle: 'Order {order}',
+    slipPickup: 'For collection',
+    slipDelivery: 'For delivery',
   },
 
   alert: {
@@ -181,6 +217,8 @@ const ecommerce = {
   },
 
   products: {
+    shareOnWhatsApp: 'Share on WhatsApp',
+    shareName: 'Share {name} on WhatsApp',
     shownOnline: 'Shown online',
     shownOnlineHelp: 'Switch off to keep a product off your online store and website.',
     shownLabel: 'Show {name} online',

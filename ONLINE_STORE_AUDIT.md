@@ -288,6 +288,8 @@ Every plugin or theme change should be written to the audit trail (an audit trai
 
 **Found in passing:** `/appointments` is also missing from the role table, so only owner roles can open it; the existing test `roleAccessConfig.test.js` ("each protected route resolves to itself") already fails because of it.
 
+**Phase 2 (part): built.** Setup checklist, QR code, printable poster, catalogue and per-product WhatsApp sharing, WhatsApp message to the customer from an order, printable packing slip. Still to do from Phase 2: a single guided "Go online" wizard, product online fields (description, photos) on the product form, bulk "put online" in Products, "Open in till" on an order, shop logo and share preview, and a default stock location.
+
 ## 10. Suggested first change
 
 Phase 1 (with the `store_engine` preference from section 8) is the smallest piece that delivers what was asked for ("a module with RBAC" and "prefer WordPress and WooCommerce") and it does not depend on new backend design. It touches `src/config/roleAccessConfig.js`, `src/newlook/shell/navigation.js`, `src/newlook/ecommerce/EcommercePage.jsx` and `src/newlook/ecommerce/OnlineOrderAlert.jsx`, plus tests.
