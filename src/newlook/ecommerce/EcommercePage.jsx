@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -63,6 +63,8 @@ const EcommercePage = () => {
   const [catalogCount, setCatalogCount] = useState(0);
   const [stockCount, setStockCount] = useState(0);
   const [lastOrder, setLastOrder] = useState({ message: '', at: '' });
+  // The settings as last loaded from, or saved to, the server: used to tell whether the form has unsaved changes
+  const savedSettings = useRef('');
 
   // Products table
   const [products, setProducts] = useState([]);
@@ -91,6 +93,16 @@ const EcommercePage = () => {
         setCatalogCount(res.catalog_count || 0);
         setStockCount(res.stock_items_count || 0);
         setLastOrder({ message: res.last_order_message || '', at: res.last_order_at || '' });
+        savedSettings.current = JSON.stringify({
+          enabled: Boolean(res.enabled),
+          store_url: res.store_url || '',
+          consumer_key: res.consumer_key || '',
+          consumer_secret: res.consumer_secret || '',
+          warehouse: res.warehouse || '',
+          auto_sync_stock: res.auto_sync_stock !== false,
+          auto_sync_products: res.auto_sync_products !== false,
+          sync_orders: res.sync_orders !== false,
+        });
       }
     } catch (err) {
       toast.error(err.message || 'Failed to load e-commerce settings');
@@ -122,22 +134,22 @@ const EcommercePage = () => {
     }
   }, [activeTab, loadProducts]);
 
+  // What the form holds now, as the server stores it
+  const currentSettings = () => ({
+    enabled,
+    store_url: storeUrl,
+    consumer_key: consumerKey,
+    consumer_secret: consumerSecret,
+    warehouse,
+    auto_sync_stock: autoSyncStock,
+    auto_sync_products: autoSyncProducts,
+    sync_orders: syncOrders,
+  });
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveEcommerceSettings(
-        {
-          enabled,
-          store_url: storeUrl,
-          consumer_key: consumerKey,
-          consumer_secret: consumerSecret,
-          warehouse,
-          auto_sync_stock: autoSyncStock,
-          auto_sync_products: autoSyncProducts,
-          sync_orders: syncOrders,
-        },
-        company
-      );
+      await saveEcommerceSettings(currentSettings(), company);
       toast.success('E-Commerce settings saved successfully');
       loadSettings();
     } catch (err) {
@@ -168,6 +180,10 @@ const EcommercePage = () => {
   const handleSync = async () => {
     setSyncing(true);
     try {
+      // The server sends what it has saved, not what is typed in the form, so unsaved changes are saved first
+      if (JSON.stringify(currentSettings()) !== savedSettings.current) {
+        await saveEcommerceSettings(currentSettings(), company);
+      }
       const res = await syncWooCommerceCatalog({ company, warehouse });
       if (res.status === 'partial') toast.info(fill(S.products.syncResult.partial, { message: res.message }));
       else toast.success(res.message || 'Store catalog synchronized successfully!');
