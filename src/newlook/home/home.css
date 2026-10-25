@@ -886,3 +886,86 @@
     transform: none;
   }
 }
+
+/* ---------- Role Home: panels for the modules a role opens, and the list of modules ---------- */
+.nl-role {
+  display: grid;
+  gap: var(--card-gap);
+}
+.nl-role__panel {
+  display: grid;
+  gap: var(--card-gap);
+}
+.nl-role__figures {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  margin-bottom: var(--space-3);
+}
+.nl-role__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.nl-role__charts {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--card-gap);
+}
+.nl-role__modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+.nl-role__module {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--brand) 5%, var(--surface)) 0%, var(--surface) 65%);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 160ms ease;
+}
+.nl-role__module:hover {
+  transform: translateY(-2px);
+}
+.nl-role__module:hover .nl-chip-icon {
+  transform: rotate(-6deg) scale(1.08);
+}
+.nl-role__module:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+.nl-role__module-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.nl-role__module-text span {
+  color: var(--ink-2);
+  font-size: var(--caption-size);
+}
+.nl-role .nl-tile,
+.nl-role .nl-hero__figures {
+  min-height: 0;
+}
+/* Needs attention is built to sit in the owner's 12-column row; here it is a whole row of its own that is only as tall as its items */
+.nl-role .nl-home__attention {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+@media (max-width: 1023px) {
+  .nl-role__charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nl-role__module,
+  .nl-role__module:hover,
+  .nl-role__module:hover .nl-chip-icon {
+    transition: none;
+    transform: none;
+  }
+}

@@ -6,7 +6,7 @@ import { BUILT_PAGES } from './redirects/live';
 // Every redesigned page loads only when its address is opened (route-level code splitting, ticket P6-3). The chart library
 // (recharts) rides along only with the pages that draw a chart: Home, Reports and the chart page. A page shows the shell's
 // loading skeleton for the moment its code takes to arrive (see the Suspense in src/routes/AppRouter.js).
-const HomePage = lazyPage(() => import('./home/HomePage'), 'HomePage');
+const HomePage = lazyPage(() => import('./home/HomeRoute'), 'HomePage');
 const SetupWizard = lazyPage(() => import('./setup/SetupWizard'), 'SetupWizard');
 const TillSettingsPage = lazyPage(() => import('./settings/TillSettingsPage'), 'TillSettingsPage');
 const SettingsPage = lazyPage(() => import('./settings/SettingsPage'), 'SettingsPage');
