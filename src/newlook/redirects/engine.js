@@ -51,7 +51,14 @@ const fill = (template, params) => {
   return filledQuery === undefined ? filledPath : `${filledPath}?${filledQuery}`;
 };
 
+/**
+ * Addresses that belong to a New look page which no old screen ever had, so the table cannot list them. Without this,
+ * '/purchases/:id' reads "receive" as a purchase number and sends the Receive goods button to a panel that is not found.
+ */
+const NEW_LOOK_ONLY = ['/purchases/receive'];
+
 export const findEntry = (pathname, table = REDIRECTS) => {
+  if (NEW_LOOK_ONLY.includes(pathname.replace(/\/+$/, ''))) return null;
   const matches = table
     .map((entry, index) => ({ entry, index, hit: matchPath({ path: entry.from, end: true }, pathname) }))
     .filter((m) => m.hit);
