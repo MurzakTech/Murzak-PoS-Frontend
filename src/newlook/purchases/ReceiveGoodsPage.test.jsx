@@ -13,9 +13,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import ReceiveGoodsPage from './ReceiveGoodsPage';
-import { getPurchase, listPurchases, listSuppliers, receiveGoods } from '../../api/purchasesListApi';
+import { createPurchaseReturn, getPurchase, listPurchases, listSuppliers, receiveGoods } from '../../api/purchasesListApi';
 
-jest.mock('../../api/purchasesListApi', () => ({ listPurchases: jest.fn(), getPurchase: jest.fn(), listSuppliers: jest.fn(), receiveGoods: jest.fn() }));
+jest.mock('../../api/purchasesListApi', () => ({ listPurchases: jest.fn(), getPurchase: jest.fn(), listSuppliers: jest.fn(), receiveGoods: jest.fn(), createPurchaseReturn: jest.fn() }));
 const mockStores = { current: [] };
 jest.mock('../../store/hooks', () => ({
   useAppDispatch: () => jest.fn(),
@@ -84,6 +84,7 @@ const renderPage = async (url = '/new-look/purchases/receive') => {
 
 const where = () => screen.getByTestId('where').textContent;
 const qtyField = (name) => screen.getByRole('textbox', { name: `Quantity received of ${name}` });
+const spoiltField = (name) => screen.getByRole('textbox', { name: `Spoilt quantity of ${name}` });
 const next = () => userEvent.click(screen.getByRole('button', { name: 'Next' }));
 // The toast area is also an alert region, so wait for the alert that holds the words
 const alertWith = async (text) => {
@@ -113,6 +114,7 @@ beforeEach(() => {
   ]);
   getPurchase.mockResolvedValue(orderPanel());
   receiveGoods.mockResolvedValue(done());
+  createPurchaseReturn.mockResolvedValue({ success: true, return_invoice: 'ACC-PINV-2026-00031' });
 });
 
 describe('step 1: choose the order', () => {
@@ -200,7 +202,7 @@ describe('step 2: tick what arrived and enter the quantity received', () => {
   test('lists the lines with ordered, received so far and still to arrive, and fills in what is still to arrive', async () => {
     await renderPage();
     await toItems();
-    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Arrived', 'Ordered', 'Received so far', 'Still to arrive', 'Quantity received']);
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Arrived', 'Ordered', 'Received so far', 'Still to arrive', 'Cost each', 'Quantity received', 'Spoilt', 'Good stock', 'Value']);
     expect(qtyField('Sugar 1kg')).toHaveValue('6');
     expect(qtyField('Rice 2kg')).toHaveValue('5');
     expect(screen.getByRole('checkbox', { name: 'Sugar 1kg' })).toBeChecked();
@@ -513,5 +515,109 @@ describe('leaving the page', () => {
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Leave without saving' }));
     expect(where()).toBe('/new-look/purchases');
+  });
+});
+
+describe('spoilt goods and the return note', () => {
+  const confirm = () => userEvent.click(screen.getByRole('button', { name: 'Confirm: receive goods and make the bill' }));
+  const spoil = async () => {
+    await toItems();
+    userEvent.type(spoiltField('Sugar 1kg'), '2');
+  };
+
+  test('shows the order facts, the cost of each item and the good stock as the spoilt quantity is typed', async () => {
+    await renderPage();
+    await toItems();
+    expect(screen.getByText('Order value')).toBeInTheDocument();
+    expect(screen.getByText('Cost each')).toBeInTheDocument();
+    userEvent.type(spoiltField('Sugar 1kg'), '2');
+    expect(screen.getByText('Spoilt, to be returned')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Why Sugar 1kg is spoilt' })).toBeInTheDocument();
+  });
+
+  test('more spoilt than received is refused and named', async () => {
+    await renderPage();
+    await toItems();
+    userEvent.type(spoiltField('Sugar 1kg'), '7');
+    next();
+    expect(await screen.findAllByText('You received 6 of Sugar 1kg, so no more than that can be spoilt.')).not.toHaveLength(0);
+    expect(screen.getByRole('heading', { level: 2, name: 'What arrived' })).toBeInTheDocument();
+  });
+
+  test('the review shows the spoilt goods and the bill after the return note', async () => {
+    await renderPage();
+    await spoil();
+    next();
+    await screen.findByRole('heading', { level: 2, name: 'Check and confirm' });
+    expect(screen.getByText('Sugar 1kg: 2 (Damaged)')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Make a return note to the supplier for the spoilt goods' })).toBeChecked();
+  });
+
+  test('Confirm receives everything that arrived, then makes the return note for the spoilt part against the bill', async () => {
+    await renderPage();
+    await spoil();
+    next();
+    await screen.findByRole('heading', { level: 2, name: 'Check and confirm' });
+    userEvent.type(screen.getByRole('textbox', { name: 'Note on the return' }), 'DN 77');
+    confirm();
+    await screen.findByText('Return note made.');
+    expect(receiveGoods.mock.calls[0][0].items).toEqual([
+      { item_code: 'SUG', qty_received: 6 },
+      { item_code: 'RIC', qty_received: 5 },
+    ]);
+    expect(createPurchaseReturn).toHaveBeenCalledTimes(1);
+    expect(createPurchaseReturn).toHaveBeenCalledWith({
+      returnAgainst: 'ACC-PINV-2026-00030',
+      items: [{ item_code: 'SUG', item_name: 'Sugar 1kg', qty: 2, rate: 100 }],
+      remarks: 'Damaged: Sugar 1kg 2. DN 77',
+      company: 'Demo Shop',
+    });
+    expect(screen.getByRole('link', { name: /Open the return note/ })).toBeInTheDocument();
+  });
+
+  test('with the return note switched off nothing is returned', async () => {
+    await renderPage();
+    await spoil();
+    next();
+    await screen.findByRole('heading', { level: 2, name: 'Check and confirm' });
+    userEvent.click(screen.getByRole('checkbox', { name: 'Make a return note to the supplier for the spoilt goods' }));
+    confirm();
+    await screen.findByText('Stock raised and bill created');
+    expect(createPurchaseReturn).not.toHaveBeenCalled();
+  });
+
+  test('no spoilt goods means no return note and no spoilt section', async () => {
+    await renderPage();
+    await toReview();
+    expect(screen.queryByText('Spoilt goods')).not.toBeInTheDocument();
+    confirm();
+    await screen.findByText('Stock raised and bill created');
+    expect(createPurchaseReturn).not.toHaveBeenCalled();
+  });
+
+  test('a repeated delivery does not make a second return note', async () => {
+    receiveGoods.mockResolvedValue(done({ repeat: true }));
+    await renderPage();
+    await spoil();
+    next();
+    await screen.findByRole('heading', { level: 2, name: 'Check and confirm' });
+    confirm();
+    await screen.findByText('This delivery was already saved, so nothing was added twice.');
+    expect(createPurchaseReturn).not.toHaveBeenCalled();
+  });
+
+  test('when the return note fails the goods stay received and the person can try the note again', async () => {
+    createPurchaseReturn.mockRejectedValueOnce(new Error('Server busy.'));
+    await renderPage();
+    await spoil();
+    next();
+    await screen.findByRole('heading', { level: 2, name: 'Check and confirm' });
+    confirm();
+    expect(await alertWith('the return note was not made')).toHaveTextContent('Server busy.');
+    expect(receiveGoods).toHaveBeenCalledTimes(1);
+    userEvent.click(screen.getByRole('button', { name: 'Try the return note again' }));
+    await screen.findByText('Return note made.');
+    expect(createPurchaseReturn).toHaveBeenCalledTimes(2);
+    expect(receiveGoods).toHaveBeenCalledTimes(1);
   });
 });

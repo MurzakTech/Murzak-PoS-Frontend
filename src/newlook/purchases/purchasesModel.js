@@ -212,7 +212,20 @@ export const receiveLines = (purchase) =>
     rate: Number(l.rate),
     ticked: Number(l.to_arrive) > 0,
     qty: Number(l.to_arrive) > 0 ? qtyText(l.to_arrive) : '',
+    spoilt: '',
+    reason: SPOILT_REASONS[0],
   }));
+
+/** Why goods are spoilt; the first is the one offered. These words go on the return note to the supplier. */
+export const SPOILT_REASONS = ['Damaged', 'Expired', 'Wrong item', 'Poor quality', 'Other'];
+
+/** A spoilt quantity typed: blank or 0 is none (0), a number above 0 is itself, anything else is null */
+export const parseSpoilt = (text) => {
+  if (String(text === null || text === undefined ? '' : text).trim() === '') return 0;
+  const n = parseQty(text);
+  if (n !== null) return n;
+  return /^0*\.?0*$/.test(String(text).trim()) ? 0 : null;
+};
 
 /** Item codes that appear on more than one line of the order (the server receives those in the current screen only) */
 export const duplicateCodes = (lines) => {
@@ -238,19 +251,61 @@ export const receiveProblems = (lines) => {
     else if (n === null) problems[l.item_code] = fill(T.receive.problems.qtyBad, { name: l.name });
     else if (n > l.toArrive + 1e-9) problems[l.item_code] = fill(T.receive.problems.qtyTooMuch, { name: l.name, left: qtyText(l.toArrive) });
   });
+  ticked.forEach((l) => {
+    if (dupes.includes(l.item_code)) return;
+    const spoilt = parseSpoilt(l.spoilt);
+    const arrived = parseQty(l.qty);
+    if (spoilt === null) problems[`${SPOILT_PREFIX}${l.item_code}`] = fill(T.receive.problems.spoiltBad, { name: l.name });
+    else if (arrived !== null && spoilt > arrived + 1e-9) problems[`${SPOILT_PREFIX}${l.item_code}`] = fill(T.receive.problems.spoiltTooMuch, { name: l.name, arrived: qtyText(arrived) });
+  });
   if (ticked.length === 0) problems.general = T.receive.problems.noneTicked;
   return problems;
 };
 
+/** The key a spoilt problem is held under, beside the quantity problem of the same line */
+export const SPOILT_PREFIX = 'spoilt:';
+
 /** The lines sent to the server: only the ticked ones, with their quantity as a number */
 export const receiveItems = (lines) => lines.filter((l) => l.ticked && l.toArrive > 0 && parseQty(l.qty) !== null).map((l) => ({ item_code: l.item_code, qty_received: parseQty(l.qty) }));
 
-/** The lines being received, with their amounts, for the review step */
+/** The lines being received, with their amounts and what part is spoilt, for the review step */
 export const reviewLines = (lines) =>
   receiveItems(lines).map((item) => {
     const line = lines.find((l) => l.item_code === item.item_code);
-    return { item_code: line.item_code, name: line.name, unit: line.unit, qty: item.qty_received, rate: line.rate, amount: Math.round(item.qty_received * line.rate * 100) / 100 };
+    const spoilt = Math.min(parseSpoilt(line.spoilt) || 0, item.qty_received);
+    return {
+      item_code: line.item_code,
+      name: line.name,
+      unit: line.unit,
+      qty: item.qty_received,
+      spoilt,
+      good: Math.round((item.qty_received - spoilt) * 1000) / 1000,
+      rate: line.rate,
+      amount: Math.round(item.qty_received * line.rate * 100) / 100,
+      spoiltAmount: Math.round(spoilt * line.rate * 100) / 100,
+    };
   });
+
+/** The ticked lines that have spoilt goods, as the return note to the supplier takes them: [{ item_code, item_name, qty, rate, reason }] */
+export const spoiltItems = (lines) =>
+  reviewLines(lines)
+    .filter((l) => l.spoilt > 0)
+    .map((l) => ({ item_code: l.item_code, item_name: l.name, qty: l.spoilt, rate: l.rate, reason: lines.find((x) => x.item_code === l.item_code).reason }));
+
+/** The value of the spoilt goods (what the return note takes off the bill) */
+export const spoiltTotal = (lines) => Math.round(reviewLines(lines).reduce((sum, l) => sum + l.spoiltAmount, 0) * 100) / 100;
+
+/** The words on the return note: each reason with its products ('Damaged: Sugar 2, Rice 1. Expired: Salt 3.'), then the person's own note */
+export const returnRemarks = (items, note = '') => {
+  const groups = [];
+  items.forEach((i) => {
+    const group = groups.find((g) => g.reason === i.reason);
+    if (group) group.names.push(`${i.item_name} ${qtyText(i.qty)}`);
+    else groups.push({ reason: i.reason, names: [`${i.item_name} ${qtyText(i.qty)}`] });
+  });
+  const text = groups.map((g) => `${g.reason}: ${g.names.join(', ')}.`).join(' ');
+  return [text, String(note || '').trim()].filter(Boolean).join(' ').slice(0, 140);
+};
 
 export const reviewTotal = (lines) => Math.round(reviewLines(lines).reduce((sum, l) => sum + l.amount, 0) * 100) / 100;
 

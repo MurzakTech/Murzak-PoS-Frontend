@@ -25,6 +25,7 @@ import {
   openAddress,
   orderRequest,
   parseQty,
+  parseSpoilt,
   payProblems,
   purchasesCsv,
   purchasesTabs,
@@ -35,8 +36,11 @@ import {
   receiveProblems,
   reviewFieldProblems,
   reviewLines,
+  returnRemarks,
   reviewTotal,
   serverLines,
+  spoiltItems,
+  spoiltTotal,
   statusView,
   stockLine,
   summaryOf,
@@ -324,6 +328,43 @@ describe('receive goods quantities', () => {
   test('a stock result line says before and now', () => {
     expect(stockLine({ item_code: 'A', before: 10, after: 16 }, { A: 'Sugar' })).toBe('Sugar: 10 before, 16 now');
     expect(stockLine({ item_code: 'A', before: 10, after: 16 })).toBe('A: 10 before, 16 now');
+  });
+
+  test('a spoilt quantity may be blank or 0, and is never more than what arrived', () => {
+    expect(parseSpoilt('')).toBe(0);
+    expect(parseSpoilt('0')).toBe(0);
+    expect(parseSpoilt('2.5')).toBe(2.5);
+    expect(parseSpoilt('abc')).toBe(null);
+    const spoil = (spoilt) => receiveLines(order).map((l) => (l.item_code === 'A' ? { ...l, spoilt } : l));
+    expect(receiveProblems(spoil('')).spoilt).toBeUndefined();
+    expect(receiveProblems(spoil('2'))).toEqual({});
+    expect(receiveProblems(spoil('7'))['spoilt:A']).toMatch(/received 6 of Sugar/);
+    expect(receiveProblems(spoil('x'))['spoilt:A']).toMatch(/Enter a number/);
+  });
+
+  test('spoilt goods are still received, split into good stock, and valued for the return note', () => {
+    const lines = receiveLines(order).map((l) => (l.item_code === 'A' ? { ...l, spoilt: '2', reason: 'Expired' } : l));
+    expect(receiveItems(lines)[0]).toEqual({ item_code: 'A', qty_received: 6 });
+    const a = reviewLines(lines).find((l) => l.item_code === 'A');
+    expect([a.qty, a.spoilt, a.good]).toEqual([6, 2, 4]);
+    expect(spoiltItems(lines)).toEqual([{ item_code: 'A', item_name: 'Sugar', qty: 2, rate: a.rate, reason: 'Expired' }]);
+    expect(spoiltTotal(lines)).toBe(Math.round(2 * a.rate * 100) / 100);
+    expect(spoiltItems(receiveLines(order))).toEqual([]);
+  });
+
+  test('an unticked line is never returned', () => {
+    const lines = receiveLines(order).map((l) => (l.item_code === 'A' ? { ...l, ticked: false, spoilt: '2' } : l));
+    expect(spoiltItems(lines)).toEqual([]);
+  });
+
+  test('the return note words group the products by reason and add the person\'s note', () => {
+    const items = [
+      { item_name: 'Sugar', qty: 2, reason: 'Damaged' },
+      { item_name: 'Rice', qty: 1, reason: 'Damaged' },
+      { item_name: 'Salt', qty: 3, reason: 'Expired' },
+    ];
+    expect(returnRemarks(items, ' DN 77 ')).toBe('Damaged: Sugar 2, Rice 1. Expired: Salt 3. DN 77');
+    expect(returnRemarks(items).length).toBeLessThanOrEqual(140);
   });
 
   test('a request id is long enough for the server and different each time', () => {
