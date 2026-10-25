@@ -453,6 +453,24 @@ describe('Confirm (AC-29)', () => {
     expect(await screen.findByText('This delivery was already saved, so nothing was added twice.')).toBeInTheDocument();
   });
 
+  test('a server that does not say nothing was changed gets the app\'s own sentence', async () => {
+    receiveGoods.mockRejectedValue(new Error('Supplier is on hold.'));
+    await renderPage();
+    await toReview();
+    confirm();
+    expect(await alertWith('We could not receive these goods.')).toHaveTextContent('Supplier is on hold. Nothing was changed.');
+  });
+
+  test('the server\'s code and other details are shown for whoever supports the shop', async () => {
+    const error = new Error('The goods were not received and no bill was made, so nothing was changed. Please try again.');
+    error.details = '{"error_type":"receipt_failed","step":"bill"}';
+    receiveGoods.mockRejectedValue(error);
+    await renderPage();
+    await toReview();
+    confirm();
+    expect(await screen.findByText('Details for support: {"error_type":"receipt_failed","step":"bill"}')).toBeInTheDocument();
+  });
+
   test('a failure keeps the page and the typed quantities, and says nothing was changed', async () => {
     receiveGoods.mockRejectedValue(new Error('The goods were not received and no bill was made, so nothing was changed. Supplier is on hold'));
     await renderPage();
@@ -465,7 +483,7 @@ describe('Confirm (AC-29)', () => {
     confirm();
     const alert = await alertWith('We could not receive these goods.');
     expect(alert).toHaveTextContent('Supplier is on hold');
-    expect(alert).toHaveTextContent('Nothing was changed.');
+    expect(alert.textContent.match(/nothing was changed/gi)).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 2, name: 'Check and confirm' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Bill number' })).toHaveValue('INV-9');
     expect(screen.queryByText('Stock raised and bill created')).not.toBeInTheDocument();

@@ -20,6 +20,10 @@ const body = (response) => response.data?.message ?? response.data;
 const failure = (reply, fallback = 'That did not work. Please try again.') => {
   const error = new Error(humanizeMessage(reply?.message, fallback));
   error.errorType = reply?.error_type || '';
+  // Whatever else the server said (a field, a code, a reason), kept so a screen can show it to the person who supports the shop
+  const { success, message, data, ...rest } = reply && typeof reply === 'object' ? reply : {};
+  const extra = Object.keys(rest).length ? JSON.stringify(rest) : '';
+  error.details = extra.length > 400 ? `${extra.slice(0, 400)}...` : extra;
   return error;
 };
 const compact = (params) => Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== ''));
