@@ -704,9 +704,14 @@ export const createSalesReturn = createAsyncThunk(
         title: waiting ? 'Sent for approval' : 'Success',
       }));
       
+      // When the return asked for the money to be paid back, the server says how that went (it never undoes the return)
+      const message = response.data?.message;
+      const refund = (message && typeof message === 'object' ? message.refund : response.data?.refund) ?? null;
+
       return {
         salesReturn: data?.data || data,
         waitingForApproval: waiting,
+        refund,
       };
     } catch (error) {
       const errorMessage = extractErrorMessage(error);

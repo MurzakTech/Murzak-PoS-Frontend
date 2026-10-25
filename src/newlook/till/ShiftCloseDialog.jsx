@@ -7,6 +7,7 @@ import { formatMoney } from '../components/format';
 import { getTillState, previewClose, closeTill } from '../../api/tillApi';
 import { cashRow, countedFor, differenceHint, differenceView, hasCount, isInfoLine, openedLine, openingFloat, otherRows, sessionName } from './shiftModel';
 import T from './strings.shift';
+import CT from './strings.cash';
 import fill from '../labels/fill';
 import './till.css';
 
@@ -27,13 +28,14 @@ const messageOf = (error, fallback) => (error && error.message ? error.message :
  *
  *   open, onClose   showing, and what Escape, Keep selling, Back to the page and Done do (Escape waits while a call runs)
  *   session         the session record { name, cashier_name, opened_at, opening } or just its name
+ *   onReport(name)  the See the shift report button of the confirmation (shown only when the parent gives it)
  *   onClosed(result) called once, when the server has closed the session (the dialog stays to show the confirmation;
  *                   the parent closes it from onClose)
  *   load, preview, close   the three server calls, replaceable in tests
  */
 const ShiftCloseDialog = ({ open, ...rest }) => (open ? <ShiftClose {...rest} /> : null);
 
-const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview = previewClose, close = closeTill }) => {
+const ShiftClose = ({ onClose, session, onClosed, onReport, load = getTillState, preview = previewClose, close = closeTill }) => {
   const [step, setStep] = useState('count');
   const [digits, setDigits] = useState('');
   const [state, setState] = useState(null);
@@ -278,9 +280,16 @@ const ShiftClose = ({ onClose, session, onClosed, load = getTillState, preview =
     heading = C.doneName;
     intro = undefined;
     footer = (
-      <Button size="till" ref={doneButton} onClick={onClose}>
-        {C.done}
-      </Button>
+      <>
+        {onReport ? (
+          <Button variant="secondary" size="till" icon="receipt" onClick={() => onReport(name)}>
+            {CT.report.seeButton}
+          </Button>
+        ) : null}
+        <Button size="till" ref={doneButton} onClick={onClose}>
+          {C.done}
+        </Button>
+      </>
     );
     body = (
       <div role="status" className="nl-shift__done">

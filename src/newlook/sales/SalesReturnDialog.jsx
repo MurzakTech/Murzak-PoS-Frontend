@@ -3,10 +3,15 @@ import Button from '../components/Button';
 import Dialog from '../components/Dialog';
 import Field from '../components/Field';
 import Icon from '../components/Icon';
+import Segmented from '../components/Segmented';
 import { formatMoney } from '../components/format';
 import { useAppDispatch } from '../../store/hooks';
 import { createSalesReturn } from '../../store/salesSlice';
 import { getSale } from '../../api/salesListApi';
+import CT from '../till/strings.cash';
+import fill from '../labels/fill';
+
+const RF = CT.refund;
 
 /**
  * Dialog to record a return of sold items.
@@ -33,6 +38,8 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState('');
+  const [refundMode, setRefundMode] = useState('Cash'); // how the customer is paid back: 'Cash' from the drawer, or 'credit' (kept as credit, paid later)
+  const [recorded, setRecorded] = useState(null); // the answer once the return is saved but its refund was not paid
 
   const handleLookup = async () => {
     const q = invoiceLookup.trim();
@@ -107,12 +114,21 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
           customer,
           return_against: currentSale?.id || undefined,
           reason: reason.trim() || undefined,
+          refund_mode: refundMode === 'credit' ? undefined : refundMode,
           items,
         })
       );
 
       if (result.type === 'sales/createSalesReturn/fulfilled') {
-        onDone(result.payload);
+        const refund = result.payload && result.payload.refund;
+        if (refund && refund.success === false) {
+          // The return is saved (and must not be saved again); say why the money was not paid and let them close
+          setRecorded(result.payload);
+          setFailure(fill(RF.notPaid, { reason: refund.message || '' }).trim());
+          setBusy(false);
+        } else {
+          onDone(result.payload);
+        }
       } else {
         setFailure(result.payload || 'Failed to record return. Please try again.');
         setBusy(false);
@@ -140,18 +156,22 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
           : 'Enter the invoice or receipt number to find items to return.'
       }
       footer={
-        <>
-          <Button variant="secondary" disabled={busy} onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            loading={busy}
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-          >
-            Record return
-          </Button>
-        </>
+        recorded ? (
+          <Button onClick={() => onDone(recorded)}>{RF.close}</Button>
+        ) : (
+          <>
+            <Button variant="secondary" disabled={busy} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              loading={busy}
+              disabled={!canSubmit}
+              onClick={handleSubmit}
+            >
+              Record return
+            </Button>
+          </>
+        )
       }
     >
       <div className="nl-sales-form">
@@ -252,7 +272,22 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
           </div>
         ) : null}
 
-        {currentSale ? (
+        {currentSale && !recorded ? (
+          <>
+            <Segmented
+              label={RF.group}
+              value={refundMode}
+              onChange={setRefundMode}
+              options={[
+                { value: 'Cash', label: RF.cash },
+                { value: 'credit', label: RF.credit },
+              ]}
+            />
+            <p style={{ color: "var(--muted)", margin: 0 }}>{RF.help}</p>
+          </>
+        ) : null}
+
+        {currentSale && !recorded ? (
           <Field
             label="Reason for return"
             placeholder="e.g. Defective, wrong size, customer changed mind"
