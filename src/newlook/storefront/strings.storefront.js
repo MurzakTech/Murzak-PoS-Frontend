@@ -28,6 +28,10 @@ const en = {
   outOfStock: 'Out of stock',
   onlyLeft: 'Only {count} left',
   perUnit: 'per {unit}',
+  details: 'Details',
+  detailsNamed: 'About {name}',
+  photoOf: 'Photo {number} of {count}',
+  showPhoto: 'Show photo {number}',
 
   basket: 'Basket',
   viewBasket: 'View basket',
@@ -147,6 +151,10 @@ const sw = {
   outOfStock: 'Imeisha',
   onlyLeft: 'Zimebaki {count} tu',
   perUnit: 'kwa {unit}',
+  details: 'Maelezo',
+  detailsNamed: 'Kuhusu {name}',
+  photoOf: 'Picha {number} kati ya {count}',
+  showPhoto: 'Onyesha picha ya {number}',
 
   basket: 'Kikapu',
   viewBasket: 'Tazama kikapu',

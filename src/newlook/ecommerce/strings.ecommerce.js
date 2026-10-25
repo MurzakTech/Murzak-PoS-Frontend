@@ -217,6 +217,10 @@ const ecommerce = {
   },
 
   products: {
+    showAll: 'Show all listed',
+    hideAll: 'Hide all listed',
+    bulkShown: '{count} products are now shown in your online store.',
+    bulkHidden: '{count} products are now hidden from your online store.',
     shareOnWhatsApp: 'Share on WhatsApp',
     shareName: 'Share {name} on WhatsApp',
     shownOnline: 'Shown online',

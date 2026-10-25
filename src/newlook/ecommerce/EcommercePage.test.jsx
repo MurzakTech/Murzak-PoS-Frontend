@@ -13,7 +13,7 @@ import {
   syncWooCommerceCatalog,
   getEcommerceProducts,
 } from '../../api/ecommerceApi';
-import { getOnlineStore, listOnlineOrders } from '../../api/onlineStoreApi';
+import { getOnlineStore, listOnlineOrders, setItemsOnline } from '../../api/onlineStoreApi';
 
 jest.mock('../../api/onlineStoreApi', () => ({
   getOnlineStore: jest.fn(),
@@ -207,5 +207,23 @@ describe('EcommercePage by role', () => {
   test('a role with no part of the module is told so', async () => {
     renderAs(['Desk User']);
     expect(await screen.findByText('You do not have access to the online store')).toBeInTheDocument();
+  });
+
+  test('shows or hides everything in the list in one go', async () => {
+    getEcommerceProducts.mockResolvedValue({
+      rows: [
+        { item_code: 'A', item_name: 'Apple', price: 10, stock: 1, unit: 'Nos', sync_status: 'ready', show_online: true },
+        { item_code: 'B', item_name: 'Bread', price: 50, stock: 1, unit: 'Nos', sync_status: 'ready', show_online: true },
+      ],
+      total: 2,
+    });
+    setItemsOnline.mockResolvedValue({});
+    renderAs(['Item Manager'], '/ecommerce?tab=products');
+    await screen.findByText('Apple');
+    userEvent.click(screen.getByRole('button', { name: 'Hide all listed' }));
+    await waitFor(() => expect(setItemsOnline).toHaveBeenCalledWith({ itemCodes: ['A', 'B'], show: false, company: 'Test Company' }));
+    expect(await screen.findByText('2 products are now hidden from your online store.')).toBeInTheDocument();
+    // A person who only chooses what is shown cannot send the catalogue to the website
+    expect(screen.queryByRole('button', { name: /Sync Products/ })).not.toBeInTheDocument();
   });
 });

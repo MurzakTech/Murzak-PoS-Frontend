@@ -52,6 +52,28 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 - The app sends nothing itself: every message opens WhatsApp with the words ready, and the owner presses send. Code:
   `src/newlook/ecommerce/shareModel.js`.
 
+## Product details for the online store (description and extra photos)
+
+- **Edit product** now has an **Online store** card (for people holding the catalogue permission): show or hide the product, a
+  description (up to 1000 letters) and up to 6 extra photos. It saves on its own button, apart from the product's own form.
+  Code: `src/newlook/products/OnlineProductSection.jsx`.
+- **Online products tab:** **Show all listed** and **Hide all listed** act on the products currently in the list (a search narrows
+  it), 100 at a time. **Sync Products** (to the website) is now owner only.
+- **On the shop:** a product with a description or extra photos shows a **Details** link that opens a window with the photos
+  (tap a small one to see it big), the price and the description, and Add.
+
+### What the backend must provide (agreed: it can handle description and extra photos)
+
+| Call | Does | Fields |
+|---|---|---|
+| `online_store_api.get_product_online(item_code, company)` | Read | reply `data`: `description` (text), `images` (list of file addresses, in order), `show_online` (1 or 0) |
+| `online_store_api.save_product_online(item_code, description, images, show_online, company)` | Save | `description` up to 1000 letters; `images` up to 6 addresses of files already uploaded with the standard file upload (`/files/...`); `show_online` 1 or 0 |
+| `storefront_api.list_products` (shoppers) | Rows gain | `images` (list of file addresses). `description` and `image` were already sent |
+
+The names are in one place, `src/api/onlineStoreApi.js` (`getProductOnline`, `saveProductOnline`); change them there if the backend
+chooses different names. The main product photo stays on the product itself (`image`); `images` are the extras. The same
+catalogue permission must be checked on the server.
+
 ## Who can do what (the online store is a module)
 
 The menu item **Online store** (under Sell) shows only to a person whose role holds some part of the module. Each tab needs its

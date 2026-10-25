@@ -204,3 +204,51 @@
   font-size: var(--body-size);
   font-weight: var(--font-weight-semibold);
 }
+
+.nl-products-online {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.nl-products-online__text {
+  height: auto;
+  min-height: 96px;
+  padding-top: var(--space-2);
+  resize: vertical;
+  font: inherit;
+}
+
+.nl-products-online__photos {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.nl-products-online__photos li {
+  position: relative;
+  width: 96px;
+}
+
+.nl-products-online__photos img {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--line);
+}
+
+.nl-products-online__photos li button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--surface);
+}
+
+.nl-products-online__actions {
+  display: flex;
+  justify-content: flex-end;
+}

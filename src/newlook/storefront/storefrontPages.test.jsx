@@ -366,3 +366,25 @@ describe('the order page', () => {
     expect(await screen.findByText('We could not find that order')).toBeInTheDocument();
   });
 });
+
+describe('a product up close', () => {
+  const LONG = { ...RICE, description: 'Pishori rice, 2 kg bag.\nGrown in Mwea.', images: ['/files/a.jpg', '/files/b.jpg'], image: '/files/main.jpg' };
+
+  test('a product with a description or extra photos can be opened, and added from there', async () => {
+    listShopProducts.mockResolvedValue({ rows: [LONG, TEA], total: 2, page: 1 });
+    renderAt('/shop/duka');
+    expect(screen.queryByRole('button', { name: 'About Tea' })).not.toBeInTheDocument();
+    userEvent.click(await screen.findByRole('button', { name: 'About Rice' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Rice' });
+    expect(within(dialog).getByText(/Pishori rice, 2 kg bag/)).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('button', { name: /Show photo/ })).toHaveLength(3);
+    userEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
+    expect(loadCart('duka').lines[0]).toMatchObject({ item_code: 'RICE', qty: 1 });
+  });
+
+  test('a product with nothing more to say has no details link', async () => {
+    renderAt('/shop/duka');
+    await screen.findByText('Rice');
+    expect(screen.queryByRole('button', { name: /About/ })).not.toBeInTheDocument();
+  });
+});

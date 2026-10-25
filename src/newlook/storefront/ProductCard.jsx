@@ -10,7 +10,7 @@ import Stepper from './Stepper';
 const PICTURE_SHAPE = 'wide';
 
 /** One product on the shelf: picture, name, price, and either "Add" or how many are in the basket. */
-const ProductCard = ({ product, line, dispatch, t }) => {
+const ProductCard = ({ product, line, dispatch, t, onOpen }) => {
   const { item_code: code, item_name: name } = product;
   const picture = { item_code: code, item_name: name, item_group: product.category, image: product.image };
 
@@ -19,6 +19,11 @@ const ProductCard = ({ product, line, dispatch, t }) => {
       <ProductImage product={picture} shape={PICTURE_SHAPE} alt={name} />
       <div className="sf-product__body">
         <h3 className="sf-product__name">{name}</h3>
+        {onOpen && (product.description || (product.images && product.images.length)) ? (
+          <button type="button" className="sf-product__more" aria-label={t('detailsNamed', { name })} onClick={() => onOpen(product)}>
+            {t('details')}
+          </button>
+        ) : null}
         <p className="sf-product__price">
           <strong>{formatMoney(product.price)}</strong>
           {product.unit ? <span className="sf-product__unit"> {t('perUnit', { unit: unitWord(product.unit) })}</span> : null}

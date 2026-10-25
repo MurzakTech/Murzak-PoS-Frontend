@@ -32,6 +32,8 @@ import { productMessage, shopLink, waLink } from './shareModel';
 import './ecommerce.css';
 
 // Each tab needs one of the online store's four permissions (see onlineStoreAccess)
+const BULK_CHUNK = 100;
+
 const TABS = [
   { key: 'orders', label: S.tabs.orders, to: '/ecommerce?tab=orders', needs: 'orders' },
   { key: 'digital_store', label: S.tabs.store, to: '/ecommerce?tab=digital_store', needs: 'settings' },
@@ -233,6 +235,26 @@ const EcommercePage = () => {
       setProducts((rows) => rows.map((r) => (r.item_code === row.item_code ? { ...r, show_online: show } : r)));
     } catch (err) {
       toast.error(err.message || S.products.updateFailed);
+    }
+  };
+
+  // Everything in the list now (so a search narrows it): shown or hidden in one go
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const setAllShown = async (show) => {
+    const codes = products.map((r) => r.item_code);
+    if (!codes.length) return;
+    setBulkBusy(true);
+    try {
+      for (let i = 0; i < codes.length; i += BULK_CHUNK) {
+        await setItemsOnline({ itemCodes: codes.slice(i, i + BULK_CHUNK), show, company });
+      }
+      setProducts((rows) => rows.map((r) => ({ ...r, show_online: show })));
+      toast.success(fill(show ? S.products.bulkShown : S.products.bulkHidden, { count: codes.length }));
+    } catch (err) {
+      toast.error(err.message || S.products.updateFailed);
+      loadProducts();
+    } finally {
+      setBulkBusy(false);
     }
   };
 
@@ -470,9 +492,19 @@ const EcommercePage = () => {
               onChange={setSearch}
               style={{ maxWidth: '300px', margin: 0 }}
             />
-            <Button variant="secondary" icon="refresh" loading={syncing} onClick={handleSync}>
-              Sync Products
-            </Button>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+              <Button variant="secondary" loading={bulkBusy} disabled={!products.length} onClick={() => setAllShown(true)}>
+                {S.products.showAll}
+              </Button>
+              <Button variant="secondary" loading={bulkBusy} disabled={!products.length} onClick={() => setAllShown(false)}>
+                {S.products.hideAll}
+              </Button>
+              {access.integrations ? (
+                <Button variant="secondary" icon="refresh" loading={syncing} onClick={handleSync}>
+                  Sync Products
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           <Table
