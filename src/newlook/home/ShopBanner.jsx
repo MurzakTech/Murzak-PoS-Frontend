@@ -5,6 +5,7 @@ import S from '../strings';
 import fill from '../labels/fill';
 import { useBrand } from '../brand/BrandProvider';
 import Backdrop from '../brand/Backdrop';
+import logoMark from '../../assets/logo_mark.png';
 
 const T = S.home.banner;
 
@@ -32,6 +33,9 @@ const ShopBanner = ({ actions, canBrand = false, brandTo }) => {
             {(name || '').trim().charAt(0).toUpperCase() || <Icon name="store" />}
           </span>
         )}
+        <span className="nl-shop__m" aria-hidden="true">
+          <img src={logoMark} alt="" />
+        </span>
         <div className="nl-shop__text">
           {name ? <p className="nl-shop__name">{name}</p> : null}
           <p className="nl-shop__tagline">{brand.tagline || T.defaultTagline}</p>
