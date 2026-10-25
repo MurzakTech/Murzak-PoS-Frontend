@@ -22,6 +22,7 @@ const T = S.home.hero;
  *   today        today's date as yyyy-mm-dd (Nairobi), to tell a stale till from today's
  *   loading      show skeletons in the figures
  *   openTo / closeTo   where the till button goes
+ *   showTill           false for a role that may look at sales but not use the till: the button and the stale-till button are left out
  */
 const Figure = ({ label, children, note, icon }) => (
   <div className="nl-hero__figure">
@@ -34,7 +35,7 @@ const Figure = ({ label, children, note, icon }) => (
   </div>
 );
 
-const HeroBand = ({ hero, today, loading, failed, onRetry, openTo, closeTo, weekday = weekdayName() }) => {
+const HeroBand = ({ hero, today, loading, failed, onRetry, openTo, closeTo, showTill = true, weekday = weekdayName() }) => {
   if (failed) {
     return (
       <section className="nl-card nl-hero nl-hero--failed" aria-label={T.label}>
@@ -79,9 +80,11 @@ const HeroBand = ({ hero, today, loading, failed, onRetry, openTo, closeTo, week
             <p className="nl-hero__stale-title">{T.staleTitle}</p>
             <p className="nl-hero__stale-text">{fill(T.staleText, { date: shortDay(till.opened_on) })}</p>
           </div>
-          <Button as={RouterLink} to={closeTo} size="small">
-            {T.closeTill}
-          </Button>
+          {showTill ? (
+            <Button as={RouterLink} to={closeTo} size="small">
+              {T.closeTill}
+            </Button>
+          ) : null}
         </div>
       ) : null}
       <div className="nl-hero__main">
@@ -99,7 +102,7 @@ const HeroBand = ({ hero, today, loading, failed, onRetry, openTo, closeTo, week
           </p>
           <ChangeLine direction={change.direction} text={change.text} />
         </div>
-        {!stale ? (
+        {!stale && showTill ? (
           <Button as={RouterLink} to={tillOpen ? closeTo : openTo} variant={tillOpen ? 'secondary' : 'primary'} icon="till" className="nl-hero__till">
             {tillOpen ? T.closeTill : T.openTill}
           </Button>
