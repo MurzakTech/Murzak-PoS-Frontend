@@ -11,6 +11,7 @@ The front end must look modern, calm, specific to retail and clearly made by peo
 | `murzak-design-system` | Tokens, shared components, strings file, rules the tests enforce. Read first for any UI change |
 | `design-fundamentals` | Hierarchy, spacing, grid, type, colour, contrast, shape, data display, motion |
 | `human-not-ai` | Avoiding generic "AI look" and AI-sounding copy; writing plain, warm, specific words |
+| `murzak-colour-theory` | Where the brand and POS colours come from, safe text pairs, how to analyse a client's brand |
 | `pos-ux-patterns` | The till, payments, M-Pesa, offline, tables, forms, roles, receipts |
 | `ui-visual-review` | Screenshot, critique and fix loop before calling UI work done |
 
