@@ -288,7 +288,7 @@ Every plugin or theme change should be written to the audit trail (an audit trai
 
 **Found in passing:** `/appointments` is also missing from the role table, so only owner roles can open it; the existing test `roleAccessConfig.test.js` ("each protected route resolves to itself") already fails because of it.
 
-**Phase 2 (part): built.** Setup checklist, QR code, printable poster, catalogue and per-product WhatsApp sharing, WhatsApp message to the customer from an order, printable packing slip. **Phase 2 (product details): built.** Description and extra photos on Edit product, bulk show or hide on the Online products tab, product details window on the shop. Needs the backend calls in `ONLINE_STORE.md`. Still to do from Phase 2: a single guided "Go online" wizard, "Open in till" on an order, shop logo and share preview, and a default stock location.
+**Phase 2 (part): built.** Setup checklist, QR code, printable poster, catalogue and per-product WhatsApp sharing, WhatsApp message to the customer from an order, printable packing slip. **Phase 2 (product details): built.** Description and extra photos on Edit product, bulk show or hide on the Online products tab, product details window on the shop. Needs the backend calls in `ONLINE_STORE.md`. **Phase 2 (guided setup): built.** A five-step "Go online" wizard that ends with the store open and the link, QR code and WhatsApp share ready; a shop with one selling location has it chosen automatically. **Open item:** how the backend stores a product's description and extra photos has not been decided; Frappe can hold them, but this must be confirmed (see `ONLINE_STORE.md`). Still to do from Phase 2: "Open in till" on an order, shop logo and share preview.
 
 ## 10. Suggested first change
 

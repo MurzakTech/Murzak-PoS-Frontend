@@ -52,6 +52,21 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 - The app sends nothing itself: every message opens WhatsApp with the words ready, and the owner presses send. Code:
   `src/newlook/ecommerce/shareModel.js`.
 
+## Go online: the guided setup
+
+The checklist at the top of My online store has **Start guided setup** (or **Continue guided setup** when some steps are done). It
+opens at the first step that still needs something and asks one thing at a time:
+
+1. **Your store:** store name, web address name (checked while typing), WhatsApp number.
+2. **Orders:** delivery, pickup or both; the pickup address; free delivery or one fee (fees by area or distance are kept if
+   already set, and changed on the settings page).
+3. **Payment:** cash, and M-Pesa when it is set up.
+4. **Products:** how many are shown; **Show all my products** shows every product in one go; or choose them one by one.
+5. **Open:** **Open my store** saves everything and turns the store on, then shows the link, a QR code, Copy and Share on WhatsApp.
+
+Nothing is saved until the last step. A step cannot be left with something missing, and the message says what. A shop with only
+one place to sell from has it chosen automatically. Code: `GoOnlineWizard.jsx`, rules in `wizardModel.js`.
+
 ## Product details for the online store (description and extra photos)
 
 - **Edit product** now has an **Online store** card (for people holding the catalogue permission): show or hide the product, a
@@ -69,6 +84,12 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 | `online_store_api.get_product_online(item_code, company)` | Read | reply `data`: `description` (text), `images` (list of file addresses, in order), `show_online` (1 or 0) |
 | `online_store_api.save_product_online(item_code, description, images, show_online, company)` | Save | `description` up to 1000 letters; `images` up to 6 addresses of files already uploaded with the standard file upload (`/files/...`); `show_online` 1 or 0 |
 | `storefront_api.list_products` (shoppers) | Rows gain | `images` (list of file addresses). `description` and `image` were already sent |
+
+**To check with the backend before relying on this.** Frappe can hold these (the Item's own description and image fields, plus a
+child table or attachments for the extra photos), but how the backend will do it has not been decided or tested. Decide and
+confirm: where each field is stored, that `list_products` for shoppers returns `images` without exposing private files, that
+photos uploaded as public files are the ones listed, and a limit on file sizes. Until then the product details card will show
+"could not be loaded".
 
 The names are in one place, `src/api/onlineStoreApi.js` (`getProductOnline`, `saveProductOnline`); change them there if the backend
 chooses different names. The main product photo stays on the product itself (`image`); `images` are the extras. The same

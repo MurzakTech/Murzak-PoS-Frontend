@@ -13,10 +13,12 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import S from './strings.ecommerce';
+import GoOnlineWizard from './GoOnlineWizard';
+import { SLUG_PATTERN } from './wizardModel';
 import { catalogueMessage, posterHtml, printHtml, setupSteps, shopLink, waLink } from './shareModel';
 
 const T = S.store;
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
+const W = S.wizard;
 const SLUG_PAUSE_MS = 400;
 const MAX_AREAS = 50;
 const MODE_ORDER = ['free', 'flat', 'area', 'distance'];
@@ -93,6 +95,7 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
   const [saving, setSaving] = useState(false);
   const [slugCheck, setSlugCheck] = useState({ state: 'idle', message: '' });
   const [locating, setLocating] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -111,6 +114,12 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
   }, [load]);
 
   const set = (patch) => setForm((current) => ({ ...current, ...patch }));
+
+  // A shop with one place to sell from needs no question about it
+  const onlyLocation = locations.length === 1 ? locations[0].value : '';
+  useEffect(() => {
+    if (onlyLocation) setForm((current) => (current && !current.warehouse ? { ...current, warehouse: onlyLocation } : current));
+  }, [onlyLocation, Boolean(form)]);
 
   // Ask whether the name is free while the owner types, after a short pause
   const slug = form?.slug.trim().toLowerCase() || '';
@@ -140,14 +149,16 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
 
   const link = useMemo(() => shopLink(saved.slug), [saved.slug]);
 
-  const save = async () => {
+  const save = async (patch = {}) => {
     setSaving(true);
     try {
-      await saveOnlineStore(toPayload(form), company);
+      await saveOnlineStore(toPayload({ ...form, ...patch }), company);
       toast.success(T.saved);
       await load();
+      return true;
     } catch (error) {
       toast.error(error.message || T.saveFailed);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -214,10 +225,28 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
 
   return (
     <div className="nl-store">
+      <GoOnlineWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        form={form}
+        set={set}
+        saved={saved}
+        slugCheck={slugCheck}
+        extra={extra}
+        company={company}
+        link={link || shopLink(form.slug.trim().toLowerCase())}
+        onOpenStore={() => save({ enabled: true })}
+        onProductsShown={(count) => setExtra((current) => ({ ...current, productCount: count }))}
+        onCopy={copyLink}
+        onShare={shareLink}
+      />
       {stepsDone < steps.length ? (
         <Card title={T.setupTitle}>
           <div className="nl-store__section">
             <p className="nl-store__help">{fill(T.setupDone, { done: stepsDone, total: steps.length })}</p>
+            <div>
+              <Button onClick={() => setWizardOpen(true)}>{stepsDone > 0 ? W.continueSetup : W.start}</Button>
+            </div>
             <ol className="nl-store__steps">
               {steps.map((step) => (
                 <li key={step.key} className={step.done ? 'is-done' : undefined}>
@@ -390,7 +419,7 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
 
       <div className="nl-ecommerce__actions">
         <span />
-        <Button variant="primary" loading={saving} onClick={save}>
+        <Button variant="primary" loading={saving} onClick={() => save()}>
           {T.save}
         </Button>
       </div>
