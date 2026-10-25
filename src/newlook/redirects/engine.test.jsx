@@ -63,6 +63,13 @@ describe('resolveRedirect', () => {
     expect(findEntry('/purchases/new', [...TABLE].reverse()).entry.from).toBe('/purchases/new');
   });
 
+  test('the Receive goods page is left alone, not read as a purchase called "receive"', () => {
+    expect(resolve('/purchases/receive', '?order=PUR-ORD-2026-00003')).toBeNull();
+    expect(resolve('/purchases/receive/', '')).toBeNull();
+    expect(findEntry('/purchases/receive')).toBeNull();
+    expect(resolve('/purchases/PO-9').to).toBe('/purchases?open=PO-9');
+  });
+
   test('keeps the filters, page and anchor the person had; the redirect’s own keys win', () => {
     expect(resolve('/sales/history', '?page=2&size=50', '#top').to).toBe('/sales?page=2&size=50#top');
     expect(resolve('/sales/invoice/9', '?open=1&q=amina').to).toBe('/sales?open=9&q=amina');
