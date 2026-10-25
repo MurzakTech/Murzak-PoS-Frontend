@@ -26,7 +26,7 @@ const number = (value) => {
 const list = (value) => (Array.isArray(value) ? value : []);
 
 /** The counted amounts as the server wants them: [{ mode, amount }], one per payment method that was counted */
-const countedList = (counted) =>
+export const countedList = (counted) =>
   list(counted)
     .filter((c) => c && c.mode && c.amount !== '' && c.amount !== null && c.amount !== undefined && Number.isFinite(Number(c.amount)))
     .map((c) => ({ mode: c.mode, amount: Number(c.amount) }));
@@ -48,7 +48,7 @@ const normalizeState = (data) => ({
   recent_sales: list(data.recent_sales),
 });
 
-const normalizeClose = (data) => ({
+export const normalizeClose = (data) => ({
   closed: data.closed === true,
   lines: list(data.lines).map((line) => ({
     ...line,

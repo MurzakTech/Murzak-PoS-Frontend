@@ -229,7 +229,8 @@
 }
 
 /* ---------- Cash in or out, and the shift report (shift management) ---------- */
-.nl-cash__form {
+.nl-cash__form,
+.nl-handover__form {
   display: grid;
   gap: var(--space-3);
 }
