@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useRealtimeRefresh, { pollEvery } from '../../hooks/useRealtimeRefresh';
 import {
   createInvoiceForOnlineOrder,
@@ -21,6 +22,7 @@ import { formatMoney } from '../components/format';
 import fill from '../labels/fill';
 import S from './strings.ecommerce';
 import { orderMessage, printHtml, slipHtml, waLink } from './shareModel';
+import { canOpenInTill, packageOrderForTill } from './tillModel';
 
 const T = S.orders;
 const STATUSES = ['New', 'Confirmed', 'Ready', 'Delivered', 'Cancelled'];
@@ -31,6 +33,7 @@ const ROW_KEY = 'name';
 
 const OnlineOrdersTab = ({ company }) => {
   const toast = useToast();
+  const navigate = useNavigate();
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(DEFAULT_SIZE);
@@ -96,6 +99,16 @@ const OnlineOrdersTab = ({ company }) => {
     const row = cancelling;
     await run(row, () => setOnlineOrderStatus({ order: row.name, status: 'Cancelled', company }), fill(T.statusChanged, { order: row.name, status: T.statuses.Cancelled }));
     setCancelling(null);
+  };
+
+  // Takes the order to the till with its items and customer, to be paid and handed over there
+  const openInTill = async (row, loaded) => {
+    try {
+      const order = loaded || (await getOnlineOrder(row.name, company));
+      navigate('/till', { state: { onlineOrderCart: packageOrderForTill(row, order) } });
+    } catch (error) {
+      toast.error(error.message || T.tillFailed);
+    }
   };
 
   const messageCustomer = () => {
@@ -188,6 +201,7 @@ const OnlineOrdersTab = ({ company }) => {
         const finished = FINISHED.includes(r.status);
         const items = [
           { label: T.view, onClick: () => openDetail(r) },
+          canOpenInTill(r) && { label: T.openInTill, onClick: () => openInTill(r) },
           !r.paid && r.status !== 'Cancelled' && { label: T.markPaid, onClick: () => markPaid(r) },
           r.status !== 'Cancelled' && { label: T.makeInvoice, onClick: () => makeInvoice(r) },
           !finished && { label: T.cancel, destructive: true, onClick: () => setCancelling(r) },
@@ -279,6 +293,9 @@ const OnlineOrdersTab = ({ company }) => {
                 <Button variant="secondary" onClick={messageCustomer}>
                   {T.messageCustomer}
                 </Button>
+                {canOpenInTill(detail.row) ? (
+                  <Button onClick={() => openInTill(detail.row, detail.order)}>{T.openInTill}</Button>
+                ) : null}
               </>
             ) : null}
             <Button variant="secondary" onClick={() => setDetail(null)}>

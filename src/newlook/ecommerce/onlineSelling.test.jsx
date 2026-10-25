@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import {
   checkStoreSlug,
@@ -475,5 +475,55 @@ describe('getting the store ready and sharing it', () => {
     expect(saveOnlineStore.mock.calls[0][0]).toMatchObject({ logo: '/files/logo.png' });
     userEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
     expect(screen.queryByRole('img', { name: 'Your shop logo' })).not.toBeInTheDocument();
+  });
+
+  test('an order can be opened in the till, which gets its items, customer and whether it is paid', async () => {
+    listOnlineOrders.mockResolvedValue({
+      rows: [{ name: 'SO-1', customer: 'CUST-001', customer_name: 'Amina Wanjiru', status: 'Ready', delivery_method: 'Pickup', grand_total: 500, paid: 0, channel: 'Website' }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    getOnlineOrder.mockResolvedValue({
+      name: 'SO-1',
+      customer: 'CUST-001',
+      customer_name: 'Amina Wanjiru',
+      phone: '254712345678',
+      grand_total: 500,
+      lines: [{ item_code: 'RICE', item_name: 'Rice', qty: 2, rate: 250, amount: 500 }],
+    });
+    const AtTill = () => <pre data-testid="till">{JSON.stringify(useLocation().state)}</pre>;
+    render(
+      <MemoryRouter initialEntries={['/ecommerce']}>
+        <ToastProvider>
+          <Routes>
+            <Route path="/ecommerce" element={<OnlineOrdersTab company="Duka Ltd" />} />
+            <Route path="/till" element={<AtTill />} />
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>
+    );
+    userEvent.click(await screen.findByRole('button', { name: 'More actions for order SO-1' }));
+    userEvent.click(await screen.findByRole('menuitem', { name: 'Open in till' }));
+    const handed = JSON.parse((await screen.findByTestId('till')).textContent);
+    expect(handed.onlineOrderCart).toMatchObject({
+      order: 'SO-1',
+      paid: false,
+      customer: 'CUST-001',
+      items: [{ item_code: 'RICE', qty: 2, rate: 250 }],
+    });
+  });
+
+  test('an order that is delivered or cancelled is not offered for the till', async () => {
+    listOnlineOrders.mockResolvedValue({
+      rows: [{ name: 'SO-9', customer_name: 'Amina', status: 'Delivered', delivery_method: 'Pickup', grand_total: 500, paid: 1, channel: 'Website' }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    renderIn(<OnlineOrdersTab company="Duka Ltd" />);
+    userEvent.click(await screen.findByRole('button', { name: 'More actions for order SO-9' }));
+    await screen.findByRole('menuitem', { name: 'View' });
+    expect(screen.queryByRole('menuitem', { name: 'Open in till' })).not.toBeInTheDocument();
   });
 });

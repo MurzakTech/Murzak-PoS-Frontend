@@ -52,6 +52,25 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 - The app sends nothing itself: every message opens WhatsApp with the words ready, and the owner presses send. Code:
   `src/newlook/ecommerce/shareModel.js`.
 
+## Open in till (collect payment and hand over)
+
+On an online order that is New, Confirmed or Ready, **Open in till** (in the row's menu and in the order details) opens the till with
+the order's items at the prices the shopper was charged (including any delivery line), and the order's customer. The cashier takes
+payment and finishes the sale as usual. Delivered and cancelled orders do not offer it.
+
+- The sale is sent with `online_order: <order name>`. When the sale goes through, the till also marks the order **paid** (unless it
+  was already paid, or the sale was put on credit); if that call fails the cashier is told to mark it paid under Online orders.
+- Code: `ecommerce/tillModel.js` (the hand-over), `pages/Sales/NewSale.js` (reads `onlineOrderCart` from the navigation, like the
+  appointment and prescription carts).
+- Not done by the till: the order's own status. Mark it Delivered under Online orders when the customer has it.
+
+**To decide with the backend.** The order already holds stock, and "Make invoice" already makes a draft invoice for it. A till
+sale linked by `online_order` must (1) release the hold without taking the stock twice, (2) stop the order offering a second invoice,
+(3) make "mark paid" safe to call twice (the till calls it too), and (4) let reports split sales by online order. Until the backend
+reads `online_order`, the field is ignored and a till sale for an online order may take stock a second time: test one real order
+before relying on it. The till screen has no automated tests of its own; this was checked by the build and by tests of the hand-over,
+not by selling in a browser.
+
 ## Shop logo and link previews
 
 - **Logo:** My online store (and the guided setup, step 1) has **Add a logo**. It is shrunk and uploaded like a product photo and

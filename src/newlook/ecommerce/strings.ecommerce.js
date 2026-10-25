@@ -161,6 +161,9 @@ const ecommerce = {
     cancelKeep: 'Keep order',
 
     detailTitle: 'Order {order}',
+    openInTill: 'Open in till',
+    tillFailed: 'The order could not be opened in the till. Please try again.',
+    tillPaidNote: 'This order is already paid.',
     messageCustomer: 'Message the customer on WhatsApp',
     noMessage: 'There is no message for this step.',
     printSlip: 'Print packing slip',
