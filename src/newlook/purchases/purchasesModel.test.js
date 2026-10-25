@@ -20,6 +20,7 @@ import {
   lineAmount,
   lineFrom,
   linesTotal,
+  NEW_PATH,
   newPurchaseAddress,
   newRequestId,
   openAddress,
@@ -27,9 +28,11 @@ import {
   parseQty,
   parseSpoilt,
   payProblems,
+  PURCHASES_PATH,
   purchasesCsv,
   purchasesTabs,
   qtyText,
+  RECEIVE_PATH,
   receiveAddress,
   receiveItems,
   receiveLines,
@@ -97,14 +100,14 @@ describe('tabs and addresses', () => {
   });
 
   test('the Reorder address fills a product in', () => {
-    expect(newPurchaseAddress('SKU 1')).toBe('/new-look/purchases/new?item=SKU%201');
-    expect(newPurchaseAddress()).toBe('/new-look/purchases/new');
+    expect(newPurchaseAddress('SKU 1')).toBe(`${NEW_PATH}?item=SKU%201`);
+    expect(newPurchaseAddress()).toBe(NEW_PATH);
   });
 
   test('the Receive goods and open addresses', () => {
-    expect(receiveAddress('PO-1')).toBe('/new-look/purchases/receive?order=PO-1');
-    expect(receiveAddress()).toBe('/new-look/purchases/receive');
-    expect(openAddress('PINV 1')).toBe('/new-look/purchases?open=PINV%201');
+    expect(receiveAddress('PO-1')).toBe(`${RECEIVE_PATH}?order=PO-1`);
+    expect(receiveAddress()).toBe(RECEIVE_PATH);
+    expect(openAddress('PINV 1')).toBe(`${PURCHASES_PATH}?open=PINV%201`);
   });
 });
 

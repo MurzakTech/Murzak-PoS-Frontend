@@ -13,6 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import ReceiveGoodsPage from './ReceiveGoodsPage';
+import { NEW_PATH, openAddress, PURCHASES_PATH } from './purchasesModel';
 import { createPurchaseReturn, getPurchase, listPurchases, listSuppliers, receiveGoods } from '../../api/purchasesListApi';
 
 jest.mock('../../api/purchasesListApi', () => ({ listPurchases: jest.fn(), getPurchase: jest.fn(), listSuppliers: jest.fn(), receiveGoods: jest.fn(), createPurchaseReturn: jest.fn() }));
@@ -168,7 +169,7 @@ describe('step 1: choose the order', () => {
     await renderPage();
     expect(await screen.findByText('No orders are waiting for goods')).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: 'New purchase' }));
-    expect(where()).toBe('/new-look/purchases/new');
+    expect(where()).toBe(NEW_PATH);
   });
 
   test('choosing an order and going on asks the server for that order and shows its items', async () => {
@@ -405,9 +406,9 @@ describe('Confirm (AC-29)', () => {
     await renderPage();
     await toReview();
     confirm();
-    expect(await screen.findByRole('link', { name: 'Open the bill #B0030' })).toHaveAttribute('href', '/new-look/purchases?open=ACC-PINV-2026-00030');
-    expect(screen.getByRole('link', { name: 'Open the goods received note #G0004' })).toHaveAttribute('href', '/new-look/purchases?open=MAT-PRE-2026-00004');
-    expect(screen.getByRole('link', { name: 'Open the order' })).toHaveAttribute('href', '/new-look/purchases?open=PUR-ORD-2026-00012');
+    expect(await screen.findByRole('link', { name: 'Open the bill #B0030' })).toHaveAttribute('href', openAddress('ACC-PINV-2026-00030'));
+    expect(screen.getByRole('link', { name: 'Open the goods received note #G0004' })).toHaveAttribute('href', openAddress('MAT-PRE-2026-00004'));
+    expect(screen.getByRole('link', { name: 'Open the order' })).toHaveAttribute('href', openAddress('PUR-ORD-2026-00012'));
   });
 
   test('a complete delivery offers another order, not the rest', async () => {
@@ -500,7 +501,7 @@ describe('leaving the page', () => {
     await renderPage();
     await screen.findByRole('row', { name: /#O0012\b/ });
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(where()).toBe('/new-look/purchases');
+    expect(where()).toBe(PURCHASES_PATH);
   });
 
   test('Cancel after choosing and changing things asks first', async () => {
@@ -514,7 +515,7 @@ describe('leaving the page', () => {
     expect(where()).toBe('/new-look/purchases/receive');
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Leave without saving' }));
-    expect(where()).toBe('/new-look/purchases');
+    expect(where()).toBe(PURCHASES_PATH);
   });
 });
 
