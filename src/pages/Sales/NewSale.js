@@ -49,6 +49,8 @@ import '../../newlook/till/till-controls.css';
 import PayScreen from '../../newlook/till/PayScreen';
 import TillPanel from '../../newlook/till/TillPanel';
 import ShiftCloseDialog from '../../newlook/till/ShiftCloseDialog';
+import CashMovementDialog from '../../newlook/till/CashMovementDialog';
+import ShiftReportDialog from '../../newlook/till/ShiftReportDialog';
 import SaleAnnouncement from '../../newlook/till/SaleAnnouncement';
 import { getPreview, isPageLive } from '../../newlook/redirects/live';
 import { toNewAddress } from '../../newlook/redirects/engine';
@@ -307,6 +309,8 @@ const NewSale = () => {
   const [leaveHolding, setLeaveHolding] = useState(false);
   const [tillPanelOpen, setTillPanelOpen] = useState(false); // New look: the Till open pill's panel (Recent sales)
   const [shiftCloseOpen, setShiftCloseOpen] = useState(false); // New look: the shift-end count
+  const [cashDialogOpen, setCashDialogOpen] = useState(false); // New look: cash put in or taken out of the drawer
+  const [reportSession, setReportSession] = useState(''); // New look: the session whose shift report is showing ('' = none)
   const [leaveError, setLeaveError] = useState('');
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [autoPrint, setAutoPrint] = useState(readAutoPrint);
@@ -2487,16 +2491,30 @@ const NewSale = () => {
               setTillPanelOpen(false);
               setShiftCloseOpen(true);
             }}
+            onCashInOut={() => {
+              setTillPanelOpen(false);
+              setCashDialogOpen(true);
+            }}
+            onShiftReport={() => {
+              setTillPanelOpen(false);
+              setReportSession(posOpeningEntry?.name || '');
+            }}
             onOpenSale={(id) => {
               setTillPanelOpen(false);
               leaveTo(isPageLive('/sales', getPreview()) ? `${toNewAddress('/sales')}?sale=${encodeURIComponent(id)}` : '/sales/history');
             }}
           />
+          <CashMovementDialog open={cashDialogOpen} onClose={() => setCashDialogOpen(false)} session={posOpeningEntry} />
+          <ShiftReportDialog open={Boolean(reportSession)} onClose={() => setReportSession('')} session={reportSession} />
           <ShiftCloseDialog
             open={shiftCloseOpen}
             onClose={() => setShiftCloseOpen(false)}
             session={posOpeningEntry}
             currency={currency}
+            onReport={(name) => {
+              setShiftCloseOpen(false);
+              setReportSession(name);
+            }}
             onClosed={(result) => {
               // The server has closed the session: tell the till, so it shows the "open the till" screen as it does after a close today
               const name = posOpeningEntry?.name;

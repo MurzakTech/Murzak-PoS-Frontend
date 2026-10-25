@@ -227,3 +227,46 @@
     animation: none;
   }
 }
+
+/* ---------- Cash in or out, and the shift report (shift management) ---------- */
+.nl-cash__form {
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-cash__recent {
+  margin-top: var(--space-4);
+}
+.nl-shift--report .nl-shiftreport {
+  display: grid;
+  gap: var(--space-4);
+}
+.nl-shiftreport__methods th,
+.nl-shiftreport__methods td {
+  text-align: right;
+}
+.nl-shiftreport__methods th:first-child {
+  text-align: left;
+}
+/* Off screen but laid out, so the browser can print it */
+.nl-shift-print {
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+@media print {
+  body.nl-printing-shift > *:not(.nl-shift-print) {
+    display: none !important;
+  }
+  body.nl-printing-shift > .nl-shift-print {
+    position: static;
+    visibility: visible;
+    display: block;
+    background: Canvas;
+    color: CanvasText;
+    color-scheme: light;
+    padding: var(--space-4);
+  }
+}
