@@ -11,7 +11,7 @@ import { ellipsize, fullMoney, shortNumber } from './chartFormat';
 import { topProductRows } from './chartData';
 
 /**
- * Top products by revenue (Spec: Charts). Horizontal bars, five at most, highest first. A product name longer than 24
+ * Top products by revenue (Spec: Charts). Horizontal bars, five at most, highest first. A product name longer than 17
  * characters is cut with an ellipsis on the axis; the whole name is in the tooltip and the table. The top bar carries its
  * value; the axis and the tooltip carry the rest.
  *
@@ -20,9 +20,12 @@ import { topProductRows } from './chartData';
  *   onSelect   a bar was clicked: called with that product's row (so a screen can open the product)
  */
 const axisTick = { fill: 'var(--ink-2)', fontSize: 12 };
+// The name column stays narrow so the bars keep room to read as bars on a third-width card (about 300px)
+const LABEL_WIDTH = 124;
+const LABEL_CHARS = 17;
 
 const TopProductsChart = ({ rows, rangeLabel, onSeeAll, onSelect, state = 'ready', onRetry, width, height = 240 }) => {
-  const top = topProductRows(rows).map((r) => ({ ...r, short: ellipsize(r.name, 24) }));
+  const top = topProductRows(rows).map((r) => ({ ...r, short: ellipsize(r.name, LABEL_CHARS) }));
   const first = top[0];
   const summary = first ? fill(S.charts.topProducts.summary, { range: rangeLabel, first: first.name, value: fullMoney(first.revenue) }) : fill(S.charts.topProducts.emptySummary, { range: rangeLabel });
 
@@ -58,7 +61,7 @@ const TopProductsChart = ({ rows, rangeLabel, onSeeAll, onSelect, state = 'ready
         {({ animate, ...size }) => (
           <BarChart {...size} data={top} layout="vertical" margin={{ top: 4, right: 48, bottom: 0, left: 0 }} barCategoryGap="30%">
             <XAxis type="number" tickFormatter={shortNumber} tick={{ fill: 'var(--muted)', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <YAxis type="category" dataKey="short" width={176} tick={axisTick} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="short" width={LABEL_WIDTH} tick={axisTick} axisLine={false} tickLine={false} />
             <Tooltip content={<ChartTooltip describe={describe} />} cursor={{ fill: COLOUR.soft }} isAnimationActive={false} />
             <Bar dataKey="revenue" fill={COLOUR.series[0]} maxBarSize={MARKS.barMaxWidth} radius={[0, MARKS.barRadius, MARKS.barRadius, 0]} isAnimationActive={animate} animationDuration={MARKS.drawInMs} onClick={onSelect ? (row) => onSelect(row) : undefined} cursor={onSelect ? 'pointer' : undefined}>
               <LabelList content={topLabel} />
