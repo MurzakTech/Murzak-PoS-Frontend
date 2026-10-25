@@ -150,6 +150,7 @@ const HomePage = () => {
     tileList.push(
       <StatTile
         key="revenue"
+        icon="chart"
         label={T.tiles.revenue}
         loading={loading}
         failed={!loading && failed('tiles.revenue', tiles.revenue)}
@@ -169,6 +170,7 @@ const HomePage = () => {
       tileList.push(
         <StatTile
           key="profit"
+          icon="wallet"
           label={T.tiles.netProfit}
           loading={loading}
           failed={!loading && failed('tiles.net_profit', np)}
@@ -189,6 +191,7 @@ const HomePage = () => {
       tileList.push(
         <StatTile
           key="owed"
+          icon="users"
           label={T.tiles.moneyOwed}
           loading={loading}
           failed={!loading && failed('tiles.money_owed', mo)}
@@ -207,6 +210,7 @@ const HomePage = () => {
     tileList.push(
       <StatTile
         key="stock"
+        icon="box"
         label={T.tiles.lowStock}
         loading={loading}
         failed={!loading && failed('tiles.low_stock', ls)}
