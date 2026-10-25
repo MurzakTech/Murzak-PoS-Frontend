@@ -13,7 +13,7 @@ describe('the kinds and their reasons', () => {
 
   test('the usual reasons are used before the server has answered', () => {
     expect(reasonsFor('Safe Drop', null)).toEqual(['Bank deposit', 'Other']);
-    expect(reasonsFor('Paid Out', {})[0]).toBe('Petty cash');
+    expect(reasonsFor('Paid Out', {})).toEqual(['Staff advance', 'Change', 'Other']);
     expect(reasonsFor('Surprise', null)).toEqual([]);
   });
 

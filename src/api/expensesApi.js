@@ -97,9 +97,12 @@ export const listExpenses = async ({ period = '30d', from, to, category, search,
  * Resolves to { expense, repeat }. A refusal is an Error with .code and, when it belongs beside one field, .field
  * (amount, category, paid_from, date, note or receipt).
  */
-export const createExpense = async ({ amount, category, paidFrom, date, note, receipt, company, requestId }) => {
-  const data = await call('create_expense', (url) => axiosInstance.post(url, compact({ amount, category, paid_from: paidFrom, date, note, receipt, company, request_id: requestId })));
-  return { expense: data.expense, repeat: Boolean(data.repeat) };
+export const createExpense = async ({ amount, category, paidFrom, date, note, receipt, company, requestId, fromTill }) => {
+  // fromTill false keeps a cash expense out of the till's drawer; left out, a cash expense comes out of the person's open shift
+  const data = await call('create_expense', (url) => axiosInstance.post(url, compact({ amount, category, paid_from: paidFrom, date, note, receipt, company, request_id: requestId, from_till: fromTill === false ? false : undefined })));
+  // till: the shift the cash came out of and what its drawer should now hold, or null when it did not come out of a drawer
+  const till = data.till && data.till.shift ? { shift: data.till.shift, cashInTill: data.till.cash_in_till === null || data.till.cash_in_till === undefined ? null : Number(data.till.cash_in_till) } : null;
+  return { expense: data.expense, repeat: Boolean(data.repeat), till };
 };
 
 /** The receipt photo of an expense made on the Expenses page, as { dataUrl, contentType, size } ready to show in an image */

@@ -15,7 +15,7 @@ export const DEFAULT_KIND = 'Paid Out';
 // What the server offers when it has not been asked yet (the same lists as the back end's cash_movement_rules)
 const FALLBACK_REASONS = {
   'Paid In': ['Float top-up', 'Change', 'Other'],
-  'Paid Out': ['Petty cash', 'Supplier payment', 'Staff advance', 'Customer refund', 'Change', 'Other'],
+  'Paid Out': ['Staff advance', 'Change', 'Other'],
   'Safe Drop': ['Bank deposit', 'Other'],
 };
 

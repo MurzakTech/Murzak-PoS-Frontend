@@ -2504,7 +2504,15 @@ const NewSale = () => {
               leaveTo(isPageLive('/sales', getPreview()) ? `${toNewAddress('/sales')}?sale=${encodeURIComponent(id)}` : '/sales/history');
             }}
           />
-          <CashMovementDialog open={cashDialogOpen} onClose={() => setCashDialogOpen(false)} session={posOpeningEntry} />
+          <CashMovementDialog
+            open={cashDialogOpen}
+            onClose={() => setCashDialogOpen(false)}
+            session={posOpeningEntry}
+            onAddExpense={() => {
+              setCashDialogOpen(false);
+              leaveTo(toNewAddress('/expenses/new'));
+            }}
+          />
           <ShiftReportDialog open={Boolean(reportSession)} onClose={() => setReportSession('')} session={reportSession} />
           <ShiftCloseDialog
             open={shiftCloseOpen}

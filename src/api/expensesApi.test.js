@@ -107,7 +107,7 @@ describe('createExpense', () => {
 
   test('sends the expense in one call, with the names the server expects', async () => {
     axiosInstance.post.mockResolvedValue(reply({ expense: { id: 'ACC-JV-1' }, repeat: false }));
-    await expect(createExpense(form)).resolves.toEqual({ expense: { id: 'ACC-JV-1' }, repeat: false });
+    await expect(createExpense(form)).resolves.toEqual({ expense: { id: 'ACC-JV-1' }, repeat: false, till: null });
     expect(axiosInstance.post).toHaveBeenCalledWith(`${EXPENSES}.create_expense`, { amount: '1500', category: 'Rent - DS', paid_from: 'cash', date: '2026-10-16', note: 'Rent for October', company: 'Demo Shop', request_id: 'exp-abc123-def456' });
   });
 
@@ -118,6 +118,15 @@ describe('createExpense', () => {
     expect(axiosInstance.post.mock.calls[0][1]).not.toHaveProperty('note');
     await createExpense({ ...form, receipt: '' });
     expect(axiosInstance.post.mock.calls[1][1]).not.toHaveProperty('receipt');
+  });
+
+  test('keeps a cash expense out of the till drawer only when told to, and says which shift it came out of', async () => {
+    axiosInstance.post.mockResolvedValue(reply({ expense: { id: 'ACC-JV-1' }, till: { shift: 'POS-OPE-1', cash_in_till: '250' } }));
+    await expect(createExpense(form)).resolves.toMatchObject({ till: { shift: 'POS-OPE-1', cashInTill: 250 } });
+    expect(axiosInstance.post.mock.calls[0][1]).not.toHaveProperty('from_till');
+    axiosInstance.post.mockResolvedValue(reply({ expense: { id: 'ACC-JV-2' }, till: null }));
+    await expect(createExpense({ ...form, fromTill: false })).resolves.toMatchObject({ till: null });
+    expect(axiosInstance.post.mock.calls[1][1]).toEqual(expect.objectContaining({ from_till: false }));
   });
 
   test('says when the answer is a repeat of one already saved', async () => {

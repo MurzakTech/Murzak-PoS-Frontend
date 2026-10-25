@@ -22,11 +22,12 @@ const messageOf = (error, fallback) => (error && error.message ? error.message :
  *   open, onClose   showing, and what Escape and Done do (Escape waits while a call runs)
  *   session         the session record or just its name
  *   onRecorded(reply) called after each save, so the till can refresh what it shows
+ *   onAddExpense    the Add an expense button under Take out (shown only when the till gives it); petty cash is an expense
  *   load, save      the two server calls, replaceable in tests
  */
 const CashMovementDialog = ({ open, ...rest }) => (open ? <CashMovement {...rest} /> : null);
 
-const CashMovement = ({ onClose, session, onRecorded, load = listCashMovements, save = recordCashMovement }) => {
+const CashMovement = ({ onClose, session, onRecorded, onAddExpense, load = listCashMovements, save = recordCashMovement }) => {
   const name = sessionName(session);
   const [kind, setKind] = useState(DEFAULT_KIND);
   const [digits, setDigits] = useState('');
@@ -116,6 +117,14 @@ const CashMovement = ({ onClose, session, onRecorded, load = listCashMovements, 
       <div className="nl-cash__form">
         <Segmented label={D.kindGroup} value={kind} onChange={pickKind} options={KINDS.map((value) => ({ value, label: D.kinds[value] }))} />
         <p className="nl-shift__muted">{D.kindHelp[kind]}</p>
+        {kind === 'Paid Out' && onAddExpense ? (
+          <div className="nl-cash__expense">
+            <p className="nl-shift__muted">{D.expenseHint}</p>
+            <Button variant="secondary" size="small" icon="wallet" onClick={onAddExpense}>
+              {D.expenseButton}
+            </Button>
+          </div>
+        ) : null}
         <Field
           kind="money"
           label={D.amountField}
