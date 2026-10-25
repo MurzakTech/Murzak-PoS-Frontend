@@ -4,6 +4,8 @@ import {
   createInvoiceForOnlineOrder,
   getOnlineOrder,
   getOnlineStore,
+  getProductOnline,
+  saveProductOnline,
   listOnlineOrders,
   markOnlineOrderPaid,
   saveOnlineStore,
@@ -91,5 +93,35 @@ describe('the website order connection', () => {
     expect(await getOrderWebhook('Duka Ltd')).toEqual({ deliveryUrl: 'https://pos.example/hook?t=abc', secret: 's3cret', steps: ['Open WooCommerce'] });
     await regenerateOrderWebhook('Duka Ltd');
     expect(axiosInstance.post.mock.calls[1][0]).toBe('murzak_pos.api.ecommerce_api.regenerate_order_webhook');
+  });
+});
+
+describe('a product online', () => {
+  test('reads the description and extra photos, keeping at most six', async () => {
+    axiosInstance.get.mockResolvedValue(reply({ description: 'Pishori', images: ['/a', '/b', '', '/c', '/d', '/e', '/f', '/g'], show_online: 1 }));
+    const product = await getProductOnline('RICE', 'Duka Ltd');
+    expect(axiosInstance.get).toHaveBeenCalledWith('murzak_pos.api.online_store_api.get_product_online', { params: { item_code: 'RICE', company: 'Duka Ltd' } });
+    expect(product).toEqual({ description: 'Pishori', images: ['/a', '/b', '/c', '/d', '/e', '/f'], showOnline: true });
+  });
+
+  test('a product the server says is hidden is hidden, and missing fields get safe defaults', async () => {
+    axiosInstance.get.mockResolvedValue(reply({ show_online: 0 }));
+    expect(await getProductOnline('RICE')).toEqual({ description: '', images: [], showOnline: false });
+  });
+
+  test('saves with the description trimmed and cut to length, and the photos capped', async () => {
+    axiosInstance.post.mockResolvedValue(reply({}));
+    await saveProductOnline({ itemCode: 'RICE', description: `  ${'a'.repeat(1200)}  `, images: ['/1', '/2', '/3', '/4', '/5', '/6', '/7'], showOnline: true, company: 'Duka Ltd' });
+    const [url, payload, options] = axiosInstance.post.mock.calls[0];
+    expect(url).toBe('murzak_pos.api.online_store_api.save_product_online');
+    expect(payload.description).toHaveLength(1000);
+    expect(payload.images).toHaveLength(6);
+    expect(payload).toMatchObject({ item_code: 'RICE', show_online: 1, company: 'Duka Ltd' });
+    expect(options).toEqual({ allowRefusal: true });
+  });
+
+  test('the server\'s refusal reaches the owner', async () => {
+    axiosInstance.post.mockResolvedValue(refusal('Too many photos.'));
+    await expect(saveProductOnline({ itemCode: 'RICE', description: '', images: [], showOnline: true })).rejects.toThrow('Too many photos.');
   });
 });

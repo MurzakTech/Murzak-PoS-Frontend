@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import {
   checkStoreSlug,
@@ -11,11 +11,14 @@ import {
   listOnlineOrders,
   markOnlineOrderPaid,
   saveOnlineStore,
+  setItemsOnline,
   setOnlineOrderStatus,
 } from '../../api/onlineStoreApi';
-import { getOrderWebhook, regenerateOrderWebhook } from '../../api/ecommerceApi';
+import { getEcommerceProducts, getOrderWebhook, regenerateOrderWebhook } from '../../api/ecommerceApi';
 import OnlineOrdersTab from './OnlineOrdersTab';
 import OnlineStoreTab from './OnlineStoreTab';
+import { showAllProducts } from './GoOnlineWizard';
+import { uploadProductImage } from '../../api/uploadImage';
 import WebhookCard from './WebhookCard';
 
 jest.mock('../../api/onlineStoreApi', () => ({
@@ -29,7 +32,8 @@ jest.mock('../../api/onlineStoreApi', () => ({
   markOnlineOrderPaid: jest.fn(),
   createInvoiceForOnlineOrder: jest.fn(),
 }));
-jest.mock('../../api/ecommerceApi', () => ({ getOrderWebhook: jest.fn(), regenerateOrderWebhook: jest.fn() }));
+jest.mock('../../api/uploadImage', () => ({ uploadProductImage: jest.fn() }));
+jest.mock('../../api/ecommerceApi', () => ({ getOrderWebhook: jest.fn(), regenerateOrderWebhook: jest.fn(), getEcommerceProducts: jest.fn() }));
 // No live connection in tests; the screen falls back to polling
 jest.mock('../../hooks/useRealtimeRefresh', () => ({ __esModule: true, default: () => false, pollEvery: (ms) => ms }));
 
@@ -335,5 +339,191 @@ describe('the website order connection', () => {
   test('shows why the last website order could not be recorded', () => {
     renderIn(<WebhookCard company="Duka Ltd" lastOrderMessage="Website order 501 could not be recorded: Product ZZZ is not available." lastOrderAt="2026-10-25 09:30:00" />);
     expect(screen.getByText(/Website order 501 could not be recorded/)).toBeInTheDocument();
+  });
+});
+
+describe('getting the store ready and sharing it', () => {
+  const openStore = async (store) => {
+    getOnlineStore.mockResolvedValue(store);
+    renderIn(<OnlineStoreTab company="Duka Ltd" locations={[]} />);
+    await screen.findByLabelText('Web address name');
+  };
+
+  test('a new store shows what is left to do', async () => {
+    await openStore({ ...STORE, product_count: 0 });
+    expect(screen.getByText('Get your store ready')).toBeInTheDocument();
+    expect(screen.getByText(/steps done/)).toBeInTheDocument();
+    expect(screen.getByText('Choose the products to show')).toBeInTheDocument();
+  });
+
+  test('a store that is ready shows no checklist', async () => {
+    await openStore({ ...STORE, slug: 'duka', enabled: true, accept_mpesa: false, product_count: 3 });
+    expect(screen.queryByText('Get your store ready')).not.toBeInTheDocument();
+  });
+
+  test('a saved store offers a QR code, a poster and the link on WhatsApp', async () => {
+    await openStore({ ...STORE, slug: 'duka', enabled: true, product_count: 3 });
+    expect(screen.getByRole('img', { name: 'QR code for your store link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Print a poster' })).toBeInTheDocument();
+    const open = jest.spyOn(window, 'open').mockReturnValue({});
+    userEvent.click(screen.getByRole('button', { name: 'Share on WhatsApp' }));
+    const url = open.mock.calls[0][0];
+    expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+    expect(decodeURIComponent(url)).toContain(`${window.location.origin}/shop/duka`);
+    open.mockRestore();
+  });
+
+  test('the owner can message the customer about their order, ready to send', async () => {
+    listOnlineOrders.mockResolvedValue({
+      rows: [{ name: 'SO-1', customer_name: 'Amina Wanjiru', status: 'Confirmed', delivery_method: 'Pickup', grand_total: 500, paid: 0, channel: 'Website' }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    getOnlineOrder.mockResolvedValue({ name: 'SO-1', customer_name: 'Amina Wanjiru', phone: '0712345678', address: '', grand_total: 500, lines: [{ item_code: 'R', item_name: 'Rice', qty: 2, rate: 250, amount: 500 }] });
+    renderIn(<OnlineOrdersTab company="Duka Ltd" />);
+    userEvent.click(await screen.findByRole('button', { name: 'More actions for order SO-1' }));
+    userEvent.click(await screen.findByRole('menuitem', { name: 'View' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Order SO-1' });
+    const open = jest.spyOn(window, 'open').mockReturnValue({});
+    userEvent.click(await within(dialog).findByRole('button', { name: 'Message the customer on WhatsApp' }));
+    const url = open.mock.calls[0][0];
+    expect(url.startsWith('https://wa.me/254712345678?text=')).toBe(true);
+    expect(decodeURIComponent(url)).toContain('Hello Amina');
+    expect(within(dialog).getByRole('button', { name: 'Print packing slip' })).toBeInTheDocument();
+    open.mockRestore();
+  });
+
+  test('the guided setup takes a new store from nothing to open, with its link ready', async () => {
+    checkStoreSlug.mockResolvedValue({ available: true, message: '' });
+    getOnlineStore.mockResolvedValueOnce({ ...STORE, product_count: 7 }).mockResolvedValue({ ...STORE, slug: 'duka', enabled: true, product_count: 7 });
+    renderIn(<OnlineStoreTab company="Duka Ltd" locations={[{ value: 'Main - D', label: 'Main shop' }]} />);
+    await screen.findByLabelText('Web address name');
+    userEvent.click(screen.getByRole('button', { name: /guided setup/ }));
+
+    // Step 1: the web address name is what is missing, so that is where it starts
+    const dialog = await screen.findByRole('dialog', { name: 'Go online: Your store' });
+    userEvent.type(within(dialog).getByLabelText('Web address name'), 'duka');
+    await within(dialog).findByText('This name is free.');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Next' }));
+
+    // Step 2: collecting needs an address
+    await screen.findByRole('dialog', { name: 'Go online: Orders' });
+    userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Write where customers collect their orders.')).toBeInTheDocument();
+    userEvent.type(within(screen.getByRole('dialog')).getByLabelText('Pickup address'), 'Moi Avenue 4');
+    userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    // Step 3 and 4: cash is on and 7 products are shown already
+    await screen.findByRole('dialog', { name: 'Go online: Payment' });
+    userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('dialog', { name: 'Go online: Products' });
+    expect(within(screen.getByRole('dialog')).getByText('7 products are shown in your store.')).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    // Step 5: open it
+    await screen.findByRole('dialog', { name: 'Go online: Open' });
+    userEvent.click(screen.getByRole('button', { name: 'Open my store' }));
+    await waitFor(() => expect(saveOnlineStore).toHaveBeenCalledTimes(1));
+    expect(saveOnlineStore.mock.calls[0][0]).toMatchObject({ slug: 'duka', enabled: 1, pickup_address: 'Moi Avenue 4', store_name: 'Duka ya Amina' });
+    const done = await screen.findByRole('dialog', { name: 'Your store is open' });
+    expect(within(done).getByText(`${window.location.origin}/shop/duka`)).toBeInTheDocument();
+    expect(within(done).getByRole('img', { name: 'QR code for your store link' })).toBeInTheDocument();
+  });
+
+  test('a name that is taken stops the owner on the first step', async () => {
+    checkStoreSlug.mockResolvedValue({ available: false, message: 'That name is already taken. Please choose another.' });
+    renderIn(<OnlineStoreTab company="Duka Ltd" locations={[]} />);
+    await screen.findByLabelText('Web address name');
+    userEvent.click(screen.getByRole('button', { name: /guided setup/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Go online: Your store' });
+    userEvent.type(within(dialog).getByLabelText('Web address name'), 'duka');
+    await within(dialog).findAllByText('That name is already taken. Please choose another.');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('dialog', { name: 'Go online: Your store' })).toBeInTheDocument();
+  });
+
+  test('"Show all my products" gets every page of products and shows them a hundred at a time', async () => {
+    const rows = (from, count) => Array.from({ length: count }, (_, i) => ({ item_code: `P${from + i}` }));
+    getEcommerceProducts
+      .mockResolvedValueOnce({ rows: rows(0, 100), total: 250, page: 1 })
+      .mockResolvedValueOnce({ rows: rows(100, 100), total: 250, page: 2 })
+      .mockResolvedValueOnce({ rows: rows(200, 50), total: 250, page: 3 });
+    setItemsOnline.mockResolvedValue({});
+    const count = await showAllProducts({ company: 'Duka Ltd', warehouse: 'Main - D' });
+    expect(count).toBe(250);
+    expect(getEcommerceProducts).toHaveBeenCalledTimes(3);
+    expect(getEcommerceProducts).toHaveBeenCalledWith(expect.objectContaining({ visibility: 'all', page: 2, pageSize: 100 }));
+    expect(setItemsOnline.mock.calls.map(([call]) => call.itemCodes.length)).toEqual([100, 100, 50]);
+    expect(setItemsOnline.mock.calls.every(([call]) => call.show === true && call.company === 'Duka Ltd')).toBe(true);
+  });
+
+  test('a shop with no products at all is not sent to the server', async () => {
+    getEcommerceProducts.mockResolvedValue({ rows: [], total: 0, page: 1 });
+    expect(await showAllProducts({ company: 'Duka Ltd' })).toBe(0);
+    expect(setItemsOnline).not.toHaveBeenCalled();
+  });
+
+  test('a logo can be added, is saved with the store, and can be taken away', async () => {
+    uploadProductImage.mockResolvedValue('/files/logo.png');
+    await openStore({ ...STORE, slug: 'duka', enabled: true, product_count: 3 });
+    expect(screen.getByRole('button', { name: 'Add a logo' })).toBeInTheDocument();
+    userEvent.upload(screen.getByLabelText('Add a logo', { selector: 'input' }), new File(['x'], 'logo.png', { type: 'image/png' }));
+    expect(await screen.findByRole('img', { name: 'Your shop logo' })).toBeInTheDocument();
+    userEvent.click(screen.getByRole('button', { name: 'Save store settings' }));
+    await waitFor(() => expect(saveOnlineStore).toHaveBeenCalled());
+    expect(saveOnlineStore.mock.calls[0][0]).toMatchObject({ logo: '/files/logo.png' });
+    userEvent.click(screen.getByRole('button', { name: 'Remove logo' }));
+    expect(screen.queryByRole('img', { name: 'Your shop logo' })).not.toBeInTheDocument();
+  });
+
+  test('an order can be opened in the till, which gets its items, customer and whether it is paid', async () => {
+    listOnlineOrders.mockResolvedValue({
+      rows: [{ name: 'SO-1', customer: 'CUST-001', customer_name: 'Amina Wanjiru', status: 'Ready', delivery_method: 'Pickup', grand_total: 500, paid: 0, channel: 'Website' }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    getOnlineOrder.mockResolvedValue({
+      name: 'SO-1',
+      customer: 'CUST-001',
+      customer_name: 'Amina Wanjiru',
+      phone: '254712345678',
+      grand_total: 500,
+      lines: [{ item_code: 'RICE', item_name: 'Rice', qty: 2, rate: 250, amount: 500 }],
+    });
+    const AtTill = () => <pre data-testid="till">{JSON.stringify(useLocation().state)}</pre>;
+    render(
+      <MemoryRouter initialEntries={['/ecommerce']}>
+        <ToastProvider>
+          <Routes>
+            <Route path="/ecommerce" element={<OnlineOrdersTab company="Duka Ltd" />} />
+            <Route path="/till" element={<AtTill />} />
+          </Routes>
+        </ToastProvider>
+      </MemoryRouter>
+    );
+    userEvent.click(await screen.findByRole('button', { name: 'More actions for order SO-1' }));
+    userEvent.click(await screen.findByRole('menuitem', { name: 'Open in till' }));
+    const handed = JSON.parse((await screen.findByTestId('till')).textContent);
+    expect(handed.onlineOrderCart).toMatchObject({
+      order: 'SO-1',
+      paid: false,
+      customer: 'CUST-001',
+      items: [{ item_code: 'RICE', qty: 2, rate: 250 }],
+    });
+  });
+
+  test('an order that is delivered or cancelled is not offered for the till', async () => {
+    listOnlineOrders.mockResolvedValue({
+      rows: [{ name: 'SO-9', customer_name: 'Amina', status: 'Delivered', delivery_method: 'Pickup', grand_total: 500, paid: 1, channel: 'Website' }],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    renderIn(<OnlineOrdersTab company="Duka Ltd" />);
+    userEvent.click(await screen.findByRole('button', { name: 'More actions for order SO-9' }));
+    await screen.findByRole('menuitem', { name: 'View' });
+    expect(screen.queryByRole('menuitem', { name: 'Open in till' })).not.toBeInTheDocument();
   });
 });

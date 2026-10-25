@@ -21,6 +21,9 @@ import useShopUnits from './useShopUnits';
 import UnitPicker from './UnitPicker';
 import { categoryLabel, changesFrom, checkForm, FIELD_IDS, formFromProduct, isEdited, MORE_FIELDS, PRODUCTS_PATH, profitLine, summaryOf } from './productsModel';
 import T from './strings.products';
+import OnlineProductSection from './OnlineProductSection';
+import { onlineStoreAccess } from '../../config/roleAccessConfig';
+import useRoleAccess from '../../hooks/useRoleAccess';
 
 /**
  * The Edit product form at /new-look/products/:code/edit. The same layout as New product, filled with what the product has now:
@@ -35,6 +38,8 @@ const EditProductPage = () => {
   const toast = useToast();
   const access = useAccess();
   const user = useAppSelector((state) => state.auth.user);
+  const { roles } = useRoleAccess();
+  const mayEditOnline = onlineStoreAccess(roles).catalogue;
   const { warehouses } = useAppSelector((state) => state.warehouse);
   const categories = useCategories();
   const units = useUnits();
@@ -176,6 +181,8 @@ const EditProductPage = () => {
           </p>
         </MoreOptions>
       </FormPage>
+
+      {mayEditOnline ? <OnlineProductSection code={code} name={load.product.item_name} company={user && (user.company || user.custom_company)} /> : null}
 
       <ConfirmDialog
         open={askCancel}

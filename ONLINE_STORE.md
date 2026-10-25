@@ -1,5 +1,7 @@
 # Online store: the pages shoppers see and the screens that run it
 
+> The backend team's list of everything this needs from them is in `BACKEND_HANDOVER_ONLINE_STORE.md`.
+
 The backend (Murzak-PoS-Backend, `docs/ONLINE_STORE.md`) provides the online store, the website (WooCommerce) connection,
 delivery fees and online orders. This repository has the screens for it.
 
@@ -39,6 +41,115 @@ now the real store settings):
 | `products` | Online products, with a "shown online" tick on each |
 
 A new online order shows a message wherever the person is in the app (`OnlineOrderAlert`, mounted in `App.js`).
+
+## Getting online and sharing (owner and staff)
+
+- **Get your store ready** checklist at the top of My online store: name and address saved, delivery or pickup, payment, products
+  chosen, store open. It disappears when all five are done.
+- **Share your store:** copy the link, a **QR code**, **Print a poster** (shop name, "Scan to shop online", QR, link) and **Share on
+  WhatsApp** (a ready message with the shop name and link).
+- **Online products:** a **Share on WhatsApp** button per product (name, price, link) while the store is open.
+- **Order details:** **Message the customer on WhatsApp** (ready-made words for Confirmed, Ready for pickup or delivery,
+  Delivered, Cancelled, sent to the order's phone number) and **Print packing slip** (tick boxes for each item).
+- The app sends nothing itself: every message opens WhatsApp with the words ready, and the owner presses send. Code:
+  `src/newlook/ecommerce/shareModel.js`.
+
+## Open in till (collect payment and hand over)
+
+On an online order that is New, Confirmed or Ready, **Open in till** (in the row's menu and in the order details) opens the till with
+the order's items at the prices the shopper was charged (including any delivery line), and the order's customer. The cashier takes
+payment and finishes the sale as usual. Delivered and cancelled orders do not offer it.
+
+- The sale is sent with `online_order: <order name>`. When the sale goes through, the till also marks the order **paid** (unless it
+  was already paid, or the sale was put on credit); if that call fails the cashier is told to mark it paid under Online orders.
+- Code: `ecommerce/tillModel.js` (the hand-over), `pages/Sales/NewSale.js` (reads `onlineOrderCart` from the navigation, like the
+  appointment and prescription carts).
+- Not done by the till: the order's own status. Mark it Delivered under Online orders when the customer has it.
+
+**To decide with the backend.** The order already holds stock, and "Make invoice" already makes a draft invoice for it. A till
+sale linked by `online_order` must (1) release the hold without taking the stock twice, (2) stop the order offering a second invoice,
+(3) make "mark paid" safe to call twice (the till calls it too), and (4) let reports split sales by online order. Until the backend
+reads `online_order`, the field is ignored and a till sale for an online order may take stock a second time: test one real order
+before relying on it. The till screen has no automated tests of its own; this was checked by the build and by tests of the hand-over,
+not by selling in a browser.
+
+## Shop logo and link previews
+
+- **Logo:** My online store (and the guided setup, step 1) has **Add a logo**. It is shrunk and uploaded like a product photo and
+  saved with the store settings as `logo`. The shop shows it in its header on every shop page.
+- **Name in the tab and share tags:** while a shop page is open the browser tab shows the shop's name, and the page carries the
+  name, line and logo as `description` and `og:` tags (`storefront/shopMeta.js`). They are put back when the shopper leaves.
+- **Preview in WhatsApp:** WhatsApp and similar apps do **not** run the page, so the tags above never reach them. They need the
+  server to send the tags. This needs two things that are NOT built or tested yet:
+  1. The backend call `storefront_api.share_page(slug)` returning a small HTML page with `og:title` (shop name), `og:description`
+     (line), `og:image` (the logo as a full web address) and `og:url`; 404 for a shop that is not open.
+  2. The web server rule in `deploy/nginx/shop-share-preview.conf`, which sends those apps that page and everyone else the app.
+  Test with `curl -A "WhatsApp/2.23" https://<shop>/shop/<name>`, then share a real link in a chat (previews are cached by the
+  app; add `?v=2` to see a change).
+- The backend settings must also accept and return `logo` (a file address) in `save_online_store`, `get_online_store` and the
+  shopper's `get_store`.
+
+## Go online: the guided setup
+
+The checklist at the top of My online store has **Start guided setup** (or **Continue guided setup** when some steps are done). It
+opens at the first step that still needs something and asks one thing at a time:
+
+1. **Your store:** store name, web address name (checked while typing), WhatsApp number.
+2. **Orders:** delivery, pickup or both; the pickup address; free delivery or one fee (fees by area or distance are kept if
+   already set, and changed on the settings page).
+3. **Payment:** cash, and M-Pesa when it is set up.
+4. **Products:** how many are shown; **Show all my products** shows every product in one go; or choose them one by one.
+5. **Open:** **Open my store** saves everything and turns the store on, then shows the link, a QR code, Copy and Share on WhatsApp.
+
+Nothing is saved until the last step. A step cannot be left with something missing, and the message says what. A shop with only
+one place to sell from has it chosen automatically. Code: `GoOnlineWizard.jsx`, rules in `wizardModel.js`.
+
+## Product details for the online store (description and extra photos)
+
+- **Edit product** now has an **Online store** card (for people holding the catalogue permission): show or hide the product, a
+  description (up to 1000 letters) and up to 6 extra photos. It saves on its own button, apart from the product's own form.
+  Code: `src/newlook/products/OnlineProductSection.jsx`.
+- **Online products tab:** **Show all listed** and **Hide all listed** act on the products currently in the list (a search narrows
+  it), 100 at a time. **Sync Products** (to the website) is now owner only.
+- **On the shop:** a product with a description or extra photos shows a **Details** link that opens a window with the photos
+  (tap a small one to see it big), the price and the description, and Add.
+
+### What the backend must provide (agreed: it can handle description and extra photos)
+
+| Call | Does | Fields |
+|---|---|---|
+| `online_store_api.get_product_online(item_code, company)` | Read | reply `data`: `description` (text), `images` (list of file addresses, in order), `show_online` (1 or 0) |
+| `online_store_api.save_product_online(item_code, description, images, show_online, company)` | Save | `description` up to 1000 letters; `images` up to 6 addresses of files already uploaded with the standard file upload (`/files/...`); `show_online` 1 or 0 |
+| `storefront_api.list_products` (shoppers) | Rows gain | `images` (list of file addresses). `description` and `image` were already sent |
+
+**To check with the backend before relying on this.** Frappe can hold these (the Item's own description and image fields, plus a
+child table or attachments for the extra photos), but how the backend will do it has not been decided or tested. Decide and
+confirm: where each field is stored, that `list_products` for shoppers returns `images` without exposing private files, that
+photos uploaded as public files are the ones listed, and a limit on file sizes. Until then the product details card will show
+"could not be loaded".
+
+The names are in one place, `src/api/onlineStoreApi.js` (`getProductOnline`, `saveProductOnline`); change them there if the backend
+chooses different names. The main product photo stays on the product itself (`image`); `images` are the extras. The same
+catalogue permission must be checked on the server.
+
+## Who can do what (the online store is a module)
+
+The menu item **Online store** (under Sell) shows only to a person whose role holds some part of the module. Each tab needs its
+own permission (`onlineStoreAccess` in `src/config/roleAccessConfig.js`):
+
+| Tab | Permission | Roles that hold it (the owner roles hold all four) |
+|---|---|---|
+| Online orders | `orders` | Sales Manager, Online Orders Clerk |
+| My online store | `settings` | Sales Manager |
+| Online products | `catalogue` | Sales Manager, Item Manager |
+| My website (WooCommerce) | `integrations` | Owner roles only |
+
+- A person who asks for a tab they may not see is shown the first one they may. The website tab's keys are not even requested for
+  anyone but an owner.
+- The new-order alert is shown only to people holding `orders`.
+- **Online Orders Clerk** is a new role name. It must be created in the system (Settings, Team, Roles) before it can be given to
+  anyone.
+- This only decides what is drawn. The backend must check the same rules on every call (see ONLINE_STORE_AUDIT.md, section 7).
 
 ## Before relying on it
 

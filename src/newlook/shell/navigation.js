@@ -69,22 +69,37 @@ export const APPOINTMENTS_NAV_ITEM = {
   match: ['/appointments', '/new-look/appointments'],
 };
 
+// The online store is a module: its menu item shows only for people whose role gives them some part of it
+export const ONLINE_STORE_NAV_ITEM = {
+  key: 'online-store',
+  label: S.shell.nav.items.ecommerce,
+  icon: 'globe',
+  page: '/ecommerce',
+  match: ['/ecommerce', '/settings/ecommerce', '/new-look/ecommerce', '/new-look/settings/ecommerce'],
+};
+
 export const isServiceBusiness = (business, user) => {
   if (business?.kind === 'services' || business?.features?.servicesFirst) return true;
   const ind = (business?.industryCode || user?.pos_industry_code || user?.pos_industry?.industry_code || user?.pos_industry?.name || '').toUpperCase();
   return ['SALON', 'SERVICES', 'BARBER', 'SPA', 'BEAUTY'].includes(ind);
 };
 
-export const resolveNavigation = (navigation, { isLive, toNew, business, user, showAppointments } = {}) => {
+export const resolveNavigation = (navigation, { isLive, toNew, business, user, showAppointments, showOnlineStore = false } = {}) => {
   const includeAppointments = showAppointments ?? isServiceBusiness(business, user);
   const resolve = (item) => ({ ...item, to: item.soon ? undefined : item.page && (isLive(item.page) || !item.old) ? toNew(item.page) : item.old });
   return {
     home: resolve(navigation.home),
     groups: navigation.groups.map((g) => {
-      if (g.key === 'sell' && includeAppointments) {
+      if (g.key === 'sell') {
+        const [sales, ...rest] = g.items;
         return {
           ...g,
-          items: [resolve(g.items[0]), resolve(APPOINTMENTS_NAV_ITEM), ...g.items.slice(1).map(resolve)],
+          items: [
+            resolve(sales),
+            ...(includeAppointments ? [resolve(APPOINTMENTS_NAV_ITEM)] : []),
+            ...rest.map(resolve),
+            ...(showOnlineStore ? [resolve(ONLINE_STORE_NAV_ITEM)] : []),
+          ],
         };
       }
       return { ...g, items: g.items.map(resolve) };

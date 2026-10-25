@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { QRCodeSVG } from 'qrcode.react';
 import { checkStoreSlug, getOnlineStore, saveOnlineStore } from '../../api/onlineStoreApi';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -11,9 +13,13 @@ import { Skeleton } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import S from './strings.ecommerce';
+import GoOnlineWizard from './GoOnlineWizard';
+import LogoField from './LogoField';
+import { SLUG_PATTERN } from './wizardModel';
+import { catalogueMessage, posterHtml, printHtml, setupSteps, shopLink, waLink } from './shareModel';
 
 const T = S.store;
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
+const W = S.wizard;
 const SLUG_PAUSE_MS = 400;
 const MAX_AREAS = 50;
 const MODE_ORDER = ['free', 'flat', 'area', 'distance'];
@@ -31,6 +37,7 @@ const toForm = (d) => ({
   slug: text(d.slug),
   store_name: text(d.store_name),
   tagline: text(d.tagline),
+  logo: text(d.logo),
   whatsapp_number: text(d.whatsapp_number),
   minimum_order: money(d.minimum_order),
   warehouse: text(d.warehouse),
@@ -59,6 +66,7 @@ const toPayload = (f) => ({
   slug: f.slug.trim().toLowerCase(),
   store_name: f.store_name.trim(),
   tagline: f.tagline.trim(),
+  logo: f.logo,
   whatsapp_number: f.whatsapp_number.trim(),
   minimum_order: number(f.minimum_order),
   warehouse: f.warehouse,
@@ -90,6 +98,7 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
   const [saving, setSaving] = useState(false);
   const [slugCheck, setSlugCheck] = useState({ state: 'idle', message: '' });
   const [locating, setLocating] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const load = useCallback(async () => {
     setFailed(false);
@@ -108,6 +117,12 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
   }, [load]);
 
   const set = (patch) => setForm((current) => ({ ...current, ...patch }));
+
+  // A shop with one place to sell from needs no question about it
+  const onlyLocation = locations.length === 1 ? locations[0].value : '';
+  useEffect(() => {
+    if (onlyLocation) setForm((current) => (current && !current.warehouse ? { ...current, warehouse: onlyLocation } : current));
+  }, [onlyLocation, Boolean(form)]);
 
   // Ask whether the name is free while the owner types, after a short pause
   const slug = form?.slug.trim().toLowerCase() || '';
@@ -135,16 +150,18 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, saved.slug, company, Boolean(form)]);
 
-  const link = useMemo(() => (saved.slug ? `${window.location.origin}/shop/${saved.slug}` : ''), [saved.slug]);
+  const link = useMemo(() => shopLink(saved.slug), [saved.slug]);
 
-  const save = async () => {
+  const save = async (patch = {}) => {
     setSaving(true);
     try {
-      await saveOnlineStore(toPayload(form), company);
+      await saveOnlineStore(toPayload({ ...form, ...patch }), company);
       toast.success(T.saved);
       await load();
+      return true;
     } catch (error) {
       toast.error(error.message || T.saveFailed);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -154,7 +171,12 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(link).then(() => toast.success(T.copied), () => {});
   };
   const shareLink = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(fill(T.shareText, { link }))}`, '_blank', 'noopener,noreferrer');
+    window.open(waLink(catalogueMessage({ name: form.store_name.trim(), link })), '_blank', 'noopener,noreferrer');
+  };
+  const printPoster = () => {
+    const qrSvg = renderToStaticMarkup(<QRCodeSVG value={link} size={320} level="M" includeMargin />);
+    const ok = printHtml(posterHtml({ name: form.store_name.trim() || saved.slug, tagline: form.tagline.trim(), link, qrSvg }));
+    if (!ok) toast.error(T.posterBlocked);
   };
 
   const useMyLocation = () => {
@@ -201,8 +223,45 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
   const modeOptions = MODE_ORDER.map((value) => ({ value, label: T.modes[value] }));
   const locationOptions = locations.map((l) => ({ value: l.value, label: l.label }));
 
+  const steps = setupSteps({ saved, form, productCount: extra.productCount });
+  const stepsDone = steps.filter((step) => step.done).length;
+
   return (
     <div className="nl-store">
+      <GoOnlineWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        form={form}
+        set={set}
+        saved={saved}
+        slugCheck={slugCheck}
+        extra={extra}
+        company={company}
+        link={link || shopLink(form.slug.trim().toLowerCase())}
+        onOpenStore={() => save({ enabled: true })}
+        onProductsShown={(count) => setExtra((current) => ({ ...current, productCount: count }))}
+        onCopy={copyLink}
+        onShare={shareLink}
+      />
+      {stepsDone < steps.length ? (
+        <Card title={T.setupTitle}>
+          <div className="nl-store__section">
+            <p className="nl-store__help">{fill(T.setupDone, { done: stepsDone, total: steps.length })}</p>
+            <div>
+              <Button onClick={() => setWizardOpen(true)}>{stepsDone > 0 ? W.continueSetup : W.start}</Button>
+            </div>
+            <ol className="nl-store__steps">
+              {steps.map((step) => (
+                <li key={step.key} className={step.done ? 'is-done' : undefined}>
+                  <span aria-hidden="true">{step.done ? '✓ ' : '○ '}</span>
+                  {T.setupSteps[step.key]}
+                  <span className="nl-store__sr">{step.done ? ' (done)' : ''}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </Card>
+      ) : null}
       <Card title={T.title} subtitle={T.intro}>
         <div className="nl-store__section">
           <h3 className="nl-store__heading">{T.addressTitle}</h3>
@@ -212,6 +271,7 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
             <Field label={T.slug} helper={slugHelper} error={slugError} value={form.slug} onChange={(value) => set({ slug: value.toLowerCase() })} autoComplete="off" />
             <Field label={T.storeName} value={form.store_name} onChange={(store_name) => set({ store_name })} />
             <Field label={T.tagline} value={form.tagline} onChange={(tagline) => set({ tagline })} />
+            <LogoField value={form.logo} onChange={(logo) => set({ logo })} />
             <Field label={T.whatsapp} helper={T.whatsappHelp} value={form.whatsapp_number} onChange={(whatsapp_number) => set({ whatsapp_number })} inputMode="tel" />
             <Field label={T.minimum} helper={T.minimumHelp} kind="money" value={form.minimum_order} onChange={(minimum_order) => set({ minimum_order })} />
             {locationOptions.length ? (
@@ -344,6 +404,12 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
                   {T.shareWhatsApp}
                 </Button>
               </div>
+              <div className="nl-store__qr">
+                <QRCodeSVG value={link} size={160} level="M" includeMargin role="img" aria-label={T.qrLabel} />
+                <Button variant="secondary" size="small" onClick={printPoster}>
+                  {T.printPoster}
+                </Button>
+              </div>
               {!saved.enabled ? <p className="nl-store__help">{T.closedNote}</p> : null}
             </>
           ) : (
@@ -357,7 +423,7 @@ const OnlineStoreTab = ({ company, locations = [] }) => {
 
       <div className="nl-ecommerce__actions">
         <span />
-        <Button variant="primary" loading={saving} onClick={save}>
+        <Button variant="primary" loading={saving} onClick={() => save()}>
           {T.save}
         </Button>
       </div>

@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { getShop, ShopNotFoundError } from '../../api/storefrontApi';
 import { cartCount, cartReducer, cartSubtotal, loadCart, saveCart } from './cart';
+import { applyShopMeta, logoUrl } from './shopMeta';
 import useLanguage from './useLanguage';
 
 const ShopContext = createContext(null);
@@ -25,6 +26,17 @@ export const ShopProvider = ({ slug, children }) => {
   useEffect(() => {
     saveCart(slug, cart);
   }, [slug, cart]);
+
+  // The shop's name, line and logo in the tab and the share tags
+  useEffect(() => {
+    if (status !== 'ready' || !shop) return undefined;
+    return applyShopMeta({
+      title: shop.store_name,
+      description: shop.tagline,
+      image: logoUrl(shop.logo),
+      url: window.location.href,
+    });
+  }, [status, shop]);
 
   const load = useCallback(async () => {
     const id = ++latest.current;

@@ -366,3 +366,45 @@ describe('the order page', () => {
     expect(await screen.findByText('We could not find that order')).toBeInTheDocument();
   });
 });
+
+describe('a product up close', () => {
+  const LONG = { ...RICE, description: 'Pishori rice, 2 kg bag.\nGrown in Mwea.', images: ['/files/a.jpg', '/files/b.jpg'], image: '/files/main.jpg' };
+
+  test('a product with a description or extra photos can be opened, and added from there', async () => {
+    listShopProducts.mockResolvedValue({ rows: [LONG, TEA], total: 2, page: 1 });
+    renderAt('/shop/duka');
+    expect(screen.queryByRole('button', { name: 'About Tea' })).not.toBeInTheDocument();
+    userEvent.click(await screen.findByRole('button', { name: 'About Rice' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Rice' });
+    expect(within(dialog).getByText(/Pishori rice, 2 kg bag/)).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('button', { name: /Show photo/ })).toHaveLength(3);
+    userEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
+    expect(loadCart('duka').lines[0]).toMatchObject({ item_code: 'RICE', qty: 1 });
+  });
+
+  test('a product with nothing more to say has no details link', async () => {
+    renderAt('/shop/duka');
+    await screen.findByText('Rice');
+    expect(screen.queryByRole('button', { name: /About/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('the shop\'s name and logo', () => {
+  test('the logo is in the header and the shop\'s name is in the tab, and the tab goes back when the shop is left', async () => {
+    const before = document.title;
+    getShop.mockResolvedValue({ ...SHOP, logo: '/files/logo.png' });
+    const { unmount } = renderAt('/shop/duka');
+    await screen.findByRole('heading', { level: 1, name: 'Duka ya Amina' });
+    expect(document.querySelector('.sf-header__logo').getAttribute('src')).toBe(`${window.location.origin}/files/logo.png`);
+    expect(document.title).toBe('Duka ya Amina');
+    expect(document.head.querySelector('meta[property="og:image"]').getAttribute('content')).toBe(`${window.location.origin}/files/logo.png`);
+    unmount();
+    expect(document.title).toBe(before);
+  });
+
+  test('a shop without a logo keeps the plain icon', async () => {
+    renderAt('/shop/duka');
+    await screen.findByRole('heading', { level: 1, name: 'Duka ya Amina' });
+    expect(document.querySelector('.sf-header__logo')).toBeNull();
+  });
+});

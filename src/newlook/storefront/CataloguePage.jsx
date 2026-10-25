@@ -8,7 +8,9 @@ import { Skeleton } from '../components/Skeleton';
 import { formatMoney } from '../components/format';
 import BasketDialog from './BasketDialog';
 import Frame from './Frame';
+import { logoUrl } from './shopMeta';
 import ProductCard from './ProductCard';
+import ProductDialog from './ProductDialog';
 import { useShop, useToggle } from './ShopProvider';
 
 const PAGE_SIZE = 20;
@@ -19,6 +21,7 @@ const CataloguePage = () => {
   const { slug, shop, status, reload, t, language, setLanguage, cart, dispatch, count, subtotal } = useShop();
   const navigate = useNavigate();
   const [basketOpen, openBasket, closeBasket] = useToggle(false);
+  const [viewing, setViewing] = useState(null);
 
   const [typed, setTyped] = useState('');
   const [query, setQuery] = useState('');
@@ -101,6 +104,7 @@ const CataloguePage = () => {
       onLanguage={setLanguage}
       title={title}
       subtitle={shop.tagline}
+      logo={logoUrl(shop.logo)}
       homeTo={home}
       whatsapp={whatsapp}
       actions={
@@ -145,7 +149,7 @@ const CataloguePage = () => {
         <>
           <div className="sf-grid" aria-busy={loading || undefined}>
             {rows.map((product) => (
-              <ProductCard key={product.item_code} product={product} line={linesByCode.get(product.item_code)} dispatch={dispatch} t={t} />
+              <ProductCard key={product.item_code} product={product} line={linesByCode.get(product.item_code)} dispatch={dispatch} t={t} onOpen={setViewing} />
             ))}
             {loading && rows.length === 0
               ? Array.from({ length: 6 }, (_, i) => <Skeleton key={`s${i}`} height="220px" radius="var(--radius-card)" />)
@@ -168,6 +172,8 @@ const CataloguePage = () => {
           </Button>
         </div>
       ) : null}
+
+      <ProductDialog product={viewing} line={viewing ? linesByCode.get(viewing.item_code) : undefined} dispatch={dispatch} onClose={() => setViewing(null)} t={t} />
 
       <BasketDialog
         open={basketOpen}

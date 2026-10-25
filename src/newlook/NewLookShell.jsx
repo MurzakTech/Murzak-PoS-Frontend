@@ -44,8 +44,8 @@ const Inner = ({ user, onSignOut, hasAccess, children }) => {
   const destination = (item) => (isPageLive(item.page, previewRedirects) ? toNewAddress(item.page) : item.old);
   const business = useBusinessFeatures();
   const navigation = useMemo(
-    () => resolveNavigation(NAVIGATION, { isLive: (page) => isPageLive(page, previewRedirects), toNew: toNewAddress, business, user }),
-    [previewRedirects, business, user]
+    () => resolveNavigation(NAVIGATION, { isLive: (page) => isPageLive(page, previewRedirects), toNew: toNewAddress, business, user, showOnlineStore: hasAccess('/ecommerce') }),
+    [previewRedirects, business, user, hasAccess]
   );
   const searchActions = useMemo(
     () => searchActionsFor({ hasAccess, open: (a) => navigate(a), destination }),

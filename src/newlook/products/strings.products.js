@@ -133,6 +133,26 @@ const products = {
   defaultUnit: 'Nos',
 
   // ---------- The Edit product form ----------
+  online: {
+    title: 'Online store',
+    intro: 'What shoppers see when they open this product in your online store.',
+    show: 'Show this product in the online store',
+    description: 'Description',
+    descriptionHelp: 'What it is, the size or brand, how to use it. Up to {max} letters.',
+    photosTitle: 'More photos',
+    photosHelp: 'Up to {max} extra pictures. The product photo stays the first one.',
+    addPhoto: 'Add a photo',
+    removePhoto: 'Remove photo {number}',
+    photoAlt: 'Photo {number} of {name}',
+    uploading: 'Uploading',
+    uploadFailed: 'That photo could not be added. Please try again.',
+    save: 'Save online details',
+    saved: 'Online details saved',
+    saveFailed: 'The online details could not be saved. Please try again.',
+    loadFailed: 'The online details could not be loaded.',
+    retry: 'Try again',
+  },
+
   edit: {
     title: 'Edit product',
     subtitle: 'Change what you need, then save.',

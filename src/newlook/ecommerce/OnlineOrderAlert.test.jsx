@@ -24,7 +24,7 @@ const show = () =>
 
 describe('the new order alert', () => {
   test('tells a signed-in person at once: the order and where it came from, nothing about the customer', () => {
-    mockAuth.current = { isAuthenticated: true, user: { company: 'Duka Ltd' } };
+    mockAuth.current = { isAuthenticated: true, user: { company: 'Duka Ltd', roles: ['Business Owner'] } };
     show();
     expect(mockListener.current).toMatchObject({ kind: 'online_order', company: 'Duka Ltd', enabled: true });
 
@@ -37,7 +37,7 @@ describe('the new order alert', () => {
   });
 
   test('an order from the online store is named plainly', () => {
-    mockAuth.current = { isAuthenticated: true, user: { company: 'Duka Ltd' } };
+    mockAuth.current = { isAuthenticated: true, user: { company: 'Duka Ltd', roles: ['Business Owner'] } };
     show();
     act(() => mockListener.current.onRefresh({ kind: 'online_order', name: 'SO-10', channel: 'Website', company: 'Duka Ltd' }));
     expect(screen.getByText(/New online order SO-10, from Online store/)).toBeInTheDocument();
@@ -47,5 +47,17 @@ describe('the new order alert', () => {
     mockAuth.current = { isAuthenticated: false, user: null };
     show();
     expect(mockListener.current.enabled).toBe(false);
+  });
+
+  test('a person who does not work the online orders is not told about them', () => {
+    mockAuth.current = { isAuthenticated: true, user: { company: 'Duka Ltd', roles: ['Desk User'] } };
+    show();
+    expect(mockListener.current.enabled).toBe(false);
+  });
+
+  test('an orders clerk is told', () => {
+    mockAuth.current = { isAuthenticated: true, user: { company: 'Duka Ltd', roles: ['Online Orders Clerk'] } };
+    show();
+    expect(mockListener.current.enabled).toBe(true);
   });
 });

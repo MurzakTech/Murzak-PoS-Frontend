@@ -1,4 +1,4 @@
-import { canAccessRoute, isRouteAllowed, resolveRoutePattern, getAllowedRoutes } from './roleAccessConfig';
+import { canAccessRoute, isRouteAllowed, resolveRoutePattern, getAllowedRoutes, onlineStoreAccess } from './roleAccessConfig';
 import { protectedRoutes } from '../routes/routes';
 
 const can = (role, path) => canAccessRoute(path, [role]);
@@ -177,5 +177,41 @@ describe('Business Owner', () => {
 
   test('a cashier still does not', () => {
     expect(canOpen('/settings/audit-trail', ['Sales User'])).toBe(false);
+  });
+});
+
+describe('the online store module', () => {
+  test('the owner roles hold every part of it', () => {
+    ['Administrator', 'System Manager', 'Business Owner'].forEach((role) => {
+      expect(onlineStoreAccess([role])).toEqual({ orders: true, catalogue: true, settings: true, integrations: true, any: true });
+    });
+  });
+
+  test('an orders clerk works the orders and nothing else', () => {
+    expect(onlineStoreAccess(['Online Orders Clerk'])).toEqual({ orders: true, catalogue: false, settings: false, integrations: false, any: true });
+    expect(can('Online Orders Clerk', '/ecommerce')).toBe(true);
+    expect(can('Online Orders Clerk', '/products')).toBe(false);
+    expect(can('Online Orders Clerk', '/settings/business')).toBe(false);
+  });
+
+  test('a sales manager runs the orders, the catalogue and the store settings but never the website keys', () => {
+    expect(onlineStoreAccess(['Sales Manager'])).toMatchObject({ orders: true, catalogue: true, settings: true, integrations: false });
+  });
+
+  test('an item manager chooses what is shown online and nothing more', () => {
+    expect(onlineStoreAccess(['Item Manager'])).toMatchObject({ orders: false, catalogue: true, settings: false, integrations: false });
+  });
+
+  test('roles with no part of it, and no roles at all, get none of it', () => {
+    expect(onlineStoreAccess(['Desk User', 'Sales User']).any).toBe(false);
+    expect(onlineStoreAccess([]).any).toBe(false);
+    expect(onlineStoreAccess(undefined).any).toBe(false);
+    expect(can('Desk User', '/ecommerce')).toBe(false);
+  });
+
+  test('the website keys are the owner only: no other role holds them', () => {
+    ['Sales Manager', 'Item Manager', 'Online Orders Clerk', 'Accounts Manager', 'Stock Manager'].forEach((role) => {
+      expect(onlineStoreAccess([role]).integrations).toBe(false);
+    });
   });
 });

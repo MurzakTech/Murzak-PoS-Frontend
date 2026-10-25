@@ -100,6 +100,7 @@ import useOfflineSales from '../../hooks/useOfflineSales';
 import { enqueueSale, isConnectionProblem, loadQueue, offlineBlocker, queueRoom } from '../../utils/offlineSales';
 import { clearShift, loadCatalog, loadCatalogAsync, loadShift, saveCatalog, saveShift, decrementOfflineCatalogStock } from '../../utils/offlineTill';
 import { createOfflineCustomer, loadOfflineCustomers } from '../../utils/offlineCustomer';
+import { markOnlineOrderPaid } from '../../api/onlineStoreApi';
 
 // Short id for one sale, sent to M-Pesa / Pesapal / PayPal so payments can be traced to it
 const newSaleReference = () => `POS${Date.now().toString(36).toUpperCase()}`;
@@ -223,6 +224,7 @@ const NewSale = () => {
   const [customerId, setCustomerId] = useState(null); // Customer ID for API calls (from customer.name field)
   const [selectedCustomerObj, setSelectedCustomerObj] = useState(null); // Full customer object for metadata access
   const [customerPriceList, setCustomerPriceList] = useState('Standard Selling'); // Customer's default price list
+  const [onlineOrder, setOnlineOrder] = useState(null); // { name, paid } while the cart came from an online order
   const [customerProductPrices, setCustomerProductPrices] = useState({}); // { item_code: price } for customer-specific prices
   const [isLoadingCustomerPrices, setIsLoadingCustomerPrices] = useState(false);
   const [paymentMode, setPaymentMode] = useState('Cash');
@@ -346,6 +348,36 @@ const NewSale = () => {
           }));
           return [...prev, ...formatted];
         });
+      }
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+
+    // An online order opened in the till: its items and customer, so the shopper can pay and collect
+    const online = location.state?.onlineOrderCart;
+    if (online) {
+      if (online.customer) {
+        setCustomerId(online.customer);
+        setCustomer(online.customer_name || online.customer);
+      } else if (online.customer_name) {
+        setCustomer(online.customer_name);
+      }
+      const incomingItems = online.items || [];
+      if (Array.isArray(incomingItems) && incomingItems.length > 0) {
+        setCart((prev) => [
+          ...prev,
+          ...incomingItems.map((item) => ({
+            item_code: item.item_code,
+            item_name: item.item_name || item.item_code,
+            qty: Number(item.qty) || 1,
+            rate: Number(item.rate) || 0,
+            uom: 'Nos',
+            warehouse: defaultWarehouse,
+            description: '',
+            subtotal: (Number(item.qty) || 1) * (Number(item.rate) || 0),
+            discount_amount: 0,
+          })),
+        ]);
+        setOnlineOrder({ name: online.order, paid: Boolean(online.paid) });
       }
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -1253,6 +1285,8 @@ const NewSale = () => {
       invoice_type: "POS Invoice",
       // Same id on a retry, so a sale whose reply was lost is not recorded twice
       client_reference: saleReference,
+      // The online order this sale settles, so the order and the sale are tied together
+      ...(onlineOrder ? { online_order: onlineOrder.name } : {}),
       // Who the commission goes to; left out, the server uses the cashier's own sales person if there is one
       ...(salesPerson ? { sales_person: salesPerson } : {}),
       // The dispensing record, for a sale that includes prescription-only medicines
@@ -1377,6 +1411,7 @@ const NewSale = () => {
             }
             
             // Reset cart and checkout mode
+            finishOnlineOrder();
             setCart([]);
             setIsCheckoutMode(false);
             setAmountGiven(0);
@@ -1423,6 +1458,7 @@ const NewSale = () => {
         }
         
         // Reset cart and checkout mode
+        finishOnlineOrder();
         setCart([]);
         setIsCheckoutMode(false);
         setAmountGiven(0);
@@ -1739,7 +1775,20 @@ const NewSale = () => {
 
 
   // ---------------------------------------------------------------- hold, recall, clear
+  // The sale for an online order went through: mark the order paid (unless it already was, or part was left on credit) and let go of it
+  const finishOnlineOrder = () => {
+    const order = onlineOrder;
+    setOnlineOrder(null);
+    if (!order || order.paid || paymentMode === 'Credit') return;
+    markOnlineOrderPaid(order.name, userCompany).catch(() => {
+      setSnackbarMessage(`The sale is done, but online order ${order.name} could not be marked as paid. Open it under Online orders and mark it paid.`);
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+    });
+  };
+
   const resetSale = () => {
+    setOnlineOrder(null);
     setCart([]);
     setIsCheckoutMode(false);
     setAmountGiven(0);

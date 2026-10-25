@@ -13,7 +13,7 @@ import {
   syncWooCommerceCatalog,
   getEcommerceProducts,
 } from '../../api/ecommerceApi';
-import { getOnlineStore } from '../../api/onlineStoreApi';
+import { getOnlineStore, listOnlineOrders, setItemsOnline } from '../../api/onlineStoreApi';
 
 jest.mock('../../api/onlineStoreApi', () => ({
   getOnlineStore: jest.fn(),
@@ -36,7 +36,7 @@ jest.mock('../../api/ecommerceApi', () => ({
 
 const mockStore = configureStore({
   reducer: {
-    auth: () => ({ user: { company: 'Test Company' } }),
+    auth: () => ({ user: { company: 'Test Company', roles: ['Administrator'] } }),
     warehouse: () => ({ warehouses: [{ name: 'Main - TC', warehouse_name: 'Main Store' }] }),
   },
 });
@@ -157,5 +157,73 @@ describe('EcommercePage', () => {
     expect(await screen.findByText(`${window.location.origin}/shop/duka-ya-amina`)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Copy link/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Share on WhatsApp/i })).toBeInTheDocument();
+  });
+});
+
+describe('EcommercePage by role', () => {
+  const asRoles = (roles) =>
+    configureStore({
+      reducer: {
+        auth: () => ({ user: { company: 'Test Company', roles } }),
+        warehouse: () => ({ warehouses: [] }),
+      },
+    });
+  const renderAs = (roles, entry = '/ecommerce') =>
+    render(
+      <Provider store={asRoles(roles)}>
+        <MemoryRouter initialEntries={[entry]}>
+          <ToastProvider>
+            <EcommercePage />
+          </ToastProvider>
+        </MemoryRouter>
+      </Provider>
+    );
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    getEcommerceSettings.mockResolvedValue({ enabled: true, consumer_secret: 'cs_secret' });
+    getEcommerceProducts.mockResolvedValue({ rows: [], total: 0 });
+    listOnlineOrders.mockResolvedValue({ rows: [], total: 0, page: 1, pageSize: 20 });
+  });
+
+  test('the owner sees all four tabs', async () => {
+    renderAs(['Business Owner']);
+    expect(await screen.findByRole('tab', { name: 'Online orders' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'My online store' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'My website (WooCommerce)' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Online products' })).toBeInTheDocument();
+  });
+
+  test('an orders clerk sees only the orders, even when they ask for the website tab, and the website keys are never fetched', async () => {
+    renderAs(['Online Orders Clerk'], '/ecommerce?tab=woocommerce');
+    expect(await screen.findByRole('tab', { name: 'Online orders' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'My website (WooCommerce)' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'My online store' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Online products' })).not.toBeInTheDocument();
+    expect(screen.queryByText('WooCommerce REST API Integration')).not.toBeInTheDocument();
+    expect(getEcommerceSettings).not.toHaveBeenCalled();
+  });
+
+  test('a role with no part of the module is told so', async () => {
+    renderAs(['Desk User']);
+    expect(await screen.findByText('You do not have access to the online store')).toBeInTheDocument();
+  });
+
+  test('shows or hides everything in the list in one go', async () => {
+    getEcommerceProducts.mockResolvedValue({
+      rows: [
+        { item_code: 'A', item_name: 'Apple', price: 10, stock: 1, unit: 'Nos', sync_status: 'ready', show_online: true },
+        { item_code: 'B', item_name: 'Bread', price: 50, stock: 1, unit: 'Nos', sync_status: 'ready', show_online: true },
+      ],
+      total: 2,
+    });
+    setItemsOnline.mockResolvedValue({});
+    renderAs(['Item Manager'], '/ecommerce?tab=products');
+    await screen.findByText('Apple');
+    userEvent.click(screen.getByRole('button', { name: 'Hide all listed' }));
+    await waitFor(() => expect(setItemsOnline).toHaveBeenCalledWith({ itemCodes: ['A', 'B'], show: false, company: 'Test Company' }));
+    expect(await screen.findByText('2 products are now hidden from your online store.')).toBeInTheDocument();
+    // A person who only chooses what is shown cannot send the catalogue to the website
+    expect(screen.queryByRole('button', { name: /Sync Products/ })).not.toBeInTheDocument();
   });
 });

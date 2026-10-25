@@ -86,3 +86,39 @@ export const createInvoiceForOnlineOrder = async (order, company) => {
   const reply = await send(() => axiosInstance.post(`${ORDERS}.create_invoice_for_online_order`, compact({ order, company }), { allowRefusal: true }));
   return reply.data?.invoice || '';
 };
+
+// ---------- What a product says about itself online ----------
+
+export const MAX_ONLINE_PHOTOS = 6;
+export const MAX_ONLINE_DESCRIPTION = 1000;
+
+/**
+ * A product's online details: { description, images (addresses of the extra photos, in order), show_online }.
+ * The product's main photo stays on the product itself; these are the extra pictures shoppers can flick through.
+ */
+export const getProductOnline = async (itemCode, company) => {
+  const reply = await send(() => axiosInstance.get(`${STORE}.get_product_online`, { params: compact({ item_code: itemCode, company }) }));
+  const data = reply.data || {};
+  return {
+    description: data.description ? String(data.description) : '',
+    images: list(data.images).filter((src) => typeof src === 'string' && src).slice(0, MAX_ONLINE_PHOTOS),
+    showOnline: data.show_online !== false && data.show_online !== 0,
+  };
+};
+
+export const saveProductOnline = async ({ itemCode, description, images, showOnline, company }) => {
+  const reply = await send(() =>
+    axiosInstance.post(
+      `${STORE}.save_product_online`,
+      compact({
+        item_code: itemCode,
+        description: String(description || '').trim().slice(0, MAX_ONLINE_DESCRIPTION),
+        images: list(images).slice(0, MAX_ONLINE_PHOTOS),
+        show_online: showOnline ? 1 : 0,
+        company,
+      }),
+      { allowRefusal: true }
+    )
+  );
+  return reply.data;
+};

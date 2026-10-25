@@ -11,6 +11,9 @@ import { useToast } from '../components/Toast';
 import { formatMoney } from '../components/format';
 import { PageHeader } from '../shell';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import useRoleAccess from '../../hooks/useRoleAccess';
+import { onlineStoreAccess } from '../../config/roleAccessConfig';
+import EmptyState from '../components/EmptyState';
 import { listWarehouses } from '../../store/warehouseSlice';
 import {
   getEcommerceSettings,
@@ -24,22 +27,36 @@ import OnlineStoreTab from './OnlineStoreTab';
 import WebhookCard from './WebhookCard';
 import S from './strings.ecommerce';
 import fill from '../labels/fill';
-import { setItemsOnline } from '../../api/onlineStoreApi';
+import { getOnlineStore, setItemsOnline } from '../../api/onlineStoreApi';
+import { productMessage, shopLink, waLink } from './shareModel';
 import './ecommerce.css';
 
+// Each tab needs one of the online store's four permissions (see onlineStoreAccess)
+const BULK_CHUNK = 100;
+
 const TABS = [
-  { key: 'orders', label: S.tabs.orders, to: '/ecommerce?tab=orders' },
-  { key: 'digital_store', label: S.tabs.store, to: '/ecommerce?tab=digital_store' },
-  { key: 'woocommerce', label: S.tabs.woocommerce, to: '/ecommerce' },
-  { key: 'products', label: S.tabs.products, to: '/ecommerce?tab=products' },
+  { key: 'orders', label: S.tabs.orders, to: '/ecommerce?tab=orders', needs: 'orders' },
+  { key: 'digital_store', label: S.tabs.store, to: '/ecommerce?tab=digital_store', needs: 'settings' },
+  { key: 'woocommerce', label: S.tabs.woocommerce, to: '/ecommerce', needs: 'integrations' },
+  { key: 'products', label: S.tabs.products, to: '/ecommerce?tab=products', needs: 'catalogue' },
 ];
+
+/** The tab to open: the one asked for if the person may see it, else the website tab (owner), else the first they may see */
+export const pickTab = (asked, allowed) => {
+  const keys = allowed.map((t) => t.key);
+  if (keys.includes(asked)) return asked;
+  return keys.includes('woocommerce') ? 'woocommerce' : keys[0] || '';
+};
 
 const EcommercePage = () => {
   const toast = useToast();
   const dispatch = useAppDispatch();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const activeTab = searchParams.get('tab') || 'woocommerce';
+  const { roles } = useRoleAccess();
+  const access = useMemo(() => onlineStoreAccess(roles), [roles]);
+  const allowedTabs = useMemo(() => TABS.filter((tab) => access[tab.needs]), [access]);
+  const activeTab = pickTab(searchParams.get('tab') || 'woocommerce', allowedTabs);
 
   const user = useAppSelector((s) => s.auth.user);
   const company = user?.company || user?.custom_company || '';
@@ -65,6 +82,9 @@ const EcommercePage = () => {
   const [lastOrder, setLastOrder] = useState({ message: '', at: '' });
   // The settings as last loaded from, or saved to, the server: used to tell whether the form has unsaved changes
   const savedSettings = useRef('');
+
+  // The store's link, for sharing one product (empty until the store has a web address name and is open)
+  const [shop, setShop] = useState({ link: '' });
 
   // Products table
   const [products, setProducts] = useState([]);
@@ -124,15 +144,28 @@ const EcommercePage = () => {
   useEffect(() => {
     if (company) {
       dispatch(listWarehouses({ company, limit: 1000 }));
-      loadSettings();
+      // The website settings include the keys, so only a person who may see them asks for them
+      if (access.integrations) loadSettings();
     }
-  }, [company, dispatch, loadSettings]);
+  }, [company, dispatch, loadSettings, access.integrations]);
 
   useEffect(() => {
     if (activeTab === 'products') {
       loadProducts();
     }
   }, [activeTab, loadProducts]);
+
+  useEffect(() => {
+    if (activeTab !== 'products' || !company) return;
+    (async () => {
+      try {
+        const data = await getOnlineStore(company);
+        setShop({ link: data && data.enabled ? shopLink(data.slug) : '' });
+      } catch (err) {
+        setShop({ link: '' });
+      }
+    })();
+  }, [activeTab, company]);
 
   // What the form holds now, as the server stores it
   const currentSettings = () => ({
@@ -205,6 +238,30 @@ const EcommercePage = () => {
     }
   };
 
+  // Everything in the list now (so a search narrows it): shown or hidden in one go
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const setAllShown = async (show) => {
+    const codes = products.map((r) => r.item_code);
+    if (!codes.length) return;
+    setBulkBusy(true);
+    try {
+      for (let i = 0; i < codes.length; i += BULK_CHUNK) {
+        await setItemsOnline({ itemCodes: codes.slice(i, i + BULK_CHUNK), show, company });
+      }
+      setProducts((rows) => rows.map((r) => ({ ...r, show_online: show })));
+      toast.success(fill(show ? S.products.bulkShown : S.products.bulkHidden, { count: codes.length }));
+    } catch (err) {
+      toast.error(err.message || S.products.updateFailed);
+      loadProducts();
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const shareProduct = (row) => {
+    window.open(waLink(productMessage({ product: row, link: shop.link })), '_blank', 'noopener,noreferrer');
+  };
+
   const productColumns = [
     {
       key: 'product',
@@ -249,7 +306,26 @@ const EcommercePage = () => {
         </span>
       ),
     },
+    {
+      key: 'share',
+      header: '',
+      align: 'right',
+      render: (r) =>
+        shop.link && r.show_online !== false ? (
+          <Button variant="ghost" size="small" aria-label={fill(S.products.shareName, { name: r.item_name })} onClick={() => shareProduct(r)}>
+            {S.products.shareOnWhatsApp}
+          </Button>
+        ) : null,
+    },
   ];
+
+  if (!allowedTabs.length) {
+    return (
+      <div className="nl-ecommerce">
+        <EmptyState icon="alert" title={S.noAccess.title} description={S.noAccess.description} />
+      </div>
+    );
+  }
 
   return (
     <div className="nl-ecommerce">
@@ -258,12 +334,13 @@ const EcommercePage = () => {
         subtitle="Connect your shop to WooCommerce or start selling online with real-time stock sync"
         tabs={{
           label: 'E-commerce sections',
-          tabs: TABS,
+          tabs: allowedTabs,
           value: activeTab,
         }}
       />
 
-      {/* Overview Stat Tiles */}
+      {/* Overview Stat Tiles (the website's status and keys: owner only) */}
+      {access.integrations ? (
       <div className="nl-ecommerce__tiles">
         <Card>
           <span className="nl-stock-tile__label">Store Status</span>
@@ -296,6 +373,7 @@ const EcommercePage = () => {
           </span>
         </Card>
       </div>
+      ) : null}
 
       {/* Main Tabs Body */}
       {activeTab === 'woocommerce' ? (
@@ -414,9 +492,19 @@ const EcommercePage = () => {
               onChange={setSearch}
               style={{ maxWidth: '300px', margin: 0 }}
             />
-            <Button variant="secondary" icon="refresh" loading={syncing} onClick={handleSync}>
-              Sync Products
-            </Button>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+              <Button variant="secondary" loading={bulkBusy} disabled={!products.length} onClick={() => setAllShown(true)}>
+                {S.products.showAll}
+              </Button>
+              <Button variant="secondary" loading={bulkBusy} disabled={!products.length} onClick={() => setAllShown(false)}>
+                {S.products.hideAll}
+              </Button>
+              {access.integrations ? (
+                <Button variant="secondary" icon="refresh" loading={syncing} onClick={handleSync}>
+                  Sync Products
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           <Table

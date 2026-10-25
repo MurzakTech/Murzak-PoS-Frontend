@@ -100,6 +100,19 @@ describe('The menu', () => {
     const retailSellItems = retailNav.groups.find((g) => g.key === 'sell').items.map((i) => i.label);
     expect(retailSellItems).toEqual(['Sales', 'Customers']);
   });
+
+  test('the Online store item is a module: it shows only when the person may open it, and opens the online store', () => {
+    const sell = (nav) => nav.groups.find((g) => g.key === 'sell').items;
+    const without = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p });
+    expect(sell(without).map((i) => i.label)).not.toContain('Online store');
+
+    const withIt = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p, showOnlineStore: true });
+    const item = sell(withIt).find((i) => i.label === 'Online store');
+    expect(item.to).toBe('/ecommerce');
+    expect(isActive(item, '/ecommerce')).toBe(true);
+    expect(isActive(item, '/settings/ecommerce')).toBe(true);
+    expect(isActive(item, '/sales')).toBe(false);
+  });
 });
 
 describe('Sidebar', () => {
