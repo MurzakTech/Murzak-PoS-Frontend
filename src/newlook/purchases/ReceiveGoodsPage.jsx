@@ -14,7 +14,7 @@ import { PageHeader } from '../shell';
 import fill from '../labels/fill';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
-import { getPurchase, receiveGoods } from '../../api/purchasesListApi';
+import { createPurchaseReturn, getPurchase, receiveGoods } from '../../api/purchasesListApi';
 import { invalidateQuery } from './usePurchasesData';
 import './purchases.css';
 import PurchaseStatus from './PurchaseStatus';
@@ -28,6 +28,7 @@ import {
   newRequestId,
   openAddress,
   parseQty,
+  parseSpoilt,
   PURCHASES_PATH,
   qtyText,
   receiveAddress,
@@ -36,7 +37,12 @@ import {
   receiveProblems,
   reviewFieldProblems,
   reviewLines,
+  returnRemarks,
   reviewTotal,
+  SPOILT_PREFIX,
+  SPOILT_REASONS,
+  spoiltItems,
+  spoiltTotal,
   stockLine,
 } from './purchasesModel';
 import T from './strings.purchases';
@@ -44,9 +50,14 @@ import { oldScreen } from '../redirects/engine';
 import { sellingLocations } from '../till/sellingLocations';
 
 const R = T.receive;
+
+/** What goes into stock from a line: what arrived less what is spoilt (never below nothing while the typing is unfinished) */
+const goodOf = (l) => Math.max(0, (parseQty(l.qty) || 0) - (parseSpoilt(l.spoilt) || 0));
 const STEPS = ['choose', 'items', 'review'];
 const MAX_ORDERS = 100;
 const ITEM_KEY = 'item_code';
+const NOTE_MAX = 140;
+const REASON_CHOICES = SPOILT_REASONS.map((r) => ({ value: r, label: r }));
 
 /** The three steps, with the one you are on marked in words and with aria-current */
 const Steps = ({ step }) => (
@@ -98,6 +109,9 @@ const ReceiveGoodsPage = () => {
   const [touched, setTouched] = useState(false);
   const [askCancel, setAskCancel] = useState(false);
   const [result, setResult] = useState(null);
+  const [makeReturn, setMakeReturn] = useState(true);
+  const [returnNote, setReturnNote] = useState('');
+  const [returnState, setReturnState] = useState(null); // null, or { status: 'busy' | 'done' | 'failed', number, amount, reason }
   const requestId = useRef(newRequestId('recv'));
   const sending = useRef(false);
   const heading = useRef(null);
@@ -151,6 +165,9 @@ const ReceiveGoodsPage = () => {
     setBillDate(isoDay(new Date()));
     setDueDate('');
     setStore('');
+    setMakeReturn(true);
+    setReturnNote('');
+    setReturnState(null);
     setFailure('');
     setProblems({});
     setTouched(false);
@@ -168,6 +185,7 @@ const ReceiveGoodsPage = () => {
       if (!prev[code] && !prev.general) return prev;
       const next = { ...prev };
       delete next[code];
+      delete next[`${SPOILT_PREFIX}${code}`];
       delete next.general;
       return next;
     });
@@ -181,7 +199,7 @@ const ReceiveGoodsPage = () => {
   const show = (found) => {
     setProblems(found);
     const first = Object.keys(found).find((k) => k !== 'general') || (found.general ? 'general' : '');
-    const id = first === 'general' ? 'rc-items' : `rc-qty-${first}`;
+    const id = first === 'general' ? 'rc-items' : first.startsWith(SPOILT_PREFIX) ? `rc-spoilt-${first.slice(SPOILT_PREFIX.length)}` : `rc-qty-${first}`;
     setTimeout(() => {
       const el = document.getElementById(id);
       if (el && el.focus) el.focus();
@@ -193,6 +211,7 @@ const ReceiveGoodsPage = () => {
     if (problems.general) list.push({ id: 'rc-items', message: problems.general });
     lines.forEach((l) => {
       if (problems[l.item_code]) list.push({ id: `rc-qty-${l.item_code}`, message: problems[l.item_code] });
+      if (problems[`${SPOILT_PREFIX}${l.item_code}`]) list.push({ id: `rc-spoilt-${l.item_code}`, message: problems[`${SPOILT_PREFIX}${l.item_code}`] });
     });
     if (problems.dueDate) list.push({ id: 'rc-due-date', message: problems.dueDate });
     if (failure) list.push({ id: 'rc-bill-no', message: failure });
@@ -248,11 +267,31 @@ const ReceiveGoodsPage = () => {
       invalidateQuery('purchases');
       invalidateQuery('stock');
       setResult(data);
+      // The goods and the bill are saved; the spoilt part goes back on its own return note, never twice for a repeated delivery
+      if (makeReturn && !data.repeat && spoiltItems(lines).length) makeReturnNote(data);
     } catch (error) {
       setFailure(fill(R.failed, { reason: error.message }));
       sending.current = false;
     }
     setSaving(false);
+  };
+
+  const makeReturnNote = async (data) => {
+    const items = spoiltItems(lines);
+    const amount = spoiltTotal(lines);
+    setReturnState({ status: 'busy' });
+    try {
+      const made = await createPurchaseReturn({
+        returnAgainst: data.invoice,
+        items: items.map(({ item_code, item_name, qty, rate }) => ({ item_code, item_name, qty, rate })),
+        remarks: returnRemarks(items, returnNote),
+        company,
+      });
+      const number = (made && (made.return_number || made.return_invoice || made.name || made.return)) || '';
+      setReturnState({ status: 'done', number, id: (made && (made.return_invoice || made.name || made.return)) || '', amount });
+    } catch (error) {
+      setReturnState({ status: 'failed', reason: error.message || '' });
+    }
   };
 
   const back = () => {
@@ -293,6 +332,26 @@ const ReceiveGoodsPage = () => {
               ) : null}
             </>
           ) : null}
+          {returnState && returnState.status === 'busy' ? (
+            <p className="nl-receive-note" role="status">
+              {R.returnRetrying}
+            </p>
+          ) : null}
+          {returnState && returnState.status === 'done' ? (
+            <p role="status">
+              <strong>{R.returnDoneTitle}. </strong>
+              {fill(R.returnDone, { amount: formatMoney(returnState.amount), supplier: purchase.supplier.name })}
+            </p>
+          ) : null}
+          {returnState && returnState.status === 'failed' ? (
+            <div className="nl-error" role="alert">
+              <Icon name="alert" />
+              <span>
+                <strong>{R.returnFailedTitle}. </strong>
+                {fill(R.returnFailed, { reason: returnState.reason })}
+              </span>
+            </div>
+          ) : null}
           {result.order && result.order.open ? <p className="nl-receive-note">{R.stillOpen}</p> : null}
           <ul className="nl-receive-done__links">
             <li>
@@ -301,11 +360,17 @@ const ReceiveGoodsPage = () => {
             <li>
               <Link to={openAddress(result.receipt)}>{fill(R.openReceipt, { number: result.receipt_number })}</Link>
             </li>
+            {returnState && returnState.status === 'done' && returnState.id ? (
+              <li>
+                <Link to={openAddress(returnState.id)}>{fill(R.returnOpen, { number: returnState.number || returnState.id })}</Link>
+              </li>
+            ) : null}
             <li>
               <Link to={openAddress(purchase.id)}>{R.openOrder}</Link>
             </li>
           </ul>
           <div className="nl-receive-done__actions">
+            {returnState && returnState.status === 'failed' ? <Button onClick={() => makeReturnNote(result)}>{R.returnRetry}</Button> : null}
             {result.order && result.order.open ? <Button onClick={() => startOver(purchase.id)}>{R.receiveRest}</Button> : null}
             <Button variant="secondary" onClick={() => startOver('')}>
               {R.receiveAnother}
@@ -391,12 +456,16 @@ const ReceiveGoodsPage = () => {
       key: 'arrived',
       header: R.columns.arrived,
       render: (l) => (
-        <Checkbox label={l.name} checked={l.ticked} disabled={l.toArrive <= 0} onChange={(on) => changeLine(l.item_code, { ticked: on, qty: on && !parseQty(l.qty) ? qtyText(l.toArrive) : l.qty })} />
+        <div className="nl-receive-product">
+          <Checkbox label={l.name} checked={l.ticked} disabled={l.toArrive <= 0} onChange={(on) => changeLine(l.item_code, { ticked: on, qty: on && !parseQty(l.qty) ? qtyText(l.toArrive) : l.qty })} />
+          <span className="nl-receive-note">{[l.item_code, l.unit].filter(Boolean).join(' · ')}</span>
+        </div>
       ),
     },
     { key: 'ordered', header: R.columns.ordered, align: 'right', render: (l) => qtyText(l.ordered) },
     { key: 'received', header: R.columns.received, align: 'right', render: (l) => qtyText(l.received) },
     { key: 'toArrive', header: R.columns.toArrive, align: 'right', render: (l) => (l.toArrive > 0 ? qtyText(l.toArrive) : R.nothingLeft) },
+    { key: 'rate', header: R.columns.cost, money: true, nowrap: true },
     {
       key: 'qty',
       header: R.columns.quantity,
@@ -416,6 +485,29 @@ const ReceiveGoodsPage = () => {
           </div>
         ) : null,
     },
+    {
+      key: 'spoilt',
+      header: R.columns.spoilt,
+      render: (l) =>
+        l.toArrive > 0 ? (
+          <div className="nl-receive-qty">
+            <Field
+              id={`rc-spoilt-${l.item_code}`}
+              label={fill(R.spoiltLabel, { name: l.name })}
+              inputMode="decimal"
+              value={l.spoilt}
+              placeholder="0"
+              disabled={!l.ticked}
+              error={problems[`${SPOILT_PREFIX}${l.item_code}`]}
+              autoComplete="off"
+              onChange={(v) => changeLine(l.item_code, { spoilt: v.replace(/[^\d.]/g, '') })}
+            />
+            {l.ticked && (parseSpoilt(l.spoilt) || 0) > 0 ? <Select label={fill(R.reasonLabel, { name: l.name })} options={REASON_CHOICES} value={l.reason} onChange={(v) => changeLine(l.item_code, { reason: v })} /> : null}
+          </div>
+        ) : null,
+    },
+    { key: 'good', header: R.columns.good, align: 'right', render: (l) => (l.ticked && l.toArrive > 0 ? qtyText(goodOf(l)) : '') },
+    { key: 'value', header: R.columns.value, money: true, nowrap: true, render: (l) => (l.ticked && l.toArrive > 0 ? formatMoney(Math.round((parseQty(l.qty) || 0) * l.rate * 100) / 100) : '') },
   ];
   const itemsStep = purchase ? (
     <>
@@ -423,6 +515,26 @@ const ReceiveGoodsPage = () => {
         {R.itemsTitle}
       </h2>
       <p className="nl-receive__chosen">{fill(R.chosen, { number: purchase.number, supplier: purchase.supplier.name, date: dateCell(purchase.date) })}</p>
+      <dl className="nl-receive-facts nl-receive-facts--row" aria-label={R.orderFactsLabel}>
+        <div>
+          <dt className="nl-label">{R.orderFacts.supplier}</dt>
+          <dd>{purchase.supplier.name}</dd>
+        </div>
+        <div>
+          <dt className="nl-label">{R.orderFacts.status}</dt>
+          <dd>
+            <PurchaseStatus status={purchase.status} />
+          </dd>
+        </div>
+        <div>
+          <dt className="nl-label">{R.orderFacts.ordered}</dt>
+          <dd>{formatMoney(purchase.totals && purchase.totals.total)}</dd>
+        </div>
+        <div>
+          <dt className="nl-label">{R.orderFacts.open}</dt>
+          <dd>{fill(R.linesCount, { count: lines.filter((l) => l.toArrive > 0).length })}</dd>
+        </div>
+      </dl>
       <p className="nl-helper">{R.itemsHelp}</p>
       {dupes.length > 0 ? (
         <p className="nl-receive-note">
@@ -446,6 +558,19 @@ const ReceiveGoodsPage = () => {
           <span>{problems.general}</span>
         </p>
       ) : null}
+      <p className="nl-receive-total">
+        <span>{R.itemsTotals.received}</span> <strong>{formatMoney(reviewTotal(lines))}</strong>
+      </p>
+      {spoiltTotal(lines) > 0 ? (
+        <>
+          <p className="nl-receive-total">
+            <span>{R.itemsTotals.spoilt}</span> <strong>{formatMoney(spoiltTotal(lines))}</strong>
+          </p>
+          <p className="nl-receive-total">
+            <span>{R.itemsTotals.good}</span> <strong>{formatMoney(Math.round((reviewTotal(lines) - spoiltTotal(lines)) * 100) / 100)}</strong>
+          </p>
+        </>
+      ) : null}
     </>
   ) : null;
 
@@ -453,9 +578,11 @@ const ReceiveGoodsPage = () => {
   const review = purchase ? reviewLines(lines) : [];
   const left = purchase ? leftAfter(lines) : '';
   const storeChoices = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
+  const spoilt = purchase ? spoiltItems(lines) : [];
   const reviewColumns = [
     { key: 'name', header: R.reviewColumns.item },
     { key: 'qty', header: R.reviewColumns.quantity, align: 'right', render: (l) => qtyText(l.qty) },
+    ...(spoilt.length ? [{ key: 'spoilt', header: R.reviewColumns.spoilt, align: 'right', render: (l) => (l.spoilt > 0 ? qtyText(l.spoilt) : '') }, { key: 'good', header: R.reviewColumns.good, align: 'right', render: (l) => qtyText(l.good) }] : []),
     { key: 'rate', header: R.reviewColumns.cost, money: true },
     { key: 'amount', header: R.reviewColumns.amount, money: true },
   ];
@@ -481,6 +608,29 @@ const ReceiveGoodsPage = () => {
       <p className="nl-receive-total">
         <span>{R.reviewTotal}</span> <strong>{formatMoney(reviewTotal(lines))}</strong>
       </p>
+      {spoilt.length ? (
+        <section className="nl-receive-spoilt" aria-label={R.spoiltTitle}>
+          <h3 className="nl-label">{R.spoiltTitle}</h3>
+          <p className="nl-helper">{fill(R.spoiltIntro, { supplier: purchase.supplier.name })}</p>
+          <ul className="nl-receive-done__stock">
+            {spoilt.map((i) => (
+              <li key={i.item_code}>{fill(R.returnSpoiltLine, { name: i.item_name, qty: qtyText(i.qty), reason: i.reason })}</li>
+            ))}
+          </ul>
+          <p className="nl-receive-total">
+            <span>{R.spoiltValue}</span> <strong>{formatMoney(spoiltTotal(lines))}</strong>
+          </p>
+          <p className="nl-receive-total">
+            <span>{R.netValue}</span> <strong>{formatMoney(Math.round((reviewTotal(lines) - spoiltTotal(lines)) * 100) / 100)}</strong>
+          </p>
+          <Checkbox label={R.makeReturn} checked={makeReturn} onChange={setMakeReturn} />
+          {makeReturn ? (
+            <Field id="rc-return-note" label={R.returnNote} helper={R.returnNoteHelper} value={returnNote} onChange={(v) => setReturnNote(v.slice(0, NOTE_MAX))} autoComplete="off" />
+          ) : (
+            <p className="nl-receive-note">{R.returnSkippedNote}</p>
+          )}
+        </section>
+      ) : null}
       <p className="nl-helper">{R.reviewTaxNote}</p>
       <p className="nl-receive-note">{left ? fill(R.leftNote, { items: left }) : R.leftNone}</p>
       <Field id="rc-bill-no" label={R.billNo} helper={R.billNoHelper} value={billNo} onChange={(v) => setBillNo(v.slice(0, 60))} autoComplete="off" />

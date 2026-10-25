@@ -11,7 +11,7 @@ import { REDIRECTS } from '../redirects/redirectTable';
 import { findEntry } from '../redirects/engine';
 import PagePlaceholder from '../redirects/PagePlaceholder';
 import { OrdersRedirect, ReturnsRedirect } from './TabRedirect';
-import { newPurchaseAddress, openAddress, receiveAddress } from './purchasesModel';
+import { NEW_PATH, newPurchaseAddress, openAddress, PURCHASES_PATH, RECEIVE_PATH, receiveAddress } from './purchasesModel';
 
 const Where = () => {
   const { pathname, search } = useLocation();
@@ -22,8 +22,8 @@ const renderAt = (url) =>
   render(
     <MemoryRouter initialEntries={[url]}>
       <Routes>
-        <Route path="/new-look/purchases/orders" element={<OrdersRedirect />} />
-        <Route path="/new-look/purchases/returns" element={<ReturnsRedirect />} />
+        <Route path={`${PURCHASES_PATH}/orders`} element={<OrdersRedirect />} />
+        <Route path={`${PURCHASES_PATH}/returns`} element={<ReturnsRedirect />} />
         <Route path="*" element={<Where />} />
       </Routes>
     </MemoryRouter>
@@ -31,13 +31,13 @@ const renderAt = (url) =>
 
 describe('the Orders and Returns addresses', () => {
   test('Orders opens the Orders tab', () => {
-    renderAt('/new-look/purchases/orders');
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/purchases?tab=orders');
+    renderAt(`${PURCHASES_PATH}/orders`);
+    expect(screen.getByTestId('where')).toHaveTextContent(`${PURCHASES_PATH}?tab=orders`);
   });
 
   test('Returns opens the Returns tab, and a purchase in the address opens its panel', () => {
-    renderAt('/new-look/purchases/returns?purchase=ACC-PINV-2026-00009');
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/purchases?tab=returns&open=ACC-PINV-2026-00009');
+    renderAt(`${PURCHASES_PATH}/returns?purchase=ACC-PINV-2026-00009`);
+    expect(screen.getByTestId('where')).toHaveTextContent(`${PURCHASES_PATH}?tab=returns&open=ACC-PINV-2026-00009`);
   });
 });
 
@@ -45,7 +45,7 @@ describe('the routes', () => {
   const find = (path) => newLookRoutes.filter((r) => r.path === path);
 
   test('the list, the New form, the Receive goods steps, Orders and Returns each have one route of their own', () => {
-    ['/new-look/purchases', '/new-look/purchases/new', '/new-look/purchases/receive', '/new-look/purchases/orders', '/new-look/purchases/returns'].forEach((path) => {
+    [PURCHASES_PATH, NEW_PATH, RECEIVE_PATH, `${PURCHASES_PATH}/orders`, `${PURCHASES_PATH}/returns`].forEach((path) => {
       expect(find(path)).toHaveLength(1);
       expect(find(path)[0].element).not.toBe(PagePlaceholder);
     });
@@ -57,9 +57,9 @@ describe('the routes', () => {
   });
 
   test('the addresses other pages link to are the real ones', () => {
-    expect(newPurchaseAddress('SKU-1')).toBe('/new-look/purchases/new?item=SKU-1');
-    expect(receiveAddress('PO-1')).toBe('/new-look/purchases/receive?order=PO-1');
-    expect(openAddress('PO-1')).toBe('/new-look/purchases?open=PO-1');
+    expect(newPurchaseAddress('SKU-1')).toBe(`${NEW_PATH}?item=SKU-1`);
+    expect(receiveAddress('PO-1')).toBe(`${RECEIVE_PATH}?order=PO-1`);
+    expect(openAddress('PO-1')).toBe(`${PURCHASES_PATH}?open=PO-1`);
   });
 });
 

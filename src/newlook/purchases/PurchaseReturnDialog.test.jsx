@@ -111,9 +111,7 @@ describe('PurchaseReturnDialog', () => {
     const findBtn = screen.getByRole('button', { name: 'Find purchase' });
     userEvent.click(findBtn);
 
-    await waitFor(() => {
-      expect(getPurchase).toHaveBeenCalledWith('#O0001', undefined, 'Linda mwananchi');
-      expect(screen.getByText('Cooking Oil 5L')).toBeInTheDocument();
-    });
+    await waitFor(() => expect(getPurchase).toHaveBeenCalledWith('#O0001', undefined, 'Linda mwananchi'));
+    expect(await screen.findByText('Cooking Oil 5L')).toBeInTheDocument();
   });
 });
