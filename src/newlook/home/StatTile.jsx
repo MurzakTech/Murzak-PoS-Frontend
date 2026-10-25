@@ -13,7 +13,6 @@ import ChangeLine from './ChangeLine';
  * own). It shows the value, an optional detail line, the change against the previous period with an arrow and words, and a
  * grey sparkline of the period, or the month progress meter while there are fewer than 7 days of data.
  *
- *   icon                   a small icon chip in the corner (decorative)
  *   label, value, detail   the tile's words and its main number (already formatted)
  *   change                 { direction, text } from changeInfo, drawn with an arrow and words
  *   goodWhen               'up' or 'down': which way is good news for this number
@@ -22,7 +21,7 @@ import ChangeLine from './ChangeLine';
  *   to, linkLabel          where the tile opens, and what a screen reader hears
  *   footer                 anything extra under the figures (a note or a button); it is not part of the link
  */
-const StatTile = ({ icon, label, value, detail, change, goodWhen, spark = [], progress, to, linkLabel, footer, loading, failed, onRetry }) => {
+const StatTile = ({ label, value, detail, change, goodWhen, spark = [], progress, to, linkLabel, footer, loading, failed, onRetry }) => {
   if (failed) {
     return (
       <article className="nl-card nl-tile" aria-label={label}>
@@ -49,18 +48,11 @@ const StatTile = ({ icon, label, value, detail, change, goodWhen, spark = [], pr
   }
   return (
     <article className="nl-card nl-tile">
-      <div className="nl-tile__head">
-        <p className="nl-tile__label">
-          <RouterLink to={to} className="nl-tile__link" aria-label={`${label}: ${value}. ${linkLabel}`}>
-            {label}
-          </RouterLink>
-        </p>
-        {icon ? (
-          <span className="nl-chip-icon" aria-hidden="true">
-            <Icon name={icon} />
-          </span>
-        ) : null}
-      </div>
+      <p className="nl-tile__label">
+        <RouterLink to={to} className="nl-tile__link" aria-label={`${label}: ${value}. ${linkLabel}`}>
+          {label}
+        </RouterLink>
+      </p>
       <p className="nl-tile__value">{value}</p>
       {detail ? <p className="nl-tile__detail">{detail}</p> : null}
       {change ? <ChangeLine direction={change.direction} text={change.text} goodWhen={goodWhen} /> : null}

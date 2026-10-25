@@ -5,7 +5,6 @@ import Icon from '../components/Icon';
 import { Skeleton } from '../components/Skeleton';
 import S from '../strings';
 import fill from '../labels/fill';
-import logoMark from '../../assets/logo_mark.png';
 import ChangeLine from './ChangeLine';
 import { changeInfo, money, shortDay, weekdayName } from './homeModel';
 
@@ -23,11 +22,8 @@ const T = S.home.hero;
  *   loading      show skeletons in the figures
  *   openTo / closeTo   where the till button goes
  */
-const Figure = ({ label, children, note, icon }) => (
+const Figure = ({ label, children, note }) => (
   <div className="nl-hero__figure">
-    <span className="nl-chip-icon" aria-hidden="true">
-      <Icon name={icon} />
-    </span>
     <dt className="nl-hero__label">{label}</dt>
     <dd className="nl-hero__value">{children}</dd>
     {note ? <dd className="nl-hero__note">{note}</dd> : null}
@@ -85,13 +81,6 @@ const HeroBand = ({ hero, today, loading, failed, onRetry, openTo, closeTo, week
         </div>
       ) : null}
       <div className="nl-hero__main">
-        <img className="nl-hero__watermark" src={logoMark} alt="" aria-hidden="true" />
-        <p className="nl-hero__brand">
-          <span className="nl-hero__brand-mark">
-            <img src={logoMark} alt="" />
-          </span>
-          <span>{T.brand}</span>
-        </p>
         <div className="nl-hero__total">
           <p className="nl-hero__total-label">{T.title}</p>
           <p className="nl-hero__total-value" data-testid="hero-total">
@@ -106,12 +95,12 @@ const HeroBand = ({ hero, today, loading, failed, onRetry, openTo, closeTo, week
         ) : null}
       </div>
       <dl className="nl-hero__figures">
-        <Figure label={T.salesCount} icon="receipt">{hero.sales_count}</Figure>
-        <Figure label={T.averageBasket} icon="chart">{hero.sales_count ? money(hero.average_basket) : money(0)}</Figure>
-        <Figure label={T.cashInTill} icon="wallet" note={cash ? fill(T.includesFloat, { amount: money(cash.opening_float) }) : T.noTill}>
+        <Figure label={T.salesCount}>{hero.sales_count}</Figure>
+        <Figure label={T.averageBasket}>{hero.sales_count ? money(hero.average_basket) : money(0)}</Figure>
+        <Figure label={T.cashInTill} note={cash ? fill(T.includesFloat, { amount: money(cash.opening_float) }) : T.noTill}>
           {cash ? money(cash.amount) : '–'}
         </Figure>
-        <Figure label={T.mpesaReceived} icon="till" note={payments}>
+        <Figure label={T.mpesaReceived} note={payments}>
           {mpesa ? money(mpesa.amount) : '–'}
         </Figure>
       </dl>

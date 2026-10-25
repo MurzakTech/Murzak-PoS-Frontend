@@ -383,7 +383,6 @@ const home = {
   },
   hero: {
     label: 'Today so far',
-    brand: 'Murzak POS',
     title: 'Today so far (KES)',
     change: {
       up: 'Up {pct}% on last {weekday}',
