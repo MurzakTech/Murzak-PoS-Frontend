@@ -40,6 +40,25 @@ now the real store settings):
 
 A new online order shows a message wherever the person is in the app (`OnlineOrderAlert`, mounted in `App.js`).
 
+## Who can do what (the online store is a module)
+
+The menu item **Online store** (under Sell) shows only to a person whose role holds some part of the module. Each tab needs its
+own permission (`onlineStoreAccess` in `src/config/roleAccessConfig.js`):
+
+| Tab | Permission | Roles that hold it (the owner roles hold all four) |
+|---|---|---|
+| Online orders | `orders` | Sales Manager, Online Orders Clerk |
+| My online store | `settings` | Sales Manager |
+| Online products | `catalogue` | Sales Manager, Item Manager |
+| My website (WooCommerce) | `integrations` | Owner roles only |
+
+- A person who asks for a tab they may not see is shown the first one they may. The website tab's keys are not even requested for
+  anyone but an owner.
+- The new-order alert is shown only to people holding `orders`.
+- **Online Orders Clerk** is a new role name. It must be created in the system (Settings, Team, Roles) before it can be given to
+  anyone.
+- This only decides what is drawn. The backend must check the same rules on every call (see ONLINE_STORE_AUDIT.md, section 7).
+
 ## Before relying on it
 
 - **Server headers.** `deploy/nginx/security-headers.conf` now allows location for the site's own pages

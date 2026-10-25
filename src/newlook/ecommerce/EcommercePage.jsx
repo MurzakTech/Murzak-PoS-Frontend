@@ -11,6 +11,9 @@ import { useToast } from '../components/Toast';
 import { formatMoney } from '../components/format';
 import { PageHeader } from '../shell';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import useRoleAccess from '../../hooks/useRoleAccess';
+import { onlineStoreAccess } from '../../config/roleAccessConfig';
+import EmptyState from '../components/EmptyState';
 import { listWarehouses } from '../../store/warehouseSlice';
 import {
   getEcommerceSettings,
@@ -27,19 +30,30 @@ import fill from '../labels/fill';
 import { setItemsOnline } from '../../api/onlineStoreApi';
 import './ecommerce.css';
 
+// Each tab needs one of the online store's four permissions (see onlineStoreAccess)
 const TABS = [
-  { key: 'orders', label: S.tabs.orders, to: '/ecommerce?tab=orders' },
-  { key: 'digital_store', label: S.tabs.store, to: '/ecommerce?tab=digital_store' },
-  { key: 'woocommerce', label: S.tabs.woocommerce, to: '/ecommerce' },
-  { key: 'products', label: S.tabs.products, to: '/ecommerce?tab=products' },
+  { key: 'orders', label: S.tabs.orders, to: '/ecommerce?tab=orders', needs: 'orders' },
+  { key: 'digital_store', label: S.tabs.store, to: '/ecommerce?tab=digital_store', needs: 'settings' },
+  { key: 'woocommerce', label: S.tabs.woocommerce, to: '/ecommerce', needs: 'integrations' },
+  { key: 'products', label: S.tabs.products, to: '/ecommerce?tab=products', needs: 'catalogue' },
 ];
+
+/** The tab to open: the one asked for if the person may see it, else the website tab (owner), else the first they may see */
+export const pickTab = (asked, allowed) => {
+  const keys = allowed.map((t) => t.key);
+  if (keys.includes(asked)) return asked;
+  return keys.includes('woocommerce') ? 'woocommerce' : keys[0] || '';
+};
 
 const EcommercePage = () => {
   const toast = useToast();
   const dispatch = useAppDispatch();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const activeTab = searchParams.get('tab') || 'woocommerce';
+  const { roles } = useRoleAccess();
+  const access = useMemo(() => onlineStoreAccess(roles), [roles]);
+  const allowedTabs = useMemo(() => TABS.filter((tab) => access[tab.needs]), [access]);
+  const activeTab = pickTab(searchParams.get('tab') || 'woocommerce', allowedTabs);
 
   const user = useAppSelector((s) => s.auth.user);
   const company = user?.company || user?.custom_company || '';
@@ -124,9 +138,10 @@ const EcommercePage = () => {
   useEffect(() => {
     if (company) {
       dispatch(listWarehouses({ company, limit: 1000 }));
-      loadSettings();
+      // The website settings include the keys, so only a person who may see them asks for them
+      if (access.integrations) loadSettings();
     }
-  }, [company, dispatch, loadSettings]);
+  }, [company, dispatch, loadSettings, access.integrations]);
 
   useEffect(() => {
     if (activeTab === 'products') {
@@ -251,6 +266,14 @@ const EcommercePage = () => {
     },
   ];
 
+  if (!allowedTabs.length) {
+    return (
+      <div className="nl-ecommerce">
+        <EmptyState icon="alert" title={S.noAccess.title} description={S.noAccess.description} />
+      </div>
+    );
+  }
+
   return (
     <div className="nl-ecommerce">
       <PageHeader
@@ -258,12 +281,13 @@ const EcommercePage = () => {
         subtitle="Connect your shop to WooCommerce or start selling online with real-time stock sync"
         tabs={{
           label: 'E-commerce sections',
-          tabs: TABS,
+          tabs: allowedTabs,
           value: activeTab,
         }}
       />
 
-      {/* Overview Stat Tiles */}
+      {/* Overview Stat Tiles (the website's status and keys: owner only) */}
+      {access.integrations ? (
       <div className="nl-ecommerce__tiles">
         <Card>
           <span className="nl-stock-tile__label">Store Status</span>
@@ -296,6 +320,7 @@ const EcommercePage = () => {
           </span>
         </Card>
       </div>
+      ) : null}
 
       {/* Main Tabs Body */}
       {activeTab === 'woocommerce' ? (

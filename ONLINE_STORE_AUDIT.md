@@ -282,6 +282,12 @@ Every plugin or theme change should be written to the audit trail (an audit trai
 6. Can WooCommerce shipping zones and payment methods be created from POS settings?
 7. How are backups and security updates handled, and who is responsible?
 
-## 9. Suggested first change
+## 9. Progress
+
+**Phase 1 (module and access control): built on this branch.** Online store menu item, four permissions, per-tab gating, alert gating, a new Online Orders Clerk role, tests. Documented in `ONLINE_STORE.md`. Not yet done from Phase 1: the `store_engine` preference (needs a place to store it on the backend) and a business-level "module on" switch (the menu item currently follows the person's role only).
+
+**Found in passing:** `/appointments` is also missing from the role table, so only owner roles can open it; the existing test `roleAccessConfig.test.js` ("each protected route resolves to itself") already fails because of it.
+
+## 10. Suggested first change
 
 Phase 1 (with the `store_engine` preference from section 8) is the smallest piece that delivers what was asked for ("a module with RBAC" and "prefer WordPress and WooCommerce") and it does not depend on new backend design. It touches `src/config/roleAccessConfig.js`, `src/newlook/shell/navigation.js`, `src/newlook/ecommerce/EcommercePage.jsx` and `src/newlook/ecommerce/OnlineOrderAlert.jsx`, plus tests.

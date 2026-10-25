@@ -14,6 +14,11 @@ const ecommerce = {
     products: 'Online products',
   },
 
+  noAccess: {
+    title: 'You do not have access to the online store',
+    description: 'Ask the business owner to give your role access to online orders.',
+  },
+
   store: {
     title: 'Your online store',
     intro:

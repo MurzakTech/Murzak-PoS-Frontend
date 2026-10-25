@@ -196,6 +196,8 @@ const ROUTE_GROUPS = {
     '/settings/brand',
   ],
   SETUP: ['/setup'],
+  // The online store module: one screen with tabs. Which tab a person sees is decided by ONLINE_STORE_ROLES below.
+  ONLINE_STORE: ['/ecommerce', '/settings/ecommerce'],
   DEV_TOOLS: ['/components', '/charts', '/redirects'],
   INDUSTRY: [
     '/industry/:industryCode/products',
@@ -271,6 +273,7 @@ export const ROLE_ACCESS_CONFIG = {
       'REPORTS',
       'SETTINGS',
       'SETUP',
+      'ONLINE_STORE',
       'DEV_TOOLS',
       'INDUSTRY',
       'KITCHEN'
@@ -295,6 +298,7 @@ export const ROLE_ACCESS_CONFIG = {
       'REPORTS',
       'SETTINGS',
       'SETUP',
+      'ONLINE_STORE',
       'DEV_TOOLS',
       'INDUSTRY',
       'KITCHEN'
@@ -319,6 +323,7 @@ export const ROLE_ACCESS_CONFIG = {
       'REPORTS',
       'SETTINGS',
       'SETUP',
+      'ONLINE_STORE',
       'DEV_TOOLS',
       'INDUSTRY',
       'KITCHEN'
@@ -327,7 +332,7 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Sales roles
   'Sales Manager': [
-    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'EXPENSES', 'KITCHEN'),
+    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'EXPENSES', 'KITCHEN', 'ONLINE_STORE'),
     '/inventory/stock-summary', // View stock for sales
   ],
 
@@ -423,10 +428,16 @@ export const ROLE_ACCESS_CONFIG = {
 
   // Item/Product roles
   'Item Manager': [
-    ...combineRoutes('DASHBOARD', 'PRODUCTS', 'INVENTORY', 'REPORTS'),
+    ...combineRoutes('DASHBOARD', 'PRODUCTS', 'INVENTORY', 'REPORTS', 'ONLINE_STORE'),
     '/inventory/stock-summary',
     '/inventory/low-stock',
     '/inventory/expiry-alerts',
+  ],
+
+  // Online Orders Clerk - packs and hands over online orders; no store settings, no catalogue, no keys
+  'Online Orders Clerk': [
+    ...combineRoutes('DASHBOARD', 'ONLINE_STORE'),
+    '/customers', // Look up who is collecting
   ],
 
   // Desk User - POS operations
@@ -558,6 +569,36 @@ ROLE_ACCESS_CONFIG['Business Owner'] = ROLE_ACCESS_CONFIG['System Manager'];
 
 // Roles that open every page
 export const FULL_ACCESS_ROLES = ['Administrator', 'System Manager', 'Business Owner'];
+
+/**
+ * The online store is one screen with four tabs, and each tab has its own rule:
+ *   orders        see online orders, confirm, hand over, cancel, mark paid, make an invoice
+ *   catalogue     choose which products are shown online
+ *   settings      the store's address, delivery, payment and WhatsApp number
+ *   integrations  the website (WooCommerce) keys and the secret that lets website orders in: the owner only
+ * The owner roles (FULL_ACCESS_ROLES) hold all four. Like the rest of this file it only decides what is drawn; the
+ * server must still check every request.
+ */
+export const ONLINE_STORE_ROLES = {
+  orders: ['Sales Manager', 'Online Orders Clerk'],
+  catalogue: ['Sales Manager', 'Item Manager'],
+  settings: ['Sales Manager'],
+  integrations: [],
+};
+
+export const onlineStoreAccess = (roles) => {
+  const list = Array.isArray(roles) ? roles : [];
+  const owner = list.some((role) => FULL_ACCESS_ROLES.includes(role));
+  const has = (name) => owner || ONLINE_STORE_ROLES[name].some((role) => list.includes(role));
+  return {
+    orders: has('orders'),
+    catalogue: has('catalogue'),
+    settings: has('settings'),
+    integrations: has('integrations'),
+    any: has('orders') || has('catalogue') || has('settings') || has('integrations'),
+  };
+};
+
 
 // Every screen the app knows, so a web address can be traced to the one screen it opens
 const KNOWN_ROUTES = Array.from(new Set(Object.values(ROUTE_GROUPS).flat())).map((path) => ({ path }));
