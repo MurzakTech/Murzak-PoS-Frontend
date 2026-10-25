@@ -25,7 +25,7 @@ const PANEL_MIN_HEIGHT = 'calc(var(--space-8) * 6)';
  *   heldCount       held sales as the till counts them; when missing, the server's count is used
  *   onOpenHeld      the Held sales (n) button
  *   onCloseTill     the Count and close till button (the parent opens ShiftCloseDialog)
- *   onCashInOut, onShiftReport   the Cash in or out and Shift report buttons (shown only when the parent gives them)
+ *   onCashInOut, onShiftReport, onHandOver   the Cash in or out, Shift report and Hand over the till buttons (shown only when the parent gives them)
  *   onOpenSale(id)  a Recent sales row
  *   load            the server call, replaceable in tests
  */
@@ -35,7 +35,7 @@ const TillPanel = ({ open, onClose, ...rest }) => (
   </Drawer>
 );
 
-const PanelBody = ({ session, heldCount, onOpenHeld, onCloseTill, onOpenSale, onCashInOut, onShiftReport, load = getTillState }) => {
+const PanelBody = ({ session, heldCount, onOpenHeld, onCloseTill, onOpenSale, onCashInOut, onShiftReport, onHandOver, load = getTillState }) => {
   const [view, setView] = useState({ status: 'loading', data: null });
   const ticket = useRef(0);
 
@@ -92,13 +92,14 @@ const PanelBody = ({ session, heldCount, onOpenHeld, onCloseTill, onOpenSale, on
           onOpenSale={onOpenSale}
           onCashInOut={onCashInOut}
           onShiftReport={onShiftReport}
+          onHandOver={onHandOver}
         />
       )}
     </LoadingGate>
   );
 };
 
-const PanelContent = ({ data, known, held, onOpenHeld, onCloseTill, onOpenSale, onCashInOut, onShiftReport }) => {
+const PanelContent = ({ data, known, held, onOpenHeld, onCloseTill, onOpenSale, onCashInOut, onShiftReport, onHandOver }) => {
   const cash = cashRow(data);
   const sales = ((data && data.recent_sales) || []).slice(0, MAX_RECENT_SALES);
   const who = openedLine(known);
@@ -158,6 +159,11 @@ const PanelContent = ({ data, known, held, onOpenHeld, onCloseTill, onOpenSale, 
         {onShiftReport ? (
           <Button variant="secondary" size="till" icon="receipt" onClick={onShiftReport}>
             {C.till.reportButton}
+          </Button>
+        ) : null}
+        {onHandOver ? (
+          <Button variant="secondary" size="till" icon="user" onClick={onHandOver}>
+            {C.till.handoverButton}
           </Button>
         ) : null}
         <Button size="till" icon="till" onClick={onCloseTill}>

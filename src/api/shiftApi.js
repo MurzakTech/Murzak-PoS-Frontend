@@ -1,5 +1,6 @@
 import axiosInstance from './axiosInstance';
 import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
+import { countedList, normalizeClose } from './tillApi';
 
 /**
  * Cash in and out of the till during a shift, and the shift report (shift management, parts 1 and 2).
@@ -12,6 +13,7 @@ import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
  * docs/SHIFTS.md of the back end and is kept in this one file, so a change on the server touches only this file.
  */
 const SHIFT = 'murzak_pos.api.shift_api';
+const HANDOVER = 'murzak_pos.api.handover_api';
 
 // Frappe wraps return values in { message }; these calls answer { success, message, data }.
 const body = (response) => response.data?.message ?? response.data;
@@ -124,3 +126,34 @@ export const getShiftReport = async (session) => {
   const reply = await run(() => axiosInstance.get(`${SHIFT}.get_shift_report`, { params: { session } }));
   return normalizeReport(reply.data);
 };
+
+/** The colleagues the till can be handed to: [{ user, name }] */
+export const listHandoverPeople = async (session) => {
+  const reply = await run(() => axiosInstance.get(`${HANDOVER}.list_handover_people`, { params: { session } }));
+  return list(reply.data.people).map((p) => ({ user: p.user, name: p.name || p.user }));
+};
+
+const handOver = async ({ session, toUser, counted, note }, confirm) => {
+  const reply = await run(() =>
+    axiosInstance.post(
+      `${HANDOVER}.hand_over_till`,
+      { session, to_user: toUser, counted: countedList(counted), confirm, note: note || undefined },
+      { allowRefusal: true }
+    )
+  );
+  const next = reply.data.next_shift;
+  return {
+    ...normalizeClose(reply.data),
+    handoverTo: reply.data.handover_to || null,
+    // null when the old shift is still closing, or the next one could not be opened (then `float` says what to open it with)
+    nextShift: next ? { ...next, float: number(next.float) } : null,
+    float: reply.data.float === undefined ? null : number(reply.data.float),
+    message: reply.message || '',
+  };
+};
+
+/** The count against what should be there, and who would take over. Nothing is closed. */
+export const previewHandover = (args) => handOver(args, false);
+
+/** Closes the shift with the count and opens the next person's shift with the counted cash. Call it only after a yes. */
+export const handOverTill = (args) => handOver(args, true);

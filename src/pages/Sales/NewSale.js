@@ -51,6 +51,7 @@ import TillPanel from '../../newlook/till/TillPanel';
 import ShiftCloseDialog from '../../newlook/till/ShiftCloseDialog';
 import CashMovementDialog from '../../newlook/till/CashMovementDialog';
 import ShiftReportDialog from '../../newlook/till/ShiftReportDialog';
+import HandoverDialog from '../../newlook/till/HandoverDialog';
 import SaleAnnouncement from '../../newlook/till/SaleAnnouncement';
 import { getPreview, isPageLive } from '../../newlook/redirects/live';
 import { toNewAddress } from '../../newlook/redirects/engine';
@@ -310,6 +311,7 @@ const NewSale = () => {
   const [tillPanelOpen, setTillPanelOpen] = useState(false); // New look: the Till open pill's panel (Recent sales)
   const [shiftCloseOpen, setShiftCloseOpen] = useState(false); // New look: the shift-end count
   const [cashDialogOpen, setCashDialogOpen] = useState(false); // New look: cash put in or taken out of the drawer
+  const [handoverOpen, setHandoverOpen] = useState(false); // New look: the Hand over the till dialog
   const [reportSession, setReportSession] = useState(''); // New look: the session whose shift report is showing ('' = none)
   const [leaveError, setLeaveError] = useState('');
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
@@ -2499,6 +2501,10 @@ const NewSale = () => {
               setTillPanelOpen(false);
               setReportSession(posOpeningEntry?.name || '');
             }}
+            onHandOver={() => {
+              setTillPanelOpen(false);
+              setHandoverOpen(true);
+            }}
             onOpenSale={(id) => {
               setTillPanelOpen(false);
               leaveTo(isPageLive('/sales', getPreview()) ? `${toNewAddress('/sales')}?sale=${encodeURIComponent(id)}` : '/sales/history');
@@ -2511,6 +2517,16 @@ const NewSale = () => {
             onAddExpense={() => {
               setCashDialogOpen(false);
               leaveTo(toNewAddress('/expenses/new'));
+            }}
+          />
+          <HandoverDialog
+            open={handoverOpen}
+            onClose={() => setHandoverOpen(false)}
+            session={posOpeningEntry}
+            onHandedOver={(result) => {
+              // This shift is closed: the till shows "open the till" for this person, and the next cashier opens theirs
+              const name = posOpeningEntry?.name;
+              dispatch(closePOSOpeningEntry.fulfilled({ requestedName: name, openingEntry: null, outcome: result?.outcome === 'closing' ? 'closing' : 'closed' }, 'new-look-handover', { pos_opening_entry: name }));
             }}
           />
           <ShiftReportDialog open={Boolean(reportSession)} onClose={() => setReportSession('')} session={reportSession} />
