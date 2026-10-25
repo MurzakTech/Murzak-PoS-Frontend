@@ -171,6 +171,117 @@ Customer accounts and "order again", coupons and loyalty at checkout, WhatsApp B
 5. Can quantities be decimal in `checkout` and `quote_delivery`?
 6. Can the online store mark a sale as channel "Online" so reports can split it?
 
-## 8. Suggested first change
+## 8. WordPress and WooCommerce as the shop engine
 
-Phase 1 is the smallest piece that delivers what was asked for ("a module with RBAC") and it does not depend on new backend design. It touches `src/config/roleAccessConfig.js`, `src/newlook/shell/navigation.js`, `src/newlook/ecommerce/EcommercePage.jsx` and `src/newlook/ecommerce/OnlineOrderAlert.jsx`, plus tests.
+Direction from the owner: the shop is based on WordPress and WooCommerce, owners should be able to **prefer** it, and owners should be able to **build and iterate** on the shop's looks, features and plugins themselves.
+
+### 8.1 What exists today
+
+WooCommerce is treated as a website the owner **already has somewhere else**. The POS can:
+
+| Capability | Where |
+|---|---|
+| Store the website address and WooCommerce keys, test the connection | `EcommercePage.jsx`, `ecommerceApi.js` (`testWooCommerceConnection`) |
+| Push the catalogue and stock to the website (`sync_woocommerce_catalog`), with "auto sync stock" and "auto sync products" switches | `EcommercePage.jsx` |
+| Receive website orders through a webhook address and secret that the owner pastes into WooCommerce | `WebhookCard.jsx`, `getOrderWebhook` |
+| Show website orders next to built-in store orders, labelled by channel | `OnlineOrdersTab.jsx` |
+| Hide or show each product on the website | Online products tab |
+
+What does **not** exist: any way to choose WooCommerce as the main shop, any control over the WordPress site itself, and any link between the two shops (the built-in store at `/shop/<name>` and WooCommerce run side by side with separate settings).
+
+### 8.2 Gaps against the new direction
+
+| # | Gap | Why it matters |
+|---|---|---|
+| W1 | **No store preference.** The Online store page opens on the WooCommerce tab by default, but nothing records which shop is the owner's main one. | The owner cannot say "my shop is WooCommerce". The share link, QR code, WhatsApp messages and the menu item cannot know which address to give customers. |
+| W2 | **Two parallel shops with two sets of settings.** Delivery areas, payment, WhatsApp number and opening state are set in the built-in store and again in WooCommerce. | Duplicate work and the two can disagree. |
+| W3 | **No site setup or health view.** Nothing tells the owner whether the site is reachable, whether the keys still work, the WordPress and WooCommerce versions, or when the last sync failed. | Owners find out a sync broke when a customer complains. |
+| W4 | **No way to reach WordPress from the POS.** There is no "Open my shop editor" button. | The owner has to remember a separate login and address. |
+| W5 | **No look and feel control.** No theme choice, logo, colours or page (home, about, contact) management from the POS. | The owner asked to build and iterate on looks. |
+| W6 | **No plugin management.** No list of installed plugins, no recommended ones, no install, activate or update. | The owner asked to iterate on features and plugins. |
+| W7 | **Sync depth is unknown from this repository.** The screens only show counts and a message. Whether descriptions, extra photos, categories, variants, prices per price list and decimal units reach WooCommerce is a backend matter. | This decides whether WooCommerce is a good fit for fashion, grocery and electronics (see section 5). |
+| W8 | **Order status goes one way.** Website orders arrive in the POS; confirming, "ready" or "delivered" in the POS is not confirmed to flow back to WooCommerce, so the customer's WooCommerce emails may not match. | Customers get wrong status messages. |
+| W9 | **Stock is sent, not reserved.** An unpaid website order may not hold stock in the POS. | Overselling between the till and the website. |
+| W10 | **Access control is the same as section 3, and sharper here.** Site keys, the webhook secret and any WordPress login are owner-only secrets. | Plugin install is the highest-risk action in the whole module. |
+
+### 8.3 Recommended design: one "Shop" module, two engines
+
+Keep both engines, but make the owner choose one as **primary**. Call them plainly:
+
+| Choice shown to owner | What it is | Best for |
+|---|---|---|
+| **Quick shop** | The built-in storefront (`/shop/<name>`). Nothing to install. | Starting in minutes, WhatsApp selling, a simple list of goods |
+| **Full shop (WordPress and WooCommerce)** | A WordPress site with WooCommerce, kept in step with the POS | Branded sites, many photos, variants, blogs, plugins, custom design |
+
+The preference is stored once on the business (`store_engine`: `quick` or `woocommerce`). The primary shop decides:
+
+1. the address in the share link, QR code, receipts and WhatsApp messages,
+2. which settings tab opens first,
+3. what the "Online store" menu item shows in its badge and summary.
+
+The other engine can stay switched on as a secondary channel; orders from both land in one **Online orders** list, as they do today.
+
+Shared settings (WhatsApp number, delivery areas and fees, pickup address, payment methods, opening state) should be entered **once** in the POS and pushed to WooCommerce, instead of being typed twice (this needs a backend mapping to WooCommerce shipping zones and payment gateways; confirm feasibility).
+
+### 8.4 Two ways to get a WordPress shop (decision needed)
+
+| Option | How it works | Pros | Cons |
+|---|---|---|---|
+| **A. Bring your own site** (today) | Owner already has WordPress and WooCommerce and connects it with keys | No hosting cost or responsibility for Murzak | Setup is technical; every site is different; harder to support |
+| **B. Murzak provisions the site** | The POS creates a WordPress and WooCommerce site for the shop (for example `shopname.pos.murzaktech.tech`), pre-connected, with a theme chosen for the industry | Truly frictionless; one login; industry starter themes and plugin sets; Murzak can offer it as a paid add-on | Needs hosting, backups, updates and security work on the backend and infrastructure side; more support load |
+
+**Recommendation:** offer both. Make B the default path ("Create my shop for me") and keep A for owners who already have a site. This is a business and infrastructure decision, not a frontend one, so it needs your confirmation before design starts.
+
+### 8.5 How owners build and iterate (looks, features, plugins)
+
+The POS should not try to copy the WordPress editor. It should **connect the owner to it and keep guard rails around it**.
+
+| Need | Proposed POS feature |
+|---|---|
+| Edit the design | "Open my shop editor" button that signs the owner into WordPress without a second login (single sign-on from the backend). The owner uses the WordPress block editor and theme customiser there. |
+| Pick a look quickly | "Choose a look" gallery of 4 to 6 vetted themes grouped by industry (restaurant, fashion, pharmacy, general), applied by the backend. |
+| Add features | "Add-ons" page listing a **vetted** set of plugins with plain-language descriptions (for example payments, delivery slots, product variants, bookings, SEO, shipping). Owner switches an add-on on or off. |
+| Safety when changing things | A backup is taken before any change; changes can be rolled back; a "preview before publish" copy where the host supports it. |
+| Keep it updated | A health panel showing WordPress, WooCommerce, theme and plugin versions with "update available" and one-click update, plus the last sync result. |
+| Industry fit | On first setup, the industry the business signed up under (`pos_industry_code`) picks a starter theme and plugin set: for example bookings plugin for salon, menu and options plugin for restaurant, variants and size guide for fashion, prescription upload for pharmacy. This answers most of the per-industry gaps in section 5 without building each one in the POS. |
+
+Technical note for the team: recent WordPress versions expose plugin listing, install from the WordPress.org directory, activation and deactivation through the REST API when the caller has an application password. Theme switching and theme installs are less uniform across versions and hosts. All of this must go through the **backend**, never from the browser, so site passwords are never exposed to the front end. Confirm each call in a short technical spike before promising it.
+
+### 8.6 Access control for the WordPress side
+
+Extend the capability table in section 3:
+
+| Capability | Actions | Roles |
+|---|---|---|
+| `online_orders` | view, fulfil, cancel, mark paid, make invoice | Owner, Manager, Sales Manager, Orders Clerk |
+| `online_catalogue` | show or hide products, edit online descriptions and photos, run a sync | Owner, Manager, Item Manager |
+| `online_store_settings` | store preference, delivery, payment, WhatsApp, open or close | Owner, Manager |
+| `online_site_design` | open the shop editor, choose a look | Owner, a designated "Shop Designer" |
+| `online_integrations` | site keys, webhook secret, site password, **install, update or remove plugins**, restore backups | **Owner only** |
+
+Every plugin or theme change should be written to the audit trail (an audit trail screen already exists at `/settings/audit-trail`), showing who changed what and when.
+
+### 8.7 Revised roadmap
+
+| Phase | Content |
+|---|---|
+| **1. Module and RBAC** | As in section 6, plus the five capabilities above and the `store_engine` preference stored on the business. |
+| **2. Engine choice and connection health** | "Quick shop or Full shop" chooser; primary shop drives share link, QR and WhatsApp messages; site health panel (reachable, keys valid, versions, last sync); "Open my shop editor" button; two-way order status (W8); stock reservation (W9). |
+| **3. Provisioned WordPress (option B)** | "Create my shop for me" with industry starter theme and plugin set; single sign-on; backups; update management. Needs backend and infrastructure first. |
+| **4. Looks and add-ons inside the POS** | Theme gallery, vetted add-ons page, rollback, audit trail entries. |
+| **5. Shared settings** | Delivery, payment and WhatsApp entered once and pushed to both engines. |
+| **6. Industry depth** | Per-industry starter kits, then the Quick shop gaps in section 5 (decimals, variants, menu options, bookings, prescriptions) for owners who stay on Quick shop. |
+
+### 8.8 Extra questions for the backend and infrastructure team
+
+1. Does the catalogue sync send descriptions, multiple images, categories, variants and decimal units? Which fields are one-way?
+2. Can order status changes made in the POS be written back to WooCommerce orders?
+3. Can the backend create a WordPress and WooCommerce site per business (multisite, containers, or a managed host), and what is the monthly cost per shop?
+4. Can the backend sign an owner into WordPress without a second password?
+5. Which WordPress REST calls (plugins, themes) work on the target hosting, and which need server access instead?
+6. Can WooCommerce shipping zones and payment methods be created from POS settings?
+7. How are backups and security updates handled, and who is responsible?
+
+## 9. Suggested first change
+
+Phase 1 (with the `store_engine` preference from section 8) is the smallest piece that delivers what was asked for ("a module with RBAC" and "prefer WordPress and WooCommerce") and it does not depend on new backend design. It touches `src/config/roleAccessConfig.js`, `src/newlook/shell/navigation.js`, `src/newlook/ecommerce/EcommercePage.jsx` and `src/newlook/ecommerce/OnlineOrderAlert.jsx`, plus tests.
