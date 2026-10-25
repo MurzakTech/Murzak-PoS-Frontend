@@ -30,6 +30,7 @@ import {
   parseQty,
   parseSpoilt,
   PURCHASES_PATH,
+  failedWords,
   qtyText,
   receiveAddress,
   receiveItems,
@@ -105,6 +106,7 @@ const ReceiveGoodsPage = () => {
   const [problems, setProblems] = useState({});
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState('');
+  const [failureDetails, setFailureDetails] = useState('');
   const [loadFailure, setLoadFailure] = useState('');
   const [touched, setTouched] = useState(false);
   const [askCancel, setAskCancel] = useState(false);
@@ -254,6 +256,7 @@ const ReceiveGoodsPage = () => {
     sending.current = true;
     setSaving(true);
     setFailure('');
+    setFailureDetails('');
     try {
       const data = await receiveGoods({
         order: purchase.id,
@@ -270,7 +273,8 @@ const ReceiveGoodsPage = () => {
       // The goods and the bill are saved; the spoilt part goes back on its own return note, never twice for a repeated delivery
       if (makeReturn && !data.repeat && spoiltItems(lines).length) makeReturnNote(data);
     } catch (error) {
-      setFailure(fill(R.failed, { reason: error.message }));
+      setFailure(failedWords(error.message));
+      setFailureDetails(error.details || '');
       sending.current = false;
     }
     setSaving(false);
@@ -633,6 +637,7 @@ const ReceiveGoodsPage = () => {
       ) : null}
       <p className="nl-helper">{R.reviewTaxNote}</p>
       <p className="nl-receive-note">{left ? fill(R.leftNote, { items: left }) : R.leftNone}</p>
+      {failure && failureDetails ? <p className="nl-receive-note">{fill(R.technical, { details: failureDetails })}</p> : null}
       <Field id="rc-bill-no" label={R.billNo} helper={R.billNoHelper} value={billNo} onChange={(v) => setBillNo(v.slice(0, 60))} autoComplete="off" />
       <Field id="rc-bill-date" kind="date" label={R.billDate} helper={R.billDateHelper} value={billDate} onChange={setBillDate} />
       <Field id="rc-due-date" kind="date" label={R.dueDate} helper={R.dueHelper} value={dueDate} error={problems.dueDate} onChange={setDueDate} />

@@ -131,6 +131,12 @@ describe('receiveGoods', () => {
     expect(error.errorType).toBe('too_much');
   });
 
+  test('a refusal keeps the other things the server said, as details', async () => {
+    axiosInstance.post.mockResolvedValue({ data: { message: { success: false, message: 'Nothing was changed.', error_type: 'receipt_failed', step: 'bill' } } });
+    const error = await receiveGoods({ order: 'PO-1', items: [] }).catch((e) => e);
+    expect(JSON.parse(error.details)).toEqual({ error_type: 'receipt_failed', step: 'bill' });
+  });
+
   test('a network failure is a plain message', async () => {
     axiosInstance.post.mockRejectedValue(new Error('Network Error'));
     await expect(receiveGoods({ order: 'PO-1', items: [] })).rejects.toThrow(/internet|connection/i);

@@ -299,6 +299,8 @@ const purchases = {
     storeAsOrdered: 'The store on the order',
     confirming: 'Receiving',
     failed: 'We could not receive these goods. {reason} Nothing was changed.',
+    failedShort: 'We could not receive these goods. {reason}',
+    technical: 'Details for support: {details}',
     successTitle: 'Stock raised and bill created',
     successText: 'The goods are in your stock and the bill from {supplier} is made.',
     successRepeat: 'This delivery was already saved, so nothing was added twice.',

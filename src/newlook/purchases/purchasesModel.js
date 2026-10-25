@@ -332,6 +332,9 @@ export const reviewFieldProblems = ({ billDate, dueDate }) => {
 /** The words of one line of the stock result: 'Sugar: 10 before, 16 now' */
 export const stockLine = (entry, names = {}) => fill(T.receive.stockLine, { name: names[entry.item_code] || entry.item_code, before: qtyText(entry.before), after: qtyText(entry.after) });
 
+/** The sentence for a failed delivery; the server often says "nothing was changed" itself, so it is not said twice */
+export const failedWords = (reason) => fill(/nothing was changed/i.test(String(reason || '')) ? T.receive.failedShort : T.receive.failed, { reason });
+
 /** An id made once per page and sent with every try, so a repeat never records a delivery twice */
 export const newRequestId = (prefix = 'req') => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
