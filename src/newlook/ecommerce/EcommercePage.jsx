@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Field from '../components/Field';
+import Checkbox from '../components/Checkbox';
 import Select from '../components/Select';
 import Switch from '../components/Switch';
 import Table from '../components/Table';
@@ -18,12 +19,19 @@ import {
   syncWooCommerceCatalog,
   getEcommerceProducts,
 } from '../../api/ecommerceApi';
+import OnlineOrdersTab from './OnlineOrdersTab';
+import OnlineStoreTab from './OnlineStoreTab';
+import WebhookCard from './WebhookCard';
+import S from './strings.ecommerce';
+import fill from '../labels/fill';
+import { setItemsOnline } from '../../api/onlineStoreApi';
 import './ecommerce.css';
 
 const TABS = [
-  { key: 'woocommerce', label: 'WooCommerce Connector', to: '/ecommerce' },
-  { key: 'digital_store', label: 'Digital Catalog & WhatsApp', to: '/ecommerce?tab=digital_store' },
-  { key: 'products', label: 'Online Product Catalog', to: '/ecommerce?tab=products' },
+  { key: 'orders', label: S.tabs.orders, to: '/ecommerce?tab=orders' },
+  { key: 'digital_store', label: S.tabs.store, to: '/ecommerce?tab=digital_store' },
+  { key: 'woocommerce', label: S.tabs.woocommerce, to: '/ecommerce' },
+  { key: 'products', label: S.tabs.products, to: '/ecommerce?tab=products' },
 ];
 
 const EcommercePage = () => {
@@ -54,6 +62,7 @@ const EcommercePage = () => {
   const [lastSync, setLastSync] = useState(null);
   const [catalogCount, setCatalogCount] = useState(0);
   const [stockCount, setStockCount] = useState(0);
+  const [lastOrder, setLastOrder] = useState({ message: '', at: '' });
 
   // Products table
   const [products, setProducts] = useState([]);
@@ -81,6 +90,7 @@ const EcommercePage = () => {
         setLastSync(res.last_sync || null);
         setCatalogCount(res.catalog_count || 0);
         setStockCount(res.stock_items_count || 0);
+        setLastOrder({ message: res.last_order_message || '', at: res.last_order_at || '' });
       }
     } catch (err) {
       toast.error(err.message || 'Failed to load e-commerce settings');
@@ -90,7 +100,7 @@ const EcommercePage = () => {
   const loadProducts = useCallback(async () => {
     setProductsLoading(true);
     try {
-      const res = await getEcommerceProducts({ company, warehouse, search });
+      const res = await getEcommerceProducts({ company, warehouse, search, visibility: 'all' });
       setProducts(res.rows || []);
     } catch (err) {
       console.error(err);
@@ -159,7 +169,8 @@ const EcommercePage = () => {
     setSyncing(true);
     try {
       const res = await syncWooCommerceCatalog({ company, warehouse });
-      toast.success(res.message || 'Store catalog synchronized successfully!');
+      if (res.status === 'partial') toast.info(fill(S.products.syncResult.partial, { message: res.message }));
+      else toast.success(res.message || 'Store catalog synchronized successfully!');
       loadSettings();
       if (activeTab === 'products') loadProducts();
     } catch (err) {
@@ -169,18 +180,13 @@ const EcommercePage = () => {
     }
   };
 
-  const digitalStoreUrl = `${window.location.origin}/store/${encodeURIComponent(
-    company.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-  )}`;
-
-  const copyStoreLink = () => {
-    navigator.clipboard?.writeText(digitalStoreUrl);
-    toast.success('Store link copied to clipboard!');
-  };
-
-  const shareWhatsApp = () => {
-    const text = encodeURIComponent(`Hello! Check out our online store catalog and order directly:\n${digitalStoreUrl}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+  const toggleShown = async (row, show) => {
+    try {
+      await setItemsOnline({ itemCodes: [row.item_code], show, company });
+      setProducts((rows) => rows.map((r) => (r.item_code === row.item_code ? { ...r, show_online: show } : r)));
+    } catch (err) {
+      toast.error(err.message || S.products.updateFailed);
+    }
   };
 
   const productColumns = [
@@ -206,6 +212,17 @@ const EcommercePage = () => {
       header: 'In Stock',
       align: 'right',
       render: (r) => `${r.stock} ${r.unit || ''}`,
+    },
+    {
+      key: 'show_online',
+      header: S.products.shownOnline,
+      render: (r) => (
+        <Checkbox
+          label={fill(S.products.shownLabel, { name: r.item_name })}
+          checked={r.show_online !== false}
+          onChange={(show) => toggleShown(r, show)}
+        />
+      ),
     },
     {
       key: 'status',
@@ -266,6 +283,7 @@ const EcommercePage = () => {
 
       {/* Main Tabs Body */}
       {activeTab === 'woocommerce' ? (
+        <>
         <Card title="WooCommerce REST API Integration">
           <div className="nl-ecommerce__guide">
             <strong>How to connect WooCommerce with your POS:</strong>
@@ -363,39 +381,13 @@ const EcommercePage = () => {
             </Button>
           </div>
         </Card>
+        <WebhookCard company={company} lastOrderMessage={lastOrder.message} lastOrderAt={lastOrder.at} />
+        </>
       ) : null}
 
-      {activeTab === 'digital_store' ? (
-        <Card title="Instant Digital Catalog & WhatsApp Ordering">
-          <p style={{ color: 'var(--ink-2)', margin: '0 0 var(--space-4) 0' }}>
-            Don't have a WordPress or WooCommerce website yet? Share your live Murzak digital store link directly with customers on WhatsApp, Instagram, or Facebook. Customers can view your menu/products and place orders directly to your till.
-          </p>
+      {activeTab === 'orders' ? <OnlineOrdersTab company={company} /> : null}
 
-          <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-            <div>
-              <span className="nl-label">Your Storefront Link</span>
-              <div className="nl-ecommerce__share-box">
-                <span style={{ flex: 1 }}>{digitalStoreUrl}</span>
-                <Button variant="secondary" size="small" icon="copy" onClick={copyStoreLink}>
-                  Copy link
-                </Button>
-                <Button variant="secondary" size="small" icon="share" onClick={shareWhatsApp}>
-                  Share on WhatsApp
-                </Button>
-              </div>
-            </div>
-
-            <div className="nl-ecommerce__guide">
-              <strong>Features of your instant online catalog:</strong>
-              <ul>
-                <li>Live product availability based on real-time POS inventory.</li>
-                <li>Instant WhatsApp order generation with product list and total price.</li>
-                <li>Fast, mobile-friendly design optimized for Kenya & East Africa.</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
-      ) : null}
+      {activeTab === 'digital_store' ? <OnlineStoreTab company={company} locations={storeOptions.map((o) => ({ value: o.value, label: o.label }))} /> : null}
 
       {activeTab === 'products' ? (
         <Card title="Online Product Catalog Preview">

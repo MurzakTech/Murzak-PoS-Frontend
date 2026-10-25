@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { friendlyErrorMessage } from '../utils/friendlyError';
 import { clearSession } from '../utils/session';
+import { isPublicPath } from '../utils/publicPaths';
 
 // Support both variable names for backward compatibility
 const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL;
@@ -49,13 +50,7 @@ const processQueue = (error, token = null) => {
 const redirectToLogin = () => {
   if (typeof window === 'undefined') return;
   const currentPath = window.location.pathname || '';
-  const isPublicPage = currentPath.includes('/login') || 
-                      currentPath.includes('/register') || 
-                      currentPath.includes('/signup') ||
-                      currentPath.includes('/forgot-password') ||
-                      currentPath.includes('/terms-of-service') ||
-                      currentPath.includes('/privacy-policy') ||
-                      currentPath.includes('/contact-us');
+  const isPublicPage = isPublicPath(currentPath);
   const isOnboardingPage = currentPath.includes('/onboarding') || currentPath.includes('/setup');
   
   // Only clear session and redirect when an authenticated request fails on a protected route
