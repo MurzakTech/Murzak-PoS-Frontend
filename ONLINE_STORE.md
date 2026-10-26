@@ -55,3 +55,25 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 - Staff screens are English only (the shop pages are English and Swahili).
 - Distance fees are estimates (straight line times a road factor), not road distances.
 - Product pictures are shown only when they are public files; others fall back to the illustration.
+
+## The storefront as its own site (paid add-on)
+
+A business can also have its storefront as its own small site, on its own address
+`https://<shop>.cloud.murzaktech.tech`. It is the same shop pages, built on their own:
+
+- **Build:** `REACT_APP_STOREFRONT_ONLY=true npm run build` produces only the online store (no till, no staff screens,
+  no sign-in). The entry point (`src/index.js`) picks the build; `src/storefrontMain.js` is the storefront's.
+- **Image:** `deploy/storefront/Dockerfile` makes one container image for every shop. The shop is chosen when the
+  container starts: `SHOP_SLUG` (its name) and `ERP_HOST` (its own ERP site, `<shop>.erp.murzaktech.tech`).
+- **Publishing:** `.github/workflows/storefront-image.yml` pushes `ghcr.io/murzaktech/murzak-storefront` on every
+  change to the storefront on `main`. The website's provisioning (`starter-storefront`) pulls it. The package must be
+  readable by the server (make it public, or give Coolify a registry login).
+- **Safety:** the container's nginx passes on only the storefront's own calls (`storefront_api` and order tracking) and
+  answers 404 to every other `/api` path. Cookies are never forwarded. The page and its calls share one address, so the
+  ERP site needs no CORS setting.
+- **Try it locally:** `docker build -f deploy/storefront/Dockerfile -t murzak-storefront .` then
+  `docker run -p 8080:8080 -e SHOP_SLUG=<shop> -e ERP_HOST=<shop>.erp.murzaktech.tech murzak-storefront` and open
+  `http://localhost:8080`.
+
+The ERP site's nginx guard must let these storefront calls through without a login (see
+`deploy/vps/nginx/00-murzak-pos-guard-map.conf` in the website repository).
