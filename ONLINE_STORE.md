@@ -56,6 +56,17 @@ A new online order shows a message wherever the person is in the app (`OnlineOrd
 - Distance fees are estimates (straight line times a road factor), not road distances.
 - Product pictures are shown only when they are public files; others fall back to the illustration.
 
+## The marketplace (buying add-ons from the POS)
+
+Settings, Business, Marketplace (`/marketplace`) shows what an owner can buy for their shop: an online storefront, a
+WooCommerce website, backups. The list and prices come from the Murzak website through `marketplace_api.get_marketplace`
+(owner only). Buy opens the website's own checkout, `<website>/checkout/new?serviceId=<id>`, in a new tab: the owner signs
+in with their Murzak account, pays by M-Pesa or PayPal, and provisioning starts from the paid invoice. The POS takes no
+money and creates no order.
+
+All words are in `src/newlook/marketplace/strings.marketplace.js`. A product's description is there by its id; a product
+with no entry still shows, with the name the website gives it.
+
 ## The storefront as its own site (paid add-on)
 
 A business can also have its storefront as its own small site, on its own address

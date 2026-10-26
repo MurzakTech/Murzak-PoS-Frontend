@@ -11,6 +11,7 @@ import LinkList from './LinkList';
 import { OLD, cardFromSearch, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
+import MARKET from '../marketplace/strings.marketplace';
 
 const B = T.business;
 
@@ -121,6 +122,7 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
       <LinkList id="business-stores" title={B.stores.title} subtitle={B.stores.subtitle} items={[{ key: 'stores', text: B.stores.note, to: legacy(OLD.stores) }]} />
       <LinkList id="business-letterhead" title={B.letterhead.title} subtitle={B.letterhead.subtitle} items={[{ key: 'letterhead', text: B.letterhead.note, to: legacy(OLD.business) }]} />
       <LinkList id="business-ecommerce" title="Online Store & E-Commerce" subtitle="Connect WooCommerce or explore selling online" items={[{ key: 'ecommerce', text: 'Manage WooCommerce connection, stock sync and digital storefront', to: '/ecommerce' }]} />
+      <LinkList id="business-marketplace" title={MARKET.link.title} subtitle={MARKET.link.subtitle} items={[{ key: 'marketplace', text: MARKET.link.text, to: '/marketplace' }]} />
     </>
   );
 };
