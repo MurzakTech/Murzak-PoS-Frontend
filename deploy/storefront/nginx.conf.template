@@ -1,0 +1,76 @@
+# One shop's storefront. ${SHOP_SLUG} and ${ERP_HOST} are filled in when the container starts.
+#
+# Same-origin by design: the page and its /api calls come from this one address, so the shop's ERP site needs no CORS
+# setting and its address is never exposed to the browser.
+#
+# Only the storefront's own calls are passed on. Every other /api path is refused here, so this container is not a way
+# into the POS, whatever the ERP site would have said.
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Permissions-Policy "geolocation=(self), camera=(), microphone=()" always;
+    add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Which shop this is: written at start-up, never cached
+    location = /shop-config.json {
+        default_type application/json;
+        add_header Cache-Control "no-store" always;
+    }
+
+    location /static/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # The only server calls a shopper's page makes
+    location ~ ^/api/method/murzak_pos\.api\.(storefront_api\.(get_store|list_products|get_product|quote_delivery|checkout|pay_for_order)|online_orders\.track_online_order)$ {
+        proxy_pass https://${ERP_HOST};
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${ERP_HOST};
+        proxy_set_header X-Frappe-Site-Name ${ERP_HOST};
+        proxy_set_header X-Real-IP $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Cookie "";
+        proxy_read_timeout 60s;
+        client_max_body_size 64k;
+    }
+
+    location ^~ /api/ {
+        return 404;
+    }
+
+    # Product pictures the owner uploaded (public files only; private files need a sign-in and are not served here)
+    location ^~ /files/ {
+        proxy_pass https://${ERP_HOST};
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${ERP_HOST};
+        proxy_set_header Cookie "";
+        proxy_hide_header Set-Cookie;
+        expires 7d;
+    }
+
+    location / {
+        try_files $uri /index.html;
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Permissions-Policy "geolocation=(self), camera=(), microphone=()" always;
+        add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+    }
+}
