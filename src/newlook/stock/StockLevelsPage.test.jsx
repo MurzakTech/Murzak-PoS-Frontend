@@ -15,7 +15,8 @@ import { AccessProvider } from '../access/AccessProvider';
 import { ToastProvider } from '../components/Toast';
 import StockLevelsPage from './StockLevelsPage';
 import { PREVIEW_KEY, resyncPreview } from '../redirects/live';
-import { findProducts, getStockLevels } from '../../api/stockLevelsApi';
+import { setDefaultWarehouse } from '../../store/warehouseSlice';
+import { addStore, findProducts, getStockLevels, moveStock } from '../../api/stockLevelsApi';
 import { getMyAccess } from '../../api/accessApi';
 import { saveTextFile } from '../../utils/saveTextFile';
 
@@ -26,17 +27,23 @@ jest.mock('../../api/stockLevelsApi', () => ({
   stockOut: jest.fn(),
   getCountSheet: jest.fn(),
   submitCount: jest.fn(),
+  moveStock: jest.fn(),
+  addStore: jest.fn(),
 }));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
 jest.mock('../../utils/saveTextFile', () => ({ saveTextFile: jest.fn() }));
 const mockShop = {
   warehouses: [{ name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0 }],
 };
+const mockDispatch = jest.fn();
 jest.mock('../../store/hooks', () => ({
-  useAppDispatch: () => jest.fn(),
+  useAppDispatch: () => mockDispatch,
   useAppSelector: (select) => select({ auth: { user: { company: 'Demo Shop' } }, warehouse: { warehouses: mockShop.warehouses } }),
 }));
-jest.mock('../../store/warehouseSlice', () => ({ listWarehouses: jest.fn(() => ({ type: 'x' })) }));
+jest.mock('../../store/warehouseSlice', () => ({
+  listWarehouses: jest.fn(() => ({ type: 'listWarehouses' })),
+  setDefaultWarehouse: jest.fn((args) => ({ type: 'setDefaultWarehouse', args })),
+}));
 
 // ---------- Fixtures: made-up shop data, never real ----------
 const SWAHILI = ['Maziwa 500ml', 'Unga wa Ngano 2kg', 'Sukari 1kg', 'Mchele Pishori', 'Sabuni ya Kipande', 'Mafuta ya Kupikia', 'Chai Majani 250g', 'Mkate wa Boflo'];
@@ -64,20 +71,29 @@ const MOVEMENTS = [
   { id: 'ledger:S2', date: '2026-10-11', time: '16:00', item_code: 'P002', item_name: 'Sukari 1kg', warehouse: 'Duka Kuu - DS', kind: 'sale', source: 'ledger', qty_change: -2, qty_after: 8, status: 'submitted', reference: 'ACC-PSINV-2026-00007', entry: null, reason: null },
   { id: 'ledger:S3', date: '2026-10-10', time: '11:00', item_code: 'P003', item_name: 'Mchele Pishori', warehouse: 'Duka Kuu - DS', kind: 'stock_in', source: 'ledger', qty_change: 5, qty_after: 30, status: 'cancelled', reference: 'MAT-STE-2026-00000', entry: 'MAT-STE-2026-00000', reason: null },
 ];
+const TRANSFERS = [
+  { id: 'ledger:T1', date: '2026-10-12', time: '14:00', item_code: 'P000', item_name: 'Maziwa 500ml', warehouse: 'Duka Kuu - DS', kind: 'transfer', source: 'ledger', qty_change: -6, qty_after: 10, status: 'submitted', reference: 'MAT-STE-2026-00030', entry: 'MAT-STE-2026-00030', reason: null },
+  { id: 'ledger:T2', date: '2026-10-12', time: '14:00', item_code: 'P000', item_name: 'Maziwa 500ml', warehouse: 'Duka la Pili - DS', kind: 'transfer', source: 'ledger', qty_change: 6, qty_after: 6, status: 'submitted', reference: 'MAT-STE-2026-00030', entry: 'MAT-STE-2026-00030', reason: null },
+];
 const EXPIRY = [
   { item_code: 'D1', item_name: 'Dawa ya Kikohozi', warehouse: 'Duka Kuu - DS', batch_no: 'B-12', qty: 8, unit: 'Nos', expiry_date: '2026-10-20', days_left: 7, state: 'critical', value: 960 },
   { item_code: 'D2', item_name: 'Maziwa Mtindi', warehouse: 'Duka Kuu - DS', batch_no: '', qty: 3, unit: 'Nos', expiry_date: '2026-10-10', days_left: -3, state: 'expired', value: 150 },
 ];
 
+const TWO = [
+  { name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0 },
+  { name: 'Duka la Pili - DS', warehouse_name: 'Duka la Pili', disabled: 0, is_group: 0 },
+];
 const FEATURES = { expiry: false, locations: 1 };
 const mockServer = { features: FEATURES, canChange: true, showValue: true, products: PRODUCTS, movements: MOVEMENTS, expiry: EXPIRY };
 
 // The server's answer, worked out as the contract says: the tiles are counted from the same rows as the list
 const answer = ({ tab = 'overview', page = 1, pageSize = 20, search = '', category = '', status = '', kind = '', ...rest } = {}) => {
-  const base = { tab, features: mockServer.features, canChange: mockServer.canChange, role: mockServer.showValue ? 'owner' : 'cashier', categories: ['Usafi', 'Vyakula'], from: '', to: '', days: undefined };
+  const base = { tab, features: mockServer.features, canChange: mockServer.canChange, role: mockServer.role || (mockServer.showValue ? 'owner' : 'cashier'), categories: ['Usafi', 'Vyakula'], from: '', to: '', days: undefined };
   if (tab === 'movements') {
     let rows = mockServer.movements;
     if (kind === 'receipt') rows = rows.filter((r) => r.kind === 'stock_in');
+    if (kind === 'transfer') rows = rows.filter((r) => r.kind === 'transfer');
     if (status) rows = rows.filter((r) => r.status === status);
     if (search) rows = rows.filter((r) => `${r.item_name} ${r.reference}`.toLowerCase().includes(search.toLowerCase()));
     return { ...base, rows: rows.slice((page - 1) * pageSize, page * pageSize), total: rows.length, page, pageSize, pages: Math.max(1, Math.ceil(rows.length / pageSize)), tiles: null, ...rest };
@@ -134,11 +150,13 @@ beforeEach(() => {
   mockServer.features = { expiry: false, locations: 1 };
   mockServer.canChange = true;
   mockServer.showValue = true;
+  mockServer.role = '';
   mockServer.products = PRODUCTS;
   mockServer.movements = MOVEMENTS;
   mockShop.warehouses = [{ name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0 }];
   getStockLevels.mockImplementation(async (query) => answer(query));
   findProducts.mockResolvedValue([]);
+  mockDispatch.mockImplementation(() => ({ unwrap: () => Promise.resolve() }));
   window.innerWidth = 1280;
   try {
     localStorage.clear();
@@ -156,7 +174,15 @@ describe('the page and its tabs', () => {
     expect(getStockLevels).toHaveBeenCalledWith(expect.objectContaining({ tab: 'overview', page: 1, pageSize: 20 }));
   });
 
-  test('a shop with one location has Overview, Low stock, Movements and Count stock, and no Locations, Transfers or Expiry', async () => {
+  test('the owner of a one-store shop has Overview, Low stock, Movements, Count stock and Locations (to add a second store), and no Transfers or Expiry', async () => {
+    await renderPage();
+    await screen.findByRole('row', { name: /Zawadi 10/ });
+    const tabs = within(screen.getByRole('tablist', { name: 'Stock levels views' })).getAllByRole('tab');
+    expect(tabs.map((t) => t.textContent)).toEqual(['Overview', 'Low stock', 'Movements', 'Count stock', 'Locations']);
+  });
+
+  test('someone who is not the owner of a one-store shop has no Locations, Transfers or Expiry', async () => {
+    mockServer.role = 'manager';
     await renderPage();
     await screen.findByRole('row', { name: /Zawadi 10/ });
     const tabs = within(screen.getByRole('tablist', { name: 'Stock levels views' })).getAllByRole('tab');
@@ -184,8 +210,8 @@ describe('the page and its tabs', () => {
     ];
     await renderPage();
     await screen.findByRole('row', { name: /Zawadi 10/ });
-    expect(screen.queryByRole('tab', { name: 'Locations' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Transfers' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Move stock' })).not.toBeInTheDocument();
   });
 
   test('the Expiry tab appears only when the server says the shop tracks expiry dates', async () => {
@@ -206,8 +232,20 @@ describe('the page and its tabs', () => {
     expect(await screen.findByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('a link to Locations in a one-store shop goes to Overview', async () => {
+  test('a link to Locations in a one-store shop goes to Overview for someone who cannot add a store', async () => {
+    mockServer.role = 'manager';
     await renderPage('/new-look/stock/locations');
+    await waitFor(() => expect(where()).toBe('/new-look/stock'));
+  });
+
+  test('a link to Locations in a one-store shop stays for the owner, who can add a second store', async () => {
+    await renderPage('/new-look/stock/locations');
+    expect(await screen.findByRole('button', { name: 'Add a store' })).toBeInTheDocument();
+    expect(where()).toBe('/new-look/stock/locations');
+  });
+
+  test('a link to Transfers in a one-store shop goes to Overview', async () => {
+    await renderPage('/new-look/stock/transfers');
     await waitFor(() => expect(where()).toBe('/new-look/stock'));
   });
 
@@ -220,24 +258,153 @@ describe('the page and its tabs', () => {
     expect(screen.getByRole('tab', { name: 'Low stock' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('Locations and Transfers link to the current Stores and Stock transfers screens', async () => {
+  test('Locations lists the stores with the main one marked, and the owner can add a store', async () => {
     mockShop.warehouses = [
-      { name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0 },
+      { name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0, is_default: true },
       { name: 'Duka la Pili - DS', warehouse_name: 'Duka la Pili', disabled: 0, is_group: 0 },
     ];
     await renderPage('/new-look/stock/locations');
-    userEvent.click(await screen.findByRole('button', { name: 'Open stores' }));
-    expect(where()).toBe('/warehouses');
+    const table = await screen.findByRole('table', { name: 'Your stores' });
+    expect(within(within(table).getByRole('row', { name: /Duka Kuu/ })).getByText('Main store')).toBeInTheDocument();
+    expect(within(within(table).getByRole('row', { name: /Duka la Pili/ })).queryByText('Main store')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add a store' })).toBeInTheDocument();
   });
 
-  test('Transfers opens the current Stock transfers screen', async () => {
+  test('adding a store sends its name, says so, and reloads the stores', async () => {
+    addStore.mockResolvedValue({ name: 'Town shop - DS', warehouse_name: 'Town shop' });
+    await renderPage('/new-look/stock/locations');
+    userEvent.click(await screen.findByRole('button', { name: 'Add a store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add a store' });
+    userEvent.type(within(dialog).getByLabelText('Store name'), '  Town shop ');
+    const before = mockDispatch.mock.calls.length;
+    userEvent.click(within(dialog).getByRole('button', { name: 'Add store' }));
+    await waitFor(() => expect(addStore).toHaveBeenCalledWith({ name: 'Town shop' }));
+    expect(await screen.findByText('Town shop was added. You can move stock to it now.')).toBeInTheDocument();
+    expect(mockDispatch.mock.calls.length).toBeGreaterThan(before);
+  });
+
+  test('a store name the shop already uses is shown in plain words and nothing closes', async () => {
+    addStore.mockRejectedValue(new Error('You already have a store called Duka Kuu.'));
+    await renderPage('/new-look/stock/locations');
+    userEvent.click(await screen.findByRole('button', { name: 'Add a store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add a store' });
+    userEvent.type(within(dialog).getByLabelText('Store name'), 'Duka Kuu');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Add store' }));
+    expect(await within(dialog).findByText('The store was not added. You already have a store called Duka Kuu.')).toBeInTheDocument();
+  });
+
+  test('a store name that is too short is not sent', async () => {
+    await renderPage('/new-look/stock/locations');
+    userEvent.click(await screen.findByRole('button', { name: 'Add a store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add a store' });
+    userEvent.type(within(dialog).getByLabelText('Store name'), 'A');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Add store' }));
+    expect(await within(dialog).findByText('Type a name for the store')).toBeInTheDocument();
+    expect(addStore).not.toHaveBeenCalled();
+  });
+
+  test('a store that is not the main one can be made the main store', async () => {
     mockShop.warehouses = [
-      { name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0 },
+      { name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0, is_default: true },
       { name: 'Duka la Pili - DS', warehouse_name: 'Duka la Pili', disabled: 0, is_group: 0 },
     ];
+    await renderPage('/new-look/stock/locations');
+    userEvent.click(await screen.findByRole('button', { name: 'Actions for Duka la Pili' }));
+    userEvent.click(screen.getByRole('menuitem', { name: 'Make main store' }));
+    expect(await screen.findByText('Duka la Pili is now your main store.')).toBeInTheDocument();
+    expect(setDefaultWarehouse).toHaveBeenCalledWith({ company: 'Demo Shop', warehouse: 'Duka la Pili - DS' });
+    // The main store has nothing to make it
+    userEvent.click(screen.getByRole('button', { name: 'Actions for Duka Kuu' }));
+    expect(screen.queryByRole('menuitem', { name: 'Make main store' })).not.toBeInTheDocument();
+  });
+
+  test('Transfers asks for only the moves between stores, names the store on each line, and links to transfer requests', async () => {
+    mockShop.warehouses = TWO;
+    mockServer.movements = [...MOVEMENTS, ...TRANSFERS];
     await renderPage('/new-look/stock/transfers');
-    userEvent.click(await screen.findByRole('button', { name: 'Open stock transfers' }));
-    expect(where()).toBe('/stock-transfers');
+    await screen.findByRole('table', { name: 'Stock moved between stores, newest first' });
+    await waitFor(() => expect(getStockLevels).toHaveBeenCalledWith(expect.objectContaining({ tab: 'movements', kind: 'transfer' })));
+    const rows = await screen.findAllByRole('row', { name: /Maziwa 500ml/ });
+    expect(rows).toHaveLength(2);
+    expect(within(rows[0]).getByText('Duka Kuu')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('-6')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('Duka la Pili')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('+6')).toBeInTheDocument();
+    expect(screen.queryByText('Sukari 1kg')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Use stock transfer requests' })).toHaveAttribute('href', '/stock-transfers?legacy=1');
+  });
+
+  test('Transfers with no moves says so and offers Move stock', async () => {
+    mockShop.warehouses = TWO;
+    await renderPage('/new-look/stock/transfers');
+    expect(await screen.findByText('No stock has been moved in this period')).toBeInTheDocument();
+    // The header button and the one in the empty list do the same thing
+    const buttons = screen.getAllByRole('button', { name: 'Move stock' });
+    expect(buttons).toHaveLength(2);
+    userEvent.click(buttons[1]);
+    expect(await screen.findByRole('dialog', { name: 'Move stock between stores' })).toBeInTheDocument();
+  });
+
+  test('Move stock is in the header only with two or more stores and for someone who may change stock', async () => {
+    mockShop.warehouses = TWO;
+    mockServer.canChange = false;
+    mockServer.role = 'cashier';
+    await renderPage();
+    await screen.findByRole('row', { name: /Zawadi 10/ });
+    expect(screen.queryByRole('button', { name: 'Move stock' })).not.toBeInTheDocument();
+  });
+
+  test('Move stock saves one move, reloads the list and says what moved', async () => {
+    mockShop.warehouses = TWO;
+    findProducts.mockResolvedValue([{ item_code: 'P000', item_name: 'Maziwa 500ml', unit: 'Nos', qty: 16 }]);
+    moveStock.mockResolvedValue({ entry: 'MAT-STE-2026-00031', products: 1, from_warehouse: 'Duka Kuu - DS', to_warehouse: 'Duka la Pili - DS', in_stock: { P000: 6 } });
+    await renderPage();
+    await screen.findByRole('row', { name: /Zawadi 10/ });
+    userEvent.click(screen.getByRole('button', { name: 'Move stock' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Move stock between stores' });
+    expect(within(dialog).getByText('Choose the store you are moving from first')).toBeInTheDocument();
+    userEvent.click(within(dialog).getByRole('combobox', { name: 'Move from' }));
+    userEvent.click(screen.getByRole('option', { name: 'Duka Kuu' }));
+    userEvent.click(within(dialog).getByRole('combobox', { name: 'Move to' }));
+    // The store it comes from is not offered as the place it goes to
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Duka la Pili']);
+    userEvent.click(screen.getByRole('option', { name: 'Duka la Pili' }));
+    userEvent.click(await within(dialog).findByRole('button', { name: /^Maziwa 500ml/ }));
+    userEvent.type(within(dialog).getByLabelText('Quantity'), '6');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Move stock' }));
+    await waitFor(() => expect(moveStock).toHaveBeenCalledTimes(1));
+    expect(moveStock).toHaveBeenCalledWith({ lines: [{ item_code: 'P000', qty: 6 }], from: 'Duka Kuu - DS', to: 'Duka la Pili - DS', note: '' });
+    expect(await screen.findByText('Moved 1 product from Duka Kuu to Duka la Pili.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  test('Move stock refuses more than the first store holds, before anything is sent', async () => {
+    mockShop.warehouses = TWO;
+    findProducts.mockResolvedValue([{ item_code: 'P000', item_name: 'Maziwa 500ml', unit: 'Nos', qty: 4 }]);
+    await renderPage('/new-look/stock?store=Duka%20Kuu%20-%20DS&action=move');
+    const dialog = await screen.findByRole('dialog', { name: 'Move stock between stores' });
+    userEvent.click(within(dialog).getByRole('combobox', { name: 'Move to' }));
+    userEvent.click(screen.getByRole('option', { name: 'Duka la Pili' }));
+    userEvent.click(await within(dialog).findByRole('button', { name: /^Maziwa 500ml/ }));
+    userEvent.type(within(dialog).getByLabelText('Quantity'), '5');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Move stock' }));
+    expect(await within(dialog).findByText('Only 4 pieces in the first store'.replace(' pieces', ''))).toBeInTheDocument();
+    expect(moveStock).not.toHaveBeenCalled();
+  });
+
+  test('a refusal from the server is shown in the dialog and the dialog stays open', async () => {
+    mockShop.warehouses = TWO;
+    findProducts.mockResolvedValue([{ item_code: 'P000', item_name: 'Maziwa 500ml', unit: 'Nos', qty: 4 }]);
+    moveStock.mockRejectedValue(new Error('There is only 3 of Maziwa 500ml in the first store, so 4 cannot be moved.'));
+    await renderPage('/new-look/stock?store=Duka%20Kuu%20-%20DS&action=move');
+    const dialog = await screen.findByRole('dialog', { name: 'Move stock between stores' });
+    userEvent.click(within(dialog).getByRole('combobox', { name: 'Move to' }));
+    userEvent.click(screen.getByRole('option', { name: 'Duka la Pili' }));
+    userEvent.click(await within(dialog).findByRole('button', { name: /^Maziwa 500ml/ }));
+    userEvent.type(within(dialog).getByLabelText('Quantity'), '4');
+    userEvent.click(within(dialog).getByRole('button', { name: 'Move stock' }));
+    expect(await within(dialog).findByText('The stock was not moved. There is only 3 of Maziwa 500ml in the first store, so 4 cannot be moved.')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Move stock between stores' })).toBeInTheDocument();
   });
 });
 
@@ -439,7 +606,7 @@ describe('Low stock', () => {
     await renderPage('/new-look/stock/low');
     const first = (await screen.findAllByRole('button', { name: /^Reorder / }))[0];
     userEvent.click(first);
-    await waitFor(() => expect(where()).toBe('/new-look/purchases/new?item=P005'));
+    await waitFor(() => expect(where()).toBe('/purchases/new?item=P005'));
   });
 
   test('Reorder opens the new purchase with the product filled in once that page is live', async () => {
@@ -448,7 +615,7 @@ describe('Low stock', () => {
     await renderPage('/new-look/stock/low');
     const out = PRODUCTS.find((p) => p.level === 'out');
     userEvent.click(await screen.findByRole('button', { name: `Reorder ${out.item_name}` }));
-    await waitFor(() => expect(where()).toBe(`/new-look/purchases/new?item=${out.item_code}`));
+    await waitFor(() => expect(where()).toBe(`/purchases/new?item=${out.item_code}`));
   });
 
   test('a product that is out of stock comes before one that is low', async () => {

@@ -96,6 +96,23 @@ export const stockIn = ({ itemCode, qty, store, note, unitCost }) =>
 export const stockOut = ({ itemCode, qty, reason, store, note }) =>
   send(() => axiosInstance.post(`${STOCK}.stock_out`, compact({ item_code: itemCode, qty, reason, warehouse: store, note }), { allowRefusal: true }));
 
+/**
+ * Moves stock from one store to another in one step: it leaves the first store and arrives in the second at once.
+ * lines is [{ item_code, qty }]. The server refuses a move the first store cannot cover, before anything is changed.
+ * Resolves to { entry, products, from_warehouse, to_warehouse, in_stock }.
+ */
+export const moveStock = ({ lines, from, to, note }) =>
+  send(() =>
+    axiosInstance.post(
+      `${STOCK}.move_stock`,
+      compact({ items: JSON.stringify(list(lines).map((l) => ({ item_code: l.item_code, qty: l.qty }))), from_warehouse: from, to_warehouse: to, note }),
+      { allowRefusal: true }
+    )
+  );
+
+/** Adds a store (the owner only). Resolves to { name, warehouse_name }. A name the shop already uses comes back as an Error with the server's plain sentence. */
+export const addStore = ({ name }) => send(() => axiosInstance.post(`${STOCK}.add_store`, compact({ store_name: name }), { allowRefusal: true }));
+
 /** What the system says is in a store, for the count: { warehouse, rows: [{ item_code, item_name, category, unit, expected }], total, truncated } */
 export const getCountSheet = async ({ scope = 'all', category, store } = {}) => {
   const data = await send(() => axiosInstance.get(`${STOCK}.get_count_sheet`, { params: compact({ scope, category, warehouse: store }) }));

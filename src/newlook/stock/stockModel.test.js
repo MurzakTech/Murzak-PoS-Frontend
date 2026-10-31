@@ -299,3 +299,55 @@ describe('the guided count', () => {
     ]);
   });
 });
+
+describe('Move stock rules', () => {
+  const milk = { item_code: 'MLK', item_name: 'Maziwa 500ml', qty: 4 };
+  const flour = { item_code: 'UNG', item_name: 'Unga wa Ngano 2kg', qty: 40 };
+  const { moveProblems, visibleTabs, tabAddress, storeName } = require('./stockModel');
+
+  test('a good move has no problems and lists the lines to send', () => {
+    const result = moveProblems({ from: 'A', to: 'B', lines: [{ product: milk, qty: '2' }, { product: flour, qty: '40' }, { product: null, qty: '' }] });
+    expect(result.ok).toBe(true);
+    expect(result.used).toHaveLength(2);
+  });
+
+  test('both stores are needed, and they must differ', () => {
+    expect(moveProblems({ from: '', to: '', lines: [{ product: milk, qty: '1' }] }).problems).toMatchObject({ from: 'Choose a store', to: 'Choose a store' });
+    expect(moveProblems({ from: 'A', to: 'A', lines: [{ product: milk, qty: '1' }] }).problems.to).toBe('Choose a different store from the one you are moving from');
+  });
+
+  test('at least one product is needed', () => {
+    const result = moveProblems({ from: 'A', to: 'B', lines: [{ product: null, qty: '' }] });
+    expect(result.ok).toBe(false);
+    expect(result.problems.lines).toBe('Choose at least one product to move');
+  });
+
+  test('each line is checked against the stock the first store holds, and a product may appear once', () => {
+    const result = moveProblems({ from: 'A', to: 'B', lines: [{ product: milk, qty: '5' }, { product: milk, qty: '1' }, { product: flour, qty: '0' }, { product: null, qty: '3' }] });
+    expect(result.lineProblems[0].qty).toBe('Only 4 in the first store');
+    expect(result.lineProblems[1].product).toBe('This product is already in the list');
+    expect(result.lineProblems[2].qty).toBe('Enter a quantity above zero');
+    expect(result.lineProblems[3].product).toBe('Choose a product');
+    expect(result.ok).toBe(false);
+  });
+
+  test('moving all that is held is allowed', () => {
+    expect(moveProblems({ from: 'A', to: 'B', lines: [{ product: milk, qty: '4' }] }).ok).toBe(true);
+  });
+
+  test('the owner of a one-store shop sees Locations but not Transfers; everyone sees both with two stores', () => {
+    const keys = (options) => visibleTabs(options).map((t) => t.key);
+    expect(keys({ canChange: true, canAddStore: true })).toEqual(['overview', 'low', 'movements', 'count', 'locations']);
+    expect(keys({ canChange: true, canAddStore: false })).toEqual(['overview', 'low', 'movements', 'count']);
+    expect(keys({ locations: true, canChange: true })).toEqual(['overview', 'low', 'movements', 'count', 'locations', 'transfers']);
+  });
+
+  test('Transfers keeps the period like Movements does', () => {
+    expect(tabAddress('/stock', 'transfers', 'period=7d&store=A&q=milk')).toBe('/stock/transfers?store=A&period=7d');
+  });
+
+  test('a store is named by its short name', () => {
+    expect(storeName([{ value: 'A - DS', label: 'Duka Kuu' }], 'A - DS')).toBe('Duka Kuu');
+    expect(storeName([], 'Z - DS')).toBe('Z - DS');
+  });
+});
