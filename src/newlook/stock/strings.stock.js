@@ -395,7 +395,11 @@ const stock = {
     title: 'Bulk stock update',
     description: 'Update or adjust stock quantities for multiple products at once.',
     methods: { file: 'Upload spreadsheet', manual: 'Quick table entry' },
-    modes: { set: 'Set exact stock level', adjust: 'Add / deduct (+/-)' },
+    modes: { set: 'Set exact stock level', adjust: 'Add or take away' },
+    modeHelp: {
+      set: 'The number you enter becomes the stock in the store. Products that are not on your list are left as they are.',
+      adjust: 'The number you enter is added to the stock in the store. Put a minus sign in front to take stock away.',
+    },
     downloadTemplate: 'Download CSV template',
     uploadPrompt: 'Choose or drop a CSV or Excel spreadsheet',
     uploadHelp: 'File must include columns: item_code and qty',

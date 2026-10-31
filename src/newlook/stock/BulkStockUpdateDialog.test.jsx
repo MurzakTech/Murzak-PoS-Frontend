@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
 import BulkStockUpdateDialog from './BulkStockUpdateDialog';
-import { bulkUpdateStock, findProducts } from '../../api/stockLevelsApi';
+import { bulkUpdateStock, currentStock, findProducts } from '../../api/stockLevelsApi';
 
 jest.mock('../../api/stockLevelsApi', () => ({
   bulkUpdateStock: jest.fn(),
+  currentStock: jest.fn(),
   findProducts: jest.fn(),
 }));
 
@@ -38,6 +39,7 @@ const renderDialog = (props = {}) => {
 describe('BulkStockUpdateDialog', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    currentStock.mockResolvedValue({});
     findProducts.mockResolvedValue([
       { item_code: 'ITEM-1', item_name: 'Sugar 1kg', qty: 10, unit: 'Nos' },
       { item_code: 'ITEM-2', item_name: 'Flour 2kg', qty: 25, unit: 'Nos' },
@@ -100,5 +102,23 @@ describe('BulkStockUpdateDialog', () => {
       expect(onSaved).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
+  });
+
+  test('shows what the store holds now, as the server reports it, and the difference', async () => {
+    currentStock.mockResolvedValue({ 'ITEM-1': 4 });
+    renderDialog();
+    userEvent.click(screen.getByRole('radio', { name: /Quick/i }));
+    userEvent.click(await screen.findByRole('button', { name: /Sugar 1kg/i }));
+
+    // The picker said 10; the server says the store holds 4, so the new figure (10) is a rise of 6
+    expect(await screen.findByText('+6')).toBeInTheDocument();
+    expect(currentStock).toHaveBeenCalledWith({ codes: ['ITEM-1'], store: 'Store A' });
+  });
+
+  test('says in plain words what each update type does', async () => {
+    renderDialog();
+    expect(screen.getByText(/becomes the stock in the store/i)).toBeInTheDocument();
+    userEvent.click(screen.getByRole('radio', { name: /Add or take away/i }));
+    expect(screen.getByText(/Put a minus sign in front to take stock away/i)).toBeInTheDocument();
   });
 });
