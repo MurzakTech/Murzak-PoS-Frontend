@@ -71,7 +71,7 @@ between tabs does not rebuild the page. `/stock/count/:id` (the three-role count
 | Material transfer | Material Transfers | **Move stock** (header button with two or more stores, `?action=move`): one step, the stock leaves one store and arrives in the other. The Transfers tab lists past moves |
 | Edit price, SKU, unit, expiry, batch per item and store | Inventory Details | Row menu item "Edit price, unit, expiry and batch" opens the current `/inventory/item-details`. Still **not placed** in the new design (Products or Stock levels is the owner's call) |
 | Multi-level stock count (three roles) | Multi-level reconciliation | Link "Count in three steps by role" in step 1 of Count stock (open question 17); its list, details and stock-take pages stay as they are |
-| Stores: add, default store | Stores | Locations tab: the owner adds a store (`?action=store`), and anyone who may change stock can make a store the main one. Editing a store and assigning staff to stores stay on the current `/warehouses` screen |
+| Stores: add, edit, default store, staff assignment | Stores | Locations tab: the owner adds a store (`?action=store`), and anyone who may change stock can make a store the main one. The owner and stock managers edit a store's name, town and address (`?action=edit&item=<store>`). The owner chooses who works at a store (`?action=people&item=<store>`) |
 | Stock transfers: request, approve, dispatch, receive, cancel | Stock Transfers | The approval flow stays on the current `/stock-transfers`; the Transfers tab links to it ("Need someone to approve and receive the goods?") |
 | Repost stock | Store code only, no screen | No screen today and none added |
 
@@ -80,7 +80,8 @@ between tabs does not rebuild the page. `/stock/count/:id` (the three-role count
 - **Move stock** needs two different stores and at least one product with a quantity. Each quantity is checked against what the first store holds (the product shows that stock when chosen), and the server checks again and moves nothing if any product falls short. Changing the "Move from" store clears the product list, because the stock shown belongs to the store it was read from.
 - **Transfers** is the Movements list asking the server for `kind=transfer`. Each move shows as two lines, one leaving a store (negative) and one arriving in another (positive), with the store named on each.
 - **Locations** lists the shop's real stores (not the folders and production warehouses a new business comes with), marks the main store, and lets the owner add a store. Only the owner may add one; the server refuses anyone else.
-- Back end: `stock_levels_api.move_stock`, `stock_levels_api.add_store`, and `kind=transfer` on `get_stock_levels`.
+- **Who works here**: a tick for each person of the business. A person with no store chosen can use every store, so ticking such a person limits them, and unticking the only store of a limited person frees them again; the form says so before saving and again afterwards. Only the owner sees it.
+- Back end: `store_admin_api.edit_store`, `get_store_people`, `set_store_people`, and `stock_levels_api.move_stock`, `stock_levels_api.add_store`, and `kind=transfer` on `get_stock_levels`.
 
 ## Needs browser check
 

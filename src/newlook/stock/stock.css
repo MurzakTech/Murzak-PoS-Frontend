@@ -378,3 +378,12 @@
   font-size: var(--caption-size);
   font-weight: 600;
 }
+
+/* Who works here: one tick per person, with how many stores they are limited to beneath */
+.nl-stock-people {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

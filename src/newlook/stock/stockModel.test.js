@@ -351,3 +351,38 @@ describe('Move stock rules', () => {
     expect(storeName([], 'Z - DS')).toBe('Z - DS');
   });
 });
+
+describe('Who works here rules', () => {
+  const { peopleChange, limitWords, namesList } = require('./stockModel');
+  const team = [
+    { user: 'a', name: 'Amina', assigned: true, stores: 1 },
+    { user: 'j', name: 'Juma', assigned: false, stores: 0 },
+    { user: 'z', name: 'Zawadi', assigned: true, stores: 2 },
+  ];
+
+  test('nothing ticked or unticked is no change', () => {
+    expect(peopleChange(team, new Set(['a', 'z']))).toEqual({ limited: [], freed: [], changed: false });
+  });
+
+  test('ticking someone with no store chosen limits them', () => {
+    expect(peopleChange(team, new Set(['a', 'z', 'j']))).toEqual({ limited: ['Juma'], freed: [], changed: true });
+  });
+
+  test('unticking someone with only this store frees them; unticking one with two stores does not', () => {
+    expect(peopleChange(team, new Set(['z']))).toEqual({ limited: [], freed: ['Amina'], changed: true });
+    expect(peopleChange(team, new Set(['a']))).toEqual({ limited: [], freed: [], changed: true });
+  });
+
+  test('how many stores a person is limited to, in words', () => {
+    expect(limitWords(0)).toBe('Can use every store');
+    expect(limitWords(1)).toBe('Limited to 1 store');
+    expect(limitWords(3)).toBe('Limited to 3 stores');
+  });
+
+  test('names read the way people say them', () => {
+    expect(namesList([])).toBe('');
+    expect(namesList(['Amina'])).toBe('Amina');
+    expect(namesList(['Amina', 'Juma'])).toBe('Amina and Juma');
+    expect(namesList(['Amina', 'Juma', 'Zawadi'])).toBe('Amina, Juma and Zawadi');
+  });
+});

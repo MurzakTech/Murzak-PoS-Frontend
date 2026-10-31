@@ -16,6 +16,7 @@ import { ToastProvider } from '../components/Toast';
 import StockLevelsPage from './StockLevelsPage';
 import { PREVIEW_KEY, resyncPreview } from '../redirects/live';
 import { setDefaultWarehouse } from '../../store/warehouseSlice';
+import { editStore, getStorePeople, setStorePeople } from '../../api/storesApi';
 import { addStore, findProducts, getStockLevels, moveStock } from '../../api/stockLevelsApi';
 import { getMyAccess } from '../../api/accessApi';
 import { saveTextFile } from '../../utils/saveTextFile';
@@ -30,6 +31,7 @@ jest.mock('../../api/stockLevelsApi', () => ({
   moveStock: jest.fn(),
   addStore: jest.fn(),
 }));
+jest.mock('../../api/storesApi', () => ({ editStore: jest.fn(), getStorePeople: jest.fn(), setStorePeople: jest.fn() }));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
 jest.mock('../../utils/saveTextFile', () => ({ saveTextFile: jest.fn() }));
 const mockShop = {
@@ -405,6 +407,172 @@ describe('the page and its tabs', () => {
     userEvent.click(within(dialog).getByRole('button', { name: 'Move stock' }));
     expect(await within(dialog).findByText('The stock was not moved. There is only 3 of Maziwa 500ml in the first store, so 4 cannot be moved.')).toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'Move stock between stores' })).toBeInTheDocument();
+  });
+});
+
+describe('editing a store and choosing who works there', () => {
+  const STORES = [
+    { name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', disabled: 0, is_group: 0, is_default: true, city: 'Nairobi', address_line_1: 'Moi Avenue' },
+    { name: 'Duka la Pili - DS', warehouse_name: 'Duka la Pili', disabled: 0, is_group: 0 },
+  ];
+  const TEAM = [
+    { user: 'amina@duka.test', name: 'Amina', assigned: true, stores: 1 },
+    { user: 'juma@duka.test', name: 'Juma', assigned: false, stores: 0 },
+    { user: 'zawadi@duka.test', name: 'Zawadi', assigned: false, stores: 2 },
+  ];
+  beforeEach(() => {
+    mockShop.warehouses = STORES;
+    getStorePeople.mockResolvedValue(TEAM);
+  });
+  const openMenu = async (store) => {
+    await renderPage('/new-look/stock/locations');
+    userEvent.click(await screen.findByRole('button', { name: `Actions for ${store}` }));
+  };
+
+  test('the owner has Edit store and Who works here on every store', async () => {
+    await openMenu('Duka la Pili');
+    expect(screen.getByRole('menuitem', { name: 'Edit store' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Who works here' })).toBeInTheDocument();
+  });
+
+  test('a manager who may change stock can edit a store but not choose who works there', async () => {
+    mockServer.role = 'manager';
+    await openMenu('Duka la Pili');
+    expect(screen.getByRole('menuitem', { name: 'Edit store' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Who works here' })).not.toBeInTheDocument();
+  });
+
+  test('someone who may not change stock gets no menu on a store', async () => {
+    mockServer.canChange = false;
+    mockServer.role = 'cashier';
+    await renderPage('/new-look/stock/locations');
+    await screen.findByRole('table', { name: 'Your stores' });
+    expect(screen.queryByRole('button', { name: /^Actions for/ })).not.toBeInTheDocument();
+  });
+
+  test('Edit store starts with what the store has, and saving sends the changes and reloads the stores', async () => {
+    editStore.mockResolvedValue({ name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu Mpya', city: 'Mombasa', address: 'Digo Road' });
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Edit store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit store' });
+    expect(within(dialog).getByLabelText('Store name')).toHaveValue('Duka Kuu');
+    expect(within(dialog).getByLabelText('Town (optional)')).toHaveValue('Nairobi');
+    expect(within(dialog).getByLabelText('Address (optional)')).toHaveValue('Moi Avenue');
+    userEvent.clear(within(dialog).getByLabelText('Store name'));
+    userEvent.type(within(dialog).getByLabelText('Store name'), 'Duka Kuu Mpya');
+    userEvent.clear(within(dialog).getByLabelText('Town (optional)'));
+    userEvent.type(within(dialog).getByLabelText('Town (optional)'), 'Mombasa');
+    userEvent.clear(within(dialog).getByLabelText('Address (optional)'));
+    userEvent.type(within(dialog).getByLabelText('Address (optional)'), 'Digo Road');
+    const before = mockDispatch.mock.calls.length;
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(editStore).toHaveBeenCalledWith({ store: 'Duka Kuu - DS', name: 'Duka Kuu Mpya', city: 'Mombasa', address: 'Digo Road' }));
+    expect(await screen.findByText('Duka Kuu Mpya was saved.')).toBeInTheDocument();
+    expect(mockDispatch.mock.calls.length).toBeGreaterThan(before);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  test('clearing the town sends a blank town, which clears it', async () => {
+    editStore.mockResolvedValue({ name: 'Duka Kuu - DS', warehouse_name: 'Duka Kuu', city: '', address: 'Moi Avenue' });
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Edit store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit store' });
+    userEvent.clear(within(dialog).getByLabelText('Town (optional)'));
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(editStore).toHaveBeenCalledWith(expect.objectContaining({ city: '' })));
+  });
+
+  test('an empty store name is not sent', async () => {
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Edit store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit store' });
+    userEvent.clear(within(dialog).getByLabelText('Store name'));
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    expect(await within(dialog).findByText('Type a name for the store')).toBeInTheDocument();
+    expect(editStore).not.toHaveBeenCalled();
+  });
+
+  test('a name another store already uses is shown in plain words and the form stays open', async () => {
+    editStore.mockRejectedValue(new Error('You already have a store called Duka la Pili.'));
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Edit store' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit store' });
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    expect(await within(dialog).findByText('The store was not saved. You already have a store called Duka la Pili.')).toBeInTheDocument();
+  });
+
+  test('the form is part of the address, so a link opens it', async () => {
+    await renderPage('/new-look/stock/locations?action=edit&item=Duka%20la%20Pili%20-%20DS');
+    const dialog = await screen.findByRole('dialog', { name: 'Edit store' });
+    expect(within(dialog).getByLabelText('Store name')).toHaveValue('Duka la Pili');
+  });
+
+  test('Who works here lists the team with a tick for those who work there and how many stores each is limited to', async () => {
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Who works here' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Who works at Duka Kuu' });
+    const list = await within(dialog).findByRole('list', { name: 'People who work at this store' });
+    expect(within(list).getByRole('checkbox', { name: 'Amina' })).toBeChecked();
+    expect(within(list).getByRole('checkbox', { name: 'Juma' })).not.toBeChecked();
+    expect(within(list).getByText('Limited to 1 store')).toBeInTheDocument();
+    expect(within(list).getByText('Can use every store')).toBeInTheDocument();
+    expect(within(list).getByText('Limited to 2 stores')).toBeInTheDocument();
+    expect(getStorePeople).toHaveBeenCalledWith('Duka Kuu - DS');
+    // Nothing changed yet, so there is nothing to save
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  test('ticking someone who can use every store warns that it limits them, and saving sends everyone ticked', async () => {
+    setStorePeople.mockResolvedValue({ added: ['juma@duka.test'], removed: [], everywhere: [] });
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Who works here' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Who works at Duka Kuu' });
+    userEvent.click(await within(dialog).findByRole('checkbox', { name: 'Juma' }));
+    expect(within(dialog).getByText('Juma can use every store now. Choosing this store limits them to the stores chosen for them.')).toBeInTheDocument();
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(setStorePeople).toHaveBeenCalledWith({ store: 'Duka Kuu - DS', people: ['amina@duka.test', 'juma@duka.test'] }));
+    expect(await screen.findByText('Saved who works at Duka Kuu.')).toBeInTheDocument();
+  });
+
+  test('taking someone off the only store they have warns before saving and says so afterwards', async () => {
+    setStorePeople.mockResolvedValue({ added: [], removed: ['amina@duka.test'], everywhere: ['amina@duka.test'] });
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Who works here' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Who works at Duka Kuu' });
+    userEvent.click(await within(dialog).findByRole('checkbox', { name: 'Amina' }));
+    expect(within(dialog).getByText('Amina will be able to use every store again, because this is the only store they were limited to.')).toBeInTheDocument();
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(setStorePeople).toHaveBeenCalledWith({ store: 'Duka Kuu - DS', people: [] }));
+    expect(await screen.findByText('Saved who works at Duka Kuu. Amina can use every store again.')).toBeInTheDocument();
+  });
+
+  test('a team that cannot be loaded says so and can be tried again', async () => {
+    getStorePeople.mockRejectedValueOnce(new Error('The server is busy.'));
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Who works here' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Who works at Duka Kuu' });
+    expect(await within(dialog).findByText('We could not load your team. The server is busy.')).toBeInTheDocument();
+    userEvent.click(within(dialog).getByRole('button', { name: 'Try again' }));
+    expect(await within(dialog).findByRole('checkbox', { name: 'Amina' })).toBeInTheDocument();
+    expect(getStorePeople).toHaveBeenCalledTimes(2);
+  });
+
+  test('a refusal from the server is shown and the form stays open', async () => {
+    setStorePeople.mockRejectedValue(new Error('Only a business owner or System Manager can do this.'));
+    await openMenu('Duka Kuu');
+    userEvent.click(screen.getByRole('menuitem', { name: 'Who works here' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Who works at Duka Kuu' });
+    userEvent.click(await within(dialog).findByRole('checkbox', { name: 'Zawadi' }));
+    userEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog).findByText('This was not saved. Only a business owner or System Manager can do this.')).toBeInTheDocument();
+  });
+
+  test('someone who is not the owner cannot open Who works here from a link', async () => {
+    mockServer.role = 'manager';
+    await renderPage('/new-look/stock/locations?action=people&item=Duka%20Kuu%20-%20DS');
+    await screen.findByRole('table', { name: 'Your stores' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(getStorePeople).not.toHaveBeenCalled();
   });
 });
 
