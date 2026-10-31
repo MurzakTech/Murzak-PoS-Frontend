@@ -140,7 +140,7 @@ describe('adding a person', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  test('adds a cashier with the roles of a cashier, closes, says Saved and reads the team again', async () => {
+  test('adds a cashier with the roles of a cashier, shows what to give them, then closes on Done, says Saved and reads the team again', async () => {
     const create = jest.fn().mockResolvedValue({});
     const load = jest.fn().mockResolvedValue(data());
     const dialog = within(await open({ load, dialogApi: { create } }));
@@ -151,9 +151,15 @@ describe('adding a person', () => {
     userEvent.click(dialog.getByRole('button', { name: 'Add person' }));
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1));
     expect(create).toHaveBeenCalledWith({ firstName: 'Wanjiru', lastName: 'Njoroge', email: 'wanjiru@shop.test', password: 'a-long-secret', phone: '', roles: ['Sales User'], company: 'Shop A' });
+    // The list is read again at once; the page of what to give them stays open until Done
+    const added = within(await screen.findByRole('dialog', { name: 'Wanjiru Njoroge was added' }));
+    expect(added.getByText('wanjiru@shop.test')).toBeInTheDocument();
+    expect(added.getByText('a-long-secret')).toBeInTheDocument();
+    expect(added.getByText('Cashier')).toBeInTheDocument();
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+    userEvent.click(added.getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByRole('status')).toHaveTextContent('Saved');
-    expect(load).toHaveBeenCalledTimes(2);
   });
 
   test('adds a manager with the manager roles', async () => {
@@ -163,11 +169,109 @@ describe('adding a person', () => {
     userEvent.type(dialog.getByLabelText('Last name'), 'Ali');
     userEvent.type(dialog.getByLabelText('Email (they sign in with this)'), 'ali@shop.test');
     userEvent.type(dialog.getByLabelText('Password for their first sign-in'), 'a-long-secret');
-    userEvent.click(dialog.getByRole('combobox', { name: /Role/ }));
-    userEvent.click(await screen.findByRole('option', { name: 'Manager' }));
+    userEvent.click(dialog.getByRole('radio', { name: /^Manager/ }));
     userEvent.click(dialog.getByRole('button', { name: 'Add person' }));
     await waitFor(() => expect(create).toHaveBeenCalled());
     expect(create.mock.calls[0][0].roles).toEqual(TIERS.grant.manager);
+  });
+
+  test('adds an owner with every role the server names for an owner', async () => {
+    const create = jest.fn().mockResolvedValue({});
+    const dialog = within(await open({ dialogApi: { create } }));
+    userEvent.type(dialog.getByLabelText('First name'), 'Beth');
+    userEvent.type(dialog.getByLabelText('Last name'), 'Wafula');
+    userEvent.type(dialog.getByLabelText('Email (they sign in with this)'), 'beth@shop.test');
+    userEvent.type(dialog.getByLabelText('Password for their first sign-in'), 'a-long-secret');
+    userEvent.click(dialog.getByRole('radio', { name: /^Owner/ }));
+    userEvent.click(dialog.getByRole('button', { name: 'Add person' }));
+    await waitFor(() => expect(create).toHaveBeenCalled());
+    expect(create.mock.calls[0][0].roles).toEqual(TIERS.grant.owner);
+    expect(await screen.findByRole('dialog', { name: 'Beth Wafula was added' })).toBeInTheDocument();
+  });
+
+  test('what each role can do is written on its card, and the owner is marked Admin', async () => {
+    const dialog = within(await open({}));
+    const group = dialog.getByRole('group', { name: 'What will they do?' });
+    expect(within(group).getAllByRole('radio')).toHaveLength(3);
+    expect(within(group).getByRole('radio', { name: /^Cashier/ })).toBeChecked();
+    expect(within(group).getByText('Sells at the till. Does not see profit, costs or money owed.')).toBeInTheDocument();
+    expect(within(group).getByText('Sees sales, stock, profit and money owed. Cannot change the team.')).toBeInTheDocument();
+    expect(within(group).getByText('Sees and can change everything, including the team and settings.')).toBeInTheDocument();
+    expect(within(within(group).getByRole('radio', { name: /^Owner/ }).closest('label')).getByText('Admin')).toBeInTheDocument();
+  });
+
+  test('the role is the first thing after the email, and the optional mobile number comes last', async () => {
+    const dialog = within(await open({}));
+    const order = ['First name', 'Last name', 'Email (they sign in with this)', 'What will they do?', 'Password for their first sign-in', 'Mobile (optional)'];
+    const nodes = order.map((name) => (name === 'What will they do?' ? dialog.getByRole('group', { name }) : dialog.getByLabelText(name)));
+    nodes.slice(1).forEach((node, i) => expect(nodes[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy());
+  });
+
+  test('Make a password fills the box with a readable one, shows it, and that password is what is sent and shown on the next page', async () => {
+    const create = jest.fn().mockResolvedValue({});
+    const dialog = within(await open({ dialogApi: { create } }));
+    userEvent.type(dialog.getByLabelText('First name'), 'Wanjiru');
+    userEvent.type(dialog.getByLabelText('Last name'), 'Njoroge');
+    userEvent.type(dialog.getByLabelText('Email (they sign in with this)'), 'wanjiru@shop.test');
+    userEvent.click(dialog.getByRole('button', { name: 'Make a password for them' }));
+    const box = dialog.getByLabelText('Password for their first sign-in');
+    expect(box.value).toMatch(/^[A-Za-z2-9]{12}$/);
+    expect(box).toHaveAttribute('type', 'text');
+    expect(dialog.getByRole('checkbox', { name: 'Show the password' })).toBeChecked();
+    const made = box.value;
+    userEvent.click(dialog.getByRole('button', { name: 'Add person' }));
+    await waitFor(() => expect(create).toHaveBeenCalled());
+    expect(create.mock.calls[0][0].password).toBe(made);
+    expect(await screen.findByText(made)).toBeInTheDocument();
+  });
+
+  test('Show the password turns the hidden box into plain text and back', async () => {
+    const dialog = within(await open({}));
+    const box = dialog.getByLabelText('Password for their first sign-in');
+    userEvent.type(box, 'a-long-secret');
+    userEvent.click(dialog.getByRole('checkbox', { name: 'Show the password' }));
+    expect(box).toHaveAttribute('type', 'text');
+    userEvent.click(dialog.getByRole('checkbox', { name: 'Show the password' }));
+    expect(box).toHaveAttribute('type', 'password');
+  });
+
+  describe('the page shown once a person is added', () => {
+    const addOne = async () => {
+      const create = jest.fn().mockResolvedValue({});
+      const dialog = within(await open({ dialogApi: { create } }));
+      userEvent.type(dialog.getByLabelText('First name'), 'Wanjiru');
+      userEvent.type(dialog.getByLabelText('Last name'), 'Njoroge');
+      userEvent.type(dialog.getByLabelText('Email (they sign in with this)'), 'wanjiru@shop.test');
+      userEvent.type(dialog.getByLabelText('Password for their first sign-in'), 'a-long-secret');
+      userEvent.click(dialog.getByRole('button', { name: 'Add person' }));
+      return within(await screen.findByRole('dialog', { name: 'Wanjiru Njoroge was added' }));
+    };
+
+    test('Copy puts the email and the first password on the clipboard and says so', async () => {
+      const writeText = jest.fn().mockResolvedValue();
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+      const added = await addOne();
+      userEvent.click(added.getByRole('button', { name: 'Copy these' }));
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith('Email: wanjiru@shop.test\nPassword: a-long-secret'));
+      expect(await added.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+    });
+
+    test('when the browser will not copy, the person is told to copy it by hand', async () => {
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText: jest.fn().mockRejectedValue(new Error('blocked')) }, configurable: true });
+      const added = await addOne();
+      userEvent.click(added.getByRole('button', { name: 'Copy these' }));
+      expect(await added.findByRole('alert')).toHaveTextContent('Could not copy. Select the text and copy it.');
+    });
+
+    test('says the password is shown only once, and it is gone when the page is closed', async () => {
+      const added = await addOne();
+      expect(added.getByText(/this is the only time you will see it/)).toBeInTheDocument();
+      userEvent.click(added.getByRole('button', { name: 'Done' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(screen.queryByText('a-long-secret')).not.toBeInTheDocument();
+      userEvent.click(screen.getByRole('button', { name: 'Add a person' }));
+      expect(within(await screen.findByRole('dialog')).getByLabelText('Password for their first sign-in')).toHaveValue('');
+    });
   });
 
   test('an email that already exists is said beside the email field', async () => {
@@ -240,8 +344,7 @@ describe('changing a person', () => {
     const remove = jest.fn();
     const update = jest.fn();
     const dialog = await edit('Zawadi Mwangi', { dialogApi: { add, remove, update } });
-    userEvent.click(dialog.getByRole('combobox', { name: /Role/ }));
-    userEvent.click(await screen.findByRole('option', { name: 'Manager' }));
+    userEvent.click(dialog.getByRole('radio', { name: /^Manager/ }));
     userEvent.click(dialog.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(add).toHaveBeenCalledWith({ email: 'zawadi@shop.test', roles: TIERS.grant.manager }));
     expect(remove).not.toHaveBeenCalled();
@@ -253,8 +356,7 @@ describe('changing a person', () => {
     const add = jest.fn().mockImplementation(async () => order.push('add'));
     const remove = jest.fn().mockImplementation(async () => order.push('remove'));
     const dialog = await edit('Juma Kamau', { dialogApi: { add, remove, update: jest.fn() } });
-    userEvent.click(dialog.getByRole('combobox', { name: /Role/ }));
-    userEvent.click(await screen.findByRole('option', { name: 'Cashier' }));
+    userEvent.click(dialog.getByRole('radio', { name: /^Cashier/ }));
     userEvent.click(dialog.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(remove).toHaveBeenCalledWith({ email: 'juma@shop.test', roles: ['Sales Manager'] }));
     expect(add).not.toHaveBeenCalled(); // Juma already holds Sales User, so nothing is added
@@ -265,8 +367,7 @@ describe('changing a person', () => {
     const add = jest.fn().mockRejectedValue(new Error('You cannot give roles you do not hold yourself: Item Manager.'));
     const remove = jest.fn();
     const dialog = await edit('Zawadi Mwangi', { dialogApi: { add, remove, update: jest.fn() } });
-    userEvent.click(dialog.getByRole('combobox', { name: /Role/ }));
-    userEvent.click(await screen.findByRole('option', { name: 'Manager' }));
+    userEvent.click(dialog.getByRole('radio', { name: /^Manager/ }));
     userEvent.click(dialog.getByRole('button', { name: 'Save' }));
     expect(await dialog.findByRole('alert')).toHaveTextContent('You cannot give roles you do not hold yourself');
     expect(remove).not.toHaveBeenCalled();
@@ -275,13 +376,14 @@ describe('changing a person', () => {
 
   test('a person cannot change their own role', async () => {
     const dialog = await edit('Amina Otieno (you)', {});
-    expect(dialog.getByRole('combobox', { name: /Role/ })).toBeDisabled();
+    dialog.getAllByRole('radio').forEach((radio) => expect(radio).toBeDisabled());
     expect(dialog.getByText('You cannot do this to yourself.')).toBeInTheDocument();
   });
 
   test('the only active owner cannot be moved down', async () => {
     const dialog = await edit('Amina Otieno', { load: jest.fn().mockResolvedValue(data([AMINA, ZAWADI], 'zawadi@shop.test')) });
-    expect(dialog.getByRole('combobox', { name: /Role/ })).toBeDisabled();
+    dialog.getAllByRole('radio').forEach((radio) => expect(radio).toBeDisabled());
+    expect(dialog.getByText('This is the only active owner, so this cannot be done.')).toBeInTheDocument();
   });
 
   test('other roles are still given one by one on the current Staff screen', async () => {

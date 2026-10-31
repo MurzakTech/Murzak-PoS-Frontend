@@ -108,3 +108,34 @@ test('the first range is the last seven days, today included', () => {
   expect(defaultRange(new Date(2026, 9, 17))).toEqual({ from: '2026-10-11', to: '2026-10-17' });
   expect(defaultRange(new Date(2026, 2, 3))).toEqual({ from: '2026-02-25', to: '2026-03-03' });
 });
+
+describe('makePassword', () => {
+  const { makePassword } = require('./teamModel');
+  const counter = () => {
+    let n = 0;
+    return (max) => {
+      n += 7;
+      return n % max;
+    };
+  };
+
+  test('is twelve letters and digits with a capital, a small letter and a digit, and none of the look-alikes', () => {
+    for (let run = 0; run < 50; run += 1) {
+      const text = makePassword();
+      expect(text).toMatch(/^[A-Za-z2-9]{12}$/);
+      expect(text).toMatch(/[A-Z]/);
+      expect(text).toMatch(/[a-z]/);
+      expect(text).toMatch(/[2-9]/);
+      expect(text).not.toMatch(/[0O1lI]/);
+    }
+  });
+
+  test('is different each time', () => {
+    expect(new Set(Array.from({ length: 30 }, () => makePassword())).size).toBe(30);
+  });
+
+  test('uses the source of randomness it is given, so a test can fix it', () => {
+    expect(makePassword(counter())).toBe(makePassword(counter()));
+    expect(makePassword(counter(), 16)).toHaveLength(16);
+  });
+});

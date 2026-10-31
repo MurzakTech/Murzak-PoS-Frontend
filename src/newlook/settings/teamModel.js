@@ -51,6 +51,33 @@ export const personProblems = (values, adding) => {
   return found;
 };
 
+const LOWER = 'abcdefghijkmnpqrstuvwxyz';
+const UPPER = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const DIGITS = '23456789';
+
+const randomBelow = (n) => {
+  const crypto = typeof window !== 'undefined' ? window.crypto : null;
+  if (crypto && crypto.getRandomValues) return crypto.getRandomValues(new Uint32Array(1))[0] % n;
+  return Math.floor(Math.random() * n);
+};
+
+/**
+ * A first password the owner can read out or send: 12 letters and digits, with at least one capital, one small letter and
+ * one digit, and none of the look-alikes (0 O 1 l I). `random(n)` gives a whole number below n; the browser's secure
+ * source is used unless a test gives its own.
+ */
+export const makePassword = (random = randomBelow, length = 12) => {
+  const pick = (set) => set[random(set.length)];
+  const all = LOWER + UPPER + DIGITS;
+  const chars = [pick(LOWER), pick(UPPER), pick(DIGITS)];
+  while (chars.length < length) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i -= 1) {
+    const j = random(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+};
+
 /** Which field a server sentence is about, so it can be shown beside that field: 'email', 'password', 'phone' or ''. */
 export const fieldForError = (message) => {
   const text = String(message || '').toLowerCase();

@@ -178,7 +178,7 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
         {!owner && state.status === 'ready' ? <p className="nl-settings-note">{P.addHint}</p> : null}
         {body}
       </Card>
-      {dialog ? <PersonDialog member={dialog.member} members={data.members} tiers={data.tiers} me={me} company={data.company} onClose={() => setDialog(null)} onDone={done} api={dialogApi} /> : null}
+      {dialog ? <PersonDialog member={dialog.member} members={data.members} tiers={data.tiers} me={me} company={data.company} onClose={() => setDialog(null)} onDone={done} onSaved={() => reload(true)} api={dialogApi} /> : null}
       <ConfirmDialog
         open={Boolean(asking)}
         title={asking ? fill(T.team.deactivate.title, { name: asking.full_name }) : ''}
