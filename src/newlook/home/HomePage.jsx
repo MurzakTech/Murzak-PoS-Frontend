@@ -144,7 +144,8 @@ const HomePage = () => {
     );
   }
 
-  const firstTime = !loading && hasNoSalesYet(data);
+  // "No sales yet" is about the whole shop. A store or a person with no sales (a new store, say) is still a shop with a history, and the filters must stay so the owner can switch back.
+  const firstTime = !loading && !store && !staff && hasNoSalesYet(data);
   const tileList = [];
   if (!firstTime) {
     tileList.push(
