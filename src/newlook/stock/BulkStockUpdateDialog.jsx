@@ -26,12 +26,12 @@ const D = T.bulkUpdateDialog || {
   },
   downloadTemplate: 'Download CSV template',
   uploadPrompt: 'Choose or drop a CSV or Excel spreadsheet',
-  uploadHelp: 'File must include columns: item_code and qty',
+  uploadHelp: 'Your file needs two columns: item_code (the product code shown on Stock levels) and qty (the quantity).',
   chooseStore: 'Target store',
   addProducts: 'Search and add product',
   clearAll: 'Clear table',
   note: 'Reason / note (optional)',
-  notePlaceholder: 'e.g. Stock audit, New shipment, Batch recount',
+  notePlaceholder: 'e.g. Stock audit, New shipment, Store recount',
   save: 'Update stock',
   saving: 'Updating stock...',
   cancel: 'Cancel',
@@ -281,7 +281,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           ) : null}
 
           <Segmented
-            label="Entry method"
+            label="How to enter the products"
             value={method}
             onChange={setMethod}
             options={[
@@ -291,7 +291,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           />
 
           <Segmented
-            label="Update type"
+            label="What the numbers mean"
             value={mode}
             onChange={setMode}
             options={[
@@ -314,7 +314,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <label className="nl-btn nl-btn--secondary" style={{ cursor: 'pointer' }}>
                 <Icon name="search" />
-                <span>Browse file</span>
+                <span>Choose file</span>
                 <input
                   type="file"
                   accept=".csv,.xlsx,.xls,.tsv"
@@ -354,7 +354,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
                   <th style={{ textAlign: 'left' }}>Product</th>
                   <th style={{ textAlign: 'right' }}>Current</th>
                   <th style={{ textAlign: 'right', width: '120px' }}>
-                    {mode === 'adjust' ? '+ / - Qty' : 'New Qty'}
+                    {mode === 'adjust' ? 'Add or take away' : 'New quantity'}
                   </th>
                   <th style={{ textAlign: 'right' }}>Difference</th>
                   <th style={{ width: '40px' }} />
