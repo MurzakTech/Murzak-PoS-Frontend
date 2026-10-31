@@ -295,6 +295,30 @@ describe('Home for an owner', () => {
     expect(screen.queryByRole('link', { name: /^Revenue:/ })).not.toBeInTheDocument();
   });
 
+  test('a store with no sales is still a shop with sales: no first-time panel, and the filters stay so the owner can switch back', async () => {
+    const data = overview({ period: { key: '30d', from: '2026-09-14', to: '2026-10-12', days: 30, days_of_data: 0 } });
+    data.hero.today_total = 0;
+    data.hero.sales_count = 0;
+    data.tiles.revenue.value = 0;
+    data.charts.sales = data.charts.sales.map((p) => ({ ...p, revenue: 0, count: 0 }));
+    getOverview.mockResolvedValue(data);
+    renderHome('/new-look?store=Duka%20la%20Pili%20-%20DS');
+    expect(await screen.findByRole('link', { name: /^Revenue:/ })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /first sale is waiting/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Period')).toBeInTheDocument();
+  });
+
+  test('a person with no sales is still a shop with sales: no first-time panel', async () => {
+    const data = overview({ period: { key: '30d', from: '2026-09-14', to: '2026-10-12', days: 30, days_of_data: 0 } });
+    data.hero.today_total = 0;
+    data.tiles.revenue.value = 0;
+    data.charts.sales = data.charts.sales.map((p) => ({ ...p, revenue: 0, count: 0 }));
+    getOverview.mockResolvedValue(data);
+    renderHome('/new-look?staff=juma%40duka.test');
+    expect(await screen.findByRole('link', { name: /^Revenue:/ })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /first sale is waiting/ })).not.toBeInTheDocument();
+  });
+
   test('a till left open from an earlier day becomes a warning banner (the hero button is replaced)', async () => {
     const data = overview();
     data.hero.till = { state: 'open', session: 'POS-OPE-1', opened_on: '2020-01-01', opened_at: '08:15' };
