@@ -27,6 +27,8 @@ import StockInDialog from './StockInDialog';
 import StockOutDialog from './StockOutDialog';
 import BulkStockUpdateDialog from './BulkStockUpdateDialog';
 import AddStoreDialog from './AddStoreDialog';
+import EditStoreDialog from './EditStoreDialog';
+import StorePeopleDialog from './StorePeopleDialog';
 import LocationsPanel from './LocationsPanel';
 import MoveStockDialog from './MoveStockDialog';
 import StockTiles from './StockTiles';
@@ -61,6 +63,8 @@ const FILTER_KEYS = ['category', 'store', 'status', 'kind', 'within'];
 const STATE_KEYS = ['action', 'item'];
 const WITHIN = ['30', '60', '90', '180', '365'];
 const MOVE_FORM = 'move';
+const EDIT_FORM = 'edit';
+const PEOPLE_FORM = 'people';
 
 const Product = ({ row }) => (
   <>
@@ -163,14 +167,16 @@ const StockLevelsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, listTab, rows.length, total, page, size]);
 
-  const action = ['in', 'out', 'bulk', 'move', 'store'].includes(state.action) ? state.action : '';
+  const action = ['in', 'out', 'bulk', MOVE_FORM, 'store', EDIT_FORM, PEOPLE_FORM].includes(state.action) ? state.action : '';
+  // The store an Edit store or Who works here form is about is named in the address, so a reload or the back button keeps it
+  const targetStore = sellingLocations(warehouses).find((w) => w.name === state.item);
   const openForm = (kind, product = null) => {
     setPreset(product);
     params.set({ action: kind, page });
   };
   const closeForm = () => {
     setPreset(null);
-    params.set({ action: '', page });
+    params.set({ action: '', page, ...(action === EDIT_FORM || action === PEOPLE_FORM ? { item: '' } : {}) });
   };
 
   const makeMain = async (store) => {
@@ -425,6 +431,8 @@ const StockLevelsPage = () => {
         canChange={canChange}
         narrow={narrow}
         onAdd={() => openForm('store')}
+        onEdit={(store) => params.set({ action: EDIT_FORM, item: store.name })}
+        onPeople={(store) => params.set({ action: PEOPLE_FORM, item: store.name })}
         onMakeMain={makeMain}
         onMoveFrom={(store) => {
           params.set({ store: store.name, action: MOVE_FORM });
@@ -476,6 +484,8 @@ const StockLevelsPage = () => {
           }}
         />
       ) : null}
+      {action === EDIT_FORM && targetStore ? <EditStoreDialog open key={`edit-${targetStore.name}`} onClose={closeForm} store={targetStore} onSaved={reloadStores} /> : null}
+      {action === PEOPLE_FORM && targetStore && canAddStore ? <StorePeopleDialog open key={`people-${targetStore.name}`} onClose={closeForm} store={targetStore} /> : null}
       {action === 'bulk' ? <BulkStockUpdateDialog open onClose={closeForm} stores={storeList} activeStore={filters.store} onSaved={reload} /> : null}
     </div>
   );

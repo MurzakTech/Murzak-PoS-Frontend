@@ -23,12 +23,17 @@ const D = T.locations;
  *   onAdd()    open the Add a store form
  *   onMakeMain(store)
  *   onMoveFrom(store)
+ *   onEdit(store)    open Edit store (anyone who may change stock)
+ *   onPeople(store)  open Who works here (the owner)
  */
-const LocationsPanel = ({ stores = [], loading = false, canAdd = false, canChange = false, narrow = false, onAdd, onMakeMain, onMoveFrom }) => {
+const LocationsPanel = ({ stores = [], loading = false, canAdd = false, canChange = false, narrow = false, onAdd, onMakeMain, onMoveFrom, onEdit, onPeople }) => {
   const several = stores.length >= 2;
   const label = (s) => s.warehouse_name || s.name;
   const menuFor = (s) => {
     const items = [];
+    if (canChange) items.push({ label: D.editStore, onClick: () => onEdit(s) });
+    // Who works where is the owner's to choose
+    if (canAdd) items.push({ label: D.whoWorksHere, onClick: () => onPeople(s) });
     if (canChange && several) items.push({ label: D.moveFrom, onClick: () => onMoveFrom(s) });
     if (canChange && several && !s.is_default) items.push({ label: D.makeMain, onClick: () => onMakeMain(s) });
     return items.length ? <Menu label={fill(D.actionsFor, { store: label(s) })} items={items} /> : null;

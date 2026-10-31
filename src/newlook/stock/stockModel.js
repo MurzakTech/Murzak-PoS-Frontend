@@ -273,6 +273,33 @@ export const moveProblems = ({ from, to, lines }) => {
   return { problems, lineProblems, used: used.map(({ line }) => line), ok: Object.keys(problems).length === 0 && !lineBad };
 };
 
+/**
+ * What choosing these people would do, so the owner is told before saving. members is [{ user, name, assigned, stores }]
+ * and chosen is a Set of user names. limited: people with no store chosen who would now be limited to the stores chosen.
+ * freed: people taken off the only store they were limited to, who would be able to use every store again.
+ */
+export const peopleChange = (members, chosen) => {
+  const picked = chosen instanceof Set ? chosen : new Set(chosen || []);
+  const list = members || [];
+  const limited = list.filter((m) => picked.has(m.user) && !m.assigned && m.stores === 0).map((m) => m.name);
+  const freed = list.filter((m) => !picked.has(m.user) && m.assigned && m.stores === 1).map((m) => m.name);
+  const changed = list.some((m) => picked.has(m.user) !== m.assigned);
+  return { limited, freed, changed };
+};
+
+/** The words for how many stores a person is limited to */
+export const limitWords = (stores) => {
+  if (!stores) return T.peopleDialog.everyStore;
+  return stores === 1 ? T.peopleDialog.oneStore : fill(T.peopleDialog.someStores, { count: stores });
+};
+
+/** A list of names as people say it: "Amina", "Amina and Juma", "Amina, Juma and Zawadi" */
+export const namesList = (names) => {
+  const all = names || [];
+  if (all.length <= 1) return all.join('');
+  return `${all.slice(0, -1).join(', ')} ${T.and} ${all[all.length - 1]}`;
+};
+
 /** A store's name for a person: its short name, else the full one */
 export const storeName = (stores, value) => {
   const found = (stores || []).find((s) => s.value === value);
