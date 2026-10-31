@@ -120,4 +120,42 @@ describe('useDataQuery', () => {
     expect(result.current.error).toBe('Network failure');
     expect(result.current.data).toBeNull();
   });
+
+  it('does not report a failed load as ready data when Try again is pressed', async () => {
+    const fetcher = jest.fn().mockRejectedValueOnce(new Error('The server is busy.')).mockResolvedValueOnce({ rows: ['a'] });
+    const { result } = renderHook(() => useDataQuery('retry', fetcher));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.status).toBe('error');
+
+    const seen = [];
+    act(() => {
+      result.current.reload();
+    });
+    // The moment after pressing Try again: loading, never "ready" with nothing in it (a page reading data.rows would crash)
+    seen.push({ status: result.current.status, data: result.current.data });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    seen.push({ status: result.current.status, data: result.current.data });
+    expect(seen[0]).toEqual({ status: 'loading', data: null });
+    expect(seen[1]).toEqual({ status: 'ready', data: { rows: ['a'] } });
+  });
+
+  it('still shows the last good answer while a fresh one is on its way after a success', async () => {
+    const fetcher = jest.fn().mockResolvedValueOnce({ n: 1 }).mockResolvedValueOnce({ n: 2 });
+    const { result } = renderHook(() => useDataQuery('good', fetcher));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => {
+      result.current.reload();
+    });
+    expect(result.current.data).toEqual({ n: 1 });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.data).toEqual({ n: 2 });
+  });
 });

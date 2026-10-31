@@ -118,10 +118,12 @@ export const useDataQuery = (key, load, enabled = true, options = {}) => {
     ticket.current += 1;
     const mine = ticket.current;
 
+    // A failed load is kept in the cache too (with no data), so only an answer that succeeded counts as something to show while the next one arrives
     const currentCached = queryCache.get(key);
+    const usable = Boolean(currentCached) && currentCached.status === 'ready' && currentCached.data !== undefined;
     setState((prev) => ({
-      status: currentCached?.data !== undefined ? 'ready' : (keepPrevious && prev.data ? 'ready' : 'loading'),
-      data: currentCached?.data !== undefined ? currentCached.data : (keepPrevious ? prev.data : null),
+      status: usable ? 'ready' : (keepPrevious && prev.data ? 'ready' : 'loading'),
+      data: usable ? currentCached.data : (keepPrevious ? prev.data : null),
       error: '',
       errorType: '',
       isFetching: true,

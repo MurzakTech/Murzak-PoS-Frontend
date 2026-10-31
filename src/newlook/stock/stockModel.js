@@ -10,7 +10,10 @@ import { oldScreen } from '../redirects/engine';
  * on screen, the address of Reorder, and the rules of the short forms and the guided count. Nothing here draws
  * anything or calls the server, so each rule can be tested alone.
  */
-export const LIST_TABS = ['overview', 'low', 'movements', 'expiry'];
+export const LIST_TABS = ['overview', 'low', 'movements', 'transfers', 'expiry'];
+
+/** Movements and Transfers are the same list; Transfers shows only the moves between stores */
+export const isMovesTab = (tab) => tab === 'movements' || tab === 'transfers';
 export const DEFAULT_TAB = 'overview';
 const PAGE_TABS = ['overview', 'low', 'movements', 'count', 'locations', 'transfers', 'expiry'];
 
@@ -24,15 +27,17 @@ export const tabFromPath = (pathname) => {
 };
 
 /**
- * The tabs shown, in order. Count stock is for people who may change stock. Locations and Transfers appear only with
- * two or more selling locations, and Expiry only for a shop that tracks expiry dates. The tab that is open is always
+ * The tabs shown, in order. Count stock is for people who may change stock. Locations and Transfers appear with two or
+ * more selling locations (the business owner sees Locations with one, to add a second store), and Expiry only for a shop that tracks expiry dates. The tab that is open is always
  * kept, so a link never opens a page with no tab selected.
  */
-export const visibleTabs = ({ locations = false, expiry = false, canChange = false, current = DEFAULT_TAB } = {}) =>
+export const visibleTabs = ({ locations = false, expiry = false, canChange = false, canAddStore = false, current = DEFAULT_TAB } = {}) =>
   PAGE_TABS.filter((key) => {
     if (key === current) return true;
     if (key === 'count') return canChange;
-    if (key === 'locations' || key === 'transfers') return locations;
+    // The owner of a one-store shop still sees Locations, because that is where a second store is added
+    if (key === 'locations') return locations || canAddStore;
+    if (key === 'transfers') return locations;
     if (key === 'expiry') return expiry;
     return true;
   }).map((key) => ({ key, label: T.tabs[key] }));
@@ -47,7 +52,7 @@ export const tabAddress = (root, tab, search = '') => {
   ['store', 'size'].forEach((key) => {
     if (current.get(key)) next.set(key, current.get(key));
   });
-  if (tab === 'movements') ['period', 'from', 'to'].forEach((key) => current.get(key) && next.set(key, current.get(key)));
+  if (isMovesTab(tab)) ['period', 'from', 'to'].forEach((key) => current.get(key) && next.set(key, current.get(key)));
   const text = next.toString();
   const path = tab === DEFAULT_TAB ? root : `${root}/${tab}`;
   return text ? `${path}?${text}` : path;
@@ -195,7 +200,7 @@ export const expiryCsv = (rows, showValue) => {
 };
 
 export const csvFor = (tab, rows, showValue) => {
-  if (tab === 'movements') return movementsCsv(rows);
+  if (isMovesTab(tab)) return movementsCsv(rows);
   if (tab === 'expiry') return expiryCsv(rows, showValue);
   return stockCsv(rows, showValue);
 };
@@ -239,6 +244,39 @@ export const stockOutProblems = ({ product, qty, reason, note }) => {
   if (!reason) problems.reason = T.stockOutDialog.reasonRequired;
   else if (reason === 'other' && !String(note || '').trim()) problems.note = T.stockOutDialog.noteRequired;
   return problems;
+};
+
+/**
+ * What is wrong with a Move stock form, by field; an empty object means it can be saved. lines is
+ * [{ product, qty }] and a line with no product and no quantity (the empty one at the end) is ignored. Each line is
+ * checked against the stock the first store holds, and a product may appear once. lineProblems has one entry per line.
+ */
+export const moveProblems = ({ from, to, lines }) => {
+  const problems = {};
+  const lineProblems = (lines || []).map(() => ({}));
+  if (!from) problems.from = T.chooseStore;
+  if (!to) problems.to = T.chooseStore;
+  else if (from && from === to) problems.to = T.moveDialog.sameStore;
+  const used = (lines || []).map((line, index) => ({ line, index })).filter(({ line }) => line.product || String(line.qty || '').trim() !== '');
+  if (used.length === 0) problems.lines = T.moveDialog.noLines;
+  const seen = new Set();
+  used.forEach(({ line, index }) => {
+    const p = lineProblems[index];
+    const n = parseQty(line.qty);
+    if (!line.product) p.product = T.picker.required;
+    else if (seen.has(line.product.item_code)) p.product = T.moveDialog.twice;
+    else seen.add(line.product.item_code);
+    if (!(n > 0)) p.qty = T.moveDialog.quantityRequired;
+    else if (line.product && n > Number(line.product.qty)) p.qty = fill(T.moveDialog.tooMany, { qty: formatQty(line.product.qty) });
+  });
+  const lineBad = lineProblems.some((p) => Object.keys(p).length > 0);
+  return { problems, lineProblems, used: used.map(({ line }) => line), ok: Object.keys(problems).length === 0 && !lineBad };
+};
+
+/** A store's name for a person: its short name, else the full one */
+export const storeName = (stores, value) => {
+  const found = (stores || []).find((s) => s.value === value);
+  return found ? found.label : value || '';
 };
 
 // ---------- The guided count ----------

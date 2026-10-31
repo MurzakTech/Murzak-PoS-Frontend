@@ -45,7 +45,7 @@ between tabs does not rebuild the page. `/stock/count/:id` (the three-role count
 3. **The Low and Out of stock tiles are also filters** (press to show only those, press again to show all). The Items and Stock value tiles are plain.
 4. **Low and out follow Home.** Low: stock above 0 at or below a store's warning level. Out: nothing left, for a product that has stock or sold in the last 30 days.
 5. **Dropdowns (at most two).** Overview and Low stock: Category, and Store when there are two or more stores. Movements: Type, and Store when two or more stores, otherwise Status (the server and the address support all four filters; with two stores the status filter is reachable by address only).
-6. **Locations and Transfers** show only when `showsWarehouseMenu(warehouses)` is true or the server reports two or more selling locations. They link to the current `/warehouses` and `/stock-transfers` screens (a "being rebuilt" notice is shown instead if the redirect preview is on).
+6. **Locations and Transfers** show when `showsWarehouseMenu(warehouses)` is true or the server reports two or more selling locations. The business owner also sees **Locations** with one store, because that is where a second store is added; nobody sees Transfers with one store. Both are real screens now (see "Warehousing" below), no longer links to the old Stores and Stock transfers screens.
 7. **Expiry** shows only when the server says `features.expiry` (the shop has a batch or a stock-loading record with an expiry date). The app has no other expiry flag. The Spec says both "a filter on Low stock" and "an Expiry tab"; the redirect table already chose the tab and so did I.
 8. **Reorder** opens `/new-look/purchases/new?item=<code>` when that page is live, else `/purchases/new` (the same `go()` rule as Home). The current New Purchase screen does not read `item`, so until the new page is live the product is not filled in.
 9. **Movements** joins the stock ledger (sales, purchases, stock in and out, counts, submitted or cancelled) with **draft** stock entries, which are not in the ledger yet. Entries link to the current stock entry screen, where Edit, Submit, Cancel, Print and Additional costs still live.
@@ -68,12 +68,19 @@ between tabs does not rebuild the page. `/stock/count/:id` (the three-role count
 | Stock entries: edit, submit, cancel, print, additional costs | Entries, entry details | Movements lists entries with Draft, Submitted, Cancelled and an Open link to the current entry screen (`/inventory/stock-entries/:name`), where those actions stay |
 | Material receipt | Material Receipts | Stock in (header button, `?action=in`) |
 | Material issue (with its per-line reason) | Material Issues | Stock out or write-off (header button, `?action=out`); the reason is now required and is shown in Movements |
-| Material transfer | Material Transfers | Transfers tab (shops with a second location) opening the current Stock transfers screen; a one-store shop has nothing to transfer |
+| Material transfer | Material Transfers | **Move stock** (header button with two or more stores, `?action=move`): one step, the stock leaves one store and arrives in the other. The Transfers tab lists past moves |
 | Edit price, SKU, unit, expiry, batch per item and store | Inventory Details | Row menu item "Edit price, unit, expiry and batch" opens the current `/inventory/item-details`. Still **not placed** in the new design (Products or Stock levels is the owner's call) |
 | Multi-level stock count (three roles) | Multi-level reconciliation | Link "Count in three steps by role" in step 1 of Count stock (open question 17); its list, details and stock-take pages stay as they are |
-| Stores: add, edit, staff, default store, staff assignment | Stores | Locations tab (second location) with "Open stores" to the current `/warehouses`. **First store creation is still not placed**: a one-store shop has no Locations tab |
-| Stock transfers: request, approve, dispatch, receive, cancel | Stock Transfers | Transfers tab with "Open stock transfers" to the current `/stock-transfers` (the whole approval flow stays there) |
+| Stores: add, default store | Stores | Locations tab: the owner adds a store (`?action=store`), and anyone who may change stock can make a store the main one. Editing a store and assigning staff to stores stay on the current `/warehouses` screen |
+| Stock transfers: request, approve, dispatch, receive, cancel | Stock Transfers | The approval flow stays on the current `/stock-transfers`; the Transfers tab links to it ("Need someone to approve and receive the goods?") |
 | Repost stock | Store code only, no screen | No screen today and none added |
+
+## Warehousing: Locations, Transfers and Move stock
+
+- **Move stock** needs two different stores and at least one product with a quantity. Each quantity is checked against what the first store holds (the product shows that stock when chosen), and the server checks again and moves nothing if any product falls short. Changing the "Move from" store clears the product list, because the stock shown belongs to the store it was read from.
+- **Transfers** is the Movements list asking the server for `kind=transfer`. Each move shows as two lines, one leaving a store (negative) and one arriving in another (positive), with the store named on each.
+- **Locations** lists the shop's real stores (not the folders and production warehouses a new business comes with), marks the main store, and lets the owner add a store. Only the owner may add one; the server refuses anyone else.
+- Back end: `stock_levels_api.move_stock`, `stock_levels_api.add_store`, and `kind=transfer` on `get_stock_levels`.
 
 ## Needs browser check
 

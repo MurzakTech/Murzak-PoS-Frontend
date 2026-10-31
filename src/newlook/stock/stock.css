@@ -358,3 +358,23 @@
   background: var(--soft);
   color: var(--muted);
 }
+
+/* Move stock: one product per line, with its quantity and a way to take it off the list */
+.nl-stock-moveline {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+}
+.nl-stock-moveline > .nl-btn--ghost {
+  justify-self: end;
+}
+/* Locations: the small status words beside a store's name */
+.nl-stock-store-main {
+  display: inline-block;
+  margin-left: var(--space-2);
+  color: var(--brand-text);
+  font-size: var(--caption-size);
+  font-weight: 600;
+}
