@@ -152,7 +152,7 @@ const AppointmentsPage = ({ load = listAppointments, save = createAppointment, u
 
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center' }}>
-          <p className="nl-helper">Loading appointments...</p>
+          <p className="nl-helper">{T.loading}</p>
         </div>
       ) : filtered.length === 0 ? (
         <Card>

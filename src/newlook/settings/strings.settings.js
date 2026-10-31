@@ -26,6 +26,11 @@ const settings = {
   // Settings, Business
   business: {
     ownerNote: 'Only the business owner can change these.',
+    ecommerce: {
+      title: 'Online Store & E-Commerce',
+      subtitle: 'Connect WooCommerce or explore selling online',
+      note: 'Manage WooCommerce connection, stock sync and digital storefront',
+    },
     loading: 'Loading business details',
     errorTitle: 'We could not load your business details',
     errorText: 'Check your connection and try again. Nothing was changed.',
@@ -94,6 +99,8 @@ const settings = {
       other: 'Other payment methods',
       notSetUp: 'Not set up for your shop yet',
       needsCode: 'Needs the M-Pesa confirmation code at the till',
+      setUpMpesa: 'Set up M-Pesa',
+      setUpCredit: 'Set up Credit',
       ownerOnly: 'Only the business owner can change these.',
       loading: 'Loading payment methods',
       errorTitle: 'We could not load the payment methods',

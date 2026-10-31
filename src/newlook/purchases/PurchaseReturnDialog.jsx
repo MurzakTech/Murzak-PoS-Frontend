@@ -5,6 +5,10 @@ import Field from '../components/Field';
 import Icon from '../components/Icon';
 import { formatMoney } from '../components/format';
 import { createPurchaseReturn, getPurchase } from '../../api/purchasesListApi';
+import fill from '../labels/fill';
+import T from './strings.purchases';
+
+const D = T.returnDialog;
 
 /**
  * Dialog to record a return of purchased goods back to a supplier (debit note).
@@ -45,10 +49,10 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
         setCurrentPurchase(found);
         setLines(initLines(found));
       } else {
-        setLookupError('Purchase not found. Check the number and try again.');
+        setLookupError(D.notFound);
       }
     } catch (err) {
-      setLookupError(err.message || 'Purchase not found. Check the number and try again.');
+      setLookupError(err.message || D.notFound);
     } finally {
       setLookupBusy(false);
     }
@@ -91,7 +95,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
 
     const targetDoc = currentPurchase?.return_target || currentPurchase?.id;
     if (!targetDoc) {
-      setFailure('No purchase invoice or document found to return against.');
+      setFailure(D.noDocument);
       setBusy(false);
       return;
     }
@@ -113,7 +117,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
 
       onDone(result);
     } catch (err) {
-      setFailure(err.message || 'Failed to record return.');
+      setFailure(err.message || D.failedShort);
       setBusy(false);
     }
   };
@@ -121,30 +125,30 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
   const supplierName =
     currentPurchase?.supplier?.name ||
     (typeof currentPurchase?.supplier === 'string' ? currentPurchase.supplier : '') ||
-    'Supplier';
+    D.supplierFallback;
 
   return (
     <Dialog
       open
       onClose={onClose}
       busy={busy}
-      title="Record purchase return"
+      title={D.title}
       description={
         currentPurchase
-          ? `Return items for purchase ${currentPurchase.number || currentPurchase.id} (${supplierName})`
-          : 'Enter the purchase order or bill number to find items to return.'
+          ? fill(D.describePurchase, { number: currentPurchase.number || currentPurchase.id, supplier: supplierName })
+          : D.describeFind
       }
       footer={
         <>
           <Button variant="secondary" disabled={busy} onClick={onClose}>
-            Cancel
+            {D.cancel}
           </Button>
           <Button
             loading={busy}
             disabled={!canSubmit}
             onClick={handleSubmit}
           >
-            Record return
+            {D.record}
           </Button>
         </>
       }
@@ -153,8 +157,8 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
         {!currentPurchase ? (
           <div style={{ display: 'grid', gap: '8px' }}>
             <Field
-              label="Purchase or Bill number"
-              placeholder="e.g. 0001, PINV-2026-00001, PUR-ORD-2026-00001"
+              label={D.lookupLabel}
+              placeholder={D.lookupPlaceholder}
               value={purchaseLookup}
               onChange={setPurchaseLookup}
               data-autofocus=""
@@ -165,7 +169,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
               disabled={!purchaseLookup.trim() || lookupBusy}
               onClick={handleLookup}
             >
-              Find purchase
+              {D.find}
             </Button>
             {lookupError ? (
               <p role="alert" className="nl-error">
@@ -178,15 +182,15 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
 
         {currentPurchase && lines.length > 0 ? (
           <div>
-            <h4 className="nl-label" style={{ marginBottom: '8px' }}>Items to return</h4>
+            <h4 className="nl-label" style={{ marginBottom: '8px' }}>{D.itemsToReturn}</h4>
             <table className="nl-purchase__lines" style={{ width: '100%', marginBottom: '16px' }}>
               <thead>
                 <tr>
                   <th style={{ width: '32px' }}></th>
-                  <th>Item</th>
-                  <th className="is-right">Received</th>
-                  <th className="is-right" style={{ width: '90px' }}>Return qty</th>
-                  <th className="is-right">Value</th>
+                  <th>{D.columns.item}</th>
+                  <th className="is-right">{D.columns.received}</th>
+                  <th className="is-right" style={{ width: '90px' }}>{D.columns.returnQty}</th>
+                  <th className="is-right">{D.columns.value}</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,7 +201,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
                         type="checkbox"
                         checked={l.selected}
                         onChange={() => handleToggleLine(idx)}
-                        aria-label={`Select ${l.item_name}`}
+                        aria-label={fill(D.select, { name: l.item_name })}
                       />
                     </td>
                     <td>
@@ -221,7 +225,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
                           borderRadius: '4px',
                           border: '1px solid var(--line)',
                         }}
-                        aria-label={`Return quantity of ${l.item_name}`}
+                        aria-label={fill(D.returnQtyOf, { name: l.item_name })}
                       />
                     </td>
                     <td className="is-right">
@@ -241,7 +245,7 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
                 fontWeight: 'bold',
               }}
             >
-              <span>Total return value:</span>
+              <span>{D.totalValue}</span>
               <span>{formatMoney(totalValue)}</span>
             </div>
           </div>
@@ -249,8 +253,8 @@ const PurchaseReturnDialog = ({ purchase = null, company, onClose, onDone }) => 
 
         {currentPurchase ? (
           <Field
-            label="Reason for return"
-            placeholder="e.g. Damaged goods, expired stock, wrong order"
+            label={D.reasonLabel}
+            placeholder={D.reasonPlaceholder}
             value={reason}
             onChange={(v) => setReason(v.slice(0, 140))}
           />

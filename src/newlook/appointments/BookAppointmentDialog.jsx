@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Dialog from '../components/Dialog';
 import Button from '../components/Button';
 import Field from '../components/Field';
+import fill from '../labels/fill';
 import T from './strings.appointments';
 
 const D = T.dialog;
@@ -144,11 +145,9 @@ const BookAppointmentDialog = ({
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             >
-              <option value="15">15 min</option>
-              <option value="30">30 min</option>
-              <option value="45">45 min</option>
-              <option value="60">1 hour</option>
-              <option value="90">1.5 hours</option>
+              {Object.keys(D.durations).map((minutes) => (
+                <option key={minutes} value={minutes}>{D.durations[minutes]}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -184,7 +183,7 @@ const BookAppointmentDialog = ({
                   className={`nl-btn ${active ? 'nl-btn--primary' : 'nl-btn--ghost'} nl-btn--small`}
                   onClick={() => toggleService(svc.code)}
                 >
-                  {svc.name} (KES {svc.rate})
+                  {fill(D.serviceLabel, { name: svc.name, rate: svc.rate })}
                 </button>
               );
             })}

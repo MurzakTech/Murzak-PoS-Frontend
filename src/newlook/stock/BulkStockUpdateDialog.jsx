@@ -15,30 +15,7 @@ import ProductPicker from './ProductPicker';
 import { formatQty, parseQty } from './stockModel';
 import T from './strings.stock';
 
-const D = T.bulkUpdateDialog || {
-  title: 'Bulk stock update',
-  description: 'Update or adjust stock quantities for multiple products at once.',
-  methods: { file: 'Upload spreadsheet', manual: 'Quick entry' },
-  modes: { set: 'Set stock level', adjust: 'Add or take away' },
-  modeHelp: {
-    set: 'The number you enter becomes the stock in the store. Products that are not on your list are left as they are.',
-    adjust: 'The number you enter is added to the stock in the store. Put a minus sign in front to take stock away.',
-  },
-  downloadTemplate: 'Download CSV template',
-  uploadPrompt: 'Choose or drop a CSV or Excel spreadsheet',
-  uploadHelp: 'Your file needs two columns: item_code (the product code shown on Stock levels) and qty (the quantity).',
-  chooseStore: 'Target store',
-  addProducts: 'Search and add product',
-  clearAll: 'Clear table',
-  note: 'Reason / note (optional)',
-  notePlaceholder: 'e.g. Stock audit, New shipment, Store recount',
-  save: 'Update stock',
-  saving: 'Updating stock...',
-  cancel: 'Cancel',
-  saved: 'Updated stock for {count} products in {store}.',
-  failed: 'Bulk stock update failed. {reason}',
-  noItems: 'No items in update list. Upload a file or add products to proceed.',
-};
+const D = T.bulkUpdateDialog;
 
 const TEMPLATE_CSV = `item_code,qty,item_name
 ITEM-001,50,Sample Product A
@@ -47,11 +24,11 @@ ITEM-002,100,Sample Product B
 
 const DiffBadge = ({ diff, unknown = false }) => {
   if (diff === null || diff === undefined) {
-    return <span className="nl-diff-badge nl-diff-badge--zero">{unknown ? 'Not known' : 'Checking...'}</span>;
+    return <span className="nl-diff-badge nl-diff-badge--zero">{unknown ? D.notKnown : D.checking}</span>;
   }
   const n = Number(diff) || 0;
   if (Math.abs(n) < 0.0001) {
-    return <span className="nl-diff-badge nl-diff-badge--zero">No change</span>;
+    return <span className="nl-diff-badge nl-diff-badge--zero">{D.noChange}</span>;
   }
   if (n > 0) {
     return <span className="nl-diff-badge nl-diff-badge--plus">+{formatQty(n)}</span>;
@@ -121,7 +98,6 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           item_name: v.itemName || v.stock.item_code,
           target_qty: rawQty,
           current_qty: null,
-          unit: 'Nos',
         };
       });
 
@@ -147,7 +123,6 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
         item_name: prod.item_name,
         current_qty: cur,
         target_qty: cur,
-        unit: prod.unit || 'Nos',
       },
     ]);
   };
@@ -281,7 +256,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           ) : null}
 
           <Segmented
-            label="How to enter the products"
+            label={D.methodLabel}
             value={method}
             onChange={setMethod}
             options={[
@@ -291,7 +266,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           />
 
           <Segmented
-            label="What the numbers mean"
+            label={D.modeLabel}
             value={mode}
             onChange={setMode}
             options={[
@@ -314,7 +289,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <label className="nl-btn nl-btn--secondary" style={{ cursor: 'pointer' }}>
                 <Icon name="search" />
-                <span>Choose file</span>
+                <span>{D.chooseFile}</span>
                 <input
                   type="file"
                   accept=".csv,.xlsx,.xls,.tsv"
@@ -342,7 +317,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
         {items.length > 0 ? (
           <div className="nl-bulk-stock__preview">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong>Items to update ({items.length})</strong>
+              <strong>{fill(D.itemsToUpdate, { count: items.length })}</strong>
               <Button variant="secondary" size="small" onClick={clearAll}>
                 {D.clearAll}
               </Button>
@@ -351,12 +326,12 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
             <table className="nl-table" style={{ width: '100%', fontSize: 'var(--body-size)' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left' }}>Product</th>
-                  <th style={{ textAlign: 'right' }}>Current</th>
+                  <th style={{ textAlign: 'left' }}>{D.columns.product}</th>
+                  <th style={{ textAlign: 'right' }}>{D.columns.current}</th>
                   <th style={{ textAlign: 'right', width: '120px' }}>
-                    {mode === 'adjust' ? 'Add or take away' : 'New quantity'}
+                    {mode === 'adjust' ? D.modes.adjust : D.columns.newQuantity}
                   </th>
-                  <th style={{ textAlign: 'right' }}>Difference</th>
+                  <th style={{ textAlign: 'right' }}>{D.columns.difference}</th>
                   <th style={{ width: '40px' }} />
                 </tr>
               </thead>
@@ -385,7 +360,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
                         variant="ghost"
                         size="small"
                         icon="x"
-                        aria-label={`Remove ${row.item_name}`}
+                        aria-label={fill(D.remove, { name: row.item_name })}
                         onClick={() => handleRemoveItem(idx)}
                       />
                     </td>
@@ -396,10 +371,10 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
 
             {/* Summary bar */}
             <div className="nl-bulk-stock__summary">
-              <span>Total items: <strong>{totals.count}</strong></span>
-              <span>Going up: <strong style={{ color: 'var(--good)' }}>+{totals.plus}</strong></span>
-              <span>Going down: <strong style={{ color: 'var(--bad)' }}>-{totals.minus}</strong></span>
-              <span>No change: <strong>{totals.zero}</strong></span>
+              <span>{D.summary.total} <strong>{totals.count}</strong></span>
+              <span>{D.summary.up} <strong style={{ color: 'var(--good)' }}>+{totals.plus}</strong></span>
+              <span>{D.summary.down} <strong style={{ color: 'var(--bad)' }}>-{totals.minus}</strong></span>
+              <span>{D.summary.same} <strong>{totals.zero}</strong></span>
             </div>
           </div>
         ) : null}

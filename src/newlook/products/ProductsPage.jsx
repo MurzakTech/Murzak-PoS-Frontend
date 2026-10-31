@@ -228,7 +228,7 @@ const ProductsPage = () => {
       items={[
         { label: T.export, icon: 'arrowDown', disabled: !ready || rows.length === 0, onClick: exportCsv },
         { label: T.import, icon: 'arrowUp', hidden: !canChange, onClick: () => navigate(go('/products/import', '/products/bulk-import')) },
-        { label: 'Online store (WooCommerce)', icon: 'globe', onClick: () => navigate('/ecommerce') },
+        { label: T.more.onlineStore, icon: 'globe', onClick: () => navigate('/ecommerce') },
         { label: T.more.updatePrices, hidden: !canChange, onClick: () => navigate(oldScreen(MORE_SCREENS.updatePrices)) },
         { label: T.more.stores, hidden: !canChange || !hasSeveralStores, onClick: () => navigate(oldScreen(MORE_SCREENS.stores)) },
         { label: T.more.stockTransfers, hidden: !canChange || !hasSeveralStores, onClick: () => navigate(oldScreen(MORE_SCREENS.stockTransfers)) },

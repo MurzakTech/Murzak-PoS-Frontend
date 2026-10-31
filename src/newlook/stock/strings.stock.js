@@ -414,6 +414,16 @@ const stock = {
     saved: 'Updated stock for {count} products in {store}.',
     failed: 'Bulk stock update failed. {reason}',
     noItems: 'No items in update list. Upload a file or add products to proceed.',
+    methodLabel: 'How to enter the products',
+    modeLabel: 'What the numbers mean',
+    chooseFile: 'Choose file',
+    itemsToUpdate: 'Items to update ({count})',
+    columns: { product: 'Product', current: 'Current', newQuantity: 'New quantity', difference: 'Difference' },
+    remove: 'Remove {name}',
+    summary: { total: 'Total items:', up: 'Going up:', down: 'Going down:', same: 'No change:' },
+    noChange: 'No change',
+    checking: 'Checking...',
+    notKnown: 'Not known',
   },
 
   csv: {

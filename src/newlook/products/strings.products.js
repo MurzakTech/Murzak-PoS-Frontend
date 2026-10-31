@@ -17,6 +17,7 @@ const products = {
   more: {
     updatePrices: 'Update many prices',
     stores: 'Stores',
+    onlineStore: 'Online store (WooCommerce)',
     stockTransfers: 'Stock transfers',
     materialTransfers: 'Move stock between stores',
   },
