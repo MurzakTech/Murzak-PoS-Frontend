@@ -546,10 +546,13 @@ const NewSale = () => {
           if (result.type === 'inventory/getStockBalanceMultiple/fulfilled') {
             const stocks = {};
             result.payload.balances?.forEach((balance) => {
+              // A row the server could not read has an error and no quantity: leave the stock unknown
+              // (the tile shows none) rather than showing it as 0, which reads as "Out of stock"
+              if (!balance || balance.error || balance.actual_qty === undefined || balance.actual_qty === null) return;
               if (!stocks[balance.item_code]) {
                 stocks[balance.item_code] = {};
               }
-              stocks[balance.item_code][defaultWarehouse] = balance.actual_qty || 0;
+              stocks[balance.item_code][defaultWarehouse] = Number(balance.actual_qty) || 0;
             });
             setProductStocks(prev => ({ ...prev, ...stocks }));
           }
