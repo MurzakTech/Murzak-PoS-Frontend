@@ -1,3 +1,4 @@
+import { isSellingLocation } from '../newlook/till/sellingLocations';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../api/axiosInstance';
 import { showNotification } from './notificationSlice';
@@ -551,6 +552,20 @@ const warehouseSlice = createSlice({
               } catch (error) {
                 console.error('Error saving active warehouse to localStorage:', error);
               }
+            }
+          }
+        }
+        // A folder such as "All Warehouses" holds no stock and cannot be sold from: when the chosen store is
+        // one, move to the default store, else the first real selling store (a shop with none keeps its choice)
+        if (state.activeWarehouse && !isSellingLocation(state.activeWarehouse)) {
+          const sellable = (action.payload.warehouses || []).filter(isSellingLocation);
+          const better = (defaultWarehouse && isSellingLocation(defaultWarehouse) && defaultWarehouse) || sellable[0];
+          if (better) {
+            state.activeWarehouse = better;
+            try {
+              localStorage.setItem('activeWarehouse', JSON.stringify(better));
+            } catch (error) {
+              console.error('Error saving active warehouse to localStorage:', error);
             }
           }
         }
