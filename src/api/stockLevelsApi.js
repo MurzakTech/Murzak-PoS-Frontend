@@ -113,6 +113,16 @@ export const moveStock = ({ lines, from, to, note }) =>
 /** Adds a store (the owner only). Resolves to { name, warehouse_name }. A name the shop already uses comes back as an Error with the server's plain sentence. */
 export const addStore = ({ name }) => send(() => axiosInstance.post(`${STOCK}.add_store`, compact({ store_name: name }), { allowRefusal: true }));
 
+/** What a store holds of the products named: { [item_code]: quantity }. A product the store has never held is 0. Nothing is changed. */
+export const currentStock = async ({ codes, store } = {}) => {
+  const data = await send(() => axiosInstance.post(`${STOCK}.get_current_stock`, compact({ codes: list(codes), warehouse: store })));
+  const stock = {};
+  Object.entries(data.stock || {}).forEach(([code, qty]) => {
+    stock[code] = number(qty);
+  });
+  return stock;
+};
+
 /** What the system says is in a store, for the count: { warehouse, rows: [{ item_code, item_name, category, unit, expected }], total, truncated } */
 export const getCountSheet = async ({ scope = 'all', category, store } = {}) => {
   const data = await send(() => axiosInstance.get(`${STOCK}.get_count_sheet`, { params: compact({ scope, category, warehouse: store }) }));

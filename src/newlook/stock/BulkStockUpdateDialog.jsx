@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Button from '../components/Button';
 import Dialog from '../components/Dialog';
 import Field from '../components/Field';
@@ -7,7 +7,7 @@ import Segmented from '../components/Segmented';
 import Select from '../components/Select';
 import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
-import { bulkUpdateStock, findProducts } from '../../api/stockLevelsApi';
+import { bulkUpdateStock, currentStock } from '../../api/stockLevelsApi';
 import { readProductFile } from '../../utils/readProductFile';
 import { checkStockSheet } from '../../utils/stockImport';
 import { saveTextFile } from '../../utils/saveTextFile';
@@ -19,7 +19,11 @@ const D = T.bulkUpdateDialog || {
   title: 'Bulk stock update',
   description: 'Update or adjust stock quantities for multiple products at once.',
   methods: { file: 'Upload spreadsheet', manual: 'Quick entry' },
-  modes: { set: 'Set stock level', adjust: 'Add / deduct (+/-)' },
+  modes: { set: 'Set stock level', adjust: 'Add or take away' },
+  modeHelp: {
+    set: 'The number you enter becomes the stock in the store. Products that are not on your list are left as they are.',
+    adjust: 'The number you enter is added to the stock in the store. Put a minus sign in front to take stock away.',
+  },
   downloadTemplate: 'Download CSV template',
   uploadPrompt: 'Choose or drop a CSV or Excel spreadsheet',
   uploadHelp: 'File must include columns: item_code and qty',
@@ -41,7 +45,10 @@ ITEM-001,50,Sample Product A
 ITEM-002,100,Sample Product B
 `;
 
-const DiffBadge = ({ diff }) => {
+const DiffBadge = ({ diff, unknown = false }) => {
+  if (diff === null || diff === undefined) {
+    return <span className="nl-diff-badge nl-diff-badge--zero">{unknown ? 'Not known' : 'Checking...'}</span>;
+  }
   const n = Number(diff) || 0;
   if (Math.abs(n) < 0.0001) {
     return <span className="nl-diff-badge nl-diff-badge--zero">No change</span>;
@@ -63,6 +70,9 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
   const [mode, setMode] = useState('set'); // 'set' | 'adjust'
   const [note, setNote] = useState('');
   const [items, setItems] = useState([]);
+  // What the chosen store holds now, by product code: asked of the server, so a sheet shows the real figure beside the new one
+  const [stockNow, setStockNow] = useState({});
+  const [lookupFailed, setLookupFailed] = useState(false);
   const [pickerProduct, setPickerProduct] = useState(null);
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -110,8 +120,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           item_code: v.stock.item_code,
           item_name: v.itemName || v.stock.item_code,
           target_qty: rawQty,
-          current_qty: 0,
-          diff: rawQty,
+          current_qty: null,
           unit: 'Nos',
         };
       });
@@ -138,7 +147,6 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
         item_name: prod.item_name,
         current_qty: cur,
         target_qty: cur,
-        diff: 0,
         unit: prod.unit || 'Nos',
       },
     ]);
@@ -148,11 +156,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
     const val = parseQty(value);
     setItems((prev) => {
       const next = [...prev];
-      const it = next[index];
-      const cur = it.current_qty || 0;
-      const target = val;
-      const diff = mode === 'adjust' ? target : target - cur;
-      next[index] = { ...it, target_qty: target, diff };
+      next[index] = { ...next[index], target_qty: val };
       return next;
     });
   };
@@ -166,17 +170,54 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
     setError('');
   };
 
+  // Each row with what the store holds now and the difference the update will make (null while the figure is still being looked up)
+  const rows = useMemo(
+    () =>
+      items.map((it) => {
+        const cur = stockNow[it.item_code] !== undefined ? stockNow[it.item_code] : it.current_qty;
+        const target = Number(it.target_qty) || 0;
+        let diff = null;
+        if (mode === 'adjust') diff = target;
+        else if (cur !== null && cur !== undefined) diff = target - cur;
+        return { ...it, current_qty: cur, diff };
+      }),
+    [items, stockNow, mode]
+  );
+
   const totals = useMemo(() => {
     let plus = 0;
     let minus = 0;
     let zero = 0;
-    items.forEach((it) => {
+    rows.forEach((it) => {
+      if (it.diff === null) return;
       if (it.diff > 0.0001) plus++;
       else if (it.diff < -0.0001) minus++;
       else zero++;
     });
-    return { count: items.length, plus, minus, zero };
-  }, [items]);
+    return { count: rows.length, plus, minus, zero };
+  }, [rows]);
+
+  // Ask what the store holds of the listed products, again when the store or the list changes
+  const codesKey = useMemo(() => items.map((it) => it.item_code).sort().join('|'), [items]);
+  useEffect(() => {
+    if (!codesKey) return undefined;
+    let cancelled = false;
+    currentStock({ codes: codesKey.split('|'), store: store || undefined })
+      .then((stock) => {
+        if (cancelled) return;
+        setStockNow(stock);
+        setLookupFailed(false);
+      })
+      .catch(() => {
+        // The figure stays unknown; the server still checks the update itself when it is saved
+        if (cancelled) return;
+        setStockNow({});
+        setLookupFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [codesKey, store]);
 
   const canSave = items.length > 0 && !saving && !reading;
 
@@ -260,6 +301,8 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
           />
         </div>
 
+        <p className="nl-stock-sub">{D.modeHelp[mode]}</p>
+
         {/* File method */}
         {method === 'file' ? (
           <div className="nl-bulk-stock__upload-box">
@@ -318,13 +361,13 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
                 </tr>
               </thead>
               <tbody>
-                {items.map((row, idx) => (
+                {rows.map((row, idx) => (
                   <tr key={row.item_code}>
                     <td>
                       <strong>{row.item_name}</strong>
                       <span className="nl-stock-sub">{row.item_code}</span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>{formatQty(row.current_qty)}</td>
+                    <td style={{ textAlign: 'right' }}>{row.current_qty === null || row.current_qty === undefined ? '-' : formatQty(row.current_qty)}</td>
                     <td style={{ textAlign: 'right' }}>
                       <Field
                         value={row.target_qty}
@@ -335,7 +378,7 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
                       />
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <DiffBadge diff={row.diff} />
+                      <DiffBadge diff={row.diff} unknown={lookupFailed} />
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <Button
@@ -354,9 +397,9 @@ const BulkStockUpdateDialog = ({ open, onClose, stores = [], activeStore = '', o
             {/* Summary bar */}
             <div className="nl-bulk-stock__summary">
               <span>Total items: <strong>{totals.count}</strong></span>
-              <span>Increasing: <strong style={{ color: 'var(--good)' }}>+{totals.plus}</strong></span>
-              <span>Decreasing: <strong style={{ color: 'var(--bad)' }}>-{totals.minus}</strong></span>
-              <span>Unchanged: <strong>{totals.zero}</strong></span>
+              <span>Going up: <strong style={{ color: 'var(--good)' }}>+{totals.plus}</strong></span>
+              <span>Going down: <strong style={{ color: 'var(--bad)' }}>-{totals.minus}</strong></span>
+              <span>No change: <strong>{totals.zero}</strong></span>
             </div>
           </div>
         ) : null}
