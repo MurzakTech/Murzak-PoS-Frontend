@@ -282,7 +282,7 @@ const SalesPage = () => {
             </Button>
             {tab === 'returns' ? (
               <Button variant="secondary" icon="undo" onClick={() => setStandaloneReturn(true)}>
-                Record return
+                {T.recordReturn}
               </Button>
             ) : null}
             {isCashier ? null : <Menu label={T.more.label} items={[{ label: T.more.newInvoice, onClick: () => navigate(oldScreen(T.links.newInvoice)) }]} />}

@@ -175,6 +175,81 @@ const ecommerce = {
     syncOrdersHelp: 'Turn this off to stop recording orders from your website.',
   },
 
+  // The E-commerce page itself: title, overview tiles, the WooCommerce form and the catalog preview
+  page: {
+    title: 'E-Commerce & Online Store',
+    subtitle: 'Connect your shop to WooCommerce or start selling online with real-time stock sync',
+    sectionsLabel: 'E-commerce sections',
+    never: 'Never',
+    columns: { product: 'Product', category: 'Category', price: 'Price', inStock: 'In Stock', syncStatus: 'Sync Status' },
+    syncReady: 'Ready to sync',
+    syncMissingPrice: 'Missing price',
+    tiles: { status: 'Store Status', catalog: 'Catalog Products', withStock: 'Items with Stock', lastSync: 'Last Catalog Sync' },
+    statusNames: { connected: 'Connected', configured: 'Configured', off: 'Offline / Off' },
+    woo: {
+      title: 'WooCommerce REST API Integration',
+      guideTitle: 'How to connect WooCommerce with your POS:',
+      // Each step is a list of parts; a part with a tag is shown in that tag (bold, italic or code)
+      steps: [
+        [{ text: 'Log in to your WordPress Admin dashboard and ensure WooCommerce is active.' }],
+        [
+          { text: 'Go to ' },
+          { tag: 'strong', text: 'WooCommerce > Settings > Advanced > REST API' },
+          { text: ' and click ' },
+          { tag: 'strong', text: 'Add Key' },
+          { text: '.' },
+        ],
+        [
+          { text: 'Set Description to ' },
+          { tag: 'em', text: 'Murzak POS' },
+          { text: ' and Permissions to ' },
+          { tag: 'strong', text: 'Read/Write' },
+          { text: '.' },
+        ],
+        [
+          { text: 'Copy and paste your Store URL, Consumer Key (' },
+          { tag: 'code', text: 'ck_...' },
+          { text: '), and Consumer Secret (' },
+          { tag: 'code', text: 'cs_...' },
+          { text: ') below.' },
+        ],
+      ],
+      storeUrl: 'WooCommerce Store URL',
+      storeUrlPlaceholder: 'https://example.com',
+      storeUrlHelp: 'Your website root address (must use HTTPS)',
+      warehouse: 'Stock Warehouse for Online Orders',
+      warehousePlaceholder: 'Select warehouse',
+      warehouseHelp: 'Which store/warehouse fulfills online orders',
+      consumerKey: 'Consumer Key',
+      consumerKeyPlaceholder: 'ck_xxxxxxxxxxxxxxxxxxxxxxxx',
+      consumerSecret: 'Consumer Secret',
+      consumerSecretPlaceholder: 'cs_xxxxxxxxxxxxxxxxxxxxxxxx',
+      enable: {
+        label: 'Enable WooCommerce Integration',
+        description: 'Activate automated sync between this POS and your WordPress/WooCommerce store',
+      },
+      realtime: {
+        label: 'Real-time Inventory Sync',
+        description: 'Update WooCommerce stock whenever an in-store sale or stock change occurs to prevent overselling',
+      },
+      catalog: {
+        label: 'Sync Product Catalog',
+        description: 'Automatically create or update product titles, descriptions, categories, and prices on WooCommerce',
+      },
+      test: 'Test Connection',
+      syncNow: 'Sync Catalog Now',
+      save: 'Save Integration Settings',
+    },
+    preview: {
+      title: 'Online Product Catalog Preview',
+      search: 'Search products...',
+      sync: 'Sync Products',
+      caption: 'Products available for e-commerce synchronization',
+      emptyTitle: 'No products found',
+      emptyDescription: 'Add products in the Products section to sync them online.',
+    },
+  },
+
   products: {
     shownOnline: 'Shown online',
     shownOnlineHelp: 'Switch off to keep a product off your online store and website.',

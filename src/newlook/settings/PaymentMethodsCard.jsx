@@ -54,10 +54,10 @@ const PaymentMethodsCard = ({ load = getPaymentMethods, save = setPaymentMethod 
                 <p className="nl-settings-hint">
                   {P.notSetUp}
                   {m.key === 'mpesa' && (
-                    <> &bull; <Link to="/settings/payment-gateways?legacy=1" className="nl-link">Set up M-Pesa</Link></>
+                    <> &bull; <Link to="/settings/payment-gateways?legacy=1" className="nl-link">{P.setUpMpesa}</Link></>
                   )}
                   {m.key === 'credit' && (
-                    <> &bull; <Link to="/settings/payment-methods?legacy=1" className="nl-link">Set up Credit</Link></>
+                    <> &bull; <Link to="/settings/payment-methods?legacy=1" className="nl-link">{P.setUpCredit}</Link></>
                   )}
                 </p>
               ) : m.needs_code ? (

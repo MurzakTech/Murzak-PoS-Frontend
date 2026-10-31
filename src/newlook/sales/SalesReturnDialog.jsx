@@ -10,8 +10,10 @@ import { createSalesReturn } from '../../store/salesSlice';
 import { getSale } from '../../api/salesListApi';
 import CT from '../till/strings.cash';
 import fill from '../labels/fill';
+import T from './strings.sales';
 
 const RF = CT.refund;
+const D = T.returnDialog;
 
 /**
  * Dialog to record a return of sold items.
@@ -52,10 +54,10 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
         setCurrentSale(found);
         setLines(initLines(found));
       } else {
-        setLookupError('Invoice not found. Check the number and try again.');
+        setLookupError(D.notFound);
       }
     } catch (err) {
-      setLookupError(err.message || 'Invoice not found. Check the number and try again.');
+      setLookupError(err.message || D.notFound);
     } finally {
       setLookupBusy(false);
     }
@@ -130,11 +132,11 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
           onDone(result.payload);
         }
       } else {
-        setFailure(result.payload || 'Failed to record return. Please try again.');
+        setFailure(result.payload || D.failed);
         setBusy(false);
       }
     } catch (err) {
-      setFailure(err.message || 'Failed to record return.');
+      setFailure(err.message || D.failedShort);
       setBusy(false);
     }
   };
@@ -149,11 +151,11 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
       open
       onClose={onClose}
       busy={busy}
-      title="Record return"
+      title={D.title}
       description={
         currentSale
-          ? `Return items for receipt ${currentSale.receipt || currentSale.id} (${customerName})`
-          : 'Enter the invoice or receipt number to find items to return.'
+          ? fill(D.describeSale, { receipt: currentSale.receipt || currentSale.id, customer: customerName })
+          : D.describeFind
       }
       footer={
         recorded ? (
@@ -161,14 +163,14 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
         ) : (
           <>
             <Button variant="secondary" disabled={busy} onClick={onClose}>
-              Cancel
+              {D.cancel}
             </Button>
             <Button
               loading={busy}
               disabled={!canSubmit}
               onClick={handleSubmit}
             >
-              Record return
+              {D.record}
             </Button>
           </>
         )
@@ -178,8 +180,8 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
         {!currentSale ? (
           <div style={{ display: 'grid', gap: '8px' }}>
             <Field
-              label="Invoice or Receipt number"
-              placeholder="e.g. 0001, POS-INV-2026-00001"
+              label={D.lookupLabel}
+              placeholder={D.lookupPlaceholder}
               value={invoiceLookup}
               onChange={setInvoiceLookup}
               data-autofocus=""
@@ -190,7 +192,7 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
               disabled={!invoiceLookup.trim() || lookupBusy}
               onClick={handleLookup}
             >
-              Find invoice
+              {D.find}
             </Button>
             {lookupError ? (
               <p role="alert" className="nl-error">
@@ -203,15 +205,15 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
 
         {currentSale && lines.length > 0 ? (
           <div>
-            <h4 className="nl-label" style={{ marginBottom: '8px' }}>Items to return</h4>
+            <h4 className="nl-label" style={{ marginBottom: '8px' }}>{D.itemsToReturn}</h4>
             <table className="nl-receipt__lines" style={{ width: '100%', marginBottom: '16px' }}>
               <thead>
                 <tr>
                   <th style={{ width: '32px' }}></th>
-                  <th>Item</th>
-                  <th className="is-right">Sold</th>
-                  <th className="is-right" style={{ width: '90px' }}>Return qty</th>
-                  <th className="is-right">Refund</th>
+                  <th>{D.columns.item}</th>
+                  <th className="is-right">{D.columns.sold}</th>
+                  <th className="is-right" style={{ width: '90px' }}>{D.columns.returnQty}</th>
+                  <th className="is-right">{D.columns.refund}</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,7 +224,7 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
                         type="checkbox"
                         checked={l.selected}
                         onChange={() => handleToggleLine(idx)}
-                        aria-label={`Select ${l.item_name}`}
+                        aria-label={fill(D.select, { name: l.item_name })}
                       />
                     </td>
                     <td>
@@ -246,7 +248,7 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
                           borderRadius: '4px',
                           border: '1px solid var(--line)',
                         }}
-                        aria-label={`Return quantity of ${l.item_name}`}
+                        aria-label={fill(D.returnQtyOf, { name: l.item_name })}
                       />
                     </td>
                     <td className="is-right">
@@ -266,7 +268,7 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
                 fontWeight: 'bold',
               }}
             >
-              <span>Total refund amount:</span>
+              <span>{D.totalRefund}</span>
               <span>{formatMoney(totalRefund)}</span>
             </div>
           </div>
@@ -289,8 +291,8 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
 
         {currentSale && !recorded ? (
           <Field
-            label="Reason for return"
-            placeholder="e.g. Defective, wrong size, customer changed mind"
+            label={D.reasonLabel}
+            placeholder={D.reasonPlaceholder}
             value={reason}
             onChange={(v) => setReason(v.slice(0, 140))}
           />

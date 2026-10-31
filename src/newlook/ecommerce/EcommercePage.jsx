@@ -208,7 +208,7 @@ const EcommercePage = () => {
   const productColumns = [
     {
       key: 'product',
-      header: 'Product',
+      header: S.page.columns.product,
       render: (r) => (
         <div>
           <strong>{r.item_name}</strong>
@@ -216,16 +216,16 @@ const EcommercePage = () => {
         </div>
       ),
     },
-    { key: 'category', header: 'Category', render: (r) => r.category || '–' },
+    { key: 'category', header: S.page.columns.category, render: (r) => r.category || '–' },
     {
       key: 'price',
-      header: 'Price',
+      header: S.page.columns.price,
       align: 'right',
       render: (r) => formatMoney(r.price),
     },
     {
       key: 'stock',
-      header: 'In Stock',
+      header: S.page.columns.inStock,
       align: 'right',
       render: (r) => `${r.stock} ${r.unit || ''}`,
     },
@@ -242,10 +242,10 @@ const EcommercePage = () => {
     },
     {
       key: 'status',
-      header: 'Sync Status',
+      header: S.page.columns.syncStatus,
       render: (r) => (
         <span className={`nl-ready-pill nl-ready-pill--${r.sync_status}`}>
-          {r.sync_status === 'ready' ? 'Ready to sync' : 'Missing price'}
+          {r.sync_status === 'ready' ? S.page.syncReady : S.page.syncMissingPrice}
         </span>
       ),
     },
@@ -254,10 +254,10 @@ const EcommercePage = () => {
   return (
     <div className="nl-ecommerce">
       <PageHeader
-        title="E-Commerce & Online Store"
-        subtitle="Connect your shop to WooCommerce or start selling online with real-time stock sync"
+        title={S.page.title}
+        subtitle={S.page.subtitle}
         tabs={{
-          label: 'E-commerce sections',
+          label: S.page.sectionsLabel,
           tabs: TABS,
           value: activeTab,
         }}
@@ -266,7 +266,7 @@ const EcommercePage = () => {
       {/* Overview Stat Tiles */}
       <div className="nl-ecommerce__tiles">
         <Card>
-          <span className="nl-stock-tile__label">Store Status</span>
+          <span className="nl-stock-tile__label">{S.page.tiles.status}</span>
           <span className="nl-stock-tile__value">
             <span
               className={`nl-status-pill nl-status-pill--${
@@ -274,25 +274,25 @@ const EcommercePage = () => {
               }`}
             >
               <span className="nl-status-pill__dot" />
-              {status === 'connected' ? 'Connected' : enabled ? 'Configured' : 'Offline / Off'}
+              {status === 'connected' ? S.page.statusNames.connected : enabled ? S.page.statusNames.configured : S.page.statusNames.off}
             </span>
           </span>
         </Card>
 
         <Card>
-          <span className="nl-stock-tile__label">Catalog Products</span>
+          <span className="nl-stock-tile__label">{S.page.tiles.catalog}</span>
           <span className="nl-stock-tile__value">{catalogCount}</span>
         </Card>
 
         <Card>
-          <span className="nl-stock-tile__label">Items with Stock</span>
+          <span className="nl-stock-tile__label">{S.page.tiles.withStock}</span>
           <span className="nl-stock-tile__value">{stockCount}</span>
         </Card>
 
         <Card>
-          <span className="nl-stock-tile__label">Last Catalog Sync</span>
+          <span className="nl-stock-tile__label">{S.page.tiles.lastSync}</span>
           <span className="nl-stock-tile__value" style={{ fontSize: 'var(--body-size)', fontWeight: 'normal' }}>
-            {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
+            {lastSync ? new Date(lastSync).toLocaleString() : S.page.never}
           </span>
         </Card>
       </div>
@@ -300,46 +300,49 @@ const EcommercePage = () => {
       {/* Main Tabs Body */}
       {activeTab === 'woocommerce' ? (
         <>
-        <Card title="WooCommerce REST API Integration">
+        <Card title={S.page.woo.title}>
           <div className="nl-ecommerce__guide">
-            <strong>How to connect WooCommerce with your POS:</strong>
+            <strong>{S.page.woo.guideTitle}</strong>
             <ol>
-              <li>Log in to your WordPress Admin dashboard and ensure WooCommerce is active.</li>
-              <li>Go to <strong>WooCommerce &gt; Settings &gt; Advanced &gt; REST API</strong> and click <strong>Add Key</strong>.</li>
-              <li>Set Description to <em>Murzak POS</em> and Permissions to <strong>Read/Write</strong>.</li>
-              <li>Copy and paste your Store URL, Consumer Key (<code>ck_...</code>), and Consumer Secret (<code>cs_...</code>) below.</li>
+              {S.page.woo.steps.map((parts, i) => (
+                <li key={i}>
+                  {parts.map((part, j) =>
+                    part.tag ? React.createElement(part.tag, { key: j }, part.text) : <React.Fragment key={j}>{part.text}</React.Fragment>
+                  )}
+                </li>
+              ))}
             </ol>
           </div>
 
           <div className="nl-ecommerce__form-grid">
             <Field
-              label="WooCommerce Store URL"
-              placeholder="https://example.com"
+              label={S.page.woo.storeUrl}
+              placeholder={S.page.woo.storeUrlPlaceholder}
               value={storeUrl}
               onChange={setStoreUrl}
-              helper="Your website root address (must use HTTPS)"
+              helper={S.page.woo.storeUrlHelp}
             />
 
             <Select
-              label="Stock Warehouse for Online Orders"
+              label={S.page.woo.warehouse}
               options={storeOptions}
               value={warehouse}
               onChange={setWarehouse}
-              placeholder="Select warehouse"
-              helper="Which store/warehouse fulfills online orders"
+              placeholder={S.page.woo.warehousePlaceholder}
+              helper={S.page.woo.warehouseHelp}
             />
 
             <Field
-              label="Consumer Key"
-              placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxx"
+              label={S.page.woo.consumerKey}
+              placeholder={S.page.woo.consumerKeyPlaceholder}
               value={consumerKey}
               onChange={setConsumerKey}
               autoComplete="off"
             />
 
             <Field
-              label="Consumer Secret"
-              placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxx"
+              label={S.page.woo.consumerSecret}
+              placeholder={S.page.woo.consumerSecretPlaceholder}
               value={consumerSecret}
               onChange={setConsumerSecret}
               type="password"
@@ -349,22 +352,22 @@ const EcommercePage = () => {
 
           <div className="nl-ecommerce__toggles">
             <Switch
-              label="Enable WooCommerce Integration"
-              description="Activate automated sync between this POS and your WordPress/WooCommerce store"
+              label={S.page.woo.enable.label}
+              description={S.page.woo.enable.description}
               checked={enabled}
               onChange={setEnabled}
             />
 
             <Switch
-              label="Real-time Inventory Sync"
-              description="Update WooCommerce stock whenever an in-store sale or stock change occurs to prevent overselling"
+              label={S.page.woo.realtime.label}
+              description={S.page.woo.realtime.description}
               checked={autoSyncStock}
               onChange={setAutoSyncStock}
             />
 
             <Switch
-              label="Sync Product Catalog"
-              description="Automatically create or update product titles, descriptions, categories, and prices on WooCommerce"
+              label={S.page.woo.catalog.label}
+              description={S.page.woo.catalog.description}
               checked={autoSyncProducts}
               onChange={setAutoSyncProducts}
             />
@@ -379,7 +382,7 @@ const EcommercePage = () => {
                 disabled={!storeUrl || saving}
                 onClick={handleTest}
               >
-                Test Connection
+                {S.page.woo.test}
               </Button>
               <Button
                 variant="secondary"
@@ -388,12 +391,12 @@ const EcommercePage = () => {
                 disabled={!enabled || saving}
                 onClick={handleSync}
               >
-                Sync Catalog Now
+                {S.page.woo.syncNow}
               </Button>
             </div>
 
             <Button variant="primary" loading={saving} onClick={handleSave}>
-              Save Integration Settings
+              {S.page.woo.save}
             </Button>
           </div>
         </Card>
@@ -406,27 +409,27 @@ const EcommercePage = () => {
       {activeTab === 'digital_store' ? <OnlineStoreTab company={company} locations={storeOptions.map((o) => ({ value: o.value, label: o.label }))} /> : null}
 
       {activeTab === 'products' ? (
-        <Card title="Online Product Catalog Preview">
+        <Card title={S.page.preview.title}>
           <div style={{ marginBottom: 'var(--space-4)', display: 'flex', justifyContent: 'space-between' }}>
             <Field
-              placeholder="Search products..."
+              placeholder={S.page.preview.search}
               value={search}
               onChange={setSearch}
               style={{ maxWidth: '300px', margin: 0 }}
             />
             <Button variant="secondary" icon="refresh" loading={syncing} onClick={handleSync}>
-              Sync Products
+              {S.page.preview.sync}
             </Button>
           </div>
 
           <Table
-            caption="Products available for e-commerce synchronization"
+            caption={S.page.preview.caption}
             columns={productColumns}
             rows={products}
             loading={productsLoading}
             empty={{
-              title: 'No products found',
-              description: 'Add products in the Products section to sync them online.',
+              title: S.page.preview.emptyTitle,
+              description: S.page.preview.emptyDescription,
             }}
           />
         </Card>

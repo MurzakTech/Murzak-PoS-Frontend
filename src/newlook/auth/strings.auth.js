@@ -92,6 +92,8 @@ const auth = {
     server: 'Something went wrong on our side. Try again in a minute, and email support if it keeps happening.',
     other: 'We could not sign you in. Try again, and email support if it keeps happening.',
     signUpFailed: 'Could not create your shop account. Please check your information and try again.',
+    emailTaken: 'An account with this email address already exists. Try signing in instead.',
+    phoneTaken: 'An account with this phone number already exists. Try signing in instead.',
     dismiss: 'Dismiss this message',
   },
 

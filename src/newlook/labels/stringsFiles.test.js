@@ -81,7 +81,8 @@ describe('The component scan reaches every folder of the New look', () => {
   const scanned = filesToScan().map((f) => f.rel);
 
   // Folders that hold no visible words of their own: the scan is allowed to find nothing there
-  const NO_WORDS = new Set(['labels', 'access', '__fixtures__']);
+  // (landing and legal hold only a stylesheet: the words of those pages are in the page files outside this folder)
+  const NO_WORDS = new Set(['labels', 'access', '__fixtures__', 'landing', 'legal']);
 
   test.each(folders.filter((f) => !NO_WORDS.has(f)))('folder %s has at least one scanned component', (folder) => {
     expect(scanned.some((rel) => rel.startsWith(`${folder}/`))).toBe(true);

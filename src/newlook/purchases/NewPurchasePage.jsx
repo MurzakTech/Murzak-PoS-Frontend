@@ -433,7 +433,7 @@ const NewPurchasePage = () => {
 
   if (isLegacy) {
     return (
-      <React.Suspense fallback={<div className="nl-form-loading" style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>Loading earlier screen...</div>}>
+      <React.Suspense fallback={<div className="nl-form-loading" style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>{T.loadingEarlier}</div>}>
         <LegacyNewPurchase />
       </React.Suspense>
     );

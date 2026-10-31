@@ -127,7 +127,7 @@ export const useSignUp = () => {
         );
       } catch (profileErr) {
         if (process.env.NODE_ENV === 'development') {
-          console.warn('Initial POS profile creation warning:', profileErr);
+          console.warn('Initial till set-up warning:', profileErr);
         }
       }
 

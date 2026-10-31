@@ -3,6 +3,27 @@
  * filled in with labels/fill.js. No word is written inside a component.
  */
 const sales = {
+  recordReturn: 'Record return',
+  returnDialog: {
+    title: 'Record return',
+    cancel: 'Cancel',
+    record: 'Record return',
+    describeSale: 'Return items for receipt {receipt} ({customer})',
+    describeFind: 'Enter the invoice or receipt number to find items to return.',
+    lookupLabel: 'Invoice or Receipt number',
+    lookupPlaceholder: 'e.g. 0001, POS-INV-2026-00001',
+    find: 'Find invoice',
+    notFound: 'Invoice not found. Check the number and try again.',
+    itemsToReturn: 'Items to return',
+    columns: { item: 'Item', sold: 'Sold', returnQty: 'Return qty', refund: 'Refund' },
+    select: 'Select {name}',
+    returnQtyOf: 'Return quantity of {name}',
+    totalRefund: 'Total refund amount:',
+    reasonLabel: 'Reason for return',
+    reasonPlaceholder: 'e.g. Defective, wrong size, customer changed mind',
+    failed: 'Failed to record return. Please try again.',
+    failedShort: 'Failed to record return.',
+  },
   title: 'Sales',
   subtitle: 'Every sale, newest first',
   tabsLabel: 'Sales views',

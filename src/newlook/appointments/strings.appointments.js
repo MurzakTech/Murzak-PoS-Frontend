@@ -3,6 +3,7 @@
  */
 const appointments = {
   title: 'Appointments',
+  loading: 'Loading appointments...',
   subtitle: 'Client bookings, barber and stylist schedules, and till checkout',
   newAppointment: 'Book appointment',
   addWalkIn: 'Add walk-in',
@@ -46,6 +47,8 @@ const appointments = {
     date: 'Appointment date',
     time: 'Time slot',
     duration: 'Estimated duration (minutes)',
+    durations: { 15: '15 min', 30: '30 min', 45: '45 min', 60: '1 hour', 90: '1.5 hours' },
+    serviceLabel: '{name} (KES {rate})',
     services: 'Select service(s)',
     servicesHint: 'e.g. Executive Haircut, Beard Trim, Wash',
     notes: 'Special requests or preferences',

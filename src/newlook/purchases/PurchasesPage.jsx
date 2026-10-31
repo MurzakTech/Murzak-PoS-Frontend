@@ -290,7 +290,7 @@ const PurchasesPage = () => {
           <>
             {tab === 'returns' ? (
               <Button variant="secondary" icon="undo" onClick={() => setStandaloneReturn(true)}>
-                Record return
+                {T.recordReturn}
               </Button>
             ) : null}
             <HeaderActions

@@ -25,14 +25,14 @@ export const plainSignUpError = (error) => {
   if (EMAIL_TAKEN.test(said)) {
     return {
       kind: 'emailTaken',
-      text: 'An account with this email address already exists. Try signing in instead.',
+      text: T.errors.emailTaken,
       field: 'email',
     };
   }
   if (PHONE_TAKEN.test(said)) {
     return {
       kind: 'phoneTaken',
-      text: 'An account with this phone number already exists. Try signing in instead.',
+      text: T.errors.phoneTaken,
       field: 'phone',
     };
   }
