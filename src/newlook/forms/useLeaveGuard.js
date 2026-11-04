@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -55,7 +56,9 @@ const useLeaveGuard = (dirty) => {
   const leave = useCallback(() => {
     const where = pending;
     allow.current = true;
-    setPending(null);
+    // Close the question and draw that before the page starts changing; otherwise it can stay on screen over the
+    // next page's loading placeholder
+    flushSync(() => setPending(null));
     if (where && where.to) navigate(where.to);
     else if (where && where.back) window.history.go(-2); // the entry added to stay put, then the page we came from
   }, [navigate, pending]);

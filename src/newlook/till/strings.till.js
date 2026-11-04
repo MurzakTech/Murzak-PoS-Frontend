@@ -20,6 +20,8 @@ const till = {
   stock: {
     only: 'Only {qty} left',
     none: 'None left in stock',
+    blockedNone: '{name} is out of stock. Remove it from the bill to continue.',
+    blockedOnly: 'Only {qty} of {name} left in stock. Lower the quantity to continue.',
   },
   itemNoun: 'item',
   // Names of buttons and controls of the current till screen that the New look words differently (a verb and its object, no old terms)

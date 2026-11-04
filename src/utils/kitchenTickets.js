@@ -91,11 +91,16 @@ export const writeSettings = (storage, company, settings) => {
 const FOOD = /food|meal|dish|snack|bakery|kitchen|breakfast|lunch|dinner|grill|pizza|burger|dessert|starter|main|side|salad|soup|chicken|meat|fish|nyama/i;
 const DRINK = /drink|beverage|beer|lager|wine|spirit|whisk|vodka|gin|rum|cocktail|soda|juice|water|tea|coffee|liquor|bar\b|cider|tonic/i;
 
+// Categories that are never cooked or poured. Without an explicit station they must not fall back to the default
+// station, or a bottle of bleach or an airtime top-up makes the till say "not sent to the kitchen".
+const NOT_KITCHEN = /household|toiletr|cleaning|detergent|laundry|stationer|airtime|service|delivery|electronic|cosmetic|personal care|pharmac|medicine|hardware|cloth|apparel|general merchandise/i;
+
 /** The station an item goes to: the one its category is set to, else the default station, else none */
 export const stationFor = (settings, group) => {
   if (!settings || !Array.isArray(settings.stations) || settings.stations.length === 0) return null;
   const direct = settings.stations.find((s) => s.groups && s.groups.some((g) => same(g, group)));
   if (direct) return direct;
+  if (group && NOT_KITCHEN.test(group)) return null;
   if (settings.defaultStation) {
     const def = settings.stations.find((s) => s.id === settings.defaultStation);
     if (def) return def;

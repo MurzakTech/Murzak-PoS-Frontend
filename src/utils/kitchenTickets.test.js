@@ -52,6 +52,19 @@ describe('routing items to stations', () => {
     expect(stationFor(settingsWith({ defaultStation: 'bar' }), 'Cigarettes').id).toBe('bar');
   });
 
+  it('keeps household and service items off the default station, but honours an explicit category', () => {
+    const withDefault = settingsWith({ defaultStation: 'kitchen' });
+    ['Household', 'Toiletries', 'Services', 'Delivery Fees'].forEach((group) => {
+      expect(stationFor(withDefault, group)).toBeNull();
+    });
+    // Anything else still falls back to the default station
+    expect(stationFor(withDefault, 'Cigarettes').id).toBe('kitchen');
+    // A shop that really maps a household category to a station keeps that choice
+    const mapped = settingsWith({ defaultStation: 'kitchen' });
+    mapped.stations = mapped.stations.map((st) => (st.id === 'bar' ? { ...st, groups: [...(st.groups || []), 'Household'] } : st));
+    expect(stationFor(mapped, 'Household').id).toBe('bar');
+  });
+
   it('does not push shop goods onto a station just because no categories are set up yet', () => {
     // The default stations have no categories at all, and no default station is chosen
     const fresh = { ...defaultSettings(), enabled: true };

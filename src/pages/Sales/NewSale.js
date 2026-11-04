@@ -36,7 +36,7 @@ import '../../newlook/components'; // the shared components and their styles, us
 import useKeptCart from '../../newlook/till/useKeptCart';
 import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
 import { sellingLocations } from '../../newlook/till/sellingLocations';
-import { stockNote } from '../../newlook/till/stockNote';
+import { stockNote, stockShortfalls } from '../../newlook/till/stockNote';
 import { getTillPaymentModes } from '../../api/paymentMethodsApi';
 import useUsualOpening from '../../newlook/setup/useUsualOpening';
 import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
@@ -1028,6 +1028,17 @@ const NewSale = () => {
 
   const handleCheckoutClick = () => {
     if (cart.length === 0) return;
+    // Never reach the payment screen with a sale the server is certain to refuse for lack of stock
+    const shortfalls = stockShortfalls(cart, (line) => {
+      const product = products.find((p) => p.item_code === line.item_code);
+      if (product && (product.is_stock_item === 0 || product.is_stock_item === false)) return null;
+      const stock = productStocks[line.item_code]?.[line.warehouse || defaultWarehouse];
+      return stock === undefined ? null : stock;
+    });
+    if (shortfalls.length > 0) {
+      dispatch(showNotification({ message: shortfalls.join(' '), severity: 'warning', title: 'Not enough stock' }));
+      return;
+    }
     // Items the kitchen was never told about: ask before charging (every way of charging comes through here)
     if (kitchenSettings.enabled && !chargeCheckedRef.current) {
       const plan = planSend(cart, kitchen, kitchenSettings);
@@ -1057,7 +1068,20 @@ const NewSale = () => {
     });
   };
 
+  // A second tap on "Complete sale" while the first is still being saved does nothing (state alone is too slow:
+  // two taps in the same moment both see "not creating yet")
+  const checkoutInFlightRef = useRef(false);
   const handleCheckout = async () => {
+    if (checkoutInFlightRef.current) return;
+    checkoutInFlightRef.current = true;
+    try {
+      await runCheckout();
+    } finally {
+      checkoutInFlightRef.current = false;
+    }
+  };
+
+  const runCheckout = async () => {
     if (cart.length === 0) {
       setSnackbarMessage('Cart is empty');
       setSnackbarSeverity('warning');

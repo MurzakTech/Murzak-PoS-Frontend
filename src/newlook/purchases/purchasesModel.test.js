@@ -41,6 +41,7 @@ import {
   reviewLines,
   returnRemarks,
   reviewTotal,
+  billBreakdown,
   serverLines,
   spoiltItems,
   spoiltTotal,
@@ -524,5 +525,21 @@ describe('the New purchase form', () => {
     const request = billRequest({ ...good, haveBill: true, paid: false, paidAmount: '50' }, [lineFrom(product)], 'bill-1');
     expect(request.paidAmount).toBeUndefined();
     expect(request.mode).toBeUndefined();
+  });
+});
+
+
+describe('billBreakdown', () => {
+  it('shows the tax on a full delivery (the reported order: 175 + 28 = 203)', () => {
+    expect(billBreakdown({ subtotal: 175, tax: 28, total: 203 }, 175)).toEqual({ goods: 175, tax: 28, total: 203 });
+  });
+
+  it('carries only its share of the tax on a part delivery', () => {
+    expect(billBreakdown({ subtotal: 175, tax: 28, total: 203 }, 87.5)).toEqual({ goods: 87.5, tax: 14, total: 101.5 });
+  });
+
+  it('has no tax when the order has none, or no value to tax', () => {
+    expect(billBreakdown({ subtotal: 100, tax: 0, total: 100 }, 100)).toEqual({ goods: 100, tax: 0, total: 100 });
+    expect(billBreakdown(undefined, 50)).toEqual({ goods: 50, tax: 0, total: 50 });
   });
 });

@@ -307,6 +307,19 @@ export const returnRemarks = (items, note = '') => {
   return [text, String(note || '').trim()].filter(Boolean).join(' ').slice(0, 140);
 };
 
+/**
+ * What the bill will show for the goods being received: the value of the goods, the tax on them and the bill total.
+ * The tax is the order's own tax in proportion (a part delivery carries that part of the order's tax), so the person
+ * confirming sees the amount the supplier will actually bill, not just the goods.
+ */
+export const billBreakdown = (totals, goodsValue) => {
+  const subtotal = Number(totals && totals.subtotal) || 0;
+  const orderTax = Number(totals && totals.tax) || 0;
+  const goods = Math.round((Number(goodsValue) || 0) * 100) / 100;
+  const tax = subtotal > 0 ? Math.round(goods * (orderTax / subtotal) * 100) / 100 : 0;
+  return { goods, tax, total: Math.round((goods + tax) * 100) / 100 };
+};
+
 export const reviewTotal = (lines) => Math.round(reviewLines(lines).reduce((sum, l) => sum + l.amount, 0) * 100) / 100;
 
 /** What will still be to arrive after this delivery, as 'Sugar 4, Rice 5' ('' when the order is complete) */

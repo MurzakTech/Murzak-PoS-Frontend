@@ -196,6 +196,32 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--card-gap);
 }
+/* The receive tables have many columns (ticks, quantities, spoilt, value). They always scroll sideways when they must,
+   with a scrollbar that stays drawn, so the Quantity and Spoilt columns can never be cut off out of reach. */
+.nl-table-wrap.nl-receive-table {
+  overflow-x: auto;
+  scrollbar-width: auto;
+}
+.nl-receive-table::-webkit-scrollbar {
+  height: 12px;
+  -webkit-appearance: none;
+}
+.nl-receive-table::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: var(--radius-card);
+}
+.nl-receive-table .nl-table th,
+.nl-receive-table .nl-table td {
+  padding: var(--space-2);
+}
+.nl-receive-table .nl-table th:first-child,
+.nl-receive-table .nl-table td:first-child {
+  padding-left: var(--space-3);
+}
+.nl-receive-table .nl-table th:last-child,
+.nl-receive-table .nl-table td:last-child {
+  padding-right: var(--space-3);
+}
 .nl-receive-steps {
   display: flex;
   flex-wrap: wrap;
