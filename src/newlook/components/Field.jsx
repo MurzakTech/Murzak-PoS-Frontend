@@ -41,10 +41,14 @@ const Field = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, kind]);
 
+  // A minus sign typed in a money box is not quietly dropped: the person is told a negative amount is not allowed
+  const [negativeTyped, setNegativeTyped] = useState(false);
+
   const handle = (event) => {
     const raw = event.target.value;
     if (!onChange) return;
     if (kind === 'money') {
+      setNegativeTyped(raw.includes('-'));
       onChange(raw.replace(/\D/g, ''));
     } else if (kind === 'date') {
       const masked = maskDate(raw);
@@ -63,9 +67,10 @@ const Field = ({
       ? { inputMode: 'numeric', autoComplete: 'off', placeholder: S.components.field.datePlaceholder, maxLength: 10 }
       : {};
 
-  const classes = ['nl-field', error && 'is-error', disabled && 'is-disabled', readOnly && 'is-readonly', forceState === 'hover' && 'is-hover', className].filter(Boolean).join(' ');
+  const shownError = error || (kind === 'money' && negativeTyped ? S.components.field.noNegative : null);
+  const classes = ['nl-field', shownError && 'is-error', disabled && 'is-disabled', readOnly && 'is-readonly', forceState === 'hover' && 'is-hover', className].filter(Boolean).join(' ');
   const wrapClasses = ['nl-input-wrap', forceState === 'focus' && 'is-focus'].filter(Boolean).join(' ');
-  const note = error || helper;
+  const note = shownError || helper;
 
   return (
     <div className={classes}>
@@ -87,16 +92,16 @@ const Field = ({
           onChange={handle}
           disabled={disabled}
           readOnly={readOnly}
-          aria-invalid={error ? true : undefined}
+          aria-invalid={shownError ? true : undefined}
           aria-describedby={note ? noteId : undefined}
           {...inputProps}
           {...rest}
         />
       </div>
-      {error ? (
+      {shownError ? (
         <p id={noteId} className="nl-error">
           <Icon name="alert" />
-          <span>{error}</span>
+          <span>{shownError}</span>
         </p>
       ) : helper ? (
         <p id={noteId} className="nl-helper">

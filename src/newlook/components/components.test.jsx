@@ -150,6 +150,14 @@ describe('Field', () => {
       expect(onChange).toHaveBeenLastCalledWith('235050');
       expect(screen.getByLabelText('Price')).toHaveAttribute('inputmode', 'numeric');
     });
+
+    test('says so when a minus sign is typed, instead of quietly making the amount positive', () => {
+      const onChange = jest.fn();
+      render(<Field kind="money" label="Price" value="" onChange={onChange} />);
+      userEvent.paste(screen.getByLabelText('Price'), '-50');
+      expect(screen.getByText('An amount cannot be negative. Enter it without the minus sign.')).toBeInTheDocument();
+      expect(screen.getByLabelText('Price')).toHaveAttribute('aria-invalid', 'true');
+    });
   });
 
   describe('date', () => {

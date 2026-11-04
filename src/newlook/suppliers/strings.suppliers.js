@@ -120,6 +120,7 @@ const suppliers = {
     typeFixed: 'The type cannot be changed once the supplier is saved.',
     taxId: 'Tax ID or PIN',
     taxIdHelp: 'The supplier KRA PIN, if you have it. It is printed on your purchase records.',
+    taxIdInvalid: 'A KRA PIN is a letter, nine digits and a letter, such as A012345678Z',
     group: 'Supplier group',
     groupNone: 'No group',
     country: 'Country',

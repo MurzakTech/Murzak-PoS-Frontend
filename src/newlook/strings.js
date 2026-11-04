@@ -208,6 +208,7 @@ const components = {
   // Field.jsx
   field: {
     datePlaceholder: 'dd/mm/yyyy',
+    noNegative: 'An amount cannot be negative. Enter it without the minus sign.',
   },
 
   // FilterRow.jsx
