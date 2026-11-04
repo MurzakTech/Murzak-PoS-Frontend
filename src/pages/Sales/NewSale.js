@@ -37,6 +37,7 @@ import useKeptCart from '../../newlook/till/useKeptCart';
 import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
 import { sellingLocations } from '../../newlook/till/sellingLocations';
 import { stockNote, stockShortfalls } from '../../newlook/till/stockNote';
+import { clampDiscount } from '../../utils/discountBounds';
 import { getTillPaymentModes } from '../../api/paymentMethodsApi';
 import useUsualOpening from '../../newlook/setup/useUsualOpening';
 import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
@@ -1001,8 +1002,9 @@ const NewSale = () => {
   const itemDiscountTotal = useMemo(() => round2(cart.reduce((sum, item) => sum + (item.discount_amount || 0), 0)), [cart]);
   const manualDiscountAmount = useMemo(() => {
     const base = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    if (manualDiscountType === 'percentage') return round2((base * (manualDiscountValue || 0)) / 100);
-    return round2(Math.min(manualDiscountValue || 0, base));
+    const value = clampDiscount(manualDiscountType, manualDiscountValue, base);
+    if (manualDiscountType === 'percentage') return round2((base * value) / 100);
+    return round2(value);
   }, [cart, manualDiscountType, manualDiscountValue]);
   const grandTotal = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
@@ -1024,6 +1026,16 @@ const NewSale = () => {
     }
   };
 
+  // Every time the payment screen opens it starts as a single cash payment, so Split mode or "Other: Bank Draft" from the
+  // previous sale never carries over
+  useEffect(() => {
+    if (!isCheckoutMode) return;
+    setSplitPayments(false);
+    setPaymentMode('Cash');
+    setCreditAmount(0);
+    setAmountGiven(0);
+  }, [isCheckoutMode]);
+
   const rxNames = useMemo(() => prescriptionItems(cart), [cart]);
 
   const handleCheckoutClick = () => {
@@ -1037,6 +1049,11 @@ const NewSale = () => {
     });
     if (shortfalls.length > 0) {
       dispatch(showNotification({ message: shortfalls.join(' '), severity: 'warning', title: 'Not enough stock' }));
+      return;
+    }
+    // A sale that comes to nothing is almost always a discount typed wrongly, so it is not taken to payment
+    if (!(grandTotal > 0)) {
+      dispatch(showNotification({ message: 'The total of this sale is KES 0. Check the discount before taking payment.', severity: 'warning', title: 'Nothing to pay' }));
       return;
     }
     // Items the kitchen was never told about: ask before charging (every way of charging comes through here)
@@ -1830,7 +1847,7 @@ const NewSale = () => {
       setSelectedCustomerObj(held.selectedCustomerObj || null);
       setCustomerPriceList(held.customerPriceList || 'Standard Selling');
       setManualDiscountType(held.manualDiscountType || 'percentage');
-      setManualDiscountValue(held.manualDiscountValue || 0);
+      setManualDiscountValue(clampDiscount(held.manualDiscountType || 'percentage', held.manualDiscountValue, Infinity));
       setActiveHeldLabel(held.label || '');
       setKitchen(held.kitchen || EMPTY_KITCHEN);
       setHeldDialogOpen(false);
@@ -2185,7 +2202,7 @@ const NewSale = () => {
       setSelectedCustomerObj(kept.selectedCustomerObj);
       setCustomerPriceList(kept.customerPriceList);
       setManualDiscountType(kept.manualDiscountType);
-      setManualDiscountValue(kept.manualDiscountValue);
+      setManualDiscountValue(clampDiscount(kept.manualDiscountType, kept.manualDiscountValue, Infinity));
       setActiveHeldLabel(kept.activeHeldLabel);
       setKitchen(kept.kitchen || EMPTY_KITCHEN);
     },
@@ -2265,7 +2282,8 @@ const NewSale = () => {
       manualDiscountValue={manualDiscountValue}
       onManualDiscountChange={(type, value) => {
         setManualDiscountType(type);
-        setManualDiscountValue(value);
+        const base = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+        setManualDiscountValue(clampDiscount(type, value, base));
       }}
       isLoadingDiscounts={isLoadingDiscounts}
       onCheckout={isPhone ? chargeFromPhone : handleCheckoutClick}
