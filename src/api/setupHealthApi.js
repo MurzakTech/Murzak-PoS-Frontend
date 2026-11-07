@@ -18,3 +18,18 @@ export const getSetupHealth = async (company) => {
     return null;
   }
 };
+
+const EXPORT_METHOD = 'murzak_pos.api.settings_export_api.export_settings';
+
+/** The shop's settings as one secret-free document (owners only). Throws an Error with a plain sentence when it cannot be read. */
+export const exportSettings = async (company) => {
+  let response;
+  try {
+    response = await axiosInstance.get(EXPORT_METHOD, { params: company ? { company } : {} });
+  } catch (error) {
+    throw new Error('We could not get your settings. Check your connection and try again.');
+  }
+  const body = response.data?.message ?? response.data;
+  if (!body || body.success === false || !body.data) throw new Error('We could not get your settings. Please try again.');
+  return body.data;
+};

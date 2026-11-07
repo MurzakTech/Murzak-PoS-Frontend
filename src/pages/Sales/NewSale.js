@@ -2510,6 +2510,7 @@ const NewSale = () => {
         companyName={userCompany}
         cashierName={cashierName}
         currency={currency}
+        customerMobile={selectedCustomerObj?.mobile_no || ''}
         onNewSale={handleReceiptClose}
         onPrint={handlePrintReceipt}
         onViewInvoice={handleViewInvoice}

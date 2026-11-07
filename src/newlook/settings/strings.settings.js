@@ -25,6 +25,16 @@ const settings = {
     },
   },
 
+  // Settings, Business: keep a copy of how the shop is set up
+  copy: {
+    title: 'Keep a copy of your settings',
+    subtitle: 'A file with how your till and payments are set up. It has no passwords, keys or phone numbers. Support can use it to compare two shops.',
+    button: 'Download my settings',
+    working: 'Getting your settings',
+    done: 'Your settings were saved to a file.',
+    fileName: 'settings-{shop}-{date}.json',
+  },
+
   // Settings, Business: what was changed lately
   recent: {
     title: 'Recent changes to settings',
