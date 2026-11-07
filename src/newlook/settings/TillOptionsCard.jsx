@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
+import { ConfirmDialog } from '../components/Dialog';
 import { SkeletonText } from '../components/Skeleton';
 import Switch from '../components/Switch';
 import { useAccess } from '../access/AccessProvider';
@@ -13,6 +14,14 @@ import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
 
 const O = T.till.options;
+
+// The switches that move money or stock ask first, in plain words, before they change. Which answer needs asking:
+// turning stock-taking off, or turning on a cashier's right to change a discount or a price.
+const ASK = {
+  updateStock: (next) => (next ? null : 'updateStockOff'),
+  allowDiscountChange: (next) => (next ? 'discountOn' : null),
+  allowRateChange: (next) => (next ? 'rateOn' : null),
+};
 
 const SWITCHES = [
   { key: 'updateStock', label: O.updateStock, hint: O.updateStockHint },
@@ -66,6 +75,26 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
     return run;
   };
 
+  // A risky change waits here for a yes; a no puts the switch back with "Not changed."
+  const [asking, setAsking] = useState(null);
+  const changeAfterAsking = (key) => (value) => {
+    const which = ASK[key] ? ASK[key](value) : null;
+    if (!which) return change(key)(value);
+    return new Promise((resolve, reject) => {
+      setAsking({
+        which,
+        yes: () => {
+          setAsking(null);
+          change(key)(value).then(resolve, reject);
+        },
+        no: () => {
+          setAsking(null);
+          reject(new Error(O.confirm.notChanged));
+        },
+      });
+    });
+  };
+
   let body;
   if (state.status === 'loading') body = <div aria-busy="true" aria-label={O.loading}><SkeletonText lines={4} /></div>;
   else if (state.status === 'error') body = <EmptyState icon="alert" tone="error" title={O.errorTitle} description={O.errorText} action={{ label: T.shell.retry, onClick: reload }} level={3} />;
@@ -78,7 +107,7 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
         <ul className="nl-settings-switches">
           {SWITCHES.map((item) => (
             <li key={item.key} className="nl-settings-switch">
-              <Switch label={item.label} checked={state.profile[item.key]} disabled={!owner} onChange={change(item.key)} />
+              <Switch label={item.label} checked={state.profile[item.key]} disabled={!owner} onChange={changeAfterAsking(item.key)} />
               <p className="nl-settings-hint">{item.hint}</p>
             </li>
           ))}
@@ -96,6 +125,18 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
       <Card title={O.title} subtitle={O.subtitle}>
         {body}
       </Card>
+      {asking ? (
+        <ConfirmDialog
+          open
+          title={O.confirm[asking.which].title}
+          message={O.confirm[asking.which].message}
+          confirmLabel={O.confirm[asking.which].yes}
+          cancelLabel={O.confirm.keep}
+          destructive
+          onConfirm={asking.yes}
+          onCancel={asking.no}
+        />
+      ) : null}
     </div>
   );
 };

@@ -23,6 +23,20 @@ const settings = {
     },
   },
 
+  // Settings, Business: is the shop ready to work
+  health: {
+    title: 'Setup health',
+    subtitle: 'Whether your shop is ready to sell, receive stock and take payments. Nothing here changes a setting.',
+    loading: 'Checking your setup',
+    allGood: 'Everything needed is in place.',
+    needFixing: '{count} thing needs fixing before the shop works properly.',
+    worthLooking: '{count} thing is worth a look. The shop can still work.',
+    fine: 'Fine',
+    look: 'Worth a look',
+    fix: 'Needs fixing',
+    where: 'Where to fix it: {where}',
+  },
+
   // Settings, Business
   business: {
     ownerNote: 'Only the business owner can change these.',
@@ -123,6 +137,25 @@ const settings = {
       allowRateHint: 'A cashier can type a different price for an item while selling.',
       allowPartial: 'Let customers pay part now and the rest later',
       allowPartialHint: 'A sale can be left partly paid. The rest shows as owed.',
+      confirm: {
+        notChanged: 'Not changed.',
+        keep: 'Keep it as it is',
+        updateStockOff: {
+          title: 'Stop taking sold items out of stock?',
+          message: 'Your stock levels will stop going down when you sell, so they will be wrong until you count them again. Turn this off only if you really want that.',
+          yes: 'Yes, stop taking items out of stock',
+        },
+        discountOn: {
+          title: 'Let cashiers change discounts?',
+          message: 'Any cashier will be able to lower the price of a sale. Every discount is a drop in the money the till takes in.',
+          yes: 'Yes, let cashiers change discounts',
+        },
+        rateOn: {
+          title: 'Let cashiers change prices at the till?',
+          message: 'Any cashier will be able to type a different price for an item while selling. Check your cash against sales often if you turn this on.',
+          yes: 'Yes, let cashiers change prices',
+        },
+      },
       more: 'The till profile name and the kind of invoice a sale is saved as stay on the current screen.',
       moreLink: 'Open till settings',
     },

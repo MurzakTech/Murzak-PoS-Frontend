@@ -8,6 +8,7 @@ import { getCompany, updateCompany } from '../../api/businessApi';
 import CompanyCard from './CompanyCard';
 import { CARD } from './businessModel';
 import LinkList from './LinkList';
+import SetupHealthCard from './SetupHealthCard';
 import { OLD, cardFromSearch, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
@@ -117,6 +118,7 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
 
   return (
     <>
+      <SetupHealthCard />
       {body}
       <LinkList id="business-banks" title={B.banks.title} subtitle={B.banks.subtitle} items={[{ key: 'bank-accounts', text: B.banks.note, to: legacy(OLD.bankAccounts) }]} />
       <LinkList id="business-stores" title={B.stores.title} subtitle={B.stores.subtitle} items={[{ key: 'stores', text: B.stores.note, to: legacy(OLD.stores) }]} />

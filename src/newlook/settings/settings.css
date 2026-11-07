@@ -396,3 +396,35 @@
   font-size: 1.1em;
   letter-spacing: 0.03em;
 }
+
+/* ---------- Setup health ---------- */
+.nl-health-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.nl-health {
+  padding-left: var(--space-3);
+  border-left: 4px solid var(--line);
+}
+.nl-health--green {
+  border-left-color: var(--success, var(--line));
+}
+.nl-health--amber {
+  border-left-color: var(--warn);
+}
+.nl-health--red {
+  border-left-color: var(--bad);
+}
+.nl-health__status {
+  color: var(--muted);
+  font-size: var(--caption-size);
+}
+.nl-health--amber .nl-health__status {
+  color: var(--warn);
+}
+.nl-health--red .nl-health__status {
+  color: var(--bad);
+}
