@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import Button from '../components/Button';
 import Card from '../components/Card';
+import Icon from '../components/Icon';
 import { SkeletonText } from '../components/Skeleton';
 import { useAccess } from '../access/AccessProvider';
 import { Link } from 'react-router-dom';
@@ -16,6 +18,25 @@ const FIX_SECTION = { stores: 'business', till: 'till', cash: 'till', mpesa: 'ti
 
 const STATUS_WORD = { green: H.fine, amber: H.look, red: H.fix };
 
+const KEY = 'nl-setup-health-open';
+// The person's own choice to open or close the list is remembered on this device; it works without storage too
+const remembered = () => {
+  try {
+    const value = window.localStorage.getItem(KEY);
+    return value === 'open' ? true : value === 'closed' ? false : null;
+  } catch (e) {
+    return null;
+  }
+};
+const remember = (open) => {
+  try {
+    window.localStorage.setItem(KEY, open ? 'open' : 'closed');
+  } catch (e) {
+    /* nothing to do: it just opens as usual next time */
+  }
+};
+const many = (count, one, more) => fill(count === 1 ? one : more, { count });
+
 /**
  * Settings, Business: "Setup health" (Addendum C, R1). Lists what must be in place for the shop to work, each line fine,
  * worth a look, or needs fixing, with one plain sentence and where to go. Owners and managers only. It only reads: it never
@@ -28,6 +49,7 @@ const SetupHealthCard = ({ load = getSetupHealth }) => {
   const { company } = useSettingsUser();
   const allowed = access.tier === 'owner' || access.tier === 'manager';
   const [state, setState] = useState({ status: 'loading', report: null });
+  const [chosen, setChosen] = useState(remembered); // true, false, or null when the person has not chosen
 
   useEffect(() => {
     if (!allowed) return undefined;
@@ -52,13 +74,46 @@ const SetupHealthCard = ({ load = getSetupHealth }) => {
     );
   } else {
     const { checks, summary } = state.report;
-    const headline = summary.red > 0 ? fill(H.needFixing, { count: summary.red }) : summary.amber > 0 ? fill(H.worthLooking, { count: summary.amber }) : H.allGood;
+    const headline = summary.red > 0 ? many(summary.red, H.needFixing, H.needFixingMany) : summary.amber > 0 ? many(summary.amber, H.worthLooking, H.worthLookingMany) : H.allGood;
+    const percent = typeof state.report.percent === 'number' ? state.report.percent : Math.round((100 * summary.green) / Math.max(checks.length, 1));
+    const broken = checks.filter((check) => check.status === 'red');
+    // Shown open when something needs attention, closed when all is well, unless the person has chosen
+    const open = chosen === null ? summary.red + summary.amber > 0 : chosen;
+    const toggle = () => {
+      remember(!open);
+      setChosen(!open);
+    };
     body = (
       <>
+        {broken.length > 0 ? (
+          <p className="nl-settings-error" role="alert">
+            <Icon name="alert" />
+            <span>{fill(H.alert, { names: broken.map((check) => check.title).join(', ') })}</span>
+          </p>
+        ) : null}
+        <div className="nl-health-summary">
+          <div
+            className={`nl-health-bar nl-health-bar--${summary.red > 0 ? 'red' : summary.amber > 0 ? 'amber' : 'green'}`}
+            role="progressbar"
+            aria-label={H.progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+          >
+            <span style={{ width: `${percent}%` }} />
+          </div>
+          <strong className="nl-health-percent">{fill(H.percent, { percent })}</strong>
+        </div>
         <p className="nl-settings-note" role="status">
           {headline}
         </p>
-        <ul className="nl-settings-list nl-health-list">
+        <div className="nl-health-toggle">
+          <Button variant="secondary" size="small" onClick={toggle} aria-expanded={open}>
+            {open ? H.hide : H.show}
+          </Button>
+        </div>
+        {open ? (
+          <ul className="nl-settings-list nl-health-list">
           {checks.map((check) => (
             <li key={check.id} className={`nl-health nl-health--${check.status}`}>
               <strong>{check.title}</strong> <span className="nl-health__status">{STATUS_WORD[check.status]}</span>
@@ -71,7 +126,8 @@ const SetupHealthCard = ({ load = getSetupHealth }) => {
               ) : null}
             </li>
           ))}
-        </ul>
+          </ul>
+        ) : null}
       </>
     );
   }

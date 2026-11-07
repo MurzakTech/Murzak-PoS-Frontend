@@ -429,6 +429,38 @@
   color: var(--bad);
 }
 
+.nl-health-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.nl-health-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.nl-health-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--success, var(--brand-text));
+}
+.nl-health-bar--amber > span {
+  background: var(--warn);
+}
+.nl-health-bar--red > span {
+  background: var(--bad);
+}
+.nl-health-percent {
+  white-space: nowrap;
+}
+.nl-health-toggle {
+  margin: var(--space-2) 0 var(--space-3);
+}
+
 /* ---------- Settings search ---------- */
 .nl-settings-search {
   margin-bottom: var(--space-4);
