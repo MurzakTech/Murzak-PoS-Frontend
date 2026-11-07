@@ -8,8 +8,11 @@ import { usePreviewRedirects } from '../redirects/live';
 import { useNewLook } from '../NewLookProvider';
 import { getUserCompany } from '../../utils/getUserCompany';
 import { getSetupState, saveSetupProgress } from '../../api/setupApi';
+import BrandStep from './BrandStep';
 import BusinessStep from './BusinessStep';
 import CashStep from './CashStep';
+import CheckStep from './CheckStep';
+import EtimsStep from './EtimsStep';
 import PaymentsStep from './PaymentsStep';
 import ProductsStep from './ProductsStep';
 import ShopStep from './ShopStep';
@@ -18,12 +21,13 @@ import { HOME_PATH, STEP_KEYS, clearSnooze, linksFor, nextKey, startStep } from 
 import T from './strings.setup';
 import './setup.css';
 
-const STEPS = { business: BusinessStep, shop: ShopStep, cash: CashStep, payments: PaymentsStep, products: ProductsStep, staff: StaffStep };
+const STEPS = { business: BusinessStep, shop: ShopStep, brand: BrandStep, cash: CashStep, payments: PaymentsStep, etims: EtimsStep, products: ProductsStep, staff: StaffStep, check: CheckStep };
 const LAST = STEP_KEYS[STEP_KEYS.length - 1];
 
 /**
- * The first-time set-up wizard at /new-look/setup (ticket P5-4, acceptance check AC-33): six short steps on the Form page pattern.
- * What do you sell (asked once), shop name and tax ID, usual opening cash, payment methods, first products, your team.
+ * The first-time set-up wizard at /new-look/setup (ticket P5-4, acceptance check AC-33): nine short steps on the Form page pattern.
+ * What do you sell (asked once), shop name and tax ID, logo and receipt, usual opening cash, payment methods (with M-Pesa), tax and
+ * eTIMS, first products, your team, and a final Setup health check.
  *
  * Every step can be skipped and the whole set-up can be finished later. What was done or skipped is kept on the server, so a refresh
  * (or coming back from Home) continues at the first step not passed yet. "Skip for now" and "Finish" both mark set-up done.

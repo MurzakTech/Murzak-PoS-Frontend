@@ -5,7 +5,7 @@ import { oldScreen, toNewAddress, NEW_LOOK_PREFIX } from '../redirects/engine.js
  * The small decisions of the first-time set-up, kept apart from the screens so they can be tested alone: the steps, where
  * the wizard starts, the "Not now" memory on this device, the tax ID check, and where each link goes.
  */
-export const STEP_KEYS = ['business', 'shop', 'cash', 'payments', 'products', 'staff'];
+export const STEP_KEYS = ['business', 'shop', 'brand', 'cash', 'payments', 'etims', 'products', 'staff', 'check'];
 export const KIND_KEYS = ['pharmacy', 'retail', 'services', 'other'];
 export const SETUP_PATH = `${NEW_LOOK_PREFIX}/setup`;
 export const HOME_PATH = `${NEW_LOOK_PREFIX || '/'}`;
@@ -112,6 +112,7 @@ export const linksFor = (previewOn) => {
     team: go('/settings/team', '/staff'),
     business: go('/settings/business', '/settings/business'),
     till: go('/settings/till', '/settings/pos-profile'),
+    brand: go('/settings/brand', '/settings/business'),
     tax: go('/settings/tax', '/settings/etims'),
     payments: oldScreen('/settings/payment-gateways'),
     home: HOME_PATH,

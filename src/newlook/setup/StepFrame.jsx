@@ -7,7 +7,7 @@ import { STEP_KEYS, stepNumber, stepStatus, previousKey } from './setupModel';
 import T from './strings.setup';
 import './setup.css';
 
-/** The list of the six steps: where you are, what is done and what was skipped (words as well as marks) */
+/** The list of the steps: where you are, what is done and what was skipped (words as well as marks) */
 export const StepList = ({ state, current }) => (
   <ol className="nl-setup-steps" aria-label={T.listLabel}>
     {STEP_KEYS.map((key) => {

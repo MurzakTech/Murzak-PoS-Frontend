@@ -1,5 +1,6 @@
 import React from 'react';
 import LinkList from './LinkList';
+import MpesaCard from './MpesaCard';
 import PaymentMethodsCard from './PaymentMethodsCard';
 import TillOptionsCard from './TillOptionsCard';
 import DeviceCard from './DeviceCard';
@@ -10,14 +11,15 @@ const L = T.till.links;
 
 /**
  * Settings, Till and payments (tickets P3-1 and P5-3): the payment method switches, the till options, the choices kept on
- * this device, and links to the current screens for what holds keys or rules (payment gateways, bank accounts, discount
- * rules, loyalty programmes).
+ * this device, the M-Pesa keys (masked, owner only), and links to the current screens for what else holds keys or rules (Pesapal,
+ * PayPal, bank accounts, discount rules, loyalty programmes).
  *
  *   payments   { load, save } for the payment method switches (tests)
  *   options    { load, save, afterSave } for the till options (tests)
  *   device     { read, write } for the device choices (tests)
+ *   mpesa      { load, save, test, testWithPhone, turnOff, loadAccounts } for the M-Pesa card (tests)
  */
-const TillSection = ({ payments = {}, options = {}, device = {}, search = '' }) => {
+const TillSection = ({ payments = {}, options = {}, device = {}, mpesa = {}, search = '' }) => {
   const highlight = new URLSearchParams(search).get('section') || '';
   const items = [
     { key: 'payment-gateways', title: L.gateways.title, text: L.gateways.text, to: legacy(OLD.paymentGateways) },
@@ -29,6 +31,7 @@ const TillSection = ({ payments = {}, options = {}, device = {}, search = '' }) 
   return (
     <>
       <PaymentMethodsCard {...payments} />
+      <MpesaCard {...mpesa} />
       <TillOptionsCard {...options} />
       <DeviceCard {...device} />
       <LinkList id="till-links" title={L.title} subtitle={L.subtitle} items={items} highlightKey={highlight} />

@@ -441,3 +441,15 @@
   display: grid;
   gap: var(--space-2);
 }
+
+/* ---------- M-Pesa and eTIMS forms ---------- */
+.nl-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.nl-mpesa {
+  display: grid;
+  gap: var(--space-4);
+}

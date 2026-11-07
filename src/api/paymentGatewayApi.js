@@ -111,3 +111,10 @@ export const normalizeKenyanPhone = (value) => {
 
 /** M-Pesa only takes whole shillings; the server rounds up the same way. */
 export const mpesaChargeAmount = (amount) => Math.max(1, Math.ceil(Math.round(Number(amount || 0) * 100) / 100));
+
+/** The business's cash and bank accounts for "where M-Pesa takings are recorded": [{ value, label }] */
+export const listReceivingAccounts = async (company) => {
+  const reply = await call('murzak_pos.api.bank_accounts_api.list_cash_and_bank_accounts', { company }, { get: true });
+  const rows = Array.isArray(reply.data) ? reply.data : [];
+  return rows.filter((a) => a && a.name).map((a) => ({ value: a.name, label: a.account_name || a.name }));
+};
