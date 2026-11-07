@@ -38,6 +38,7 @@ import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
 import { sellingLocations } from '../../newlook/till/sellingLocations';
 import { stockNote, stockShortfalls } from '../../newlook/till/stockNote';
 import { clampDiscount } from '../../utils/discountBounds';
+import { storedMobile } from '../../newlook/customers/customersModel';
 import { getTillPaymentModes } from '../../api/paymentMethodsApi';
 import useUsualOpening from '../../newlook/setup/useUsualOpening';
 import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
@@ -1723,7 +1724,7 @@ const NewSale = () => {
       const offlineCust = createOfflineCustomer({
         company: userCompany,
         customer_name: data.customer_name,
-        mobile_no: data.mobile_no,
+        mobile_no: storedMobile(data.mobile_no) || data.mobile_no,
         email_id: data.email_id,
         customer_type: data.customer_type,
       });
@@ -1740,7 +1741,8 @@ const NewSale = () => {
     const customerData = {
       customer_name: data.customer_name.trim(),
       customer_type: data.customer_type,
-      ...(data.mobile_no && { mobile_no: data.mobile_no }),
+      // Saved the same way the Customers screen saves it (+254712345678), so the stored numbers all look alike
+      ...(data.mobile_no && { mobile_no: storedMobile(data.mobile_no) || data.mobile_no }),
       ...(data.email_id && { email_id: data.email_id }),
       ...(data.tax_id && { tax_id: data.tax_id }),
       company: userCompany,

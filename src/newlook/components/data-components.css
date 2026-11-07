@@ -178,6 +178,17 @@
   visibility: hidden;
   font-weight: var(--font-weight-semibold);
 }
+.nl-segmented--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.nl-segmented--wrap .nl-segmented__item {
+  white-space: normal;
+  text-align: center;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
 .nl-segmented__item:hover,
 .nl-segmented__item.is-hover {
   background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));

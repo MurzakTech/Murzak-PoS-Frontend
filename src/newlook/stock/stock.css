@@ -235,6 +235,14 @@
   background: var(--soft);
   border-radius: var(--radius-input);
 }
+.nl-count-total.is-short {
+  background: transparent;
+  border: 1px solid var(--warn);
+  border-left-width: 4px;
+}
+.nl-count-total.is-short strong {
+  color: var(--warn);
+}
 .nl-count-done {
   display: grid;
   justify-items: center;

@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { publicRoutes, protectedRoutes, protectedRoutesWithoutLayout, routes } from './routes';
 import ProtectedRoute from '../components/ProtectedRoute';
 import IdleSignOut from '../components/IdleSignOut';
-import { ErrorBoundary, FullPageLoader, PageSkeleton } from '../components/Common';
+import { ErrorBoundary, FormSkeleton, FullPageLoader, PageSkeleton } from '../components/Common';
+import { isFormAddress } from './formAddress';
 import NewLookGate from '../newlook/NewLookGate';
 import NewLookShell from '../newlook/NewLookShellConnected';
 import { newLookRoutes } from '../newlook/newLookRoutes';
@@ -16,6 +17,9 @@ const KitchenStation = lazy(() => import('../pages/Kitchen'));
 // Branded splash for public pages; layout-shaped skeleton inside the app shell
 const LoadingFallback = FullPageLoader;
 const ContentLoadingFallback = PageSkeleton;
+
+// Pages that are forms (their address ends in /new or /edit/...) show a form-shaped placeholder while they load
+const fallbackFor = (path) => (isFormAddress(path) ? <FormSkeleton /> : <ContentLoadingFallback />);
 
 /**
  * Extracts all unique flattened routes from protectedRoutes (both parents and nested children)
@@ -129,7 +133,7 @@ const AppRouter = () => {
                     <ProtectedRoute>
                       <NewLookGate>
                         <NewLookShell>
-                          <Suspense fallback={<ContentLoadingFallback />}>
+                          <Suspense fallback={fallbackFor(route.path)}>
                             <Component />
                           </Suspense>
                         </NewLookShell>

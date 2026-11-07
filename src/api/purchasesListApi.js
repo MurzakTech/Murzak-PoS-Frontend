@@ -229,8 +229,12 @@ const asProduct = (r) => ({
 
 /** Products by name or code for the New purchase form, with the cost price the shop has on record (owners and managers): [{ item_code, item_name, unit, cost }] */
 export const findProductsToBuy = async ({ search, limit = 8 } = {}) => {
-  const data = await listProducts({ search, pageSize: limit });
-  return data.rows.map(asProduct);
+  // Ask for more than the limit, because services are dropped below and would otherwise use up the places
+  const data = await listProducts({ search, pageSize: Math.min(limit * 3, 100) });
+  return data.rows
+    .filter((r) => !(r.is_stock_item === 0 || r.is_stock_item === false)) // a service (Delivery Fee, Airtime) is not ordered as stock
+    .slice(0, limit)
+    .map(asProduct);
 };
 
 /** One product by its code (for ?item=), or null when there is none */

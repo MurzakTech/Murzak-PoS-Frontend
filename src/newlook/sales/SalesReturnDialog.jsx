@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from '../components/Button';
 import Dialog from '../components/Dialog';
 import Field from '../components/Field';
@@ -11,6 +11,7 @@ import { getSale } from '../../api/salesListApi';
 import CT from '../till/strings.cash';
 import fill from '../labels/fill';
 import T from './strings.sales';
+import { defaultRefundMode, refundChoices } from './returnRefund';
 
 const RF = CT.refund;
 const D = T.returnDialog;
@@ -19,10 +20,10 @@ const D = T.returnDialog;
  * Dialog to record a return of sold items.
  * Can be opened against a specific sale from ReceiptPanel, or standalone from SalesPage.
  */
-const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
+const SalesReturnDialog = ({ sale = null, invoiceId = '', onClose, onDone }) => {
   const dispatch = useAppDispatch();
   const [currentSale, setCurrentSale] = useState(sale);
-  const [invoiceLookup, setInvoiceLookup] = useState('');
+  const [invoiceLookup, setInvoiceLookup] = useState(invoiceId || '');
   const [lookupBusy, setLookupBusy] = useState(false);
   const [lookupError, setLookupError] = useState('');
 
@@ -40,11 +41,12 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState('');
-  const [refundMode, setRefundMode] = useState('Cash'); // how the customer is paid back: 'Cash' from the drawer, or 'credit' (kept as credit, paid later)
+  // How the customer is paid back: the way they paid (cash, M-Pesa...), or 'credit' (kept as credit, paid later)
+  const [refundMode, setRefundMode] = useState(() => defaultRefundMode(sale));
   const [recorded, setRecorded] = useState(null); // the answer once the return is saved but its refund was not paid
 
-  const handleLookup = async () => {
-    const q = invoiceLookup.trim();
+  const handleLookup = async (typed) => {
+    const q = String(typeof typed === 'string' ? typed : invoiceLookup).trim();
     if (!q) return;
     setLookupBusy(true);
     setLookupError('');
@@ -53,6 +55,7 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
       if (found) {
         setCurrentSale(found);
         setLines(initLines(found));
+        setRefundMode(defaultRefundMode(found));
       } else {
         setLookupError(D.notFound);
       }
@@ -62,6 +65,12 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
       setLookupBusy(false);
     }
   };
+
+  // Opened from a link to a sale (?invoice=...): find that sale at once instead of showing an empty box
+  useEffect(() => {
+    if (!sale && invoiceId) handleLookup(invoiceId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleToggleLine = (idx) => {
     setLines((prev) =>
@@ -280,10 +289,11 @@ const SalesReturnDialog = ({ sale = null, onClose, onDone }) => {
               label={RF.group}
               value={refundMode}
               onChange={setRefundMode}
-              options={[
-                { value: 'Cash', label: RF.cash },
-                { value: 'credit', label: RF.credit },
-              ]}
+              className="nl-segmented--wrap"
+              options={refundChoices(currentSale).map((choice) => ({
+                value: choice.value,
+                label: choice.kind === 'cash' ? RF.cash : choice.kind === 'credit' ? RF.credit : fill(RF.original, { mode: choice.value }),
+              }))}
             />
             <p style={{ color: "var(--muted)", margin: 0 }}>{RF.help}</p>
           </>

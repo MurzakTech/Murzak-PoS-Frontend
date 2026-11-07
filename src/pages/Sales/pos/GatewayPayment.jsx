@@ -122,7 +122,23 @@ const usePoll = (active, fn) => {
 
 const MpesaCollect = ({ option, amount, currency, company, saleReference, customerPhone, onChange }) => {
   const canUseCode = Boolean(option.c2b_enabled || option.allow_manual_code);
-  const [method, setMethod] = useState('prompt');
+  // The server says whether a prompt can be sent at all (keys and passkey set). When it cannot, the prompt is not
+  // offered: the cashier uses the customer's M-Pesa code, and is told why in words.
+  const promptReady = option.prompt_ready !== false;
+  const [method, setMethod] = useState(promptReady ? 'prompt' : 'code');
+  if (!promptReady) {
+    return (
+      <Stack spacing={1.5}>
+        <Alert severity="info">
+          {canUseCode
+            ? 'Sending a prompt to the customer\'s phone is not set up for this shop. Ask the customer for the M-Pesa code from their message instead.'
+            : 'M-Pesa is not fully set up for this shop, so a payment prompt cannot be sent. Ask the owner to finish the M-Pesa settings, or take another way of paying.'}
+          {option.prompt_problem ? ` (${option.prompt_problem})` : ''}
+        </Alert>
+        {canUseCode && <MpesaCode option={option} amount={amount} currency={currency} company={company} onChange={onChange} />}
+      </Stack>
+    );
+  }
   return (
     <Stack spacing={1.5}>
       {canUseCode && (

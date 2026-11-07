@@ -134,7 +134,7 @@ const CountStockFlow = ({ stores = [], categories = [], itemCode = '', rootPath 
 
   const totalsText = (
     <>
-      <p className="nl-count-total" role="status">
+      <p className={`nl-count-total${totals.short > 0 ? ' is-short' : ''}`} role="status">
         <strong>{C.totalLabel}</strong>
         <span>{fill(C.totalLine, { counted: totals.counted, short: totals.short, over: totals.over, matches: totals.matches })}</span>
         <span>{fill(C.totalNet, { amount: netWords(totals.net) })}</span>

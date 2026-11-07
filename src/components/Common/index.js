@@ -4,4 +4,4 @@ export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as EmptyState } from './EmptyState';
 export { default as SectionCard } from './SectionCard';
 export { default as StatCard } from './StatCard';
-export { FullPageLoader, PageSkeleton } from './LoadingState';
+export { FormSkeleton, FullPageLoader, PageSkeleton } from './LoadingState';

@@ -6,6 +6,10 @@ import {
 } from '@mui/material';
 import { Close, ArrowBack, PersonAdd, Search, PersonOutline, Phone, Email, AccountBalance } from '@mui/icons-material';
 import { fmt } from './money';
+import { storedMobile } from '../../../newlook/customers/customersModel';
+
+// The list always starts with a permanent "Walk-in customer" entry, so a saved customer of that name is not listed again
+const isWalkIn = (c) => /^walk-?in( customer)?$/i.test(String((c && (c.customer_name || c.name)) || '').trim());
 
 const CustomerDialog = ({
   open, onClose, showAddForm, setShowAddForm, resetForm, handleFormSubmit, onCreate, formControl, formErrors, isCreating,
@@ -13,6 +17,7 @@ const CustomerDialog = ({
 }) => {
   // Phones get the whole screen so the list and the on-screen keyboard both fit
   const fullScreen = useMediaQuery((t) => t.breakpoints.down('sm'));
+  const shownCustomers = (customers || []).filter((c) => !isWalkIn(c));
   return (
     <Dialog open={open} onClose={onClose} fullWidth fullScreen={fullScreen} maxWidth="sm" aria-labelledby="customer-dialog-title">
       <DialogTitle id="customer-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -41,8 +46,10 @@ const CustomerDialog = ({
               <Controller
                 name="mobile_no"
                 control={formControl}
-                render={({ field }) => (
+                rules={{ validate: (value) => !String(value || '').trim() || Boolean(storedMobile(value)) || 'Enter a Kenyan mobile number such as 0712 345 678' }}
+                render={({ field, fieldState }) => (
                   <TextField {...field} label="Mobile number" type="tel" placeholder="0712 345 678"
+                    error={Boolean(fieldState.error)} helperText={fieldState.error ? fieldState.error.message : undefined}
                     InputProps={{ startAdornment: <InputAdornment position="start"><Phone fontSize="small" /></InputAdornment> }} />
                 )}
               />
@@ -99,12 +106,12 @@ const CustomerDialog = ({
               </ListItemButton>
               {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
-              ) : customers.length === 0 ? (
+              ) : shownCustomers.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 3 }}>
                   <Typography variant="body2" color="text.secondary">No customers match.</Typography>
                 </Box>
               ) : (
-                customers.map((c) => (
+                shownCustomers.map((c) => (
                   <ListItemButton key={c.name} onClick={() => onSelect(c)} sx={{ borderRadius: 2 }}>
                     <ListItemText
                       primary={c.customer_name || c.name}

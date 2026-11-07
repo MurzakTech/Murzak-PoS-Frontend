@@ -307,10 +307,17 @@ describe('Complete sale and the keyboard', () => {
 describe('M-Pesa confirmation code (AC-20)', () => {
   const mpesa = (extra = {}) => render(<Till startMode="Mpesa" canCompleteOverride {...extra} />);
 
-  test('a blank code blocks Complete sale and explains why beside the field', () => {
+  test('a blank code blocks Complete sale, but no error shows until the box has been used', async () => {
     mpesa();
     const field = screen.getByRole('textbox', { name: 'M-Pesa confirmation code' });
     expect(field).toHaveValue('');
+    // On arrival: blocked, with the helper saying where to find the code, and no red error yet
+    expect(field).not.toBeInvalid();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(complete()).toBeDisabled();
+    // Once typed in and cleared again, the reason is shown beside the field
+    await userEvent.type(field, 'a');
+    await userEvent.clear(field);
     expect(field).toBeInvalid();
     expect(screen.getByRole('alert')).toHaveTextContent("Enter the confirmation code from the customer's M-Pesa message to complete the sale");
     expect(field).toHaveAccessibleDescription(/Enter the confirmation code/);
@@ -549,6 +556,12 @@ describe('on credit and other methods', () => {
   test('a card sale tells the cashier to take the payment on the terminal', () => {
     render(<Till startMode="Credit Card" />);
     expect(screen.getByText(/Take the KES 350 payment on your Card terminal or phone/)).toBeInTheDocument();
+  });
+
+  test('a method that is not a card asks for the payment to be recorded, not for a terminal', () => {
+    render(<Till startMode="Cheque" modes={['Cash', 'Mpesa', 'Credit Card', 'Credit', 'Cheque']} />);
+    expect(screen.getByText(/Record KES 350 paid by/)).toBeInTheDocument();
+    expect(screen.queryByText(/terminal/)).not.toBeInTheDocument();
   });
 
   test('a gateway method other than M-Pesa shows the gateway component', () => {

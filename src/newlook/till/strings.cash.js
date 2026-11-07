@@ -139,6 +139,7 @@ const cash = {
     group: 'How is the customer paid back?',
     help: 'Pick how the money goes back. If the customer keeps it as credit, nothing is paid out now.',
     cash: 'Cash from the drawer',
+    original: 'Back to {mode}, the way they paid',
     credit: 'Keep it as credit, pay later',
     cashNeedsShift: 'Cash comes out of an open shift. Open the till first.',
     notPaid: 'The return was saved, but the refund was not paid. {reason}',
