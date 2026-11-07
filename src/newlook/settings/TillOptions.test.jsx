@@ -185,11 +185,19 @@ describe('the links to the current screens', () => {
     Object.entries(expected).forEach(([name, href]) => expect(screen.getByRole('link', { name })).toHaveAttribute('href', href));
   });
 
-  test('no key, secret or phone number can be typed on this section', async () => {
-    show(<TillSection options={{ load: jest.fn().mockResolvedValue(PROFILE) }} payments={{ load: jest.fn().mockResolvedValue({ methods: [], other: [] }) }} />);
+  test('keys can be typed only in the M-Pesa card, and only in masked boxes', async () => {
+    const mpesa = {
+      load: jest.fn().mockResolvedValue({ mpesa: { is_active: 1, environment: 'Sandbox', shortcode: '174379', consumer_key: '***', consumer_secret: '***', passkey: '***', payment_account: 'M-Pesa - LI' } }),
+      loadAccounts: jest.fn().mockResolvedValue([]),
+    };
+    show(<TillSection options={{ load: jest.fn().mockResolvedValue(PROFILE) }} payments={{ load: jest.fn().mockResolvedValue({ methods: [], other: [] }) }} mpesa={mpesa} />);
     await screen.findByRole('switch', { name: 'Take sold items out of stock' });
-    expect(screen.queryByLabelText(/consumer|secret|passkey|key|paybill|till number|password/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    const card = (await screen.findByLabelText('Consumer key')).closest('[data-card="mpesa"]');
+    // Every box that holds a key or secret is a password box; none of the other cards has one
+    const secrets = Array.from(document.querySelectorAll('input[type="password"]'));
+    expect(secrets.length).toBeGreaterThanOrEqual(3);
+    secrets.forEach((box) => expect(card.contains(box)).toBe(true));
+    expect(screen.queryByDisplayValue('***')).not.toBeInTheDocument();
   });
 });
 

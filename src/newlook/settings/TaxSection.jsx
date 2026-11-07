@@ -5,6 +5,7 @@ import Card from '../components/Card';
 import { Chip } from '../components/Chip';
 import { SkeletonText } from '../components/Skeleton';
 import { getEtimsStatus } from '../../api/taxApi';
+import EtimsSettingsCard from './EtimsSettingsCard';
 import { OLD, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
@@ -27,9 +28,10 @@ export const etimsView = (status) => {
  * current eTIMS screen reads, and a link to that screen to change anything. The server never sends keys or passwords with
  * it, and none are asked for or kept here.
  *
- *   load   injectable for tests; it defaults to the server call
+ *   load      injectable for tests; it defaults to the server call
+ *   details   { load, save } for the eTIMS details card (tests)
  */
-const TaxSection = ({ load = getEtimsStatus }) => {
+const TaxSection = ({ load = getEtimsStatus, details = {} }) => {
   const { company } = useSettingsUser();
   const [state, setState] = useState({ status: company ? 'loading' : 'nocompany', value: null });
 
@@ -73,6 +75,7 @@ const TaxSection = ({ load = getEtimsStatus }) => {
   } else line = <p className="nl-settings-hint">{T.business.noCompany}</p>;
 
   return (
+    <>
     <div className="nl-settings-card" data-card="etims">
       <Card title={E.title} subtitle={E.subtitle}>
         {line}
@@ -83,6 +86,8 @@ const TaxSection = ({ load = getEtimsStatus }) => {
         </Button>
       </Card>
     </div>
+    <EtimsSettingsCard {...details} />
+    </>
   );
 };
 
