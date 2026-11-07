@@ -192,3 +192,17 @@ describe('the links to the current screens', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 });
+
+describe('Till options, last change', () => {
+  test('says who last changed a switch, and when, when the trail can be read', async () => {
+    const loadLast = jest.fn().mockResolvedValue({ events: [{ id: 'v-1', timestamp: '2026-11-04 11:02:10', user: 'linda@shop.test', summary: "Turned off 'Take sold items out of stock'" }] });
+    show(<TillOptionsCard load={jest.fn().mockResolvedValue(PROFILE)} loadLast={loadLast} />);
+    expect(await screen.findByText("Last change: Turned off 'Take sold items out of stock', by linda@shop.test on 04/11/2026 11:02.")).toBeInTheDocument();
+  });
+
+  test('says nothing about it when the trail cannot be read', async () => {
+    show(<TillOptionsCard load={jest.fn().mockResolvedValue(PROFILE)} loadLast={jest.fn().mockRejectedValue(new Error('no'))} />);
+    await screen.findByRole('switch', { name: 'Take sold items out of stock' });
+    expect(screen.queryByText(/Last change:/)).not.toBeInTheDocument();
+  });
+});

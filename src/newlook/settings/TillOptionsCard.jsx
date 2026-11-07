@@ -8,6 +8,9 @@ import { SkeletonText } from '../components/Skeleton';
 import Switch from '../components/Switch';
 import { useAccess } from '../access/AccessProvider';
 import { getPosProfile, updatePosProfile } from '../../api/tillOptionsApi';
+import { listAuditEvents } from '../../api/auditApi';
+import fill from '../labels/fill';
+import { whenLabel } from './teamModel';
 import { fetchCurrentUser } from '../../store/authSlice';
 import { OLD, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
@@ -40,12 +43,21 @@ const SWITCHES = [
  *   afterSave     what to do once a change is saved; by default the signed-in person's till profile is read again, as the
  *                 current screen does, so the till sees the change
  */
-const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterSave }) => {
+const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterSave, loadLast = listAuditEvents }) => {
   const access = useAccess();
   const { company, dispatch } = useSettingsUser();
   const owner = access.tier === 'owner';
   const [state, setState] = useState({ status: company ? 'loading' : 'nocompany', profile: null });
   const latest = useRef(null);
+  // Who last changed a switch, and when (from the audit trail; shown only when it can be read)
+  const [last, setLast] = useState(null);
+  const readLast = useCallback(() => {
+    if (!company || !owner) return;
+    loadLast({ company, module: 'Settings', limit_start: 0, limit_page_length: 1 })
+      .then((result) => setLast((result.events || [])[0] || null))
+      .catch(() => setLast(null));
+  }, [company, owner, loadLast]);
+  useEffect(readLast, [readLast]);
   const queue = useRef(Promise.resolve());
 
   const reload = useCallback(() => {
@@ -68,6 +80,7 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
       const saved = await save({ company, profile: { ...latest.current, [key]: value } });
       latest.current = saved;
       setState({ status: 'ready', profile: saved });
+      readLast();
       if (afterSave) await afterSave();
       else await Promise.resolve(dispatch(fetchCurrentUser())).catch(() => undefined);
     });
@@ -112,6 +125,7 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
             </li>
           ))}
         </ul>
+        {last ? <p className="nl-settings-hint">{fill(O.lastChange, { what: last.summary, who: last.user, when: whenLabel(last.timestamp) })}</p> : null}
         <p className="nl-settings-hint">{O.more}</p>
         <Button as={Link} to={legacy(OLD.tillProfile)} variant="secondary" icon="chevronRight" iconEnd>
           {O.moreLink}

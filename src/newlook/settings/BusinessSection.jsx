@@ -6,8 +6,10 @@ import { SkeletonText } from '../components/Skeleton';
 import { useAccess } from '../access/AccessProvider';
 import { getCompany, updateCompany } from '../../api/businessApi';
 import CompanyCard from './CompanyCard';
-import { CARD } from './businessModel';
+import { CARD, changeRequestLink } from './businessModel';
+import AUTH from '../auth/strings.auth';
 import LinkList from './LinkList';
+import RecentChangesCard from './RecentChangesCard';
 import SetupHealthCard from './SetupHealthCard';
 import { OLD, cardFromSearch, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
@@ -88,6 +90,11 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
             </>
           )}
         </CompanyCard>
+        {owner ? (
+          <p className="nl-settings-hint">
+            <a href={changeRequestLink(company, B.details, AUTH.footer.supportEmail)}>{B.details.requestChange}</a>
+          </p>
+        ) : null}
         <CompanyCard {...common} card={CARD.address} title={B.address.title} subtitle={B.address.subtitle} highlighted={wanted === 'business-address'}>
           {({ values, set, errors, readOnly, id }) => (
             <>
@@ -120,6 +127,7 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
     <>
       <SetupHealthCard />
       {body}
+      <RecentChangesCard />
       <LinkList id="business-banks" title={B.banks.title} subtitle={B.banks.subtitle} items={[{ key: 'bank-accounts', text: B.banks.note, to: legacy(OLD.bankAccounts) }]} />
       <LinkList id="business-stores" title={B.stores.title} subtitle={B.stores.subtitle} items={[{ key: 'stores', text: B.stores.note, to: legacy(OLD.stores) }]} />
       <LinkList id="business-letterhead" title={B.letterhead.title} subtitle={B.letterhead.subtitle} items={[{ key: 'letterhead', text: B.letterhead.note, to: legacy(OLD.business) }]} />

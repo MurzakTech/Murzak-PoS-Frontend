@@ -7,6 +7,8 @@ const settings = {
     save: 'Save',
     undo: 'Undo changes',
     openCurrent: 'Open',
+    opensOldScreen: 'Opens the advanced screen, which looks different from this one.',
+    alsoUnderTill: 'Also found under Till and payments.',
     ownerOnly: 'Only the business owner can change these.',
     loading: 'Loading',
     retry: 'Try again',
@@ -21,6 +23,38 @@ const settings = {
       team: { title: 'Team and security', subtitle: 'Who works in the shop, what they can do and who did what' },
       advanced: { title: 'Advanced', subtitle: 'Less common settings, each opens on its own screen' },
     },
+  },
+
+  // Settings, Business: what was changed lately
+  recent: {
+    title: 'Recent changes to settings',
+    subtitle: 'The last few changes to how the till works, and who made them.',
+    loading: 'Loading recent changes',
+    line: '{when}, {who}: {what}',
+    none: 'No changes to settings have been recorded yet.',
+  },
+
+  // Settings search: the places a setting can be found, with the plain words an owner would type for it
+  search: {
+    label: 'Find a setting',
+    placeholder: 'For example M-Pesa, receipt, discount, KRA',
+    none: 'Nothing matches that. Try a simpler word, such as receipt or staff.',
+    resultsLabel: 'Settings that match',
+    entries: [
+      { section: 'business', label: 'Business details and KRA PIN', words: 'business name tax number kra pin country currency' },
+      { section: 'business', label: 'Address and contact', words: 'address phone email contact person town' },
+      { section: 'business', label: 'Setup health', words: 'health setup check problem scheduler ready working' },
+      { section: 'business', label: 'Bank accounts and stores', words: 'bank account store warehouse branch letterhead' },
+      { section: 'brand', label: 'Logo, colours and receipt wording', words: 'logo colour color brand receipt wording footer header print' },
+      { section: 'till', label: 'Payment methods', words: 'payment cash mpesa m-pesa card credit pay' },
+      { section: 'till', label: 'Till options', words: 'till discount price stock cashier partial payment change switch' },
+      { section: 'till', label: 'Print the receipt automatically', words: 'auto print receipt device printer' },
+      { section: 'tax', label: 'Tax and eTIMS', words: 'tax etims kra vat revenue authority device' },
+      { section: 'team', label: 'People and roles', words: 'people staff team cashier manager owner role add person password' },
+      { section: 'team', label: 'Security and the audit trail', words: 'security two-step sign-in audit who did what history log' },
+      { section: 'advanced', label: 'Discounts, loyalty and price groups', words: 'discount loyalty points price group inventory' },
+      { section: 'advanced', label: 'Brands, units and product variations', words: 'brand unit variation warranty product import opening stock recipe wastage' },
+    ],
   },
 
   // Settings, Business: is the shop ready to work
@@ -60,6 +94,9 @@ const settings = {
       country: 'Country',
       currency: 'Currency',
       fixed: 'Set when your business was created. To change it, ask support.',
+      requestChange: 'Ask support to change the name, country or currency',
+      requestSubject: 'Please change my business details: {business}',
+      requestBody: 'Hello,\n\nPlease change these details for my business.\n\nBusiness now: {business}\nCountry now: {country}\nCurrency now: {currency}\n\nWhat it should be:\n\n(write the new name, country or currency here)\n',
     },
     address: {
       title: 'Address and contact',
@@ -138,6 +175,7 @@ const settings = {
       allowRateHint: 'A cashier can type a different price for an item while selling.',
       allowPartial: 'Let customers pay part now and the rest later',
       allowPartialHint: 'A sale can be left partly paid. The rest shows as owed.',
+      lastChange: 'Last change: {what}, by {who} on {when}.',
       confirm: {
         notChanged: 'Not changed.',
         keep: 'Keep it as it is',

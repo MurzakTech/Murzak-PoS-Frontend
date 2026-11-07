@@ -71,3 +71,17 @@ export const problems = (card, values) => {
 
 /** Whether any field of the card differs from the saved values (spaces at the ends do not count). */
 export const cardChanged = (card, values, saved) => CARDS[card].some((key) => String(values[key]).trim() !== String(saved[key]).trim());
+
+
+/**
+ * A ready-written email to support asking for a change to the details the shop cannot change itself (name, country, currency),
+ * holding what they are now so support can find the business. Opens in the person's email program.
+ */
+export const changeRequestLink = (company, words, email) => {
+  const fill = (text) =>
+    text
+      .replace('{business}', company.companyName || '')
+      .replace('{country}', company.country || '')
+      .replace('{currency}', company.currency || '');
+  return `mailto:${email}?subject=${encodeURIComponent(fill(words.requestSubject))}&body=${encodeURIComponent(fill(words.requestBody))}`;
+};

@@ -428,3 +428,16 @@
 .nl-health--red .nl-health__status {
   color: var(--bad);
 }
+
+/* ---------- Settings search ---------- */
+.nl-settings-search {
+  margin-bottom: var(--space-4);
+  max-width: 420px;
+}
+.nl-settings-search__list {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}

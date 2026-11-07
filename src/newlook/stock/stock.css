@@ -395,3 +395,16 @@
   padding: 0;
   list-style: none;
 }
+
+/* On a phone the smaller stock actions are one menu; on a wider screen they are buttons */
+.nl-stock-narrow {
+  display: none;
+}
+@media (max-width: 767px) {
+  .nl-stock-wide {
+    display: none;
+  }
+  .nl-stock-narrow {
+    display: inline-flex;
+  }
+}

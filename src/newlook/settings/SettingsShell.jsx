@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../shell';
+import SettingsSearch from './SettingsSearch';
 import { SECTIONS, sectionAddress } from './settingsModel';
 import './settings.css';
 import T from './strings.settings';
@@ -38,7 +39,10 @@ const SettingsShell = ({ section, children }) => {
             ))}
           </ul>
         </nav>
-        <div className="nl-settings-content">{children}</div>
+        <div className="nl-settings-content">
+          <SettingsSearch />
+          {children}
+        </div>
       </div>
     </div>
   );
