@@ -86,6 +86,8 @@ const pay = {
   },
 
   complete: 'Complete sale',
+  completeWith: 'Complete sale, {method} {amount}',
+  completeSplit: 'Complete sale, {amount} in parts',
   processing: 'Processing...',
 };
 

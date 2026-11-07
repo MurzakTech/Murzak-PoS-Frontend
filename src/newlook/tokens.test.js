@@ -91,7 +91,7 @@ describe('Part 1 type, space, shape and elevation tokens', () => {
     ['body-size', '14px'],
     ['body-line', '1.5'],
     ['table-size', '13.5px'],
-    ['caption-size', '12.5px'],
+    ['caption-size', '13px'],
     ['label-size', '11.5px'],
     ['label-weight', '700'],
     ['label-spacing', '0.06em'],

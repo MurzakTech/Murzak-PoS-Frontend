@@ -558,6 +558,11 @@ describe('on credit and other methods', () => {
     expect(screen.getByText(/Take the KES 350 payment on your Card terminal or phone/)).toBeInTheDocument();
   });
 
+  test('the button says what the cashier is about to do: the method and the amount', () => {
+    render(<Till startMode="Mpesa" canCompleteOverride />);
+    expect(complete()).toHaveTextContent('Complete sale, M-Pesa KES 350');
+  });
+
   test('a method that is not a card asks for the payment to be recorded, not for a terminal', () => {
     render(<Till startMode="Cheque" modes={['Cash', 'Mpesa', 'Credit Card', 'Credit', 'Cheque']} />);
     expect(screen.getByText(/Record KES 350 paid by/)).toBeInTheDocument();

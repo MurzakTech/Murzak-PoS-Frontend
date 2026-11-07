@@ -481,3 +481,11 @@ export const orderRequest = (values, lines, requestId) => ({
   warehouse: values.warehouse || undefined,
   requestId,
 });
+
+
+/** Net, tax and total of a purchase typed so far, at the business's tax rate (a percentage). The server works out the real figures when the order is saved. */
+export const taxBreakdown = (net, ratePercent) => {
+  const base = Math.round((Number(net) || 0) * 100) / 100;
+  const tax = Math.round(base * ((Number(ratePercent) || 0) / 100) * 100) / 100;
+  return { net: base, tax, total: Math.round((base + tax) * 100) / 100 };
+};

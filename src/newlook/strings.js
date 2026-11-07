@@ -531,6 +531,7 @@ const home = {
     noAccessText: 'Ask the owner to give your role access to the modules you need. Your role is {role}.',
     stale: 'Some figures could not be loaded. The rest of your workspace is still here.',
   },
+  showing: 'The figures and charts below are for {range}.',
   range: { today: 'today', '7d': 'the last 7 days', '30d': 'the last 30 days', month: 'this month', custom: '{from} to {to}' },
   csv: {
     headings: ['Section', 'Name', 'Value'],

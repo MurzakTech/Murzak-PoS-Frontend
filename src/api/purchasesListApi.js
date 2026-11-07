@@ -243,3 +243,15 @@ export const getProductToBuy = async (itemCode) => {
   const found = data.rows.find((r) => r.item_code === itemCode);
   return found ? asProduct(found) : null;
 };
+
+
+/** The percentage the business's default purchase tax adds to a bill (0 when there is none), so the form can show tax as it is typed. */
+export const getPurchaseTaxRate = async () => {
+  try {
+    const data = await call('get_purchase_tax_rate', (url) => axiosInstance.get(url));
+    const rate = Number(data && data.rate);
+    return Number.isFinite(rate) && rate > 0 ? rate : 0;
+  } catch (error) {
+    return 0; // an extra: without it the form still shows the total of the items
+  }
+};

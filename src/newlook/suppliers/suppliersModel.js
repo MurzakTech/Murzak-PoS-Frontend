@@ -2,6 +2,7 @@ import { formatMoney } from '../components/format';
 import { NEW_LOOK_PREFIX } from '../redirects/engine';
 import fill from '../labels/fill';
 import T from './strings.suppliers';
+import { formChanged } from '../forms/sameValue';
 
 /**
  * The decisions of the Suppliers page, as plain functions (ticket P4-6): the Owed filter and the status in the address, how a due
@@ -167,4 +168,4 @@ export const toServerValues = (values) => ({
 });
 
 /** Whether anything in the form differs from where it started */
-export const isDirty = (values, start) => Object.keys(start).some((key) => values[key] !== start[key]);
+export const isDirty = (values, start) => formChanged(values, start);

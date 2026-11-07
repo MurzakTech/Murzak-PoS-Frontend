@@ -25,3 +25,19 @@ describe('clampDiscount', () => {
     expect(discountWasClamped('percentage', 50)).toBe(false);
   });
 });
+
+describe('discountPreview', () => {
+  const { discountPreview } = require('./discountBounds');
+
+  it('turns a percentage into money', () => {
+    expect(discountPreview('percentage', '10', 1500)).toEqual({ amount: 150, tooMuch: false });
+  });
+  it('says so when more than the sale is asked for', () => {
+    expect(discountPreview('percentage', '150', 1000)).toEqual({ amount: 1000, tooMuch: true });
+    expect(discountPreview('amount', '700', 500)).toEqual({ amount: 500, tooMuch: true });
+  });
+  it('shows nothing for an empty or zero box', () => {
+    expect(discountPreview('percentage', '', 1000)).toEqual({ amount: 0, tooMuch: false });
+    expect(discountPreview('amount', '0', 1000)).toEqual({ amount: 0, tooMuch: false });
+  });
+});

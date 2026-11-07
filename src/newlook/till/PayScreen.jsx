@@ -487,7 +487,7 @@ const PayScreen = ({
 
       <div className="nlp__footer">
         <Button className="nlp-complete" variant="primary" size="till" icon="check" loading={Boolean(isCreating)} disabled={!allowed && !isCreating} onClick={onComplete}>
-          {isCreating ? T.processing : T.complete}
+          {isCreating ? T.processing : splitPayments ? fill(T.completeSplit, { amount: formatMoney(total) }) : fill(T.completeWith, { method: modeName(paymentMode, paymentModes, MODE_WORDS), amount: formatMoney(total) })}
         </Button>
       </div>
     </div>

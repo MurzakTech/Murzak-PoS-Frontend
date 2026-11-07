@@ -13,7 +13,7 @@ import { ToastProvider } from '../components/Toast';
 import NewPurchasePage from './NewPurchasePage';
 import { NEW_PATH, PRODUCT_NEW_PATH, PURCHASES_PATH, openAddress } from './purchasesModel';
 import T from './strings.purchases';
-import { addPurchaseNote, createDirectBill, findProductsToBuy, getPaymentModes, getProductToBuy, listSuppliers, saveOrder } from '../../api/purchasesListApi';
+import { addPurchaseNote, createDirectBill, findProductsToBuy, getPaymentModes, getProductToBuy, getPurchaseTaxRate, listSuppliers, saveOrder } from '../../api/purchasesListApi';
 
 jest.mock('../../api/purchasesListApi', () => ({
   addPurchaseNote: jest.fn(),
@@ -21,6 +21,7 @@ jest.mock('../../api/purchasesListApi', () => ({
   findProductsToBuy: jest.fn(),
   getPaymentModes: jest.fn(),
   getProductToBuy: jest.fn(),
+  getPurchaseTaxRate: jest.fn(() => Promise.resolve(0)),
   listSuppliers: jest.fn(),
   saveOrder: jest.fn(),
 }));
@@ -83,6 +84,7 @@ beforeEach(() => {
   getPaymentModes.mockResolvedValue(MODES);
   findProductsToBuy.mockResolvedValue([SUGAR, RICE]);
   getProductToBuy.mockResolvedValue(SUGAR);
+  getPurchaseTaxRate.mockResolvedValue(0);
   saveOrder.mockResolvedValue({ order: 'PUR-ORD-2026-00050', waitingForApproval: false });
   createDirectBill.mockResolvedValue({ invoice: 'ACC-PINV-2026-00070', invoice_number: '#B0070', total: 955, outstanding: 955 });
   addPurchaseNote.mockResolvedValue({ note: { text: 'x', date: '2026-10-14' } });
@@ -172,6 +174,26 @@ describe('the items', () => {
     userEvent.clear(screen.getByRole('textbox', { name: 'Cost each of Sugar 1kg (KES)' }));
     userEvent.type(screen.getByRole('textbox', { name: 'Cost each of Sugar 1kg (KES)' }), '100');
     expect(screen.getAllByText('KES 1,000').length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('with a purchase tax rate, the tax and the total with tax show as the items are typed', async () => {
+    getPurchaseTaxRate.mockResolvedValue(16);
+    await renderPage();
+    await addProduct('Sugar 1kg');
+    userEvent.clear(screen.getByRole('textbox', { name: 'Quantity of Sugar 1kg' }));
+    userEvent.type(screen.getByRole('textbox', { name: 'Quantity of Sugar 1kg' }), '10');
+    userEvent.clear(screen.getByRole('textbox', { name: 'Cost each of Sugar 1kg (KES)' }));
+    userEvent.type(screen.getByRole('textbox', { name: 'Cost each of Sugar 1kg (KES)' }), '100');
+    expect(await screen.findByText('Tax at 16%')).toBeInTheDocument();
+    expect(screen.getByText('KES 160')).toBeInTheDocument();
+    expect(screen.getByText('Total with tax')).toBeInTheDocument();
+    expect(screen.getByText('KES 1,160')).toBeInTheDocument();
+  });
+
+  test('with no purchase tax, only the total of the items shows', async () => {
+    await renderPage();
+    await addProduct('Sugar 1kg');
+    expect(screen.queryByText('Total with tax')).not.toBeInTheDocument();
   });
 
   test('a line can be removed', async () => {

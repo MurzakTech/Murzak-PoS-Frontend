@@ -37,6 +37,7 @@ import {
   WarningAmberOutlined,
 } from '@mui/icons-material';
 import { fmt, money } from './money';
+import { discountPreview } from '../../../utils/discountBounds';
 import ProductImage from '../../../components/Common/ProductImage';
 import { useNewLook } from '../../../newlook/NewLookProvider';
 import { quantityText, unitWord } from '../../../newlook/products/unitWords';
@@ -200,6 +201,7 @@ const OrderPanel = ({
   const [draftType, setDraftType] = useState('percentage');
   const [draftValue, setDraftValue] = useState('');
   const itemCount = cart.reduce((n, i) => n + i.qty, 0);
+  const preview = discountPreview(draftType, draftValue, cart.reduce((sum, i) => sum + (i.subtotal || 0), 0));
   const empty = cart.length === 0;
 
   const openDiscount = (e) => {
@@ -386,6 +388,14 @@ const OrderPanel = ({
             value={draftValue}
             onChange={(e) => setDraftValue(e.target.value)}
             inputProps={{ min: 0, step: 'any', inputMode: 'decimal' }}
+            error={preview.tooMuch}
+            helperText={
+              preview.tooMuch
+                ? `A discount cannot be more than ${draftType === 'percentage' ? '100%' : 'the sale'}. It will be ${currency} ${fmt(preview.amount)}.`
+                : preview.amount > 0
+                  ? `That takes ${currency} ${fmt(preview.amount)} off the sale.`
+                  : ' '
+            }
             sx={{ mb: 1.5 }}
           />
           <Stack direction="row" spacing={1}>

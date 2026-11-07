@@ -543,3 +543,14 @@ describe('billBreakdown', () => {
     expect(billBreakdown(undefined, 50)).toEqual({ goods: 50, tax: 0, total: 50 });
   });
 });
+
+describe('taxBreakdown', () => {
+  const { taxBreakdown } = require('./purchasesModel');
+  it('adds the tax at the business rate', () => {
+    expect(taxBreakdown(175, 16)).toEqual({ net: 175, tax: 28, total: 203 });
+  });
+  it('is just the net with no rate', () => {
+    expect(taxBreakdown(100, 0)).toEqual({ net: 100, tax: 0, total: 100 });
+    expect(taxBreakdown(undefined, undefined)).toEqual({ net: 0, tax: 0, total: 0 });
+  });
+});

@@ -4,6 +4,7 @@ import { formatPhone, toStoredPhone } from '../labels/renameMap';
 import fill from '../labels/fill';
 import S from '../strings';
 import T from './strings.customers';
+import { formChanged } from '../forms/sameValue';
 
 /**
  * The decisions of the Customers page, as plain functions (ticket P4-7): the tabs, how a date, a phone number or a status reads,
@@ -259,4 +260,4 @@ export const toServerValues = (values, original = null) => {
 };
 
 /** Whether anything in the form differs from where it started */
-export const isDirty = (values, start) => Object.keys(start).some((key) => values[key] !== start[key]);
+export const isDirty = (values, start) => formChanged(values, start);

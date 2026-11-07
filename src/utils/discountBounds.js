@@ -12,3 +12,16 @@ export const clampDiscount = (type, value, limit = Infinity) => {
 
 /** True when the typed value had to be pulled back, so the screen can say so */
 export const discountWasClamped = (type, value, limit = Infinity) => clampDiscount(type, value, limit) !== (Number(value) || 0);
+
+/**
+ * What a discount typed in the box comes to, in money, for the line shown under it while typing.
+ * Returns { amount, tooMuch }: tooMuch is true when the typed value is more than the sale allows (over 100 percent, or more
+ * than the sale), so the screen can say so before Apply. `base` is the sale total before the discount.
+ */
+export const discountPreview = (type, typed, base) => {
+  const value = Number(typed);
+  if (!Number.isFinite(value) || value <= 0) return { amount: 0, tooMuch: false };
+  const kept = clampDiscount(type, value, base);
+  const amount = type === 'percentage' ? Math.round(((Number(base) || 0) * kept) / 100 * 100) / 100 : kept;
+  return { amount, tooMuch: kept !== value };
+};

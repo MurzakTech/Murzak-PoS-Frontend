@@ -51,11 +51,12 @@ const settings = {
     noCompany: 'We could not tell which business this is. Sign out and in again.',
     details: {
       title: 'Business details',
-      subtitle: 'Your name and your tax number',
+      subtitle: 'Your name and your tax number. Saved for the whole shop.',
       name: 'Business name',
       abbr: 'Short name',
       taxId: 'Tax ID (KRA PIN)',
       taxIdHelper: 'For example P123456789A',
+      taxIdWrong: 'A KRA PIN is a letter, nine digits and a letter, such as P123456789A.',
       country: 'Country',
       currency: 'Currency',
       fixed: 'Set when your business was created. To change it, ask support.',
@@ -109,7 +110,7 @@ const settings = {
     subtitle: 'How the till takes money',
     payments: {
       title: 'Payment methods',
-      subtitle: 'Choose which ways of paying the till offers. A change shows at the till the next time it is opened or reloaded.',
+      subtitle: 'Choose which ways of paying the till offers. Saved for the whole shop. A change shows at the till the next time it is opened or reloaded.',
       other: 'Other payment methods',
       notSetUp: 'Not set up for your shop yet',
       needsCode: 'Needs the M-Pesa confirmation code at the till',
@@ -124,7 +125,7 @@ const settings = {
     },
     options: {
       title: 'Till options',
-      subtitle: 'What cashiers can do at the till. Each switch saves at once and shows at the till the next time it is opened or reloaded.',
+      subtitle: 'What cashiers can do at the till. Each switch saves at once for the whole shop and shows at the till the next time it is opened or reloaded.',
       loading: 'Loading till options',
       errorTitle: 'We could not load the till options',
       errorText: 'Check your connection and try again. Nothing was changed.',
@@ -161,7 +162,7 @@ const settings = {
     },
     device: {
       title: 'This device',
-      subtitle: 'These choices are kept on this device only, not on the server.',
+      subtitle: 'Saved on this device only, not for the whole shop. Another till or phone keeps its own choice.',
       autoPrint: 'Print the receipt automatically after a sale',
       autoPrintHint: 'Takes effect the next time the till is opened or reloaded on this device.',
     },

@@ -211,7 +211,13 @@
   display: flex;
   gap: var(--space-5);
   overflow-x: auto;
+  /* Only sideways: the 1px overlap of the selected tab made a tiny up-and-down scroll widget appear */
+  overflow-y: hidden;
+  scrollbar-width: none;
   border-bottom: 1px solid var(--line);
+}
+.nl-tabs::-webkit-scrollbar {
+  display: none;
 }
 .nl-tab {
   display: inline-flex;

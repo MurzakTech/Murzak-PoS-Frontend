@@ -15,7 +15,7 @@ import FT from '../forms/strings.forms';
 import fill from '../labels/fill';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
-import { addPurchaseNote, createDirectBill, getProductToBuy, saveOrder } from '../../api/purchasesListApi';
+import { addPurchaseNote, createDirectBill, getProductToBuy, getPurchaseTaxRate, saveOrder } from '../../api/purchasesListApi';
 import './purchases.css';
 import PurchaseProductPicker from './PurchaseProductPicker';
 import { invalidateQuery, usePaymentModes, useSuppliers } from './usePurchasesData';
@@ -34,6 +34,7 @@ import {
   lineAmount,
   lineFrom,
   linesTotal,
+  taxBreakdown,
   MORE_FIELDS,
   newRequestId,
   openAddress,
@@ -227,6 +228,17 @@ const NewPurchaseForm = () => {
 
   const errors = useMemo(() => summaryOf(problems, lines), [problems, lines]);
   const total = linesTotal(lines);
+  const [taxRate, setTaxRate] = useState(0);
+  useEffect(() => {
+    let live = true;
+    getPurchaseTaxRate().then((rate) => {
+      if (live) setTaxRate(rate);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  const withTax = taxBreakdown(total, taxRate);
   const supplierChoices = suppliers.status === 'ready' && Array.isArray(suppliers.data) ? suppliers.data.map((s) => ({ value: s.id, label: s.name })) : [];
   const storeChoices = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const modeChoices = modes.map((m) => ({ value: m.name, label: m.name }));
@@ -337,6 +349,17 @@ const NewPurchaseForm = () => {
           <p className="nl-newpurchase__total" role="status">
             <span>{F.total}</span> <strong>{formatMoney(total)}</strong>
           </p>
+          {taxRate > 0 && total > 0 ? (
+            <>
+              <p className="nl-newpurchase__total">
+                <span>{fill(F.taxLine, { rate: taxRate })}</span> <strong>{formatMoney(withTax.tax)}</strong>
+              </p>
+              <p className="nl-newpurchase__total">
+                <span>{F.totalWithTax}</span> <strong>{formatMoney(withTax.total)}</strong>
+              </p>
+              <p className="nl-helper">{F.taxNote}</p>
+            </>
+          ) : null}
         </section>
 
         <MoreOptions key={forceOpen ? 'open' : 'closed'} defaultOpen={forceOpen}>

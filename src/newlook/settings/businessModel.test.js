@@ -76,3 +76,19 @@ describe('phone numbers (P6-4): shown as 0712 345 678, stored as the shop had th
     expect(companyWith({ ...company, phone: '' }, 'address', values).phone).toBe('');
   });
 });
+
+
+describe('the KRA PIN on the business details card', () => {
+  const values = (taxId) => ({ taxId });
+
+  it('accepts a PIN in the KRA shape, in either case, and a blank one', () => {
+    expect(problems('details', values('P123456789A'))).toEqual({});
+    expect(problems('details', values('p123456789a'))).toEqual({});
+    expect(problems('details', values(''))).toEqual({});
+  });
+
+  it('refuses anything else, in words', () => {
+    expect(problems('details', values('abc'))).toEqual({ taxId: 'taxIdWrong' });
+    expect(problems('details', values('P12345678A'))).toEqual({ taxId: 'taxIdWrong' });
+  });
+});
