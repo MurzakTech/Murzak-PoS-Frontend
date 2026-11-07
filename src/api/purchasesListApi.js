@@ -229,8 +229,12 @@ const asProduct = (r) => ({
 
 /** Products by name or code for the New purchase form, with the cost price the shop has on record (owners and managers): [{ item_code, item_name, unit, cost }] */
 export const findProductsToBuy = async ({ search, limit = 8 } = {}) => {
-  const data = await listProducts({ search, pageSize: limit });
-  return data.rows.map(asProduct);
+  // Ask for more than the limit, because services are dropped below and would otherwise use up the places
+  const data = await listProducts({ search, pageSize: Math.min(limit * 3, 100) });
+  return data.rows
+    .filter((r) => !(r.is_stock_item === 0 || r.is_stock_item === false)) // a service (Delivery Fee, Airtime) is not ordered as stock
+    .slice(0, limit)
+    .map(asProduct);
 };
 
 /** One product by its code (for ?item=), or null when there is none */
@@ -238,4 +242,16 @@ export const getProductToBuy = async (itemCode) => {
   const data = await listProducts({ search: itemCode, pageSize: 5 });
   const found = data.rows.find((r) => r.item_code === itemCode);
   return found ? asProduct(found) : null;
+};
+
+
+/** The percentage the business's default purchase tax adds to a bill (0 when there is none), so the form can show tax as it is typed. */
+export const getPurchaseTaxRate = async () => {
+  try {
+    const data = await call('get_purchase_tax_rate', (url) => axiosInstance.get(url));
+    const rate = Number(data && data.rate);
+    return Number.isFinite(rate) && rate > 0 ? rate : 0;
+  } catch (error) {
+    return 0; // an extra: without it the form still shows the total of the items
+  }
 };

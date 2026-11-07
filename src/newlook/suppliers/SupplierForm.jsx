@@ -145,7 +145,7 @@ const SupplierForm = ({ mode, id }) => {
       </Link>
       <Field id={FIELD_IDS.name} label={T.form.name} value={values.name} error={errors.name} onChange={set('name')} autoComplete="off" />
       <Select id="supplier-type" label={T.form.type} options={TYPES.map((value) => ({ value, label: T.types[value] }))} value={values.type} onChange={set('type')} disabled={editing} helper={editing ? T.form.typeFixed : undefined} />
-      <Field id={FIELD_IDS.taxId} label={T.form.taxId} helper={T.form.taxIdHelp} autoComplete="off" value={values.taxId} onChange={set('taxId')} />
+      <Field id={FIELD_IDS.taxId} label={T.form.taxId} helper={T.form.taxIdHelp} autoComplete="off" value={values.taxId} error={errors.taxId} onChange={set('taxId')} />
       {editing ? <Checkbox label={T.form.enabled} checked={values.enabled} onChange={set('enabled')} aria-describedby="supplier-enabled-help" /> : null}
       {editing ? (
         <p id="supplier-enabled-help" className="nl-helper">

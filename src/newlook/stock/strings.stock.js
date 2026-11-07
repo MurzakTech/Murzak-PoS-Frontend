@@ -153,6 +153,8 @@ const stock = {
   },
 
   moveStock: 'Move stock',
+  actionsMenu: 'Stock actions',
+  actionsMenuLabel: 'Stock in, stock out or move stock',
   locations: {
     title: 'Your stores',
     subtitle: 'Where your stock is kept. Move stock between stores from the Transfers tab.',

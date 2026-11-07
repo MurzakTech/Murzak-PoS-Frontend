@@ -235,6 +235,14 @@
   background: var(--soft);
   border-radius: var(--radius-input);
 }
+.nl-count-total.is-short {
+  background: transparent;
+  border: 1px solid var(--warn);
+  border-left-width: 4px;
+}
+.nl-count-total.is-short strong {
+  color: var(--warn);
+}
 .nl-count-done {
   display: grid;
   justify-items: center;
@@ -386,4 +394,17 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* On a phone the smaller stock actions are one menu; on a wider screen they are buttons */
+.nl-stock-narrow {
+  display: none;
+}
+@media (max-width: 767px) {
+  .nl-stock-wide {
+    display: none;
+  }
+  .nl-stock-narrow {
+    display: inline-flex;
+  }
 }

@@ -60,4 +60,22 @@ export const PageSkeleton = () => (
   </Box>
 );
 
+// The same for a page that is a form (New product, New expense, New supplier...): a title, then stacked fields and a button,
+// so the screen does not first look like a list and then turn into a form
+export const FormSkeleton = () => (
+  <Box sx={{ width: '100%', maxWidth: 720, animation: 'murzak-fade-up .25s ease both' }} aria-busy="true" aria-label="Loading">
+    <Skeleton variant="text" width={200} height={34} />
+    <Skeleton variant="text" width={300} height={20} sx={{ mb: 3 }} />
+    <Stack spacing={2.5}>
+      {[0, 1, 2, 3].map((i) => (
+        <Box key={i}>
+          <Skeleton variant="text" width={120} height={18} />
+          <Skeleton variant="rounded" height={44} />
+        </Box>
+      ))}
+      <Skeleton variant="rounded" width={140} height={42} />
+    </Stack>
+  </Box>
+);
+
 export default PageSkeleton;

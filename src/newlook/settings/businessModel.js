@@ -6,6 +6,8 @@
 import { formatPhone } from '../labels/renameMap';
 
 const EMAIL = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+// A Kenyan KRA PIN: a letter, nine digits and a letter
+const KRA_PIN = /^[A-Z]\d{9}[A-Z]$/i;
 
 /** The names of the three cards, as they are used in code (not words to read) */
 export const CARD = { details: 'details', address: 'address', contact: 'contact' };
@@ -57,6 +59,7 @@ export const companyWith = (company, card, values) => {
 /** What is wrong with a card's values: { fieldName: 'key into the words' }. Empty when all is well. */
 export const problems = (card, values) => {
   const found = {};
+  if (card === 'details' && values.taxId.trim() && !KRA_PIN.test(values.taxId.trim())) found.taxId = 'taxIdWrong';
   if (card === 'address') {
     if (!values.line1.trim()) found.line1 = 'line1Missing';
     if (!values.city.trim()) found.city = 'cityMissing';
@@ -68,3 +71,17 @@ export const problems = (card, values) => {
 
 /** Whether any field of the card differs from the saved values (spaces at the ends do not count). */
 export const cardChanged = (card, values, saved) => CARDS[card].some((key) => String(values[key]).trim() !== String(saved[key]).trim());
+
+
+/**
+ * A ready-written email to support asking for a change to the details the shop cannot change itself (name, country, currency),
+ * holding what they are now so support can find the business. Opens in the person's email program.
+ */
+export const changeRequestLink = (company, words, email) => {
+  const fill = (text) =>
+    text
+      .replace('{business}', company.companyName || '')
+      .replace('{country}', company.country || '')
+      .replace('{currency}', company.currency || '');
+  return `mailto:${email}?subject=${encodeURIComponent(fill(words.requestSubject))}&body=${encodeURIComponent(fill(words.requestBody))}`;
+};

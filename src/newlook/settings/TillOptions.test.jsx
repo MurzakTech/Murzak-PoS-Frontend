@@ -60,6 +60,7 @@ describe('Till options', () => {
     const rate = await screen.findByRole('switch', { name: 'Let cashiers change prices at the till' });
     await waitFor(() => expect(rate).toBeEnabled());
     userEvent.click(rate);
+    userEvent.click(await screen.findByRole('button', { name: 'Yes, let cashiers change prices' }));
     await waitFor(() => expect(save).toHaveBeenCalledWith({ company: 'Shop A', profile: { ...PROFILE, allowRateChange: true } }));
     expect(await screen.findByText('Saved')).toBeInTheDocument();
     expect(afterSave).toHaveBeenCalled();
@@ -72,6 +73,7 @@ describe('Till options', () => {
     const rate = await screen.findByRole('switch', { name: 'Let cashiers change prices at the till' });
     await waitFor(() => expect(rate).toBeEnabled());
     userEvent.click(rate);
+    userEvent.click(await screen.findByRole('button', { name: 'Yes, let cashiers change prices' }));
     userEvent.click(screen.getByRole('switch', { name: 'Let customers pay part now and the rest later' }));
     await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
     expect(save.mock.calls[1][0].profile).toEqual({ ...PROFILE, allowRateChange: true, allowPartialPayment: true });
@@ -83,8 +85,32 @@ describe('Till options', () => {
     const stock = await screen.findByRole('switch', { name: 'Take sold items out of stock' });
     await waitFor(() => expect(stock).toBeEnabled());
     userEvent.click(stock);
+    userEvent.click(await screen.findByRole('button', { name: 'Yes, stop taking items out of stock' }));
     expect(await screen.findByText('You cannot change this till profile.')).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Take sold items out of stock' })).toBeChecked();
+  });
+
+  test('turning off stock-taking asks first, and a no changes nothing', async () => {
+    const save = jest.fn().mockImplementation(async ({ profile }) => profile);
+    show(<TillOptionsCard load={jest.fn().mockResolvedValue(PROFILE)} save={save} afterSave={jest.fn()} />);
+    const stock = await screen.findByRole('switch', { name: 'Take sold items out of stock' });
+    await waitFor(() => expect(stock).toBeEnabled());
+    userEvent.click(stock);
+    expect(await screen.findByText('Stop taking sold items out of stock?')).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+    userEvent.click(screen.getByRole('button', { name: 'Keep it as it is' }));
+    expect(await screen.findByText('Not changed.')).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByRole('switch', { name: 'Take sold items out of stock' })).toBeChecked();
+  });
+
+  test('a safe change (turning discounts off) does not ask', async () => {
+    const save = jest.fn().mockImplementation(async ({ profile }) => profile);
+    show(<TillOptionsCard load={jest.fn().mockResolvedValue(PROFILE)} save={save} afterSave={jest.fn()} />);
+    const discount = await screen.findByRole('switch', { name: 'Let cashiers change discounts' });
+    await waitFor(() => expect(discount).toBeEnabled());
+    userEvent.click(discount);
+    await waitFor(() => expect(save).toHaveBeenCalledWith({ company: 'Shop A', profile: { ...PROFILE, allowDiscountChange: false } }));
   });
 
   test('nobody but the owner can change them', async () => {
@@ -164,5 +190,19 @@ describe('the links to the current screens', () => {
     await screen.findByRole('switch', { name: 'Take sold items out of stock' });
     expect(screen.queryByLabelText(/consumer|secret|passkey|key|paybill|till number|password/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+});
+
+describe('Till options, last change', () => {
+  test('says who last changed a switch, and when, when the trail can be read', async () => {
+    const loadLast = jest.fn().mockResolvedValue({ events: [{ id: 'v-1', timestamp: '2026-11-04 11:02:10', user: 'linda@shop.test', summary: "Turned off 'Take sold items out of stock'" }] });
+    show(<TillOptionsCard load={jest.fn().mockResolvedValue(PROFILE)} loadLast={loadLast} />);
+    expect(await screen.findByText("Last change: Turned off 'Take sold items out of stock', by linda@shop.test on 04/11/2026 11:02.")).toBeInTheDocument();
+  });
+
+  test('says nothing about it when the trail cannot be read', async () => {
+    show(<TillOptionsCard load={jest.fn().mockResolvedValue(PROFILE)} loadLast={jest.fn().mockRejectedValue(new Error('no'))} />);
+    await screen.findByRole('switch', { name: 'Take sold items out of stock' });
+    expect(screen.queryByText(/Last change:/)).not.toBeInTheDocument();
   });
 });

@@ -7,6 +7,8 @@ const settings = {
     save: 'Save',
     undo: 'Undo changes',
     openCurrent: 'Open',
+    opensOldScreen: 'Opens the advanced screen, which looks different from this one.',
+    alsoUnderTill: 'Also found under Till and payments.',
     ownerOnly: 'Only the business owner can change these.',
     loading: 'Loading',
     retry: 'Try again',
@@ -23,6 +25,63 @@ const settings = {
     },
   },
 
+  // Settings, Business: keep a copy of how the shop is set up
+  copy: {
+    title: 'Keep a copy of your settings',
+    subtitle: 'A file with how your till and payments are set up. It has no passwords, keys or phone numbers. Support can use it to compare two shops.',
+    button: 'Download my settings',
+    working: 'Getting your settings',
+    done: 'Your settings were saved to a file.',
+    fileName: 'settings-{shop}-{date}.json',
+  },
+
+  // Settings, Business: what was changed lately
+  recent: {
+    title: 'Recent changes to settings',
+    subtitle: 'The last few changes to how the till works, and who made them.',
+    loading: 'Loading recent changes',
+    line: '{when}, {who}: {what}',
+    none: 'No changes to settings have been recorded yet.',
+  },
+
+  // Settings search: the places a setting can be found, with the plain words an owner would type for it
+  search: {
+    label: 'Find a setting',
+    placeholder: 'For example M-Pesa, receipt, discount, KRA',
+    none: 'Nothing matches that. Try a simpler word, such as receipt or staff.',
+    resultsLabel: 'Settings that match',
+    entries: [
+      { section: 'business', label: 'Business details and KRA PIN', words: 'business name tax number kra pin country currency' },
+      { section: 'business', label: 'Address and contact', words: 'address phone email contact person town' },
+      { section: 'business', label: 'Setup health', words: 'health setup check problem scheduler ready working' },
+      { section: 'business', label: 'Bank accounts and stores', words: 'bank account store warehouse branch letterhead' },
+      { section: 'brand', label: 'Logo, colours and receipt wording', words: 'logo colour color brand receipt wording footer header print' },
+      { section: 'till', label: 'Payment methods', words: 'payment cash mpesa m-pesa card credit pay' },
+      { section: 'till', label: 'Till options', words: 'till discount price stock cashier partial payment change switch' },
+      { section: 'till', label: 'Print the receipt automatically', words: 'auto print receipt device printer' },
+      { section: 'tax', label: 'Tax and eTIMS', words: 'tax etims kra vat revenue authority device' },
+      { section: 'team', label: 'People and roles', words: 'people staff team cashier manager owner role add person password' },
+      { section: 'team', label: 'Security and the audit trail', words: 'security two-step sign-in audit who did what history log' },
+      { section: 'advanced', label: 'Discounts, loyalty and price groups', words: 'discount loyalty points price group inventory' },
+      { section: 'advanced', label: 'Brands, units and product variations', words: 'brand unit variation warranty product import opening stock recipe wastage' },
+    ],
+  },
+
+  // Settings, Business: is the shop ready to work
+  health: {
+    title: 'Setup health',
+    subtitle: 'Whether your shop is ready to sell, receive stock and take payments. Nothing here changes a setting.',
+    loading: 'Checking your setup',
+    allGood: 'Everything needed is in place.',
+    needFixing: '{count} thing needs fixing before the shop works properly.',
+    worthLooking: '{count} thing is worth a look. The shop can still work.',
+    fine: 'Fine',
+    look: 'Worth a look',
+    fix: 'Needs fixing',
+    where: 'Where to fix it: {where}',
+    goThere: 'Go to these settings',
+  },
+
   // Settings, Business
   business: {
     ownerNote: 'Only the business owner can change these.',
@@ -37,14 +96,18 @@ const settings = {
     noCompany: 'We could not tell which business this is. Sign out and in again.',
     details: {
       title: 'Business details',
-      subtitle: 'Your name and your tax number',
+      subtitle: 'Your name and your tax number. Saved for the whole shop.',
       name: 'Business name',
       abbr: 'Short name',
       taxId: 'Tax ID (KRA PIN)',
       taxIdHelper: 'For example P123456789A',
+      taxIdWrong: 'A KRA PIN is a letter, nine digits and a letter, such as P123456789A.',
       country: 'Country',
       currency: 'Currency',
       fixed: 'Set when your business was created. To change it, ask support.',
+      requestChange: 'Ask support to change the name, country or currency',
+      requestSubject: 'Please change my business details: {business}',
+      requestBody: 'Hello,\n\nPlease change these details for my business.\n\nBusiness now: {business}\nCountry now: {country}\nCurrency now: {currency}\n\nWhat it should be:\n\n(write the new name, country or currency here)\n',
     },
     address: {
       title: 'Address and contact',
@@ -95,7 +158,7 @@ const settings = {
     subtitle: 'How the till takes money',
     payments: {
       title: 'Payment methods',
-      subtitle: 'Choose which ways of paying the till offers. A change shows at the till the next time it is opened or reloaded.',
+      subtitle: 'Choose which ways of paying the till offers. Saved for the whole shop. A change shows at the till the next time it is opened or reloaded.',
       other: 'Other payment methods',
       notSetUp: 'Not set up for your shop yet',
       needsCode: 'Needs the M-Pesa confirmation code at the till',
@@ -110,7 +173,7 @@ const settings = {
     },
     options: {
       title: 'Till options',
-      subtitle: 'What cashiers can do at the till. Each switch saves at once and shows at the till the next time it is opened or reloaded.',
+      subtitle: 'What cashiers can do at the till. Each switch saves at once for the whole shop and shows at the till the next time it is opened or reloaded.',
       loading: 'Loading till options',
       errorTitle: 'We could not load the till options',
       errorText: 'Check your connection and try again. Nothing was changed.',
@@ -123,12 +186,32 @@ const settings = {
       allowRateHint: 'A cashier can type a different price for an item while selling.',
       allowPartial: 'Let customers pay part now and the rest later',
       allowPartialHint: 'A sale can be left partly paid. The rest shows as owed.',
+      lastChange: 'Last change: {what}, by {who} on {when}.',
+      confirm: {
+        notChanged: 'Not changed.',
+        keep: 'Keep it as it is',
+        updateStockOff: {
+          title: 'Stop taking sold items out of stock?',
+          message: 'Your stock levels will stop going down when you sell, so they will be wrong until you count them again. Turn this off only if you really want that.',
+          yes: 'Yes, stop taking items out of stock',
+        },
+        discountOn: {
+          title: 'Let cashiers change discounts?',
+          message: 'Any cashier will be able to lower the price of a sale. Every discount is a drop in the money the till takes in.',
+          yes: 'Yes, let cashiers change discounts',
+        },
+        rateOn: {
+          title: 'Let cashiers change prices at the till?',
+          message: 'Any cashier will be able to type a different price for an item while selling. Check your cash against sales often if you turn this on.',
+          yes: 'Yes, let cashiers change prices',
+        },
+      },
       more: 'The till profile name and the kind of invoice a sale is saved as stay on the current screen.',
       moreLink: 'Open till settings',
     },
     device: {
       title: 'This device',
-      subtitle: 'These choices are kept on this device only, not on the server.',
+      subtitle: 'Saved on this device only, not for the whole shop. Another till or phone keeps its own choice.',
       autoPrint: 'Print the receipt automatically after a sale',
       autoPrintHint: 'Takes effect the next time the till is opened or reloaded on this device.',
     },

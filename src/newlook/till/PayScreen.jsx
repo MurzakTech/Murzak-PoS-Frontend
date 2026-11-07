@@ -201,7 +201,10 @@ const PayScreen = ({
     if (state.fromGateway) {
       return <Field id={codeId(index)} label={T.mpesa.codeName} value={state.code} readOnly helper={T.mpesa.fromGateway} onChange={() => {}} />;
     }
-    const message = state.problem ? T.mpesa[state.problem] : null;
+    // The problem is shown once the box has been used (typed in, even if cleared again), not on arrival: an untouched
+    // empty box is not yet a mistake. Complete sale stays blocked meanwhile.
+    const touched = codes[index] !== undefined;
+    const message = state.problem && touched ? T.mpesa[state.problem] : null;
     return (
       <div className="nlp-code">
         <Field
@@ -343,7 +346,7 @@ const PayScreen = ({
 
             {showTerminalNote ? (
               <Notice tone="good" icon="info">
-                {fill(T.other.terminal, { amount: formatMoney(total), method: modeName(paymentMode, paymentModes, MODE_WORDS) })}
+                {fill(choice === 'card' ? T.other.terminal : T.other.recordPaid, { amount: formatMoney(total), method: modeName(paymentMode, paymentModes, MODE_WORDS) })}
               </Notice>
             ) : null}
 
@@ -484,7 +487,7 @@ const PayScreen = ({
 
       <div className="nlp__footer">
         <Button className="nlp-complete" variant="primary" size="till" icon="check" loading={Boolean(isCreating)} disabled={!allowed && !isCreating} onClick={onComplete}>
-          {isCreating ? T.processing : T.complete}
+          {isCreating ? T.processing : splitPayments ? fill(T.completeSplit, { amount: formatMoney(total) }) : fill(T.completeWith, { method: modeName(paymentMode, paymentModes, MODE_WORDS), amount: formatMoney(total) })}
         </Button>
       </div>
     </div>

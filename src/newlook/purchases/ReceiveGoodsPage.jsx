@@ -40,6 +40,7 @@ import {
   reviewLines,
   returnRemarks,
   reviewTotal,
+  billBreakdown,
   SPOILT_PREFIX,
   SPOILT_REASONS,
   spoiltItems,
@@ -554,7 +555,7 @@ const ReceiveGoodsPage = () => {
         </Button>
       </div>
       <div id="rc-items" tabIndex={-1}>
-        <Table caption={R.itemsCaption} columns={lineColumns} rows={lines} rowKey={ITEM_KEY} />
+        <Table caption={R.itemsCaption} columns={lineColumns} rows={lines} rowKey={ITEM_KEY} className="nl-receive-table" />
       </div>
       {problems.general ? (
         <p className="nl-error">
@@ -583,6 +584,7 @@ const ReceiveGoodsPage = () => {
   const left = purchase ? leftAfter(lines) : '';
   const storeChoices = sellingLocations(warehouses).map((w) => ({ value: w.name, label: w.warehouse_name || w.name }));
   const spoilt = purchase ? spoiltItems(lines) : [];
+  const bill = billBreakdown(purchase && purchase.totals, purchase ? reviewTotal(lines) : 0);
   const reviewColumns = [
     { key: 'name', header: R.reviewColumns.item },
     { key: 'qty', header: R.reviewColumns.quantity, align: 'right', render: (l) => qtyText(l.qty) },
@@ -608,9 +610,15 @@ const ReceiveGoodsPage = () => {
           </dd>
         </div>
       </dl>
-      <Table caption={R.reviewCaption} columns={reviewColumns} rows={review} rowKey={ITEM_KEY} />
+      <Table caption={R.reviewCaption} columns={reviewColumns} rows={review} rowKey={ITEM_KEY} className="nl-receive-table" />
       <p className="nl-receive-total">
-        <span>{R.reviewTotal}</span> <strong>{formatMoney(reviewTotal(lines))}</strong>
+        <span>{R.reviewTotal}</span> <strong>{formatMoney(bill.goods)}</strong>
+      </p>
+      <p className="nl-receive-total">
+        <span>{R.reviewTax}</span> <strong>{formatMoney(bill.tax)}</strong>
+      </p>
+      <p className="nl-receive-total">
+        <span>{R.reviewBillTotal}</span> <strong>{formatMoney(bill.total)}</strong>
       </p>
       {spoilt.length ? (
         <section className="nl-receive-spoilt" aria-label={R.spoiltTitle}>

@@ -277,6 +277,10 @@ const HomePage = () => {
             canExport={Boolean(data)}
           />
 
+          <p className="nl-home__showing" role="status">
+            {fill(T.showing, { range })}
+          </p>
+
           <div className="nl-home__tiles" style={{ '--tiles': tileList.length }}>
             {tileList}
           </div>

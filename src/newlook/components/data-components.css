@@ -178,6 +178,17 @@
   visibility: hidden;
   font-weight: var(--font-weight-semibold);
 }
+.nl-segmented--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.nl-segmented--wrap .nl-segmented__item {
+  white-space: normal;
+  text-align: center;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
 .nl-segmented__item:hover,
 .nl-segmented__item.is-hover {
   background-image: linear-gradient(rgb(var(--ink-rgb) / 0.08), rgb(var(--ink-rgb) / 0.08));
@@ -200,7 +211,13 @@
   display: flex;
   gap: var(--space-5);
   overflow-x: auto;
+  /* Only sideways: the 1px overlap of the selected tab made a tiny up-and-down scroll widget appear */
+  overflow-y: hidden;
+  scrollbar-width: none;
   border-bottom: 1px solid var(--line);
+}
+.nl-tabs::-webkit-scrollbar {
+  display: none;
 }
 .nl-tab {
   display: inline-flex;

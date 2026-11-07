@@ -269,3 +269,18 @@ describe('categories', () => {
     ]);
   });
 });
+
+describe('similarCategories', () => {
+  const { similarCategories } = require('./productsModel');
+  it('finds the same category written two ways', () => {
+    expect(similarCategories(['Beer', 'Beers', 'Household'])).toEqual([['Beer', 'Beers']]);
+    expect(similarCategories(['Soft Drink', 'soft drinks'])).toEqual([['Soft Drink', 'soft drinks']]);
+    expect(similarCategories(['Dairy-Products', 'Dairy products'])).toEqual([['Dairy-Products', 'Dairy products']]);
+    expect(similarCategories(['Grocery', 'Groceries'])).toEqual([['Grocery', 'Groceries']]);
+  });
+  it('does not guess at different words, or merge words that merely end in s', () => {
+    expect(similarCategories(['Beverages', 'Drinks'])).toEqual([]);
+    expect(similarCategories(['Glass', 'Glas'])).toEqual([]);
+    expect(similarCategories([])).toEqual([]);
+  });
+});

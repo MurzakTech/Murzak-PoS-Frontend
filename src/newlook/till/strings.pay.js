@@ -56,6 +56,7 @@ const pay = {
 
   other: {
     terminal: 'Take the {amount} payment on your {method} terminal or phone. When it goes through, press Complete sale.',
+    recordPaid: 'Record {amount} paid by {method}. Press Complete sale once the customer has paid.',
   },
 
   credit: {
@@ -85,6 +86,8 @@ const pay = {
   },
 
   complete: 'Complete sale',
+  completeWith: 'Complete sale, {method} {amount}',
+  completeSplit: 'Complete sale, {amount} in parts',
   processing: 'Processing...',
 };
 

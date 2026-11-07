@@ -235,3 +235,23 @@ describe('the supplier form', () => {
     expect(isDirty({ ...start, enabled: false }, start)).toBe(true);
   });
 });
+
+
+describe('supplier KRA PIN', () => {
+  const base = { name: 'Gilanis', currency: 'KES', country: 'Kenya' };
+
+  it('accepts a PIN in the KRA shape, in either case, and a blank one', () => {
+    expect(formProblems({ ...base, taxId: 'A012345678Z' }).taxId).toBeUndefined();
+    expect(formProblems({ ...base, taxId: 'a012345678z' }).taxId).toBeUndefined();
+    expect(formProblems({ ...base, taxId: '' }).taxId).toBeUndefined();
+  });
+
+  it('refuses something that is not a PIN for a Kenyan supplier', () => {
+    expect(formProblems({ ...base, taxId: 'abc' }).taxId).toBeTruthy();
+    expect(formProblems({ ...base, taxId: 'A12345678Z' }).taxId).toBeTruthy();
+  });
+
+  it('does not hold a supplier abroad to the KRA shape', () => {
+    expect(formProblems({ ...base, country: 'Uganda', taxId: 'UG-12345' }).taxId).toBeUndefined();
+  });
+});

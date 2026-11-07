@@ -309,7 +309,7 @@ describe('suppliers and products', () => {
       { item_code: 'A', item_name: 'Sugar', unit: 'Kg', cost: 95.5 },
       { item_code: 'B', item_name: 'Rice', unit: '', cost: null },
     ]);
-    expect(listProducts).toHaveBeenCalledWith({ search: 'su', pageSize: 8 });
+    expect(listProducts).toHaveBeenCalledWith({ search: 'su', pageSize: 24 });
   });
 
   test('one product is found by its exact code', async () => {
@@ -322,5 +322,22 @@ describe('suppliers and products', () => {
     await expect(getProductToBuy('A')).resolves.toEqual({ item_code: 'A', item_name: 'Sugar', unit: '', cost: 8 });
     listProducts.mockResolvedValue({ rows: [] });
     await expect(getProductToBuy('Z')).resolves.toBeNull();
+  });
+});
+
+
+describe('findProductsToBuy and services', () => {
+  it('leaves services out of the products offered for a stock order, and keeps the limit', async () => {
+    listProducts.mockResolvedValue({
+      rows: [
+        { item_code: 'DELIVERY', item_name: 'Delivery Fee', is_stock_item: 0 },
+        { item_code: 'AIRTIME', item_name: 'Safaricom Airtime', is_stock_item: 0 },
+        { item_code: 'SUGAR', item_name: 'Sugar', is_stock_item: 1, unit: 'Kg' },
+        { item_code: 'RICE', item_name: 'Rice', is_stock_item: 1 },
+        { item_code: 'FLOUR', item_name: 'Flour' },
+      ],
+    });
+    const found = await findProductsToBuy({ limit: 2 });
+    expect(found.map((p) => p.item_code)).toEqual(['SUGAR', 'RICE']);
   });
 });

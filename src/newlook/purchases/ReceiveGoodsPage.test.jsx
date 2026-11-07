@@ -300,7 +300,11 @@ describe('step 3: check and confirm', () => {
     expect(screen.getByText('Sugar 1kg')).toBeInTheDocument();
     expect(screen.getByText('Rice 2kg')).toBeInTheDocument();
     expect(screen.queryByText('Salt 500g')).not.toBeInTheDocument();
-    expect(screen.getByText('KES 1,600')).toBeInTheDocument();
+    // The goods, the tax on them and the bill total are all shown, so the person confirming sees the real bill
+    expect(screen.getByText('Value of the goods')).toBeInTheDocument();
+    expect(screen.getByText('Tax')).toBeInTheDocument();
+    expect(screen.getByText('Bill total')).toBeInTheDocument();
+    expect(screen.getAllByText('KES 1,600').length).toBeGreaterThan(0);
     expect(screen.getByRole('textbox', { name: 'Bill number' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Bill date' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Due date' })).toBeInTheDocument();

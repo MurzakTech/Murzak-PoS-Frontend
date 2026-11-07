@@ -176,3 +176,19 @@ test('M-Pesa prompt: a payment already received is confirmed at once', async () 
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ confirmed: true, transactionId: 'LOG-PAID', reference: 'RCT6' }));
   expect(api.checkMpesaPayment).not.toHaveBeenCalled();
 });
+
+test('M-Pesa prompt that cannot work is not offered; the cashier is pointed to the M-Pesa code', async () => {
+  renderMpesa({ option: { allow_manual_code: 1, prompt_ready: false, prompt_problem: 'M-Pesa prompts are not ready: add the Lipa na M-Pesa passkey in Settings > Payment gateways.' } });
+  await flush();
+  expect(screen.queryByRole('button', { name: /send .* prompt/i })).not.toBeInTheDocument();
+  expect(screen.getByText(/not set up for this shop/i)).toBeInTheDocument();
+  expect(screen.getByText(/passkey/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/M-Pesa code/i)).toBeInTheDocument();
+});
+
+test('M-Pesa with no prompt and no code option says plainly that M-Pesa is not fully set up', async () => {
+  renderMpesa({ option: { prompt_ready: false } });
+  await flush();
+  expect(screen.getByText(/not fully set up/i)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /send .* prompt/i })).not.toBeInTheDocument();
+});

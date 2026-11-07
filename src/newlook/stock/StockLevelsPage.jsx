@@ -449,17 +449,31 @@ const StockLevelsPage = () => {
         actions={
           canChange ? (
             <>
-              <Button variant="secondary" icon="plus" onClick={() => openForm('in')}>
+              <Button className="nl-stock-wide" variant="secondary" icon="plus" onClick={() => openForm('in')}>
                 {T.stockIn}
               </Button>
-              <Button variant="secondary" icon="arrowUp" onClick={() => openForm('out')}>
+              <Button className="nl-stock-wide" variant="secondary" icon="arrowUp" onClick={() => openForm('out')}>
                 {T.stockOut}
               </Button>
               {locationsShown ? (
-                <Button variant="secondary" icon="truck" onClick={() => openForm('move')}>
+                <Button className="nl-stock-wide" variant="secondary" icon="truck" onClick={() => openForm('move')}>
                   {T.moveStock}
                 </Button>
               ) : null}
+              {/* On a phone the three smaller actions share one menu, so the header is one row, not two */}
+              <Menu
+                className="nl-stock-narrow"
+                label={T.actionsMenuLabel}
+                variant="secondary"
+                size="default"
+                items={[
+                  { label: T.stockIn, onClick: () => openForm('in') },
+                  { label: T.stockOut, onClick: () => openForm('out') },
+                  ...(locationsShown ? [{ label: T.moveStock, onClick: () => openForm('move') }] : []),
+                ]}
+              >
+                {T.actionsMenu}
+              </Menu>
               <Button variant="primary" icon="upload" onClick={() => openForm('bulk')}>
                 {T.bulkUpdate}
               </Button>

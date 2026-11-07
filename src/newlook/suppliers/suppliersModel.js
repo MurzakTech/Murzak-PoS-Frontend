@@ -2,6 +2,7 @@ import { formatMoney } from '../components/format';
 import { NEW_LOOK_PREFIX } from '../redirects/engine';
 import fill from '../labels/fill';
 import T from './strings.suppliers';
+import { formChanged } from '../forms/sameValue';
 
 /**
  * The decisions of the Suppliers page, as plain functions (ticket P4-6): the Owed filter and the status in the address, how a due
@@ -139,6 +140,8 @@ export const formFromSupplier = (s) => ({
 });
 
 const CURRENCY = /^[A-Za-z]{3}$/;
+// A Kenyan KRA PIN: a letter, nine digits and a letter, such as A012345678Z
+const KRA_PIN = /^[A-Z]\d{9}[A-Z]$/i;
 
 /** What is wrong with the form, by field: { name, currency }. An empty object means it can be saved. */
 export const formProblems = (values) => {
@@ -146,6 +149,10 @@ export const formProblems = (values) => {
   if (!String(values.name || '').trim()) problems.name = T.form.nameRequired;
   const currency = String(values.currency || '').trim();
   if (currency && !CURRENCY.test(currency)) problems.currency = T.form.currencyInvalid;
+  // Only a Kenyan supplier is held to the KRA format; a supplier abroad has a tax ID of another shape
+  const taxId = String(values.taxId || '').trim();
+  const country = String(values.country || '').trim().toLowerCase();
+  if (taxId && (!country || country === 'kenya') && !KRA_PIN.test(taxId)) problems.taxId = T.form.taxIdInvalid;
   return problems;
 };
 
@@ -161,4 +168,4 @@ export const toServerValues = (values) => ({
 });
 
 /** Whether anything in the form differs from where it started */
-export const isDirty = (values, start) => Object.keys(start).some((key) => values[key] !== start[key]);
+export const isDirty = (values, start) => formChanged(values, start);

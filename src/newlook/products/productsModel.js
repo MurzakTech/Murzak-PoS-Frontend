@@ -260,3 +260,24 @@ export const changesFrom = (values, baseline, { canSeeCost = false } = {}) => {
   if (values.enabled !== baseline.enabled) out.disabled = !values.enabled;
   return out;
 };
+
+/**
+ * Categories that look like the same thing written two ways (Beer and Beers, Soft Drink and Soft drinks, Dairy-Products and
+ * Dairy products). Capitals, spaces, dashes and a plural s are ignored. Returns groups of two or more names, each in the order
+ * given; categories with different words (Beverages and Drinks) are not guessed at.
+ */
+export const similarCategories = (names) => {
+  const key = (name) => {
+    const letters = String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (letters.endsWith('ies') && letters.length > 4) return `${letters.slice(0, -3)}y`;
+    if (letters.endsWith('s') && letters.length > 3 && !letters.endsWith('ss')) return letters.slice(0, -1);
+    return letters;
+  };
+  const groups = new Map();
+  (names || []).forEach((name) => {
+    const k = key(name);
+    if (!k) return;
+    groups.set(k, [...(groups.get(k) || []), name]);
+  });
+  return [...groups.values()].filter((group) => group.length > 1);
+};

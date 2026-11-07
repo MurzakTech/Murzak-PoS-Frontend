@@ -1,4 +1,4 @@
-import { cardChanged, companyWith, problems, valuesFromCompany } from './businessModel';
+import { cardChanged, changeRequestLink, companyWith, problems, valuesFromCompany } from './businessModel';
 
 const company = {
   name: 'Shop A',
@@ -74,5 +74,32 @@ describe('phone numbers (P6-4): shown as 0712 345 678, stored as the shop had th
     const values = valuesFromCompany({ ...company, phone: '' });
     expect(values.phone).toBe('');
     expect(companyWith({ ...company, phone: '' }, 'address', values).phone).toBe('');
+  });
+});
+
+
+describe('the KRA PIN on the business details card', () => {
+  const values = (taxId) => ({ taxId });
+
+  it('accepts a PIN in the KRA shape, in either case, and a blank one', () => {
+    expect(problems('details', values('P123456789A'))).toEqual({});
+    expect(problems('details', values('p123456789a'))).toEqual({});
+    expect(problems('details', values(''))).toEqual({});
+  });
+
+  it('refuses anything else, in words', () => {
+    expect(problems('details', values('abc'))).toEqual({ taxId: 'taxIdWrong' });
+    expect(problems('details', values('P12345678A'))).toEqual({ taxId: 'taxIdWrong' });
+  });
+});
+
+
+describe('changeRequestLink', () => {
+  const words = { requestSubject: 'Please change my business details: {business}', requestBody: 'Now: {business}, {country}, {currency}' };
+  it('writes an email to support with what the details are now', () => {
+    const link = changeRequestLink({ companyName: 'Linda mwananchi', country: 'Kenya', currency: 'KES' }, words, 'help@example.com');
+    expect(link.startsWith('mailto:help@example.com?subject=')).toBe(true);
+    expect(decodeURIComponent(link)).toContain('Please change my business details: Linda mwananchi');
+    expect(decodeURIComponent(link)).toContain('Now: Linda mwananchi, Kenya, KES');
   });
 });

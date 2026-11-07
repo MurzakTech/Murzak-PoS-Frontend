@@ -37,6 +37,7 @@ const LinkRow = ({ item, fallbackTitle, highlighted }) => {
         {item.title ? <h3 className="nl-settings-link__title">{item.title}</h3> : null}
         <p className="nl-settings-hint">{item.text}</p>
         {item.note ? <p className="nl-settings-hint">{item.note}</p> : null}
+        {item.to && item.to !== '/' && !String(item.to).startsWith('/new-look') ? <p className="nl-settings-hint nl-settings-link__leaves">{W.opensOldScreen}</p> : null}
       </div>
       {item.to ? (
         <Button as={Link} to={item.to} variant="secondary" icon="chevronRight" iconEnd aria-label={`${W.openCurrent} ${item.title || fallbackTitle}`}>

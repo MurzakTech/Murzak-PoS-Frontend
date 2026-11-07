@@ -36,7 +36,9 @@ import '../../newlook/components'; // the shared components and their styles, us
 import useKeptCart from '../../newlook/till/useKeptCart';
 import LeaveTillDialog from '../../newlook/till/LeaveTillDialog';
 import { sellingLocations } from '../../newlook/till/sellingLocations';
-import { stockNote } from '../../newlook/till/stockNote';
+import { stockNote, stockShortfalls } from '../../newlook/till/stockNote';
+import { clampDiscount } from '../../utils/discountBounds';
+import { storedMobile } from '../../newlook/customers/customersModel';
 import { getTillPaymentModes } from '../../api/paymentMethodsApi';
 import useUsualOpening from '../../newlook/setup/useUsualOpening';
 import { offeredModes, readSavedModes, saveModes } from '../../newlook/till/offeredModes';
@@ -1001,8 +1003,9 @@ const NewSale = () => {
   const itemDiscountTotal = useMemo(() => round2(cart.reduce((sum, item) => sum + (item.discount_amount || 0), 0)), [cart]);
   const manualDiscountAmount = useMemo(() => {
     const base = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    if (manualDiscountType === 'percentage') return round2((base * (manualDiscountValue || 0)) / 100);
-    return round2(Math.min(manualDiscountValue || 0, base));
+    const value = clampDiscount(manualDiscountType, manualDiscountValue, base);
+    if (manualDiscountType === 'percentage') return round2((base * value) / 100);
+    return round2(value);
   }, [cart, manualDiscountType, manualDiscountValue]);
   const grandTotal = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
@@ -1024,10 +1027,36 @@ const NewSale = () => {
     }
   };
 
+  // Every time the payment screen opens it starts as a single cash payment, so Split mode or "Other: Bank Draft" from the
+  // previous sale never carries over
+  useEffect(() => {
+    if (!isCheckoutMode) return;
+    setSplitPayments(false);
+    setPaymentMode('Cash');
+    setCreditAmount(0);
+    setAmountGiven(0);
+  }, [isCheckoutMode]);
+
   const rxNames = useMemo(() => prescriptionItems(cart), [cart]);
 
   const handleCheckoutClick = () => {
     if (cart.length === 0) return;
+    // Never reach the payment screen with a sale the server is certain to refuse for lack of stock
+    const shortfalls = stockShortfalls(cart, (line) => {
+      const product = products.find((p) => p.item_code === line.item_code);
+      if (product && (product.is_stock_item === 0 || product.is_stock_item === false)) return null;
+      const stock = productStocks[line.item_code]?.[line.warehouse || defaultWarehouse];
+      return stock === undefined ? null : stock;
+    });
+    if (shortfalls.length > 0) {
+      dispatch(showNotification({ message: shortfalls.join(' '), severity: 'warning', title: 'Not enough stock' }));
+      return;
+    }
+    // A sale that comes to nothing is almost always a discount typed wrongly, so it is not taken to payment
+    if (!(grandTotal > 0)) {
+      dispatch(showNotification({ message: 'The total of this sale is KES 0. Check the discount before taking payment.', severity: 'warning', title: 'Nothing to pay' }));
+      return;
+    }
     // Items the kitchen was never told about: ask before charging (every way of charging comes through here)
     if (kitchenSettings.enabled && !chargeCheckedRef.current) {
       const plan = planSend(cart, kitchen, kitchenSettings);
@@ -1057,7 +1086,20 @@ const NewSale = () => {
     });
   };
 
+  // A second tap on "Complete sale" while the first is still being saved does nothing (state alone is too slow:
+  // two taps in the same moment both see "not creating yet")
+  const checkoutInFlightRef = useRef(false);
   const handleCheckout = async () => {
+    if (checkoutInFlightRef.current) return;
+    checkoutInFlightRef.current = true;
+    try {
+      await runCheckout();
+    } finally {
+      checkoutInFlightRef.current = false;
+    }
+  };
+
+  const runCheckout = async () => {
     if (cart.length === 0) {
       setSnackbarMessage('Cart is empty');
       setSnackbarSeverity('warning');
@@ -1682,7 +1724,7 @@ const NewSale = () => {
       const offlineCust = createOfflineCustomer({
         company: userCompany,
         customer_name: data.customer_name,
-        mobile_no: data.mobile_no,
+        mobile_no: storedMobile(data.mobile_no) || data.mobile_no,
         email_id: data.email_id,
         customer_type: data.customer_type,
       });
@@ -1699,7 +1741,8 @@ const NewSale = () => {
     const customerData = {
       customer_name: data.customer_name.trim(),
       customer_type: data.customer_type,
-      ...(data.mobile_no && { mobile_no: data.mobile_no }),
+      // Saved the same way the Customers screen saves it (+254712345678), so the stored numbers all look alike
+      ...(data.mobile_no && { mobile_no: storedMobile(data.mobile_no) || data.mobile_no }),
       ...(data.email_id && { email_id: data.email_id }),
       ...(data.tax_id && { tax_id: data.tax_id }),
       company: userCompany,
@@ -1806,7 +1849,7 @@ const NewSale = () => {
       setSelectedCustomerObj(held.selectedCustomerObj || null);
       setCustomerPriceList(held.customerPriceList || 'Standard Selling');
       setManualDiscountType(held.manualDiscountType || 'percentage');
-      setManualDiscountValue(held.manualDiscountValue || 0);
+      setManualDiscountValue(clampDiscount(held.manualDiscountType || 'percentage', held.manualDiscountValue, Infinity));
       setActiveHeldLabel(held.label || '');
       setKitchen(held.kitchen || EMPTY_KITCHEN);
       setHeldDialogOpen(false);
@@ -2161,7 +2204,7 @@ const NewSale = () => {
       setSelectedCustomerObj(kept.selectedCustomerObj);
       setCustomerPriceList(kept.customerPriceList);
       setManualDiscountType(kept.manualDiscountType);
-      setManualDiscountValue(kept.manualDiscountValue);
+      setManualDiscountValue(clampDiscount(kept.manualDiscountType, kept.manualDiscountValue, Infinity));
       setActiveHeldLabel(kept.activeHeldLabel);
       setKitchen(kept.kitchen || EMPTY_KITCHEN);
     },
@@ -2241,7 +2284,8 @@ const NewSale = () => {
       manualDiscountValue={manualDiscountValue}
       onManualDiscountChange={(type, value) => {
         setManualDiscountType(type);
-        setManualDiscountValue(value);
+        const base = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+        setManualDiscountValue(clampDiscount(type, value, base));
       }}
       isLoadingDiscounts={isLoadingDiscounts}
       onCheckout={isPhone ? chargeFromPhone : handleCheckoutClick}
@@ -2466,6 +2510,7 @@ const NewSale = () => {
         companyName={userCompany}
         cashierName={cashierName}
         currency={currency}
+        customerMobile={selectedCustomerObj?.mobile_no || ''}
         onNewSale={handleReceiptClose}
         onPrint={handlePrintReceipt}
         onViewInvoice={handleViewInvoice}

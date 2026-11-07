@@ -4,6 +4,8 @@ import { alpha } from '@mui/material/styles';
 import { CheckCircle, Print, Receipt } from '@mui/icons-material';
 import { fmt, money, round2 } from './money';
 import PrintButton from '../../../components/Common/PrintButton';
+import { whatsappLink } from '../../../newlook/customers/customersModel';
+import { receiptMessage } from './receiptMessage';
 import { useNewLook } from '../../../newlook/NewLookProvider';
 import { useBrand } from '../../../newlook/brand/BrandProvider';
 import ShopReceipt from '../../../newlook/receipt/Receipt';
@@ -35,7 +37,7 @@ const Row = ({ label, value, bold, tone }) => (
 );
 
 // announcement: an optional hidden live region (the New look passes one that says "Sale complete, KES 100")
-const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, currency, onNewSale, onPrint, onViewInvoice, announcement = null }) => {
+const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, currency, customerMobile = '', onNewSale, onPrint, onViewInvoice, announcement = null }) => {
   const { enabled: newLook } = useNewLook();
   const { brand, business } = useBrand();
   if (!invoice || !saleData) return null;
@@ -48,6 +50,8 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
   const isCash = saleData.paymentMode === 'Cash' && saleData.amountGiven > 0;
   const change = isCash ? Math.max(0, round2(saleData.amountGiven - saleData.grandTotal)) : 0;
   const when = saleData.timestamp;
+  // A customer with a mobile number can be sent the receipt on WhatsApp; without one the button is not shown
+  const sendLink = whatsappLink(customerMobile, receiptMessage({ shop: companyName, number: invoice.name, total: `${currency} ${fmt(grand)}` }));
 
   return (
     <Dialog open={open} onClose={onNewSale} fullWidth maxWidth="xs" disableEnforceFocus aria-labelledby="receipt-title">
@@ -143,6 +147,11 @@ const ReceiptDialog = ({ open, invoice, saleData, companyName, cashierName, curr
             <Button fullWidth variant="outlined" startIcon={<Receipt />} onClick={onViewInvoice}>View invoice</Button>
           )}
         </Box>
+        {sendLink ? (
+          <Button fullWidth variant="outlined" component="a" href={sendLink} target="_blank" rel="noopener noreferrer">
+            Send the receipt on WhatsApp
+          </Button>
+        ) : null}
       </DialogActions>
     </Dialog>
   );

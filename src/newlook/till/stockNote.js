@@ -14,3 +14,22 @@ export const stockNote = (qty, stockQty) => {
   if (have <= 0) return T.stock.none;
   return fill(T.stock.only, { qty: Number.isInteger(have) ? have : Math.round(have * 100) / 100 });
 };
+
+/**
+ * Cart lines the shop cannot sell because there is not enough in stock, as plain sentences for the cashier.
+ * The server refuses such a sale (negative stock is off), so the till says so before the payment screen instead of
+ * letting the cashier go all the way to "Complete sale" and fail.
+ *
+ * `stockOf(line)` returns the stock figure for a line, or null when it is not known (a service, or the till is
+ * offline); a line with no known figure is never blocked.
+ */
+export const stockShortfalls = (cart, stockOf) =>
+  (cart || [])
+    .map((line) => {
+      const note = stockNote(line.qty, stockOf(line));
+      if (!note) return null;
+      const name = line.item_name || line.item_code;
+      const have = Number(stockOf(line));
+      return have <= 0 ? fill(T.stock.blockedNone, { name }) : fill(T.stock.blockedOnly, { name, qty: Number.isInteger(have) ? have : Math.round(have * 100) / 100 });
+    })
+    .filter(Boolean);

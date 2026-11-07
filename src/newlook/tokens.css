@@ -54,7 +54,7 @@
   --body-size: 14px; /* Paragraphs and form text */
   --body-line: 1.5;
   --table-size: 13.5px; /* Rows and cells */
-  --caption-size: 12.5px; /* Helper text, in the muted colour */
+  --caption-size: 13px; /* Helper text, in the muted colour (13px or more, as the UX review asks) */
   --label-size: 11.5px; /* Field and column labels, in capitals */
   --label-weight: 700;
   --label-spacing: 0.06em;

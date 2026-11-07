@@ -3,16 +3,28 @@ import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
+import { ConfirmDialog } from '../components/Dialog';
 import { SkeletonText } from '../components/Skeleton';
 import Switch from '../components/Switch';
 import { useAccess } from '../access/AccessProvider';
 import { getPosProfile, updatePosProfile } from '../../api/tillOptionsApi';
+import { listAuditEvents } from '../../api/auditApi';
+import fill from '../labels/fill';
+import { whenLabel } from './teamModel';
 import { fetchCurrentUser } from '../../store/authSlice';
 import { OLD, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
 
 const O = T.till.options;
+
+// The switches that move money or stock ask first, in plain words, before they change. Which answer needs asking:
+// turning stock-taking off, or turning on a cashier's right to change a discount or a price.
+const ASK = {
+  updateStock: (next) => (next ? null : 'updateStockOff'),
+  allowDiscountChange: (next) => (next ? 'discountOn' : null),
+  allowRateChange: (next) => (next ? 'rateOn' : null),
+};
 
 const SWITCHES = [
   { key: 'updateStock', label: O.updateStock, hint: O.updateStockHint },
@@ -31,12 +43,21 @@ const SWITCHES = [
  *   afterSave     what to do once a change is saved; by default the signed-in person's till profile is read again, as the
  *                 current screen does, so the till sees the change
  */
-const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterSave }) => {
+const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterSave, loadLast = listAuditEvents }) => {
   const access = useAccess();
   const { company, dispatch } = useSettingsUser();
   const owner = access.tier === 'owner';
   const [state, setState] = useState({ status: company ? 'loading' : 'nocompany', profile: null });
   const latest = useRef(null);
+  // Who last changed a switch, and when (from the audit trail; shown only when it can be read)
+  const [last, setLast] = useState(null);
+  const readLast = useCallback(() => {
+    if (!company || !owner) return;
+    loadLast({ company, module: 'Settings', limit_start: 0, limit_page_length: 1 })
+      .then((result) => setLast((result.events || [])[0] || null))
+      .catch(() => setLast(null));
+  }, [company, owner, loadLast]);
+  useEffect(readLast, [readLast]);
   const queue = useRef(Promise.resolve());
 
   const reload = useCallback(() => {
@@ -59,11 +80,32 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
       const saved = await save({ company, profile: { ...latest.current, [key]: value } });
       latest.current = saved;
       setState({ status: 'ready', profile: saved });
+      readLast();
       if (afterSave) await afterSave();
       else await Promise.resolve(dispatch(fetchCurrentUser())).catch(() => undefined);
     });
     queue.current = run.catch(() => undefined);
     return run;
+  };
+
+  // A risky change waits here for a yes; a no puts the switch back with "Not changed."
+  const [asking, setAsking] = useState(null);
+  const changeAfterAsking = (key) => (value) => {
+    const which = ASK[key] ? ASK[key](value) : null;
+    if (!which) return change(key)(value);
+    return new Promise((resolve, reject) => {
+      setAsking({
+        which,
+        yes: () => {
+          setAsking(null);
+          change(key)(value).then(resolve, reject);
+        },
+        no: () => {
+          setAsking(null);
+          reject(new Error(O.confirm.notChanged));
+        },
+      });
+    });
   };
 
   let body;
@@ -78,11 +120,12 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
         <ul className="nl-settings-switches">
           {SWITCHES.map((item) => (
             <li key={item.key} className="nl-settings-switch">
-              <Switch label={item.label} checked={state.profile[item.key]} disabled={!owner} onChange={change(item.key)} />
+              <Switch label={item.label} checked={state.profile[item.key]} disabled={!owner} onChange={changeAfterAsking(item.key)} />
               <p className="nl-settings-hint">{item.hint}</p>
             </li>
           ))}
         </ul>
+        {last ? <p className="nl-settings-hint">{fill(O.lastChange, { what: last.summary, who: last.user, when: whenLabel(last.timestamp) })}</p> : null}
         <p className="nl-settings-hint">{O.more}</p>
         <Button as={Link} to={legacy(OLD.tillProfile)} variant="secondary" icon="chevronRight" iconEnd>
           {O.moreLink}
@@ -96,6 +139,18 @@ const TillOptionsCard = ({ load = getPosProfile, save = updatePosProfile, afterS
       <Card title={O.title} subtitle={O.subtitle}>
         {body}
       </Card>
+      {asking ? (
+        <ConfirmDialog
+          open
+          title={O.confirm[asking.which].title}
+          message={O.confirm[asking.which].message}
+          confirmLabel={O.confirm[asking.which].yes}
+          cancelLabel={O.confirm.keep}
+          destructive
+          onConfirm={asking.yes}
+          onCancel={asking.no}
+        />
+      ) : null}
     </div>
   );
 };
