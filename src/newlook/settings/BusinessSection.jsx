@@ -12,6 +12,7 @@ import LinkList from './LinkList';
 import RecentChangesCard from './RecentChangesCard';
 import SettingsCopyCard from './SettingsCopyCard';
 import SetupHealthCard from './SetupHealthCard';
+import ShopTypeCard from './ShopTypeCard';
 import { OLD, cardFromSearch, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
@@ -128,6 +129,7 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
     <>
       <SetupHealthCard />
       {body}
+      <ShopTypeCard />
       <RecentChangesCard />
       <SettingsCopyCard />
       <LinkList id="business-banks" title={B.banks.title} subtitle={B.banks.subtitle} items={[{ key: 'bank-accounts', text: B.banks.note, to: legacy(OLD.bankAccounts) }]} />

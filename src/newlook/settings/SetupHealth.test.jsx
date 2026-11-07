@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { MemoryRouter } from 'react-router-dom';
@@ -82,4 +83,36 @@ test('a cashier does not see it, and nothing is asked', async () => {
   await screen.findByText(() => false).catch(() => undefined);
   expect(load).not.toHaveBeenCalled();
   expect(screen.queryByText('Setup health')).not.toBeInTheDocument();
+});
+
+test('shows how much is ready as a percentage, and warns about what needs fixing even when the list is closed', async () => {
+  const user = userEvent;
+  show(jest.fn().mockResolvedValue({ ...REPORT, percent: 33 }));
+  expect(await screen.findByText('33% ready')).toBeInTheDocument();
+  expect(screen.getByRole('progressbar', { name: 'Setup progress' })).toHaveAttribute('aria-valuenow', '33');
+  expect(screen.getByRole('alert')).toHaveTextContent('Needs fixing now: Background jobs.');
+  await user.click(screen.getByRole('button', { name: 'Hide details' }));
+  expect(screen.queryByText('Cash payments')).not.toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('Background jobs'); // the warning stays while the list is closed
+  await user.click(screen.getByRole('button', { name: 'Show details' }));
+  expect(screen.getByText('Cash payments')).toBeInTheDocument();
+});
+
+test('the list starts closed when everything is fine, and the choice is remembered', async () => {
+  const user = userEvent;
+  const fine = { ...REPORT, ok: true, percent: 100, summary: { green: 1, amber: 0, red: 0 }, checks: [REPORT.checks[2]] };
+  const first = show(jest.fn().mockResolvedValue(fine));
+  expect(await screen.findByText('100% ready')).toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(screen.queryByText('Cash payments')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Show details' }));
+  expect(screen.getByText('Cash payments')).toBeInTheDocument();
+  first.unmount();
+  show(jest.fn().mockResolvedValue(fine));
+  expect(await screen.findByText('Cash payments')).toBeInTheDocument(); // still open the next time
+});
+
+test('the heading reads right for one and for several', async () => {
+  show(jest.fn().mockResolvedValue({ ...REPORT, summary: { green: 0, amber: 2, red: 0 }, checks: [REPORT.checks[1], REPORT.checks[1]] }));
+  expect(await screen.findByText('2 things are worth a look. The shop can still work.')).toBeInTheDocument();
 });
