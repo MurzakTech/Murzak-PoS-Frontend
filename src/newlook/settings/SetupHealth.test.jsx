@@ -55,6 +55,13 @@ test('lists each check with its status in words, and says how many need fixing',
   expect(screen.getByText('Where to fix it: Settings > Payment gateways.')).toBeInTheDocument();
 });
 
+test('a line that needs attention links to the settings that fix it', async () => {
+  show(jest.fn().mockResolvedValue(REPORT));
+  const links = await screen.findAllByRole('link', { name: 'Go to these settings' });
+  expect(links).toHaveLength(1); // M-Pesa; the scheduler has no screen to go to, and the cash line is fine
+  expect(links[0].getAttribute('href')).toMatch(/settings\/till$/);
+});
+
 test('a line that is fine does not send the owner anywhere', async () => {
   show(jest.fn().mockResolvedValue({ ...REPORT, summary: { green: 1, amber: 0, red: 0 }, checks: [REPORT.checks[2]] }));
   expect(await screen.findByText('Everything needed is in place.')).toBeInTheDocument();

@@ -164,6 +164,7 @@ const products = {
     rename: 'Rename',
     remove: 'Delete',
     deleteHint: 'A category can be deleted once no products are in it.',
+    lookAlike: 'These look like the same category: {names}. Renaming one so they match keeps your products and reports together.',
     topLevel: 'Top level',
     count: '{count}',
     emptyTitle: 'No categories yet',

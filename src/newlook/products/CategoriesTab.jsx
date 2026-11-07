@@ -7,7 +7,7 @@ import { useToast } from '../components/Toast';
 import fill from '../labels/fill';
 import { deleteCategory } from '../../api/productsListApi';
 import CategoryDialog from './CategoryDialog';
-import { canDeleteCategory, categoryAddress, categoryLabel, isRootCategory } from './productsModel';
+import { canDeleteCategory, categoryAddress, categoryLabel, isRootCategory, similarCategories } from './productsModel';
 import T from './strings.products';
 
 const KEY = 'name';
@@ -46,6 +46,8 @@ const CategoriesTab = ({ state, adding, onAddingChange, onChanged, canChange = t
     setRemoving(null);
   };
 
+  const lookAlike = canChange && state.status === 'ready' ? similarCategories(categories.filter((c) => !isRootCategory(c.name)).map((c) => c.name)) : [];
+
   const allColumns = [
     {
       key: 'name',
@@ -76,6 +78,11 @@ const CategoriesTab = ({ state, adding, onAddingChange, onChanged, canChange = t
   return (
     <div className="nl-products__list">
       <p className="nl-products-note">{C.intro}</p>
+      {lookAlike.map((group) => (
+        <p key={group.join('|')} className="nl-products-note" role="status">
+          {fill(C.lookAlike, { names: group.join(' and ') })}
+        </p>
+      ))}
       <Table
         caption={C.caption}
         columns={columns}

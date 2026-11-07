@@ -79,6 +79,7 @@ const settings = {
     look: 'Worth a look',
     fix: 'Needs fixing',
     where: 'Where to fix it: {where}',
+    goThere: 'Go to these settings',
   },
 
   // Settings, Business

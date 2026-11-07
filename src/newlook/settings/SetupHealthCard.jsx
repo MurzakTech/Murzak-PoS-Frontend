@@ -2,12 +2,17 @@ import React, { useEffect, useState } from 'react';
 import Card from '../components/Card';
 import { SkeletonText } from '../components/Skeleton';
 import { useAccess } from '../access/AccessProvider';
+import { Link } from 'react-router-dom';
 import { getSetupHealth } from '../../api/setupHealthApi';
+import { sectionAddress } from './settingsModel';
 import fill from '../labels/fill';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
 
 const H = T.health;
+
+// Where each check can be fixed in the new Settings, so the line is a link and not only a sentence
+const FIX_SECTION = { stores: 'business', till: 'till', cash: 'till', mpesa: 'till', etims: 'tax' };
 
 const STATUS_WORD = { green: H.fine, amber: H.look, red: H.fix };
 
@@ -59,6 +64,11 @@ const SetupHealthCard = ({ load = getSetupHealth }) => {
               <strong>{check.title}</strong> <span className="nl-health__status">{STATUS_WORD[check.status]}</span>
               <p className="nl-settings-hint">{check.detail}</p>
               {check.status !== 'green' && check.where ? <p className="nl-settings-hint">{fill(H.where, { where: check.where })}</p> : null}
+              {check.status !== 'green' && FIX_SECTION[check.id] ? (
+                <p className="nl-settings-hint">
+                  <Link to={sectionAddress(FIX_SECTION[check.id])}>{H.goThere}</Link>
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
