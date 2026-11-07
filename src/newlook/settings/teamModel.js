@@ -78,6 +78,24 @@ export const makePassword = (random = randomBelow, length = 12) => {
   return chars.join('');
 };
 
+const SYMBOLS = '#$%&*+-=?@';
+
+/**
+ * A new password for someone who is locked out: 14 characters with a capital, a small letter, a digit and a symbol, which
+ * is what the server asks for when it sets a password. No look-alikes (0 O 1 l I).
+ */
+export const makeStrongPassword = (random = randomBelow, length = 14) => {
+  const pick = (set) => set[random(set.length)];
+  const all = LOWER + UPPER + DIGITS + SYMBOLS;
+  const chars = [pick(LOWER), pick(UPPER), pick(DIGITS), pick(SYMBOLS)];
+  while (chars.length < length) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i -= 1) {
+    const j = random(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+};
+
 /** Which field a server sentence is about, so it can be shown beside that field: 'email', 'password', 'phone' or ''. */
 export const fieldForError = (message) => {
   const text = String(message || '').toLowerCase();
