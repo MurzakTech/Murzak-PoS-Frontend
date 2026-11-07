@@ -30,7 +30,7 @@ const Option = ({ title, text, action, to, primary = false }) => {
 };
 
 /**
- * Step 5, the first products: add one yourself (New product), start from the ready-made list for this kind of shop (the current
+ * Step 7, the first products: add one yourself (New product), start from the ready-made list for this kind of shop (the current
  * starter products screen), add many from a file, or add opening stock (the current import screens). The links leave the wizard;
  * it waits at this step until you come back.
  */

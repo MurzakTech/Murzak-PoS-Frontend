@@ -10,7 +10,7 @@ const S = T.staff;
 const STEP = 'staff';
 
 /**
- * Step 6, your team: a link to Settings, Team (or the current Staff screen until Team is live), and a short list of what else can be
+ * Step 8, your team: a link to Settings, Team (or the current Staff screen until Team is live), and a short list of what else can be
  * set up later. The last step: its button reads Finish and ends set-up.
  */
 const StaffStep = ({ ctx }) => {

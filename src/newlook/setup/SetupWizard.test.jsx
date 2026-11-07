@@ -21,6 +21,10 @@ jest.mock('../../api/setupApi', () => ({
   saveTaxId: jest.fn(),
 }));
 jest.mock('../../api/paymentMethodsApi', () => ({ getPaymentMethods: jest.fn(), setPaymentMethod: jest.fn() }));
+// The Settings cards shown inside the payments, tax and final-check steps have their own tests
+jest.mock('../settings/MpesaCard', () => () => <p>M-Pesa card</p>);
+jest.mock('../settings/EtimsSettingsCard', () => () => <p>eTIMS card</p>);
+jest.mock('../settings/SetupHealthCard', () => () => <p>Setup health card</p>);
 jest.mock('../NewLookProvider', () => ({ useNewLook: () => ({ enabled: true, status: 'ready', company: 'Shop A' }) }));
 
 const NO = { expiry: false, prescriptionOnly: false, barcodesFirst: false, unitsFirst: false, servicesFirst: false };
@@ -84,7 +88,7 @@ describe('step 1, What do you sell', () => {
     expect(screen.getByText(/Expiry dates and the Expiry tab/)).toBeInTheDocument();
     expect(screen.getByText(/Barcodes and units come first/)).toBeInTheDocument();
     expect(screen.getByText(/Services are listed first/)).toBeInTheDocument();
-    expect(screen.getByText(/Step 1 of 6/)).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 of 9/)).toBeInTheDocument();
     expect(screen.getByText('Not saved yet')).toBeInTheDocument();
   });
 
@@ -129,10 +133,10 @@ describe('step 1, What do you sell', () => {
 
 describe('asked once, and continuing where it stopped', () => {
   test('a shop that already answered is not asked again: set-up opens at the first step not passed', async () => {
-    show(state({ kind: 'retail', doneSteps: ['business', 'shop'], nextStep: 'cash' }));
-    await heading('Usual opening cash');
+    show(state({ kind: 'retail', doneSteps: ['business', 'shop'], nextStep: 'brand' }));
+    await heading('Your logo and receipt');
     expect(screen.queryByRole('heading', { name: 'What do you sell?' })).not.toBeInTheDocument();
-    expect(screen.getByText(/Step 3 of 6/)).toBeInTheDocument();
+    expect(screen.getByText(/Step 3 of 9/)).toBeInTheDocument();
   });
 
   test('a refresh in the middle opens the same step (the server remembers what was passed)', async () => {
@@ -148,17 +152,21 @@ describe('asked once, and continuing where it stopped', () => {
     await heading('Usual opening cash');
     const list = screen.getByRole('list', { name: 'Set-up steps' });
     const items = within(list).getAllByRole('listitem');
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(9);
     expect(items[0]).toHaveTextContent('What you sell (Done)');
     expect(items[1]).toHaveTextContent('Shop name (Skipped)');
-    expect(items[2]).toHaveAttribute('aria-current', 'step');
-    expect(items[3]).not.toHaveAttribute('aria-current');
+    expect(items[2]).toHaveTextContent('Logo and receipt');
+    expect(items[2]).not.toHaveAttribute('aria-current');
+    expect(items[3]).toHaveAttribute('aria-current', 'step');
+    expect(items[4]).not.toHaveAttribute('aria-current');
   });
 
   test('Back returns to the step before', async () => {
     show(state({ kind: 'retail', doneSteps: ['business', 'shop'], nextStep: 'cash' }));
     api.getShopDetails.mockResolvedValue({ name: 'Shop A', title: 'Shop A', taxId: '' });
     await heading('Usual opening cash');
+    userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await heading('Your logo and receipt');
     userEvent.click(screen.getByRole('button', { name: 'Back' }));
     await heading('Your shop');
   });
@@ -185,7 +193,7 @@ describe('step 2, the shop name and tax ID', () => {
     open();
     userEvent.type(await screen.findByLabelText('Tax ID (optional)'), 'a123456789b');
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
-    await heading('Usual opening cash');
+    await heading('Your logo and receipt');
     expect(api.saveTaxId).toHaveBeenCalledWith({ company: 'Shop A', taxId: 'A123456789B' });
     expect(api.saveSetupProgress).toHaveBeenCalledWith('shop', { company: 'Shop A' });
   });
@@ -194,7 +202,7 @@ describe('step 2, the shop name and tax ID', () => {
     open();
     await screen.findByLabelText('Tax ID (optional)');
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
-    await heading('Usual opening cash');
+    await heading('Your logo and receipt');
     expect(api.saveTaxId).not.toHaveBeenCalled();
   });
 
@@ -214,7 +222,7 @@ describe('step 2, the shop name and tax ID', () => {
   });
 });
 
-describe('step 3, the usual opening cash', () => {
+describe('step 4, the usual opening cash', () => {
   const open = (over = {}) => show(state({ kind: 'retail', doneSteps: ['business', 'shop'], nextStep: 'cash', ...over }));
 
   test('is saved as an amount and set-up goes on to the payment methods', async () => {
@@ -241,19 +249,20 @@ describe('step 3, the usual opening cash', () => {
   });
 });
 
-describe('step 4, the payment methods', () => {
+describe('step 5, the payment methods', () => {
   test('shows the same switches as Settings and Continue moves on', async () => {
-    show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'cash'], nextStep: 'payments' }));
+    show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'brand', 'cash'], nextStep: 'payments' }));
     await heading('How do customers pay?');
     expect(await screen.findByRole('switch', { name: 'Cash' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /M-Pesa keys, bank accounts/ })).toHaveAttribute('href', '/settings/payment-gateways?legacy=1');
+    expect(screen.getByText('M-Pesa card')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Pesapal, PayPal, bank accounts/ })).toHaveAttribute('href', '/settings/payment-gateways?legacy=1');
     userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await heading('Add your first products');
+    await heading('Tax and eTIMS');
     expect(api.saveSetupProgress).toHaveBeenCalledWith('payments', { company: 'Shop A' });
   });
 });
 
-describe('step 5, the first products', () => {
+describe('step 7, the first products', () => {
   const open = (over = {}) => show(state({ kind: 'pharmacy', doneSteps: ['business', 'shop', 'cash', 'payments'], nextStep: 'products', ...over }));
 
   test('links to New product and to the current starter products screen of the kind', async () => {
@@ -285,8 +294,8 @@ describe('step 5, the first products', () => {
   });
 });
 
-describe('step 6, your team, and finishing', () => {
-  const open = () => show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'cash', 'payments', 'products'], nextStep: 'staff' }));
+describe('step 8, your team, and moving on to the final check', () => {
+  const open = () => show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'brand', 'cash', 'payments', 'etims', 'products'], nextStep: 'staff' }));
 
   test('links to Settings, Team and Settings, Tax', async () => {
     open();
@@ -295,12 +304,68 @@ describe('step 6, your team, and finishing', () => {
     expect(screen.getByRole('link', { name: 'Tax and eTIMS' })).toHaveAttribute('href', '/settings/tax');
   });
 
-  test('Finish marks the step and the whole set-up done, and returns to Home', async () => {
+  test('Continue marks the step done and goes on to the final check (set-up is not over yet)', async () => {
     open();
     await heading('Add your team');
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await heading('One last check');
+    expect(api.saveSetupProgress.mock.calls.map((c) => c[0])).toEqual(['staff']);
+    expect(screen.queryByText('Home page')).not.toBeInTheDocument();
+  });
+});
+
+describe('step 3, the logo and receipt', () => {
+  test('explains what to do and links to Settings, Brand and receipts', async () => {
+    show(state({ kind: 'retail', doneSteps: ['business', 'shop'], nextStep: 'brand' }));
+    await heading('Your logo and receipt');
+    expect(screen.getByRole('link', { name: 'Open logo and receipt' })).toHaveAttribute('href', '/settings/brand');
+  });
+
+  test('Continue marks it done and goes on to the opening cash', async () => {
+    show(state({ kind: 'retail', doneSteps: ['business', 'shop'], nextStep: 'brand' }));
+    await heading('Your logo and receipt');
+    userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await heading('Usual opening cash');
+    expect(api.saveSetupProgress).toHaveBeenCalledWith('brand', { company: 'Shop A' });
+  });
+});
+
+describe('step 6, tax and eTIMS', () => {
+  const open = () => show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'brand', 'cash', 'payments'], nextStep: 'etims' }));
+
+  test('says what eTIMS is, where the PIN comes from, shows the eTIMS card and links to Settings, Tax', async () => {
+    open();
+    await heading('Tax and eTIMS');
+    expect(screen.getByText(/Your KRA PIN is the Tax ID you entered under Shop name/)).toBeInTheDocument();
+    expect(screen.getByText('eTIMS card')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open tax settings' })).toHaveAttribute('href', '/settings/tax');
+  });
+
+  test('can be skipped by a shop that is not registered, and goes on to the products', async () => {
+    open();
+    await heading('Tax and eTIMS');
+    userEvent.click(screen.getByRole('button', { name: 'Skip this step' }));
+    await heading('Add your first products');
+    expect(api.saveSetupProgress).toHaveBeenCalledWith('etims', { skipped: true, company: 'Shop A' });
+  });
+});
+
+describe('step 9, the final check, and finishing', () => {
+  const open = () => show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'brand', 'cash', 'payments', 'etims', 'products', 'staff'], nextStep: 'check' }));
+
+  test('shows the Setup health list', async () => {
+    open();
+    await heading('One last check');
+    expect(screen.getByText('Setup health card')).toBeInTheDocument();
+    expect(screen.getByText(/Step 9 of 9/)).toBeInTheDocument();
+  });
+
+  test('Finish marks the step and the whole set-up done, and returns to Home', async () => {
+    open();
+    await heading('One last check');
     userEvent.click(screen.getByRole('button', { name: 'Finish' }));
     expect(await screen.findByText('Home page')).toBeInTheDocument();
-    expect(api.saveSetupProgress.mock.calls.map((c) => c[0])).toEqual(['staff', 'finish']);
+    expect(api.saveSetupProgress.mock.calls.map((c) => c[0])).toEqual(['check', 'finish']);
   });
 });
 
@@ -316,17 +381,17 @@ describe('skipping', () => {
   });
 
   test('every step can be skipped', async () => {
-    show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'cash', 'payments', 'products'], nextStep: 'staff' }));
+    show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'brand', 'cash', 'payments', 'etims', 'products'], nextStep: 'staff' }));
     await heading('Add your team');
     expect(screen.getByRole('button', { name: 'Skip this step' })).toBeInTheDocument();
   });
 
   test('skipping the last step ends set-up', async () => {
-    show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'cash', 'payments', 'products'], nextStep: 'staff' }));
-    await heading('Add your team');
+    show(state({ kind: 'retail', doneSteps: ['business', 'shop', 'brand', 'cash', 'payments', 'etims', 'products', 'staff'], nextStep: 'check' }));
+    await heading('One last check');
     userEvent.click(screen.getByRole('button', { name: 'Skip this step' }));
     expect(await screen.findByText('Home page')).toBeInTheDocument();
-    expect(api.saveSetupProgress.mock.calls.map((c) => c[0])).toEqual(['staff', 'finish']);
+    expect(api.saveSetupProgress.mock.calls.map((c) => c[0])).toEqual(['check', 'finish']);
   });
 
   test('Skip for now marks set-up done and returns to Home, from any step', async () => {

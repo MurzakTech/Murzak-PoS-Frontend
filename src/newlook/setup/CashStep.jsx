@@ -15,7 +15,7 @@ const FIELD_ID = 'setup-opening-cash';
 const digitsOf = (amount) => (Number(amount) > 0 ? String(Math.round(Number(amount))) : '');
 
 /**
- * Step 3, the usual opening cash. It is kept for the business as a suggestion: the New look Open till dialog fills it in, and the
+ * Step 4, the usual opening cash. It is kept for the business as a suggestion: the New look Open till dialog fills it in, and the
  * person opening the till can change it. Empty means no suggestion. No accounting entry is made.
  */
 const CashStep = ({ ctx }) => {

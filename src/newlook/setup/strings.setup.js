@@ -8,10 +8,13 @@ const setup = {
   steps: {
     business: 'What you sell',
     shop: 'Shop name',
+    brand: 'Logo and receipt',
     cash: 'Opening cash',
     payments: 'Payment methods',
+    etims: 'Tax (eTIMS)',
     products: 'First products',
     staff: 'Your team',
+    check: 'Final check',
   },
   stepState: { current: 'You are here', done: 'Done', skipped: 'Skipped', todo: 'Not done yet' },
   listLabel: 'Set-up steps',
@@ -95,11 +98,31 @@ const setup = {
     tooBig: 'That amount is too large. Check it.',
   },
 
+  brand: {
+    title: 'Your logo and receipt',
+    help: 'Your logo, colour and the words at the top and bottom of your receipt. A shop name alone is enough to start.',
+    option: { title: 'Add your logo and choose how your receipt looks', text: 'You see the receipt as you change it.', action: 'Open logo and receipt' },
+    opensNote: 'Set-up waits for you. Open it again from Home to carry on.',
+  },
+
   payments: {
     title: 'How do customers pay?',
-    help: 'Switch on the ways your till takes money. Each switch saves by itself.',
-    moreLink: 'M-Pesa keys, bank accounts and other payment settings',
-    moreText: 'Payment keys and bank accounts are set up in Settings.',
+    help: 'Switch on the ways your till takes money. Each switch saves by itself. Set up M-Pesa below if your customers use it, and test it before you sell.',
+    moreLink: 'Pesapal, PayPal, bank accounts and other payment settings',
+    moreText: 'Other payment keys and bank accounts are set up in Settings.',
+  },
+
+  etims: {
+    title: 'Tax and eTIMS',
+    help: 'eTIMS is the link that sends your sales to the Kenya Revenue Authority. Skip this step if your shop is not registered for it.',
+    pinNote: 'Your KRA PIN is the Tax ID you entered under Shop name. Change it there.',
+    supportNote: 'If KRA has certified your system, support creates your eTIMS settings once. After that you manage them here, or later in Settings under Tax.',
+    moreLink: 'Open tax settings',
+  },
+
+  check: {
+    title: 'One last check',
+    help: 'A quick look at whether your shop is ready to sell. Anything marked as needing a fix says where to fix it. You can finish now and fix it later.',
   },
 
   products: {

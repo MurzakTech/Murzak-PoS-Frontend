@@ -6,12 +6,13 @@ const DAY = 24 * 60 * 60 * 1000;
 beforeEach(() => localStorage.clear());
 
 describe('the steps', () => {
-  test('are six, in the order of the Spec', () => {
-    expect(STEP_KEYS).toEqual(['business', 'shop', 'cash', 'payments', 'products', 'staff']);
+  test('are nine, in the order the wizard shows them', () => {
+    expect(STEP_KEYS).toEqual(['business', 'shop', 'brand', 'cash', 'payments', 'etims', 'products', 'staff', 'check']);
     expect(nextKey('business')).toBe('shop');
-    expect(nextKey('staff')).toBeNull();
+    expect(nextKey('staff')).toBe('check');
+    expect(nextKey('check')).toBeNull();
     expect(previousKey('business')).toBeNull();
-    expect(previousKey('cash')).toBe('shop');
+    expect(previousKey('cash')).toBe('brand');
     expect(stepAddress('cash')).toBe('/setup?step=cash');
   });
 
