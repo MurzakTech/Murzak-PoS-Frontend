@@ -94,9 +94,10 @@ const PersonDialog = ({ member, members, tiers, me, company, onClose, onDone, on
     setError('');
     try {
       if (adding) {
-        await calls.create({ firstName: values.firstName.trim(), lastName: values.lastName.trim(), email: values.email.trim(), password: values.password, phone: values.phone.trim(), roles: rolesForNewPerson(values.tier, tiers), company });
+        const reply = await calls.create({ firstName: values.firstName.trim(), lastName: values.lastName.trim(), email: values.email.trim(), password: values.password, phone: values.phone.trim(), roles: rolesForNewPerson(values.tier, tiers), company });
+        const welcome = (reply && reply.welcome_email) || null;
         // The first password is shown once, on the next page, and kept nowhere after that
-        setAdded({ name: `${values.firstName.trim()} ${values.lastName.trim()}`.trim(), email: values.email.trim(), password: values.password, tier: values.tier });
+        setAdded({ name: `${values.firstName.trim()} ${values.lastName.trim()}`.trim(), email: values.email.trim(), password: values.password, tier: values.tier, welcome });
         setSaving(false);
         if (onSaved) onSaved();
         return;
@@ -155,6 +156,11 @@ const PersonDialog = ({ member, members, tiers, me, company, onClose, onDone, on
               <dd>{T.team.roles[added.tier]}</dd>
             </div>
           </dl>
+          {added.welcome ? (
+            <p className={added.welcome.sent ? 'nl-settings-hint' : 'nl-settings-error'} role={added.welcome.sent ? undefined : 'alert'}>
+              {added.welcome.sent ? fill(P.welcomeSent, { email: added.email }) : fill(P.welcomeNotSent, { reason: added.welcome.reason || P.welcomeNoReason })}
+            </p>
+          ) : null}
           {copied === 'no' ? (
             <p className="nl-settings-error" role="alert">
               <Icon name="alert" />

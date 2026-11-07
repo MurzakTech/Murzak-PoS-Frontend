@@ -8,9 +8,10 @@ import Icon from '../components/Icon';
 import Menu from '../components/Menu';
 import Table from '../components/Table';
 import { useAccess } from '../access/AccessProvider';
-import { deactivatePerson, listTeam, reactivatePerson } from '../../api/teamApi';
+import { deactivatePerson, listTeam, reactivatePerson, resendWelcome, checkSignIn, setPersonPassword } from '../../api/teamApi';
 import fill from '../labels/fill';
 import PersonDialog from './PersonDialog';
+import { SetPasswordDialog, SignInCheckDialog } from './SignInTools';
 import { canUseTill, isLastOwner } from './teamModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
@@ -31,10 +32,12 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
   const access = useAccess();
   const { company } = useSettingsUser();
   const owner = access.tier === 'owner';
-  const calls = { deactivate: deactivatePerson, reactivate: reactivatePerson, ...api };
+  const calls = { deactivate: deactivatePerson, reactivate: reactivatePerson, resend: resendWelcome, check: checkSignIn, setPassword: setPersonPassword, ...api };
   const [state, setState] = useState({ status: 'loading', data: null });
   const [dialog, setDialog] = useState(null); // null, { member } (member null to add)
   const [asking, setAsking] = useState(null); // the person about to be deactivated
+  const [checking, setChecking] = useState(null); // the person whose sign-in is being checked
+  const [settingPassword, setSettingPassword] = useState(null); // the person getting a new password
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [problem, setProblem] = useState('');
@@ -86,6 +89,21 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
     }
   };
 
+  const resend = async (member) => {
+    try {
+      const result = await calls.resend(member.email);
+      if (result.sent) {
+        setNotice(fill(P.welcomeResent, { email: member.email }));
+        setProblem('');
+      } else {
+        setNotice('');
+        setProblem(fill(P.welcomeNotResent, { reason: result.reason || T.team.person.welcomeNoReason }));
+      }
+    } catch (e) {
+      setProblem(e.message);
+    }
+  };
+
   const data = state.data;
   const me = data && data.me;
 
@@ -93,6 +111,11 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
     const self = member.email === me;
     const last = isLastOwner(member, data.members);
     const items = [{ label: P.edit, onClick: () => setDialog({ member }) }];
+    if (member.enabled) {
+      items.push({ label: P.checkSignIn, onClick: () => setChecking(member) });
+      items.push({ label: P.setPassword, disabled: member.tier === 'owner' && !self, onClick: () => setSettingPassword(member) });
+      items.push({ label: P.resendWelcome, onClick: () => resend(member) });
+    }
     if (member.enabled) items.push({ label: P.deactivate, destructive: true, disabled: self || last, onClick: () => setAsking(member) });
     else items.push({ label: P.reactivate, onClick: () => reactivate(member) });
     return <Menu label={fill(P.moreFor, { name: member.full_name })} items={items} />;
@@ -179,6 +202,18 @@ const TeamPeople = ({ load = listTeam, api = {}, dialogApi }) => {
         {body}
       </Card>
       {dialog ? <PersonDialog member={dialog.member} members={data.members} tiers={data.tiers} me={me} company={data.company} onClose={() => setDialog(null)} onDone={done} onSaved={() => reload(true)} api={dialogApi} /> : null}
+      {checking ? (
+        <SignInCheckDialog
+          member={checking}
+          onClose={() => setChecking(null)}
+          onSetPassword={(m) => {
+            setChecking(null);
+            setSettingPassword(m);
+          }}
+          check={calls.check}
+        />
+      ) : null}
+      {settingPassword ? <SetPasswordDialog member={settingPassword} onClose={() => setSettingPassword(null)} setPassword={calls.setPassword} /> : null}
       <ConfirmDialog
         open={Boolean(asking)}
         title={asking ? fill(T.team.deactivate.title, { name: asking.full_name }) : ''}

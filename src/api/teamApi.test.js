@@ -37,7 +37,7 @@ describe('the staff calls the current Staff screen uses', () => {
       roles: ['Sales User'],
       company: 'Shop A',
       enabled: true,
-      send_welcome_email: false,
+      send_welcome_email: true,
     });
   });
 

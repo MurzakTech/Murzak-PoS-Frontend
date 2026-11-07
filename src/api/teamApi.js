@@ -9,6 +9,7 @@ import { friendlyErrorMessage, humanizeMessage } from '../utils/friendlyError';
  */
 const TEAM = 'murzak_pos.api.team_api';
 const STAFF = 'murzak_pos.api.staff_api';
+const SIGNIN = 'murzak_pos.api.staff_signin_api';
 
 const bodyOf = (response) => response.data?.message ?? response.data;
 
@@ -53,11 +54,31 @@ export const createPerson = async ({ firstName, lastName, email, password, phone
         roles,
         company: company || '',
         enabled: true,
-        send_welcome_email: false,
+        send_welcome_email: true,
       })
     ),
     'The person could not be added.'
   );
+
+/**
+ * Whether a person can sign in, and if not why: { checks: [{ id, title, status: 'green' | 'amber' | 'red', detail, fix }], ok, summary }.
+ * Plain checks of the account only; it never returns a password.
+ */
+export const checkSignIn = async (email) => {
+  const reply = bodyOf(await send(() => axiosInstance.get(`${SIGNIN}.check_staff_sign_in`, { params: { user_email: email } })));
+  if (!reply || reply.success === false || !reply.data) throw failure(reply, 'The sign-in check could not be made.');
+  return reply.data;
+};
+
+/** Give a person a new password. The server applies the sign-up rules, ends their other sign-ins and never sends the password back. */
+export const setPersonPassword = async ({ email, password }) =>
+  done(await send(() => axiosInstance.post(`${SIGNIN}.set_staff_password`, { user_email: email, password })), 'The password could not be changed.');
+
+/** Send the welcome email again. Resolves to { sent, reason }. */
+export const resendWelcome = async (email) => {
+  const reply = done(await send(() => axiosInstance.post(`${SIGNIN}.resend_welcome_email`, { user_email: email })), 'The email could not be sent.');
+  return reply.welcome_email || { sent: false, reason: '' };
+};
 
 /** Change a person's name or mobile number. */
 export const updatePerson = async ({ email, firstName, lastName, phone }) =>
