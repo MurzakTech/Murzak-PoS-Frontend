@@ -21,7 +21,7 @@ import { listWarehouses, setDefaultWarehouse } from '../../store/warehouseSlice'
 import { saveTextFile } from '../../utils/saveTextFile';
 import './stock.css';
 import CountStockFlow from './CountStockFlow';
-import { EntryStatus, ExpiryLabel, LevelLabel } from './Labels';
+import { EntryStatus, ExpiryLabel, FlagList, LevelLabel } from './Labels';
 import StockCards from './StockCards';
 import StockInDialog from './StockInDialog';
 import StockOutDialog from './StockOutDialog';
@@ -51,6 +51,9 @@ import {
   tabAddress,
   tabFromPath,
   valueText,
+  flagWords,
+  hasSelling,
+  marginText,
   visibleTabs,
   whenWords,
 } from './stockModel';
@@ -250,12 +253,20 @@ const StockLevelsPage = () => {
       {r.level === 'low' && r.warning_level !== null && r.warning_level !== undefined ? <span className="nl-stock-sub">{fill(T.warningAt, { level: formatQty(r.warning_level) })}</span> : null}
     </>
   );
+  const sellingShown = tab === 'overview' && showValue && hasSelling(rows);
   const overviewColumns = [
     { key: 'product', header: T.columns.product, render: (r) => <Product row={r} /> },
     { key: 'category', header: T.columns.category, render: (r) => r.category || T.noValue },
     { key: 'qty', header: T.columns.inStock, align: 'right', nowrap: true, render: (r) => qtyWithUnit(r.qty, r.unit) },
     ...(showValue ? [{ key: 'value', header: T.columns.value, money: true, nowrap: true, render: (r) => valueText(r.value) }] : []),
+    ...(sellingShown
+      ? [
+          { key: 'selling', header: T.columns.sellingValue, money: true, nowrap: true, render: (r) => valueText(r.retail_value) },
+          { key: 'margin', header: T.columns.margin, align: 'right', nowrap: true, render: (r) => marginText(r.margin_pct) },
+        ]
+      : []),
     { key: 'level', header: T.columns.level, render: levelCell },
+    ...(sellingShown ? [{ key: 'check', header: T.columns.check, render: (r) => <FlagList flags={r.flags} /> }] : []),
     { key: 'more', header: T.columns.more, align: 'right', render: rowMenu },
   ];
   const lowColumns = [
@@ -363,7 +374,7 @@ const StockLevelsPage = () => {
       key: r.item_code,
       head: r.item_name,
       aside: qtyWithUnit(r.qty, r.unit),
-      lines: [r.category || T.noValue, ...(showValue ? [valueText(r.value)] : []), ...(tab === 'low' && canChange ? [<Button key="r" variant="secondary" size="small" aria-label={fill(T.reorderFor, { product: r.item_name })} onClick={() => toReorder(r)}>{T.reorder}</Button>] : [])],
+      lines: [r.category || T.noValue, ...(showValue ? [valueText(r.value)] : []), ...(sellingShown ? [`${valueText(r.retail_value)} (${marginText(r.margin_pct)})`, ...flagWords(r.flags)] : []), ...(tab === 'low' && canChange ? [<Button key="r" variant="secondary" size="small" aria-label={fill(T.reorderFor, { product: r.item_name })} onClick={() => toReorder(r)}>{T.reorder}</Button>] : [])],
       foot: <LevelLabel level={r.level} />,
     }));
   };

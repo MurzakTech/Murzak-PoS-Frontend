@@ -152,10 +152,20 @@ const cell = (value) => {
 };
 const toCsv = (rows) => `${rows.map((r) => r.map(cell).join(',')).join('\n')}\n`;
 
+/** Whether the server sent the selling figures (only to a person who may see cost) */
+export const hasSelling = (rows) => (rows || []).some((r) => r.retail_value !== undefined);
+
+/** The warnings on a product's figures, in words */
+export const flagWords = (flags) => (flags || []).map((f) => T.flags[f]).filter(Boolean);
+
+/** A margin as words, or the plain dash when there is no cost to work it out from */
+export const marginText = (pct) => (pct === null || pct === undefined ? T.noValue : `${pct}%`);
+
 /** The rows listed on Overview or Low stock; the value column only when the person may see value */
 export const stockCsv = (rows, showValue) => {
   const C = T.csv;
-  const head = [C.product, C.code, C.category, C.inStock, C.unit, ...(showValue ? [C.value] : []), C.level, C.warning];
+  const selling = showValue && hasSelling(rows);
+  const head = [C.product, C.code, C.category, C.inStock, C.unit, ...(showValue ? [C.value] : []), ...(selling ? [C.sellingValue, C.margin] : []), C.level, C.warning, ...(selling ? [C.check] : [])];
   return toCsv([
     head,
     ...rows.map((r) => [
@@ -165,8 +175,10 @@ export const stockCsv = (rows, showValue) => {
       r.qty,
       unitWords(r.unit, r.qty),
       ...(showValue ? [r.value] : []),
+      ...(selling ? [r.retail_value, r.margin_pct === null || r.margin_pct === undefined ? '' : r.margin_pct] : []),
       levelView(r.level).words,
       r.warning_level === null || r.warning_level === undefined ? '' : r.warning_level,
+      ...(selling ? [flagWords(r.flags).join('; ')] : []),
     ]),
   ]);
 };
