@@ -10,8 +10,8 @@ import T from './strings.stock';
  * list. Items, Low and Out of stock also work as filters: press one to see only those products, press again to see all.
  * The stock value tile is left out for a person who may not see cost.
  *
- *   tiles     { items, low, out_of_stock, stock_value? } or null while loading
- *   active    the level filter now on: 'low', 'out' or ''
+ *   tiles     { items, low, out_of_stock, stock_value?, retail_value?, potential_profit?, check? } or null while loading
+ *   active    the filter now on: 'low', 'out', 'check' (products with a warning on their figures) or ''
  *   onPick(level)
  */
 const Tile = ({ label, value, pressed, onPress, hint }) => {
@@ -46,9 +46,12 @@ const StockTiles = ({ tiles, loading, showValue, active, onPick }) => {
   return (
     <section className="nl-stock-tiles" aria-label={T.tiles.label}>
       {hasValue ? <Tile label={T.tiles.stockValue} value={formatMoney(tiles.stock_value)} /> : null}
+      {hasValue && tiles.retail_value !== undefined ? <Tile label={T.tiles.sellingValue} value={formatMoney(tiles.retail_value)} /> : null}
+      {hasValue && tiles.potential_profit !== undefined ? <Tile label={T.tiles.profit} value={formatMoney(tiles.potential_profit)} /> : null}
       <Tile label={T.tiles.items} value={formatQty(tiles.items)} />
       <Tile label={T.tiles.low} value={formatQty(tiles.low)} pressed={active === 'low'} onPress={() => onPick('low')} hint={T.tiles.filterHint} />
       <Tile label={T.tiles.out} value={formatQty(tiles.out_of_stock)} pressed={active === 'out'} onPress={() => onPick('out')} hint={T.tiles.filterHint} />
+      {hasValue && tiles.check !== undefined ? <Tile label={T.tiles.check} value={formatQty(tiles.check)} pressed={active === 'check'} onPress={() => onPick('check')} hint={T.tiles.filterHint} /> : null}
     </section>
   );
 };

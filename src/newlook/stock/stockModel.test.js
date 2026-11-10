@@ -22,6 +22,9 @@ import {
   reorderPath,
   statusView,
   stockCsv,
+  flagWords,
+  hasSelling,
+  marginText,
   stockInProblems,
   stockOutProblems,
   stockRoot,
@@ -30,6 +33,7 @@ import {
   unitWords,
   visibleTabs,
 } from './stockModel';
+import T from './strings.stock';
 
 describe('tabs and their addresses', () => {
   test('the tab comes from the address and anything unknown is Overview', () => {
@@ -384,5 +388,43 @@ describe('Who works here rules', () => {
     expect(namesList(['Amina'])).toBe('Amina');
     expect(namesList(['Amina', 'Juma'])).toBe('Amina and Juma');
     expect(namesList(['Amina', 'Juma', 'Zawadi'])).toBe('Amina, Juma and Zawadi');
+  });
+});
+
+describe('the selling figures', () => {
+  const sellingRows = [
+    { item_code: 'MCH', item_name: 'Mchele', category: 'Nafaka', qty: 10, unit: 'Kg', value: 1000, retail_value: 1500, margin_pct: 33.3, flags: [], level: 'ok', warning_level: null },
+    { item_code: 'SAB', item_name: 'Sabuni', category: 'Sabuni', qty: 3, unit: 'Nos', value: 0, retail_value: 90, margin_pct: null, flags: ['no_cost'], level: 'low', warning_level: 5 },
+  ];
+
+  test('the warnings are written in plain words', () => {
+    expect(flagWords(['no_cost', 'below_cost'])).toEqual(['No cost recorded', 'Priced below cost']);
+    expect(flagWords([])).toEqual([]);
+    expect(flagWords(undefined)).toEqual([]);
+  });
+
+  test('a margin is shown as a percentage, or a dash when there is no cost to work it from', () => {
+    expect(marginText(33.3)).toBe('33.3%');
+    expect(marginText(null)).toBe(T.noValue);
+  });
+
+  test('the selling figures are noticed only when the server sent them', () => {
+    expect(hasSelling(sellingRows)).toBe(true);
+    expect(hasSelling([{ item_code: 'X', value: 1 }])).toBe(false);
+    expect(hasSelling([])).toBe(false);
+  });
+
+  test('the export gains the selling value, margin and warnings for someone who may see cost', () => {
+    const lines = stockCsv(sellingRows, true).split('\n');
+    expect(lines[0]).toContain('"Selling value"');
+    expect(lines[0]).toContain('"Margin (%)"');
+    expect(lines[0]).toContain('"To check"');
+    expect(lines[2]).toContain('No cost recorded');
+  });
+
+  test('the export is as before for a person who may not see cost', () => {
+    const head = stockCsv(sellingRows, false).split('\n')[0];
+    expect(head).not.toContain('Selling value');
+    expect(head).not.toContain('To check');
   });
 });
