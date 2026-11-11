@@ -441,6 +441,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
+    '/appointments', // book, check in and send a visit to the till
     '/products', // View products for POS
     '/customers', // View customers
     '/inventory/stock-summary', // Check stock
@@ -458,6 +459,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
+    '/appointments', // book, check in and send a visit to the till
     '/products',
     '/customers',
     '/inventory/stock-summary',
