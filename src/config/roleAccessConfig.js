@@ -202,6 +202,9 @@ const ROUTE_GROUPS = {
   ],
   // Kitchen and bar station screen (anyone who can use the till can have one on a tablet)
   KITCHEN: ['/kitchen'],
+  // Appointment book (salons, barbers, clinics): booking, checking a customer in and sending the visit
+  // to the till. For the people who act on an appointment, so it goes with the till, not with the back office.
+  APPOINTMENTS: ['/appointments'],
 };
 
 // Smaller bundles for roles that should not get a whole area
@@ -273,7 +276,8 @@ export const ROLE_ACCESS_CONFIG = {
       'SETUP',
       'DEV_TOOLS',
       'INDUSTRY',
-      'KITCHEN'
+      'KITCHEN',
+      'APPOINTMENTS'
     ),
   ],
 
@@ -297,7 +301,8 @@ export const ROLE_ACCESS_CONFIG = {
       'SETUP',
       'DEV_TOOLS',
       'INDUSTRY',
-      'KITCHEN'
+      'KITCHEN',
+      'APPOINTMENTS'
     ),
   ],
 
@@ -321,13 +326,14 @@ export const ROLE_ACCESS_CONFIG = {
       'SETUP',
       'DEV_TOOLS',
       'INDUSTRY',
-      'KITCHEN'
+      'KITCHEN',
+      'APPOINTMENTS'
     ),
   ],
 
   // Sales roles
   'Sales Manager': [
-    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'EXPENSES', 'KITCHEN'),
+    ...combineRoutes('DASHBOARD', 'SALES', 'CUSTOMERS', 'PRODUCTS', 'REPORTS', 'EXPENSES', 'KITCHEN', 'APPOINTMENTS'),
     '/inventory/stock-summary', // View stock for sales
   ],
 
@@ -335,6 +341,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD', 'SALES_TILL', 'RECONCILIATION_STEP'),
     '/sales/invoice/new',
     '/kitchen', // station screen on a tablet
+    '/appointments', // book, check in and send a visit to the till
     '/customers',
     '/customers/new',
     '/products', // View products for sales
@@ -485,6 +492,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
+    '/appointments', // book, check in and send a visit to the till
     '/customers',
     '/products',
   ],

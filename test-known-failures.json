@@ -1,7 +1,6 @@
 [
   "src/api/axiosInstance.test.js :: axiosInstance clears session and redirects to /login on 401 when no refresh_token is available",
   "src/api/axiosInstance.test.js :: axiosInstance performs silent token refresh on 401 when refresh_token exists",
-  "src/config/roleAccessConfig.test.js :: every screen has an access rule each protected route resolves to itself",
   "src/fonts.test.js :: Inter is loaded as one Latin variable file the application does not import the seven-language package style sheet any more",
   "src/hooks/useHeldSales.test.js :: bringing a bill back deletes it from the server first, then hands it over",
   "src/hooks/useHeldSales.test.js :: when the server has no held-sales calls behaves exactly as before: bills are kept on the device, and the server is not asked again",
