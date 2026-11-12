@@ -12,7 +12,7 @@ export const STORE_NAME = 'pos_kv_store';
 
 const memoryStore = new Map();
 
-const isIdbSupported = () => {
+export const isIdbSupported = () => {
   try {
     return typeof window !== 'undefined' && 'indexedDB' in window && window.indexedDB !== null;
   } catch {

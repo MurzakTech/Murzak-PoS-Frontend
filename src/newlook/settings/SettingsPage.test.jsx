@@ -43,9 +43,9 @@ const renderAt = (address, tier = 'owner') => {
       <MemoryRouter initialEntries={[address]}>
         <AccessProvider userKey="amina">
           <Routes>
-            <Route path="/new-look/settings/till" element={<TillSettingsPage />} />
-            <Route path="/new-look/settings" element={<SettingsPage />} />
-            <Route path="/new-look/settings/:section" element={<SettingsPage />} />
+            <Route path="/settings/till" element={<TillSettingsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/:section" element={<SettingsPage />} />
             <Route path="*" element={<p>Somewhere else</p>} />
           </Routes>
           <Where />
@@ -69,7 +69,7 @@ beforeEach(() => {
 });
 
 test('has a side list of the six sections, with the open one marked', async () => {
-  renderAt('/new-look/settings/tax');
+  renderAt('/settings/tax');
   const nav = screen.getByRole('navigation', { name: 'Settings sections' });
   expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Business', 'Brand and receipts', 'Till and payments', 'Tax', 'Team and security', 'Advanced']);
   expect(within(nav).getByRole('link', { name: 'Tax' })).toHaveAttribute('aria-current', 'page');
@@ -79,25 +79,25 @@ test('has a side list of the six sections, with the open one marked', async () =
 });
 
 test('the bare address opens Business', async () => {
-  renderAt('/new-look/settings');
+  renderAt('/settings');
   expect(await screen.findByRole('heading', { level: 1, name: 'Business' })).toBeInTheDocument();
-  expect(screen.getByTestId('where')).toHaveTextContent('/new-look/settings/business');
+  expect(screen.getByTestId('where')).toHaveTextContent('/settings/business');
   await screen.findByLabelText('Tax ID (KRA PIN)');
 });
 
 test('the bare address keeps what was asked for in the address', async () => {
-  renderAt('/new-look/settings?section=brands');
+  renderAt('/settings?section=brands');
   await screen.findByRole('heading', { level: 1, name: 'Business' });
-  expect(screen.getByTestId('where')).toHaveTextContent('/new-look/settings/business?section=brands');
+  expect(screen.getByTestId('where')).toHaveTextContent('/settings/business?section=brands');
 });
 
 test('each section opens from the side list, and the address changes with it', async () => {
-  renderAt('/new-look/settings/business');
+  renderAt('/settings/business');
   await screen.findByLabelText('Tax ID (KRA PIN)');
   const nav = screen.getByRole('navigation', { name: 'Settings sections' });
   userEvent.click(within(nav).getByRole('link', { name: 'Team and security' }));
   expect(await screen.findByRole('heading', { level: 1, name: 'Team and security' })).toBeInTheDocument();
-  expect(screen.getByTestId('where')).toHaveTextContent('/new-look/settings/team');
+  expect(screen.getByTestId('where')).toHaveTextContent('/settings/team');
   userEvent.click(within(nav).getByRole('link', { name: 'Advanced' }));
   expect(await screen.findByRole('heading', { level: 1, name: 'Advanced' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Brands' })).toBeInTheDocument();
@@ -106,16 +106,16 @@ test('each section opens from the side list, and the address changes with it', a
 });
 
 test('a refresh on any section opens the same section', async () => {
-  const { unmount } = renderAt('/new-look/settings/advanced?section=units');
+  const { unmount } = renderAt('/settings/advanced?section=units');
   expect(await screen.findByRole('heading', { level: 1, name: 'Advanced' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Units' }).closest('li')).toHaveAttribute('aria-current', 'true');
   unmount();
-  renderAt('/new-look/settings/team');
+  renderAt('/settings/team');
   expect(await screen.findByRole('heading', { level: 1, name: 'Team and security' })).toBeInTheDocument();
 });
 
 test('Till and payments keeps the payment method switches and adds the till options and the device choice', async () => {
-  renderAt('/new-look/settings/till');
+  renderAt('/settings/till');
   expect(await screen.findByRole('switch', { name: 'Cash' })).toBeInTheDocument();
   expect(await screen.findByRole('switch', { name: 'Take sold items out of stock' })).toBeInTheDocument();
   expect(screen.getByRole('switch', { name: 'Print the receipt automatically after a sale' })).toBeInTheDocument();
@@ -124,14 +124,14 @@ test('Till and payments keeps the payment method switches and adds the till opti
 });
 
 test('every section is reached through the existing server calls (the saved business name is the signed-in business)', async () => {
-  renderAt('/new-look/settings/business');
+  renderAt('/settings/business');
   await waitFor(() => expect(getCompany).toHaveBeenCalledWith('Shop A'));
-  renderAt('/new-look/settings/team');
+  renderAt('/settings/team');
   await waitFor(() => expect(listTeam).toHaveBeenCalledWith({ company: 'Shop A' }));
 });
 
 test('a link to another section with unsaved changes asks first', async () => {
-  renderAt('/new-look/settings/business');
+  renderAt('/settings/business');
   const tax = await screen.findByLabelText('Tax ID (KRA PIN)');
   userEvent.type(tax, 'P123456789A');
   userEvent.click(within(screen.getByRole('navigation', { name: 'Settings sections' })).getByRole('link', { name: 'Tax' }));

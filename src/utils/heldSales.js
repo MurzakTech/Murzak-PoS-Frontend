@@ -8,7 +8,7 @@
  * each business, that a failed save is reported instead of ignored, and that
  * what is stored cannot crash the till if it is damaged.
  */
-import { idbGet, idbSet } from './indexedDb.js';
+import { idbGet, idbSet, isIdbSupported } from './indexedDb.js';
 
 export const LEGACY_KEY = 'pos_held_sales_v1'; // one shared list for everyone on the device
 export const STALE_AFTER_HOURS = 12;
@@ -72,7 +72,11 @@ export const readHeldAsync = async (company) => {
   return [];
 };
 
-/** Saves the list. Returns true; IndexedDB guarantees persistence even when localStorage quota is exceeded. */
+/**
+ * Saves the list. Returns false when the save failed, so the till keeps the sale instead of
+ * telling the cashier it is held. A full browser storage is fine as long as the device's
+ * larger store (IndexedDB) is there to take the list; with neither, nothing was kept.
+ */
 export const writeHeld = (storage, company, list) => {
   const key = heldKey(company);
   idbSet(key, list).catch(() => {});
@@ -80,8 +84,7 @@ export const writeHeld = (storage, company, list) => {
     storage.setItem(key, JSON.stringify(list));
     return true;
   } catch (e) {
-    // localStorage quota exceeded or restricted; IndexedDB ensures persistence
-    return true;
+    return isIdbSupported();
   }
 };
 

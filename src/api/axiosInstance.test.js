@@ -1,4 +1,3 @@
-import axios from 'axios';
 import axiosInstance, { refreshClient, PUBLIC_AUTH_ENDPOINTS, _resetRefreshStateForTest } from './axiosInstance';
 
 jest.mock('../utils/session', () => ({
@@ -76,14 +75,11 @@ describe('axiosInstance', () => {
       },
     });
 
-    // Mock axiosInstance call for retried request
-    const retrySpy = jest.spyOn(axiosInstance, 'request').mockResolvedValueOnce({
-      data: { success: true },
-      status: 200,
-    });
+    // The retried request is answered here instead of going out over the network
+    const adapter = jest.fn((config) => Promise.resolve({ data: { success: true }, status: 200, statusText: 'OK', headers: {}, config }));
 
     const error = {
-      config: { url: 'murzak_pos.api.customer_api.get_customer', headers: {} },
+      config: { url: 'murzak_pos.api.customer_api.get_customer', headers: {}, adapter },
       response: { status: 401 },
       message: 'Request failed with status code 401',
     };
@@ -98,8 +94,7 @@ describe('axiosInstance', () => {
     expect(localStorage.getItem('access_token')).toBe('new-fresh-token');
     expect(localStorage.getItem('refresh_token')).toBe('new-refresh-token');
     expect(result.data).toEqual({ success: true });
-
-    retrySpy.mockRestore();
+    expect(adapter.mock.calls[0][0].headers.Authorization).toBe('Bearer new-fresh-token');
   });
 
   it('clears session and redirects to /login on 401 when no refresh_token is available', async () => {
@@ -110,7 +105,7 @@ describe('axiosInstance', () => {
     };
 
     const interceptor = axiosInstance.interceptors.response.handlers[0];
-    await expect(interceptor.rejected(error)).rejects.toThrow();
+    await expect(interceptor.rejected(error)).rejects.toBe(error);
 
     const { clearSession } = require('../utils/session');
     expect(clearSession).toHaveBeenCalled();

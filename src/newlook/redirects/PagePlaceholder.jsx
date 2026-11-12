@@ -4,7 +4,7 @@ import { Card, EmptyState } from '../components';
 import { PageHeader } from '../shell';
 import S from '../strings';
 import { NEW_PAGES } from './redirectTable';
-import { NEW_LOOK_PREFIX, oldAddressFor } from './engine';
+import { NEW_LOOK_PREFIX, oldAddressFor, oldScreen } from './engine';
 
 /**
  * The page a new address shows until its real screen is built. It names the page and sends the person back to the
@@ -26,7 +26,7 @@ const PagePlaceholder = () => {
           icon="info"
           title={S.shell.placeholder.emptyTitle}
           description={S.shell.placeholder.emptyDescription}
-          action={old ? { label: S.shell.placeholder.openCurrent, onClick: () => navigate(old) } : undefined}
+          action={old ? { label: S.shell.placeholder.openCurrent, onClick: () => navigate(oldScreen(old)) } : undefined}
         />
       </Card>
     </div>

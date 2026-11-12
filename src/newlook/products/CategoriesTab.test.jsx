@@ -39,7 +39,7 @@ const Where = () => {
 const renderTab = async (tier = 'owner') => {
   getMyAccess.mockResolvedValue({ tier, can: tier === 'cashier' ? {} : { cost_of_goods: true } });
   render(
-    <MemoryRouter initialEntries={['/new-look/products/categories']}>
+    <MemoryRouter initialEntries={['/products/categories']}>
       <AccessProvider userKey="beth">
         <ToastProvider>
           <ProductsPage />
@@ -97,9 +97,9 @@ describe('the list', () => {
   test('a category name opens the product list for it', async () => {
     await renderTab();
     const link = await screen.findByRole('link', { name: 'See the products in Food' });
-    expect(link).toHaveAttribute('href', '/new-look/products?category=Food');
+    expect(link).toHaveAttribute('href', '/products?category=Food');
     userEvent.click(link);
-    await waitFor(() => expect(where()).toBe('/new-look/products?category=Food'));
+    await waitFor(() => expect(where()).toBe('/products?category=Food'));
   });
 
   test('with no categories the page says what to do', async () => {

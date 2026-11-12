@@ -24,14 +24,14 @@ describe('the six sections', () => {
   test('every section has a route, and so does the bare address', () => {
     const paths = newLookRoutes.map((r) => r.path);
     SECTIONS.forEach((key) => expect(paths).toContain(sectionAddress(key)));
-    expect(paths).toContain('/new-look/settings');
+    expect(paths).toContain('/settings');
   });
 
   test('a section is read from the address, and the bare address has none', () => {
-    expect(sectionFromPath('/new-look/settings/tax')).toBe('tax');
-    expect(sectionFromPath('/new-look/settings/team/')).toBe('team');
-    expect(sectionFromPath('/new-look/settings')).toBeNull();
-    expect(sectionFromPath('/new-look/settings/unknown')).toBeNull();
+    expect(sectionFromPath('/settings/tax')).toBe('tax');
+    expect(sectionFromPath('/settings/team/')).toBe('team');
+    expect(sectionFromPath('/settings')).toBeNull();
+    expect(sectionFromPath('/settings/unknown')).toBeNull();
   });
 
   test('a card is asked for by ?section= and a role by ?open=', () => {
@@ -60,7 +60,7 @@ describe('the old Settings, Staff and Roles addresses', () => {
   test('Staff, Roles and the old Settings addresses all resolve, and open the new Settings pages now they are live', () => {
     ['/staff', '/roles', '/roles/Sales%20Manager', '/settings', '/settings/security', '/settings/audit-trail', '/settings/etims', '/settings/bank-accounts'].forEach((from) => {
       expect(findEntry(from)).not.toBeNull();
-      expect(resolveRedirect(from, '').to).toMatch(/^\/new-look\/settings\//);
+      expect(resolveRedirect(from, '').to).toMatch(/^\/settings\//);
     });
   });
 
@@ -73,8 +73,8 @@ describe('the old Settings, Staff and Roles addresses', () => {
 
   test('with the redirects switched on in a test, Staff opens Team and a brand link opens Advanced on the brands card', () => {
     const live = () => true;
-    expect(resolveRedirect('/staff', '', '', { isLive: live }).to).toBe('/new-look/settings/team');
-    expect(resolveRedirect('/products/brands', '', '', { isLive: live }).to).toBe('/new-look/settings/advanced?section=brands');
+    expect(resolveRedirect('/staff', '', '', { isLive: live }).to).toBe('/settings/team');
+    expect(resolveRedirect('/products/brands', '', '', { isLive: live }).to).toBe('/settings/advanced?section=brands');
   });
 });
 

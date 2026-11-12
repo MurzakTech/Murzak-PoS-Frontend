@@ -29,7 +29,8 @@ describe('Inter is loaded as one Latin variable file', () => {
   });
 
   test('the application does not import the seven-language package style sheet any more', () => {
-    const entry = fs.readFileSync(path.join(__dirname, 'index.js'), 'utf8');
+    // index.js only chooses between the two builds; the application itself starts in mainEntry.js
+    const entry = fs.readFileSync(path.join(__dirname, 'mainEntry.js'), 'utf8');
     expect(entry).not.toMatch(/import\s+['"]@fontsource-variable\/inter['"]/);
     expect(entry).toMatch(/import\s+['"]\.\/fonts\.css['"]/);
   });

@@ -43,11 +43,11 @@ const EXISTING = {
 
 const renderNew = () =>
   render(
-    <MemoryRouter initialEntries={['/new-look/customers/new']}>
+    <MemoryRouter initialEntries={['/customers/new']}>
       <ToastProvider>
-        <Link to="/new-look/sales">Sales</Link>
+        <Link to="/sales">Sales</Link>
         <Routes>
-          <Route path="/new-look/customers/new" element={<NewCustomerPage />} />
+          <Route path="/customers/new" element={<NewCustomerPage />} />
           <Route path="*" element={<p>Somewhere else</p>} />
         </Routes>
         <Where />
@@ -57,10 +57,10 @@ const renderNew = () =>
 
 const renderEdit = (id = 'CUST-0007') =>
   render(
-    <MemoryRouter initialEntries={[`/new-look/customers/${id}/edit`]}>
+    <MemoryRouter initialEntries={[`/customers/${id}/edit`]}>
       <ToastProvider>
         <Routes>
-          <Route path="/new-look/customers/:id/edit" element={<EditCustomerPage />} />
+          <Route path="/customers/:id/edit" element={<EditCustomerPage />} />
           <Route path="*" element={<p>Somewhere else</p>} />
         </Routes>
         <Where />
@@ -240,7 +240,7 @@ describe('saving', () => {
       territory: undefined,
       company: 'Demo Shop',
     });
-    await waitFor(() => expect(where()).toBe('/new-look/customers?open=CUST-0099'));
+    await waitFor(() => expect(where()).toBe('/customers?open=CUST-0099'));
     expect(await screen.findByText('Amina Hassan saved')).toBeInTheDocument();
   });
 
@@ -264,7 +264,7 @@ describe('saving', () => {
     expect(screen.getByLabelText('Mobile number')).toHaveValue('');
     expect(screen.getByRole('combobox', { name: 'Customer type' })).toHaveTextContent('Partnership');
     expect(screen.getByLabelText('Customer name')).toHaveFocus();
-    expect(where()).toBe('/new-look/customers/new');
+    expect(where()).toBe('/customers/new');
     expect(await screen.findByText('Amina Hassan saved. Add the next customer.')).toBeInTheDocument();
   });
 
@@ -277,7 +277,7 @@ describe('saving', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save customer' }));
     expect((await screen.findAllByText('You already have a customer called Amina Hassan')).length).toBe(2);
     expect(screen.getByLabelText('Customer name')).toHaveAttribute('aria-invalid', 'true');
-    expect(where()).toBe('/new-look/customers/new');
+    expect(where()).toBe('/customers/new');
   });
 
   test('any other failure is a plain message and the form keeps what was typed', async () => {
@@ -313,7 +313,7 @@ describe('leaving with changes (AC-26)', () => {
     expect(within(dialog).getByText(/changes that are not saved yet/)).toBeInTheDocument();
     userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
     expect(screen.getByLabelText('Customer name')).toHaveValue('Amina');
-    expect(where()).toBe('/new-look/customers/new');
+    expect(where()).toBe('/customers/new');
   });
 
   test('with changes, Leave without saving goes on', async () => {
@@ -322,7 +322,7 @@ describe('leaving with changes (AC-26)', () => {
     userEvent.click(screen.getByRole('link', { name: 'Sales' }));
     userEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
     expect(await screen.findByText('Somewhere else')).toBeInTheDocument();
-    expect(where()).toBe('/new-look/sales');
+    expect(where()).toBe('/sales');
   });
 
   test('with changes, Cancel asks first', async () => {
@@ -335,7 +335,7 @@ describe('leaving with changes (AC-26)', () => {
   test('with nothing changed, Cancel goes back to the list', async () => {
     renderNew();
     userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(where()).toBe('/new-look/customers'));
+    await waitFor(() => expect(where()).toBe('/customers'));
   });
 
   test('after a save there is nothing to lose any more', async () => {
@@ -380,7 +380,7 @@ describe('the Edit customer form', () => {
     const sent = updateCustomer.mock.calls[0][0];
     expect(sent).toMatchObject({ id: 'CUST-0007', company: 'Demo Shop', name: 'Wanjiru K. Kamau', disabled: false, type: 'Company' });
     expect(sent.mobile).toBeUndefined();
-    await waitFor(() => expect(where()).toBe('/new-look/customers?open=CUST-0007'));
+    await waitFor(() => expect(where()).toBe('/customers?open=CUST-0007'));
   });
 
   test('the Disabled box is sent with the save', async () => {

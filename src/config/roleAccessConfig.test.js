@@ -8,9 +8,9 @@ describe('every screen has an access rule', () => {
 
   test('each protected route resolves to itself', () => {
     // A screen missing from ROUTE_GROUPS would be refused to everyone but admins
-    collect(protectedRoutes).forEach((path) => {
-      expect(resolveRoutePattern(path)).toBe(path);
-    });
+    // Collected first, so one missing screen does not hide the others
+    const missing = collect(protectedRoutes).filter((path) => resolveRoutePattern(path) !== path);
+    expect(missing).toEqual([]);
   });
 });
 

@@ -63,7 +63,7 @@ const Where = () => <p data-testid="where">{useLocation().pathname}</p>;
 const renderPage = async () => {
   listUnits.mockResolvedValue([{ name: 'Nos', uom_name: 'Nos' }, { name: 'Kg', uom_name: 'Kg' }]);
   const view = render(
-    <MemoryRouter initialEntries={['/new-look/products/import']}>
+    <MemoryRouter initialEntries={['/products/import']}>
       <ImportProductsPage />
       <Where />
     </MemoryRouter>
@@ -261,6 +261,6 @@ describe('importing', () => {
     await chooseFile();
     userEvent.click(await screen.findByRole('button', { name: 'Import 2 products' }));
     userEvent.click(await screen.findByRole('button', { name: 'View products' }));
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/products');
+    expect(screen.getByTestId('where')).toHaveTextContent('/products');
   });
 });

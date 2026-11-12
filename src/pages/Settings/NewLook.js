@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import PageHeader from '../../newlook/shell/PageHeader';
-import { Button, Card, Switch, ConfirmDialog, Icon, Badge } from '../../newlook/components';
+import { Button, Card, Switch, ConfirmDialog, Icon, Chip } from '../../newlook/components';
 import { useNewLook } from '../../newlook/NewLookProvider';
 
 /**
@@ -91,9 +91,7 @@ const NewLook = () => {
             New look{company ? ` for ${company}` : ''}
           </h2>
           {known ? (
-            <Badge tone={enabled ? 'positive' : 'neutral'}>
-              {enabled ? 'On' : 'Off'}
-            </Badge>
+            <Chip tone={enabled ? 'brand' : 'neutral'}>{enabled ? 'On' : 'Off'}</Chip>
           ) : (
             <span style={{ fontSize: 'var(--caption-size)', color: 'var(--muted)' }}>Checking...</span>
           )}
@@ -137,13 +135,13 @@ const NewLook = () => {
 
       <ConfirmDialog
         open={confirmOn}
-        onClose={() => setConfirmOn(false)}
+        onCancel={() => setConfirmOn(false)}
         onConfirm={() => save(true)}
         loading={busy}
         title="Turn on the New look?"
         message="Everyone who signs in at this shop will see the redesigned screens that are ready. It is best to do this when the till is closed or no cashier has items in the cart. You can switch it off again here at any time."
-        confirmText="Turn on"
-        cancelText="Keep it off"
+        confirmLabel="Turn on"
+        cancelLabel="Keep it off"
       />
     </div>
   );

@@ -50,24 +50,24 @@ describe('the Owed filter and the status in the address', () => {
 
 describe('the addresses', () => {
   test('the panel of a supplier opens on the list', () => {
-    expect(listAddress('/new-look/suppliers', 'SUP-1')).toBe('/new-look/suppliers?open=SUP-1');
+    expect(listAddress('/suppliers', 'SUP-1')).toBe('/suppliers?open=SUP-1');
   });
 
   test('a number with spaces and symbols is made safe', () => {
-    expect(listAddress('/new-look/suppliers', 'Bidco & Sons')).toBe('/new-look/suppliers?open=Bidco%20%26%20Sons');
-    expect(editAddress('/new-look/suppliers', 'Bidco & Sons')).toBe('/new-look/suppliers/Bidco%20%26%20Sons/edit');
+    expect(listAddress('/suppliers', 'Bidco & Sons')).toBe('/suppliers?open=Bidco%20%26%20Sons');
+    expect(editAddress('/suppliers', 'Bidco & Sons')).toBe('/suppliers/Bidco%20%26%20Sons/edit');
   });
 
   test('a bill links to the Purchases page with the supplier and the bill', () => {
-    expect(purchasesAddress('SUP-1', 'ACC-PINV-2026-00012')).toBe('/new-look/purchases?supplier=SUP-1&open=ACC-PINV-2026-00012');
+    expect(purchasesAddress('SUP-1', 'ACC-PINV-2026-00012')).toBe('/purchases?supplier=SUP-1&open=ACC-PINV-2026-00012');
   });
 
   test('all the bills of a supplier link to the Purchases page with only the supplier', () => {
-    expect(purchasesAddress('SUP-1')).toBe('/new-look/purchases?supplier=SUP-1');
+    expect(purchasesAddress('SUP-1')).toBe('/purchases?supplier=SUP-1');
   });
 
   test('a supplier name in a link is made safe', () => {
-    expect(purchasesAddress('A&B Mill')).toBe('/new-look/purchases?supplier=A%26B+Mill');
+    expect(purchasesAddress('A&B Mill')).toBe('/purchases?supplier=A%26B+Mill');
   });
 
   test('the supplier groups screen is the one that exists today', () => {

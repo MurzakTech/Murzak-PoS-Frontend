@@ -29,10 +29,10 @@ import {
 
 describe('tabs', () => {
   test('the categories address is the Categories tab and any other is the list', () => {
-    expect(tabFromPath('/new-look/products/categories')).toBe('categories');
-    expect(tabFromPath('/new-look/products/categories/')).toBe('categories');
-    expect(tabFromPath('/new-look/products')).toBe('products');
-    expect(tabFromPath('/new-look/products/new')).toBe('products');
+    expect(tabFromPath('/products/categories')).toBe('categories');
+    expect(tabFromPath('/products/categories/')).toBe('categories');
+    expect(tabFromPath('/products')).toBe('products');
+    expect(tabFromPath('/products/new')).toBe('products');
     expect(tabFromPath(undefined)).toBe('products');
   });
 });
@@ -115,7 +115,7 @@ describe('the list filters', () => {
   });
 
   test('the address of a category in the list', () => {
-    expect(categoryAddress('Fresh & Dry')).toBe('/new-look/products?category=Fresh%20%26%20Dry');
+    expect(categoryAddress('Fresh & Dry')).toBe('/products?category=Fresh%20%26%20Dry');
   });
 });
 

@@ -86,6 +86,6 @@ export const resolveRedirect = (pathname, search = '', hash = '', { table = REDI
 /** The current screen that does the job of a new page, for the "being rebuilt" notice (null when there is none) */
 export const oldAddressFor = (page, table = REDIRECTS) => {
   const path = page.split('?')[0];
-  const hit = table.find((e) => e.status !== 'keep' && e.to && e.to.split('?')[0] === path && !e.from.includes(':') && e.from !== '*');
+  const hit = table.find((e) => e.status !== 'keep' && e.to && e.to.split('?')[0] === path && e.from !== path && !e.from.includes(':') && e.from !== '*');
   return hit ? hit.from : null;
 };

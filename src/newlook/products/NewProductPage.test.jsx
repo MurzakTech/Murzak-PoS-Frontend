@@ -42,10 +42,10 @@ const Where = () => {
 const renderForm = async (tier = 'owner') => {
   getMyAccess.mockResolvedValue({ tier, can: tier === 'cashier' ? {} : { cost_of_goods: true, profit: true } });
   const view = render(
-    <MemoryRouter initialEntries={['/new-look/products/new']}>
+    <MemoryRouter initialEntries={['/products/new']}>
       <AccessProvider userKey="beth">
         <ToastProvider>
-          <Link to="/new-look/products">Back to products</Link>
+          <Link to="/products">Back to products</Link>
           <NewProductPage />
           <Where />
         </ToastProvider>
@@ -137,7 +137,7 @@ describe('saving with only a name and a price', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(createProduct).toHaveBeenCalledTimes(1));
     expect(createProduct).toHaveBeenCalledWith({ name: 'Soap bar', price: '120', unit: 'Nos', category: '', barcode: '', stock: '', warning: '', cost: '' });
-    await waitFor(() => expect(where()).toBe('/new-look/products?open=PRD-00001'));
+    await waitFor(() => expect(where()).toBe('/products?open=PRD-00001'));
     expect(await screen.findByText('Soap bar saved')).toBeInTheDocument();
   });
 
@@ -250,7 +250,7 @@ describe('errors', () => {
     expect(barcode).toHaveAccessibleDescription(/already used by another product/);
     expect(within(summary()).getByRole('button', { name: /already used by another product/ })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Barcode')).toHaveFocus());
-    expect(where()).toBe('/new-look/products/new');
+    expect(where()).toBe('/products/new');
   });
 
   test('a refusal that cannot be told apart is in the summary only', async () => {
@@ -343,7 +343,7 @@ describe('Save and add another', () => {
     expect(screen.getByLabelText('Barcode')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Food' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('combobox', { name: /Unit/ })).toHaveTextContent('Kilograms');
-    expect(where()).toBe('/new-look/products/new');
+    expect(where()).toBe('/products/new');
     await waitFor(() => expect(screen.getByLabelText('Product name')).toHaveFocus());
     expect(await screen.findByText('Saved')).toBeInTheDocument();
     expect(screen.getByText('Soap bar saved. Add the next one.')).toBeInTheDocument();
@@ -376,7 +376,7 @@ describe('Save and add another', () => {
     await screen.findByText('Saved');
     userEvent.click(screen.getByRole('link', { name: 'Back to products' }));
     expect(screen.queryByText('Leave without saving?')).not.toBeInTheDocument();
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
   });
 });
 
@@ -390,7 +390,7 @@ describe('Not saved yet, and the question before leaving', () => {
     await renderForm();
     userEvent.click(screen.getByRole('link', { name: 'Back to products' }));
     expect(screen.queryByText('Leave without saving?')).not.toBeInTheDocument();
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
   });
 
   test('leaving with something typed asks first, and Stay keeps the form', async () => {
@@ -400,7 +400,7 @@ describe('Not saved yet, and the question before leaving', () => {
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
     userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    expect(where()).toBe('/new-look/products/new');
+    expect(where()).toBe('/products/new');
     expect(screen.getByLabelText('Product name')).toHaveValue('Soap');
   });
 
@@ -410,13 +410,13 @@ describe('Not saved yet, and the question before leaving', () => {
     userEvent.click(screen.getByRole('link', { name: 'Back to products' }));
     const dialog = await screen.findByRole('alertdialog');
     userEvent.click(within(dialog).getByRole('button', { name: 'Leave without saving' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
   });
 
   test('Cancel on a clean form goes back to the list', async () => {
     await renderForm();
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
   });
 
   test('Cancel after typing asks first', async () => {
@@ -424,9 +424,9 @@ describe('Not saved yet, and the question before leaving', () => {
     userEvent.type(screen.getByLabelText('Price'), '5');
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
-    expect(where()).toBe('/new-look/products/new');
+    expect(where()).toBe('/products/new');
     userEvent.click(within(dialog).getByRole('button', { name: 'Leave without saving' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
   });
 
   test('the footer holds Cancel, Save and add another, and Save', async () => {
