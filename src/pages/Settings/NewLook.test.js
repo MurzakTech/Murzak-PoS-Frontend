@@ -29,12 +29,12 @@ beforeEach(() => {
   setEnabled.mockResolvedValue(true);
 });
 
-test('shows the shop and that the New look is off by default', () => {
+test('shows the shop and whether the New look is on or off', () => {
   show();
   expect(screen.getByText('New look for Shop A')).toBeInTheDocument();
   expect(screen.getByText('Off')).toBeInTheDocument();
   expect(toggle()).not.toBeChecked();
-  expect(screen.queryByRole('link', { name: /open the new look/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Open Home' })).not.toBeInTheDocument();
 });
 
 test('turning it on asks first, and does nothing if the owner keeps it off', () => {
@@ -57,7 +57,7 @@ test('confirming turns it on and says Saved', async () => {
 test('turning it off needs no confirmation and takes effect at once', async () => {
   show({ enabled: true });
   expect(screen.getByText('On')).toBeInTheDocument();
-  expect(screen.getByRole('link', { name: /open the new look/i })).toHaveAttribute('href', '/new-look');
+  expect(screen.getByRole('link', { name: 'Open Home' })).toHaveAttribute('href', '/');
   userEvent.click(toggle());
   await waitFor(() => expect(setEnabled).toHaveBeenCalledWith(false));
   expect(screen.queryByText('Turn on the New look?')).not.toBeInTheDocument();

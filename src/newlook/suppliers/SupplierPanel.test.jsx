@@ -51,7 +51,7 @@ const renderPanel = async (view = OWNER_VIEW, props = {}) => {
   getSupplierOverview.mockResolvedValue(view);
   const handlers = { onClose: jest.fn(), onEdit: jest.fn(), onChanged: jest.fn() };
   const utils = render(
-    <MemoryRouter initialEntries={['/new-look/suppliers?open=SUP-001']}>
+    <MemoryRouter initialEntries={['/suppliers?open=SUP-001']}>
       <ToastProvider>
         <SupplierPanel id="SUP-001" company="Demo Shop" summary={{ name: 'Bidco Distributors', disabled: false }} canSeeMoney {...handlers} {...props} />
         <Where />
@@ -133,17 +133,17 @@ describe('the unpaid bills', () => {
 
   test('each bill links to the Purchases page with the supplier and that bill open', async () => {
     await renderPanel();
-    expect(screen.getByRole('link', { name: 'Bill BD-1001' })).toHaveAttribute('href', '/new-look/purchases?supplier=SUP-001&open=ACC-PINV-2026-00012');
+    expect(screen.getByRole('link', { name: 'Bill BD-1001' })).toHaveAttribute('href', '/purchases?supplier=SUP-001&open=ACC-PINV-2026-00012');
   });
 
   test('a bill without its own bill number is named by the invoice number', async () => {
     await renderPanel();
-    expect(screen.getByRole('link', { name: 'Bill ACC-PINV-2026-00019' })).toHaveAttribute('href', '/new-look/purchases?supplier=SUP-001&open=ACC-PINV-2026-00019');
+    expect(screen.getByRole('link', { name: 'Bill ACC-PINV-2026-00019' })).toHaveAttribute('href', '/purchases?supplier=SUP-001&open=ACC-PINV-2026-00019');
   });
 
   test('a link to all the bills of this supplier opens the Purchases page for them', async () => {
     await renderPanel();
-    expect(screen.getByRole('link', { name: 'See all bills from this supplier' })).toHaveAttribute('href', '/new-look/purchases?supplier=SUP-001');
+    expect(screen.getByRole('link', { name: 'See all bills from this supplier' })).toHaveAttribute('href', '/purchases?supplier=SUP-001');
   });
 
   test('says how many bills there are when the list is short', async () => {
@@ -162,13 +162,13 @@ describe('the actions', () => {
   test('Pay bill is the main action and opens the next bill in Purchases', async () => {
     await renderPanel();
     userEvent.click(screen.getByRole('button', { name: 'Pay bill' }));
-    expect(where()).toBe('/new-look/purchases?supplier=SUP-001&open=ACC-PINV-2026-00012');
+    expect(where()).toBe('/purchases?supplier=SUP-001&open=ACC-PINV-2026-00012');
   });
 
   test('Pay bill falls back to the first bill when no bill has a due date', async () => {
     await renderPanel({ ...OWNER_VIEW, next_due: null });
     userEvent.click(screen.getByRole('button', { name: 'Pay bill' }));
-    expect(where()).toBe('/new-look/purchases?supplier=SUP-001&open=ACC-PINV-2026-00012');
+    expect(where()).toBe('/purchases?supplier=SUP-001&open=ACC-PINV-2026-00012');
   });
 
   test('there is no Pay bill when nothing is owed', async () => {

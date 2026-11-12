@@ -35,9 +35,9 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-test('nobody signed in: off, and the server is not asked', () => {
+test('nobody signed in: on (the default everywhere), and the server is not asked', () => {
   mount({ isAuthenticated: false, user: null });
-  expect(state()).toBe('idle:off');
+  expect(state()).toBe('ready:on');
   expect(getNewLook).not.toHaveBeenCalled();
 });
 
@@ -66,42 +66,44 @@ test('while the server is being asked, the last saved answer is used', async () 
   expect(localStorage.getItem('murzak_new_look:Shop A')).toBe('0');
 });
 
-test('with nothing saved, the first ask shows "loading", never a wrong look', async () => {
+test('with nothing saved, the New look shows while the server is asked, and the server wins', async () => {
   let answer;
   getNewLook.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
   mount();
-  expect(state()).toBe('loading:off');
-  await act(async () => answer(true));
   expect(state()).toBe('ready:on');
+  await act(async () => answer(false));
+  expect(state()).toBe('ready:off');
 });
 
-test('a saved "off" is not trusted before the server answers (it may be from before the New look became the default)', async () => {
+test('a saved "off" is used while the server is asked, and the server wins', async () => {
   localStorage.setItem('murzak_new_look:Shop A', '0');
   let answer;
   getNewLook.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
   mount();
-  expect(state()).toBe('loading:off');
+  expect(state()).toBe('ready:off');
   await act(async () => answer(true));
   expect(state()).toBe('ready:on');
 });
 
-test('when the server cannot be reached the saved answer stays, and with none saved it is off', async () => {
+test('when the server cannot be reached the saved answer stays, and with none saved it is on', async () => {
   getNewLook.mockRejectedValue(new Error('offline'));
   localStorage.setItem('murzak_new_look:Shop A', '1');
+  localStorage.setItem('murzak_new_look:Shop A', '0');
   const view = mount();
-  await waitFor(() => expect(state()).toBe('error:on'));
+  await waitFor(() => expect(state()).toBe('error:off'));
   view.unmount();
 
   localStorage.clear();
   mount();
-  await waitFor(() => expect(state()).toBe('error:off'));
+  await waitFor(() => expect(state()).toBe('error:on'));
 });
 
 test('another shop on the same device does not inherit the saved answer', async () => {
   localStorage.setItem('murzak_new_look:Shop A', '1');
   getNewLook.mockResolvedValue(false);
+  localStorage.setItem('murzak_new_look:Shop A', '0');
   mount({ isAuthenticated: true, user: { company: 'Shop B' } });
-  expect(state()).toBe('loading:off');
+  expect(state()).toBe('ready:on'); // Shop A's saved "off" is not Shop B's
   await waitFor(() => expect(state()).toBe('ready:off'));
 });
 

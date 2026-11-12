@@ -51,12 +51,12 @@ const OPTIONS = {
 const renderForm = async (tier = 'owner') => {
   getMyAccess.mockResolvedValue({ tier, can: {} });
   const view = render(
-    <MemoryRouter initialEntries={['/new-look/expenses/new']}>
+    <MemoryRouter initialEntries={['/expenses/new']}>
       <AccessProvider userKey="amina">
         <ToastProvider>
-          <Link to="/new-look/sales">Sales</Link>
+          <Link to="/sales">Sales</Link>
           <Routes>
-            <Route path="/new-look/expenses/new" element={<AddExpensePage />} />
+            <Route path="/expenses/new" element={<AddExpensePage />} />
             <Route path="*" element={<p>Somewhere else</p>} />
           </Routes>
           <Where />
@@ -203,7 +203,7 @@ describe('saving', () => {
     await renderForm();
     await fillGood();
     save();
-    await waitFor(() => expect(where()).toBe('/new-look/expenses'));
+    await waitFor(() => expect(where()).toBe('/expenses'));
     expect(createExpense).toHaveBeenCalledTimes(1);
     expect(createExpense).toHaveBeenCalledWith({
       amount: '1500',
@@ -235,7 +235,7 @@ describe('saving', () => {
     pick('Paid from', 'Bank');
     userEvent.click(screen.getByRole('button', { name: 'Save and add another' }));
     expect(await screen.findByText('Expense of KES 1,500 saved. You can add the next one.')).toBeInTheDocument();
-    expect(where()).toBe('/new-look/expenses/new');
+    expect(where()).toBe('/expenses/new');
     expect(screen.getByLabelText('Amount')).toHaveValue('');
     expect(screen.getByLabelText('Note')).toHaveValue('');
     expect(screen.getByRole('combobox', { name: 'Category' })).toHaveTextContent('Office Rent');
@@ -273,9 +273,9 @@ describe('saving', () => {
     await fillGood();
     save();
     expect(await screen.findAllByText(/could not reach the Murzak server/)).not.toHaveLength(0);
-    expect(where()).toBe('/new-look/expenses/new');
+    expect(where()).toBe('/expenses/new');
     save();
-    await waitFor(() => expect(where()).toBe('/new-look/expenses'));
+    await waitFor(() => expect(where()).toBe('/expenses'));
     expect(createExpense).toHaveBeenCalledTimes(2);
     expect(createExpense.mock.calls[0][0].requestId).toBe(createExpense.mock.calls[1][0].requestId);
   });
@@ -290,7 +290,7 @@ describe('saving', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save and add another' }));
     expect(createExpense).toHaveBeenCalledTimes(1);
     finish({ expense: { id: 'X' }, repeat: false });
-    await waitFor(() => expect(where()).toBe('/new-look/expenses'));
+    await waitFor(() => expect(where()).toBe('/expenses'));
   });
 });
 
@@ -378,7 +378,7 @@ describe('errors', () => {
     save();
     expect((await screen.findAllByText(/This shop has no Bank account set up/)).length).toBe(2);
     expect(screen.getByRole('combobox', { name: 'Paid from' })).toHaveFocus();
-    expect(where()).toBe('/new-look/expenses/new');
+    expect(where()).toBe('/expenses/new');
   });
 
   test('an answer about the whole form is shown at the top and in a message', async () => {
@@ -387,7 +387,7 @@ describe('errors', () => {
     await fillGood();
     save();
     await waitFor(() => expect(screen.getAllByRole('alert').some((a) => within(a).queryByText('The expense was not saved, so nothing was changed. Please try again.'))).toBe(true));
-    expect(where()).toBe('/new-look/expenses/new');
+    expect(where()).toBe('/expenses/new');
   });
 });
 
@@ -509,7 +509,7 @@ describe('leaving with changes', () => {
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
     userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
     expect(screen.getByLabelText('Amount')).toHaveValue('50');
-    expect(where()).toBe('/new-look/expenses/new');
+    expect(where()).toBe('/expenses/new');
   });
 
   test('with changes, Leave without saving goes on', async () => {
@@ -533,7 +533,7 @@ describe('leaving with changes', () => {
     await renderForm();
     await screen.findByLabelText('Amount');
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(where()).toBe('/new-look/expenses'));
+    await waitFor(() => expect(where()).toBe('/expenses'));
   });
 
   test('choosing only a photo counts as a change', async () => {
@@ -581,6 +581,6 @@ describe('owners and managers only', () => {
     expect(screen.queryByLabelText('Amount')).not.toBeInTheDocument();
     expect(getExpenseOptions).not.toHaveBeenCalled();
     userEvent.click(screen.getByRole('button', { name: 'Back to Home' }));
-    expect(where()).toBe('/new-look');
+    expect(where()).toBe('/');
   });
 });

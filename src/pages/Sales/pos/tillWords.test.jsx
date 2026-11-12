@@ -218,9 +218,10 @@ describe('a page that does not exist', () => {
     expect(screen.queryByText('404')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go to Home' })).toBeInTheDocument();
   });
-  test('old look: unchanged', () => {
+  test('with the New look off it is the same page (the earlier 404 page has been retired)', () => {
     render(withLook(false, <NotFound />));
-    expect(screen.getByText('404')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'We could not find that page' })).toBeInTheDocument();
+    expect(screen.queryByText('404')).not.toBeInTheDocument();
   });
 });
 

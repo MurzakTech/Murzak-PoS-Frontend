@@ -44,11 +44,11 @@ const EXISTING = {
 
 const renderNew = () =>
   render(
-    <MemoryRouter initialEntries={['/new-look/suppliers/new']}>
+    <MemoryRouter initialEntries={['/suppliers/new']}>
       <ToastProvider>
-        <Link to="/new-look/sales">Sales</Link>
+        <Link to="/sales">Sales</Link>
         <Routes>
-          <Route path="/new-look/suppliers/new" element={<NewSupplierPage />} />
+          <Route path="/suppliers/new" element={<NewSupplierPage />} />
           <Route path="*" element={<p>Somewhere else</p>} />
         </Routes>
         <Where />
@@ -58,10 +58,10 @@ const renderNew = () =>
 
 const renderEdit = (id = 'SUP-0007') =>
   render(
-    <MemoryRouter initialEntries={[`/new-look/suppliers/${id}/edit`]}>
+    <MemoryRouter initialEntries={[`/suppliers/${id}/edit`]}>
       <ToastProvider>
         <Routes>
-          <Route path="/new-look/suppliers/:id/edit" element={<EditSupplierPage />} />
+          <Route path="/suppliers/:id/edit" element={<EditSupplierPage />} />
           <Route path="*" element={<p>Somewhere else</p>} />
         </Routes>
         <Where />
@@ -203,7 +203,7 @@ describe('errors beside the field and in the summary (AC-26)', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save supplier' }));
     expect((await screen.findAllByText(/You already have a supplier called "Mama Njeri Eggs"/)).length).toBe(2);
     expect(screen.getByLabelText('Supplier name')).toHaveAttribute('aria-invalid', 'true');
-    expect(where()).toBe('/new-look/suppliers/new');
+    expect(where()).toBe('/suppliers/new');
   });
 
   test('a currency the server does not know is explained beside the currency field', async () => {
@@ -233,7 +233,7 @@ describe('saving a new supplier', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save supplier' }));
     await waitFor(() => expect(createSupplier).toHaveBeenCalledTimes(1));
     expect(createSupplier).toHaveBeenCalledWith({ name: 'Mama Njeri Eggs', type: 'Company', taxId: '', group: undefined, country: 'Kenya', currency: 'KES', internal: false, company: 'Demo Shop' });
-    await waitFor(() => expect(where()).toBe('/new-look/suppliers?open=SUP-0099'));
+    await waitFor(() => expect(where()).toBe('/suppliers?open=SUP-0099'));
   });
 
   test('sends the type, the tax ID in capitals, the group and the internal flag', async () => {
@@ -262,7 +262,7 @@ describe('saving a new supplier', () => {
     expect(screen.getByLabelText('Supplier name')).toHaveValue('');
     expect(screen.getByRole('combobox', { name: 'Type' })).toHaveTextContent('Individual');
     expect(screen.getByLabelText('Supplier name')).toHaveFocus();
-    expect(where()).toBe('/new-look/suppliers/new');
+    expect(where()).toBe('/suppliers/new');
     expect(await screen.findByText('Asha Flour Mill was saved. You can add the next supplier.')).toBeInTheDocument();
   });
 
@@ -287,7 +287,7 @@ describe('leaving with changes (AC-26)', () => {
     const dialog = await screen.findByRole('alertdialog', { name: 'Leave without saving?' });
     userEvent.click(within(dialog).getByRole('button', { name: 'Stay' }));
     expect(screen.getByLabelText('Supplier name')).toHaveValue('Mama');
-    expect(where()).toBe('/new-look/suppliers/new');
+    expect(where()).toBe('/suppliers/new');
   });
 
   test('with changes, Leave without saving goes on', async () => {
@@ -296,7 +296,7 @@ describe('leaving with changes (AC-26)', () => {
     userEvent.click(screen.getByRole('link', { name: 'Sales' }));
     userEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
     expect(await screen.findByText('Somewhere else')).toBeInTheDocument();
-    expect(where()).toBe('/new-look/sales');
+    expect(where()).toBe('/sales');
   });
 
   test('with changes, Cancel asks first', async () => {
@@ -309,7 +309,7 @@ describe('leaving with changes (AC-26)', () => {
   test('with nothing changed, Cancel goes back to the list', async () => {
     renderNew();
     userEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(where()).toBe('/new-look/suppliers'));
+    await waitFor(() => expect(where()).toBe('/suppliers'));
   });
 
   test('changing only the country counts as a change', async () => {
@@ -370,7 +370,7 @@ describe('the Edit supplier form', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save supplier' }));
     await waitFor(() => expect(updateSupplier).toHaveBeenCalledTimes(1));
     expect(updateSupplier).toHaveBeenCalledWith({ id: 'SUP-0007', name: 'Bidco Africa', group: 'Goods', taxId: 'P051234567A', country: 'Kenya', currency: 'KES', disabled: false });
-    await waitFor(() => expect(where()).toBe('/new-look/suppliers?open=SUP-0007'));
+    await waitFor(() => expect(where()).toBe('/suppliers?open=SUP-0007'));
   });
 
   test('unticking Enabled and saving sends disabled', async () => {

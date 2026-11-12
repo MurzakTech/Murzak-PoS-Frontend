@@ -86,7 +86,8 @@ describe('resolveRedirect', () => {
   });
 
   test('works out the current screen that does the job of a new page', () => {
-    expect(oldAddressFor('/sales', TABLE)).toBe('/sales');
+    // Not '/sales' itself: that would send the person straight back to the page they left
+    expect(oldAddressFor('/sales', TABLE)).toBe('/sales/history');
     expect(oldAddressFor('/sales/new', TABLE)).toBe('/sales/invoice/new');
     expect(oldAddressFor('/nowhere', TABLE)).toBeNull();
   });
@@ -190,7 +191,7 @@ describe('LegacyRedirects (in the app)', () => {
           <button type="button" onClick={() => navigate('/sales/history')}>
             to old
           </button>
-          <button type="button" onClick={() => navigate('/new-look/sales')}>
+          <button type="button" onClick={() => navigate('/sales')}>
             to new
           </button>
         </>
@@ -209,9 +210,9 @@ describe('LegacyRedirects (in the app)', () => {
     userEvent.click(screen.getByRole('button', { name: 'to old' }));
     expect(screen.getByTestId('where')).toHaveTextContent('/sales/history');
     userEvent.click(screen.getByRole('button', { name: 'to new' }));
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/sales');
+    expect(screen.getByTestId('where')).toHaveTextContent(/^\/sales$/);
     userEvent.click(screen.getByRole('button', { name: 'to old' }));
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/sales');
+    expect(screen.getByTestId('where')).toHaveTextContent(/^\/sales$/);
     resetLegacyStay();
   });
 
@@ -227,9 +228,9 @@ describe('PagePlaceholder', () => {
     window.innerWidth = 1280;
     render(
       <ThemeProvider>
-        <MemoryRouter initialEntries={['/new-look/sales']}>
+        <MemoryRouter initialEntries={['/sales']}>
           <Routes>
-            <Route path="/new-look/sales" element={<PagePlaceholder />} />
+            <Route path="/sales" element={<PagePlaceholder />} />
             <Route path="*" element={<p>current screen</p>} />
           </Routes>
         </MemoryRouter>

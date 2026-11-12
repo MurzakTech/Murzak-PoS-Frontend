@@ -56,10 +56,11 @@ describe('which sign-in page opens', () => {
     expect(screen.getByRole('button', { name: T.theme.toDark })).toBeInTheDocument();
   });
 
-  test('the flag off (an owner switched the New look off) shows the current page', () => {
+  test('the flag off still shows the redesigned page: the earlier sign-in page has been retired', () => {
     localStorage.setItem(DEVICE_KEY, '0');
     mount();
-    expect(screen.getByText(CURRENT_SUBTITLE)).toBeInTheDocument();
+    expect(screen.queryByText(CURRENT_SUBTITLE)).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: T.signIn.title })).toBeInTheDocument();
   });
 
   test('the flag on shows the redesigned page, with the theme toggle', () => {

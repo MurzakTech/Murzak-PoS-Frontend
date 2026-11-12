@@ -11,11 +11,11 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      # A failing test stops the deploy, so a broken build never reaches the shops
       - name: Run automated tests
         run: npm test -- --watchAll=false --ci
         env:
           CI: true
-        continue-on-error: true
       - run: npm run build
         env:
           CI: false
