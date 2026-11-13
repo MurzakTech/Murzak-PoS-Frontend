@@ -148,6 +148,17 @@ const NewProductPage = () => {
         ) : null}
         {isPharmacy ? (
           <div>
+            <Checkbox id="np-controlled" label={F.controlled} checked={values.controlled === 'yes'} onChange={(on) => {
+                set('controlled')(on ? 'yes' : 'no');
+                if (on) set('prescription')('yes'); // a controlled medicine is always prescription-only
+              }}
+            />
+            <p className="nl-products-note">{F.controlledHelper}</p>
+            <Field id="np-ppb" label={F.ppb} helper={F.ppbHelper} value={values.ppb || ''} autoComplete="off" onChange={set('ppb')} />
+          </div>
+        ) : null}
+        {isPharmacy ? (
+          <div>
             <Checkbox id="np-batches" label={F.batches} checked={batchesOn} onChange={(on) => set('batches')(on ? 'yes' : 'no')} />
             <p className="nl-products-note">{F.batchesHelper}</p>
           </div>

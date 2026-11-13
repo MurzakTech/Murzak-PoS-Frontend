@@ -92,6 +92,8 @@ const KEYS = {
   trackBatches: 'track_batches',
   openingBatch: 'opening_batch_no',
   openingExpiry: 'opening_expiry',
+  controlled: 'controlled_drug',
+  ppb: 'ppb_registration_no',
 };
 
 /**
@@ -153,6 +155,8 @@ export const updateProduct = async ({ code, changes, warehouse, company }) => {
   if (changes.unit !== undefined) params.stock_uom = changes.unit;
   if (changes.disabled !== undefined) params.disabled = changes.disabled;
   if (changes.prescriptionOnly !== undefined) params.prescription_only = changes.prescriptionOnly ? 1 : 0;
+  if (changes.controlled !== undefined) params.controlled_drug = changes.controlled ? 1 : 0;
+  if (changes.ppb !== undefined) params.ppb_registration_no = changes.ppb;
   if (changes.cost !== undefined) {
     params.buying_price = Number(changes.cost);
     params.warehouse = warehouse;

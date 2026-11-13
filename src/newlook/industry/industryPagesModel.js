@@ -54,3 +54,14 @@ export const recentMonths = (now = new Date(), count = 12) =>
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     return { value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`, label: d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) };
   });
+
+/** The controlled medicines register as a CSV file's text: one line per movement, under each medicine */
+export const controlledCsv = (medicines) => {
+  const lines = [T.controlled.csvColumns.map(csvCell).join(',')];
+  (medicines || []).forEach((m) =>
+    (m.lines || []).forEach((l) =>
+      lines.push([m.item_name, l.date, l.time, l.kind, l.reference, l.qty_in || '', l.qty_out || '', l.balance, l.patient, l.prescriber, l.dispensed_by].map(csvCell).join(','))
+    )
+  );
+  return `${lines.join('\r\n')}\r\n`;
+};

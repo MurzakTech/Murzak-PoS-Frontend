@@ -7,6 +7,7 @@ import useIndustryProfile from './useIndustryProfile';
 
 const REPORTS = [
   { key: 'register', feature: 'dispensing_register', path: '/reports/dispensing-register' },
+  { key: 'controlled', feature: 'controlled_register', path: '/reports/controlled-register' },
   { key: 'cashup', feature: 'waiter_cashup', path: '/reports/waiter-cashup' },
   { key: 'levy', feature: 'tourism_levy', path: '/reports/tourism-levy' },
 ];

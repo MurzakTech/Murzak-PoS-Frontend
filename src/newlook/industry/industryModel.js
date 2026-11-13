@@ -13,6 +13,7 @@ export const FEATURE_NAMES = [
   'expiry',
   'dispensing_register',
   'antibiotics_prescription_only',
+  'controlled_register',
   'tables',
   'kitchen_tickets',
   'void_approval',

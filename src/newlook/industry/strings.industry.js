@@ -84,7 +84,28 @@ const industry = {
     label: 'Reports for your kind of shop',
     register: { title: 'Dispensing register', text: 'Every prescription-only medicine sold, with the patient and prescriber' },
     cashup: { title: 'Waiter cash-up', text: "Each waiter's takings, the cash to hand over and their voids" },
+    controlled: { title: 'Controlled medicines register', text: 'Every movement of each controlled medicine, with a running balance' },
     levy: { title: 'Tourism levy', text: "The month's 2% levy to the Tourism Fund, by store" },
+  },
+
+  controlled: {
+    title: 'Controlled medicines register',
+    subtitle: 'Each controlled medicine: the balance at the start, every movement and the balance now',
+    from: 'From',
+    to: 'To',
+    show: 'Show',
+    download: 'Download (CSV)',
+    errorTitle: 'The register could not be loaded',
+    retry: 'Try again',
+    emptyTitle: 'No controlled medicines yet',
+    emptyText: 'Tick "Controlled medicine" on a product (narcotics, psychotropics) and its movements are listed here.',
+    opening: 'Balance at the start: {qty}',
+    closing: 'Balance at the end: {qty} (in {received}, out {issued})',
+    noMovement: 'No movement in this period.',
+    privacy: 'This register names patients. Keep it private and show it only to an inspector who asks for it.',
+    columns: { date: 'Date', kind: 'Movement', reference: 'Document', qtyIn: 'In', qtyOut: 'Out', balance: 'Balance', patient: 'Patient', prescriber: 'Prescriber', dispensedBy: 'By' },
+    csvColumns: ['Medicine', 'Date', 'Time', 'Movement', 'Document', 'In', 'Out', 'Balance', 'Patient', 'Prescriber', 'Dispensed by'],
+    fileName: 'controlled-register-{from}-to-{to}.csv',
   },
 
   levy: {

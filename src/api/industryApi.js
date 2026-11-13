@@ -66,3 +66,13 @@ export const setMenuOptions = async ({ itemCode, groups, company }) =>
 /** The tourism levy for a month ("yyyy-mm"): { month, rate_percent, stores, not_levied, totals } */
 export const getTourismLevy = async ({ company, month } = {}) =>
   (await callServer('murzak_pos.api.levy_api.get_tourism_levy', withCompany({ month }, company), { get: true, fallback: 'The tourism levy could not be worked out.' })).data;
+
+/** The controlled medicines register for the period: { from_date, to_date, medicines: [{ item_name, opening, lines, closing, ... }] } */
+export const getControlledRegister = async ({ company, fromDate, toDate, warehouse } = {}) =>
+  (
+    await callServer(
+      `${PHARMACY}.get_controlled_register`,
+      withCompany({ from_date: fromDate, to_date: toDate, warehouse }, company),
+      { get: true, fallback: 'The controlled medicines register could not be loaded.' }
+    )
+  ).data;

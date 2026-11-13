@@ -103,3 +103,18 @@ describe('the levy month picker', () => {
     expect(months[11].value).toBe('2025-02');
   });
 });
+
+describe('the controlled medicines register download', () => {
+  test('one line per movement under each medicine, with a header', () => {
+    const { controlledCsv } = require('./industryPagesModel');
+    const lines = controlledCsv([
+      { item_name: 'Diazepam 5mg', lines: [{ date: '2026-11-02', time: '09:30', kind: 'Dispensed', reference: 'POS-2', qty_in: 0, qty_out: 20, balance: 70, patient: 'Jane', prescriber: 'Dr O', dispensed_by: 'Amina' }] },
+      { item_name: 'Pethidine', lines: [] },
+    ])
+      .trim()
+      .split('\r\n');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toBe('Medicine,Date,Time,Movement,Document,In,Out,Balance,Patient,Prescriber,Dispensed by');
+    expect(lines[1]).toBe('Diazepam 5mg,2026-11-02,09:30,Dispensed,POS-2,,20,70,Jane,Dr O,Amina');
+  });
+});

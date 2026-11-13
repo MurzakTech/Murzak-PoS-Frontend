@@ -320,3 +320,20 @@ describe('batch tracking (pharmacies)', () => {
     expect(changesFrom(form, form)).not.toHaveProperty('trackBatches');
   });
 });
+
+describe('controlled medicines and the PPB number (pharmacies)', () => {
+  test('a new product sends them only when given', () => {
+    expect(requestFrom({ name: 'Diazepam', price: '10', controlled: 'yes', ppb: ' H123 ' })).toMatchObject({ controlled: 1, ppb: 'H123' });
+    const plain = requestFrom({ name: 'Soap', price: '10' });
+    expect(plain).not.toHaveProperty('controlled');
+    expect(plain).not.toHaveProperty('ppb');
+  });
+
+  test('the edit form sends only what changed', () => {
+    const form = formFromProduct({ item_name: 'Diazepam', price: 10, controlled_drug: 0, ppb_registration_no: 'H1' });
+    expect(form.controlled).toBe('no');
+    expect(form.ppb).toBe('H1');
+    expect(changesFrom(form, form)).toEqual({});
+    expect(changesFrom({ ...form, controlled: 'yes', ppb: 'H2' }, form)).toMatchObject({ controlled: true, ppb: 'H2' });
+  });
+});
