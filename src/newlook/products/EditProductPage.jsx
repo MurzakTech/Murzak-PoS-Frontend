@@ -19,6 +19,9 @@ import './products.css';
 import { invalidateQuery, useCategories, useUnits } from './useProductsData';
 import useShopUnits from './useShopUnits';
 import UnitPicker from './UnitPicker';
+import useBusinessFeatures from '../setup/useBusinessFeatures';
+import useIndustryProfile from '../industry/useIndustryProfile';
+import { has as profileHas } from '../industry/industryModel';
 import { categoryLabel, changesFrom, checkForm, FIELD_IDS, formFromProduct, isEdited, MORE_FIELDS, PRODUCTS_PATH, profitLine, summaryOf } from './productsModel';
 import T from './strings.products';
 
@@ -41,6 +44,9 @@ const EditProductPage = () => {
   const shopUnits = useShopUnits();
   const E = T.edit;
   const F = T.form;
+  const business = useBusinessFeatures().features;
+  const industry = useIndustryProfile(null).profile;
+  const isPharmacy = business.prescriptionOnly || profileHas(industry, 'prescription_only');
 
   const [load, setLoad] = useState({ status: 'loading', product: null, canSeeCost: false });
   const [values, setValues] = useState(null);
@@ -152,6 +158,12 @@ const EditProductPage = () => {
         <div id={FIELD_IDS.general} tabIndex={-1} className="nl-products-formtop" />
         <Field id={FIELD_IDS.name} label={F.name} value={values.name} error={problems.name} aria-required={true} autoComplete="off" onChange={set('name')} />
         <Field id={FIELD_IDS.price} kind="money" label={F.price} helper={F.priceHelper} value={values.price} error={problems.price} aria-required={true} onChange={set('price')} />
+        {isPharmacy ? (
+          <div>
+            <Checkbox id="ep-prescription" label={F.prescription} checked={values.prescription === 'yes'} onChange={(on) => set('prescription')(on ? 'yes' : 'no')} />
+            <p className="nl-products-note">{F.prescriptionHelper}</p>
+          </div>
+        ) : null}
 
         <MoreOptions key={forceOpen ? 'open' : 'closed'} defaultOpen={forceOpen}>
           {canSeeCost ? (

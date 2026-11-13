@@ -88,6 +88,7 @@ const KEYS = {
   stock: 'opening_stock',
   warning: 'low_stock_warning',
   store: 'warehouse',
+  prescriptionOnly: 'prescription_only',
 };
 
 /**
@@ -132,6 +133,7 @@ export const updateProduct = async ({ code, changes, warehouse, company }) => {
   if (changes.category !== undefined) params.item_group = changes.category;
   if (changes.unit !== undefined) params.stock_uom = changes.unit;
   if (changes.disabled !== undefined) params.disabled = changes.disabled;
+  if (changes.prescriptionOnly !== undefined) params.prescription_only = changes.prescriptionOnly ? 1 : 0;
   if (changes.cost !== undefined) {
     params.buying_price = Number(changes.cost);
     params.warehouse = warehouse;

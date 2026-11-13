@@ -41,6 +41,8 @@ const ChartsPage = lazyPage(() => import('./charts/ChartsPage'), 'ChartsPage');
 const RedirectsPage = lazyPage(() => import('./redirects/RedirectsPage'), 'RedirectsPage');
 const EcommercePage = lazyPage(() => import('./ecommerce/EcommercePage'), 'EcommercePage');
 const MarketplacePage = lazyPage(() => import('./marketplace/MarketplacePage'), 'MarketplacePage');
+const DispensingRegisterPage = lazyPage(() => import('./industry/DispensingRegisterPage'), 'DispensingRegisterPage');
+const WaiterCashupPage = lazyPage(() => import('./industry/WaiterCashupPage'), 'WaiterCashupPage');
 
 // Pages that have their own route, so they get no placeholder
 const OWN_ROUTES = [
@@ -109,6 +111,9 @@ const CANONICAL_ROUTES = [
   { path: '/expenses/new', element: AddExpensePage },
   // Reports (P5-2)
   { path: '/reports', element: ReportsPage },
+  // Industry reports: the pharmacy's dispensing register and the restaurant's waiter cash-up
+  { path: '/reports/dispensing-register', element: DispensingRegisterPage },
+  { path: '/reports/waiter-cashup', element: WaiterCashupPage },
   { path: '/reports/:name', element: ReportPage },
   // Redirects table review
   { path: '/redirects', element: RedirectsPage },

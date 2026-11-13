@@ -17,6 +17,8 @@ import {
   profitLine,
   profitOf,
   requestFrom,
+  formFromProduct,
+  changesFrom,
   showFromParam,
   showOptions,
   statusView,
@@ -284,3 +286,20 @@ describe('similarCategories', () => {
     expect(similarCategories([])).toEqual([]);
   });
 });
+
+describe('prescription-only (pharmacies)', () => {
+  test('the new product sends the choice only when the person ticked or unticked the box', () => {
+    expect(requestFrom({ name: 'Amoxicillin', price: '300' })).not.toHaveProperty('prescriptionOnly');
+    expect(requestFrom({ name: 'Amoxicillin', price: '300', prescription: 'yes' })).toMatchObject({ prescriptionOnly: 1 });
+    expect(requestFrom({ name: 'Amoxicillin', price: '300', prescription: 'no' })).toMatchObject({ prescriptionOnly: 0 });
+  });
+
+  test('the edit form reads the setting and sends it only when it changed', () => {
+    const form = formFromProduct({ item_name: 'Amoxicillin', price: 300, prescription_only: 1 });
+    expect(form.prescription).toBe('yes');
+    expect(changesFrom(form, form)).not.toHaveProperty('prescriptionOnly');
+    expect(changesFrom({ ...form, prescription: 'no' }, form)).toMatchObject({ prescriptionOnly: false });
+    expect(formFromProduct({ item_name: 'Soap', price: 50 }).prescription).toBe('no');
+  });
+});
+

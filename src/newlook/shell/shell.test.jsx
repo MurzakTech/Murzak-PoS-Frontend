@@ -91,8 +91,13 @@ describe('The menu', () => {
     expect(isActive(sales, '/customers')).toBe(false);
   });
 
-  test('for service/salon businesses, resolveNavigation adds Appointments to the Sell group', () => {
-    const serviceNav = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p, business: { kind: 'services' } });
+  test('Appointments stays out of the menu, even for a salon, until the server has bookings', () => {
+    const salonNav = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p, business: { kind: 'services' } });
+    expect(salonNav.groups.find((g) => g.key === 'sell').items.map((i) => i.label)).toEqual(['Sales', 'Customers']);
+  });
+
+  test('for service/salon businesses, resolveNavigation adds Appointments to the Sell group when bookings are switched on', () => {
+    const serviceNav = resolveNavigation(NAVIGATION, { isLive: () => true, toNew: (p) => p, business: { kind: 'services' }, showAppointments: true });
     const sellItems = serviceNav.groups.find((g) => g.key === 'sell').items.map((i) => i.label);
     expect(sellItems).toEqual(['Sales', 'Appointments', 'Customers']);
 

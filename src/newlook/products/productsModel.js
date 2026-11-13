@@ -177,6 +177,8 @@ export const requestFrom = (values, { canSeeCost = false } = {}) => ({
   stock: values.stock,
   warning: values.warning,
   ...(canSeeCost ? { cost: values.cost } : {}),
+  // Pharmacies only: sent only when the person ticked or unticked it; otherwise the server decides (antibiotics start ticked)
+  ...(values.prescription === 'yes' ? { prescriptionOnly: 1 } : values.prescription === 'no' ? { prescriptionOnly: 0 } : {}),
 });
 
 /**
@@ -233,7 +235,7 @@ export const canDeleteCategory = (category) => !isRootCategory(category.name) &&
 
 // ---------- The Edit product form ----------
 
-const EDIT_KEYS = ['name', 'price', 'cost', 'unit', 'category', 'enabled'];
+const EDIT_KEYS = ['name', 'price', 'cost', 'unit', 'category', 'enabled', 'prescription'];
 
 /** The form's starting values from a row of the list. The cost is there only when the person may see it. */
 export const formFromProduct = (product, { canSeeCost = false } = {}) => ({
@@ -244,6 +246,8 @@ export const formFromProduct = (product, { canSeeCost = false } = {}) => ({
   category: isRootCategory(product.category) ? '' : product.category || '',
   barcode: product.barcode || '',
   enabled: product.status !== 'disabled',
+  // Pharmacies: whether a sale needs a prescription ('yes' or 'no', as the New product form keeps it)
+  prescription: product.prescription_only === 1 || product.prescription_only === true ? 'yes' : 'no',
 });
 
 /** Has anything on the Edit form been changed? */
@@ -258,6 +262,7 @@ export const changesFrom = (values, baseline, { canSeeCost = false } = {}) => {
   if (values.unit !== baseline.unit) out.unit = values.unit;
   if (values.category !== baseline.category && values.category) out.category = values.category;
   if (values.enabled !== baseline.enabled) out.disabled = !values.enabled;
+  if (values.prescription && values.prescription !== baseline.prescription) out.prescriptionOnly = values.prescription === 'yes';
   return out;
 };
 

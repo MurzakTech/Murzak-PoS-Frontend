@@ -84,9 +84,9 @@ import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
 import KitchenTicketDialog from './pos/KitchenTicketDialog';
 import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import PrescriptionDialog from './pos/PrescriptionDialog';
-import ClinicalPrescriptionModal from './pos/ClinicalPrescriptionModal';
-import { recordDispense } from '../../api/pharmacyHealthApi';
-import useBusinessFeatures from '../../newlook/setup/useBusinessFeatures';
+import VoidApprovalDialog from './pos/VoidApprovalDialog';
+import useIndustryProfile from '../../newlook/industry/useIndustryProfile';
+import { has as profileHas } from '../../newlook/industry/industryModel';
 import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
@@ -285,6 +285,11 @@ const NewSale = () => {
     saveDevice: saveKitchenDevice,
   } = useKitchenSettings({ company: userCompany });
   const kitchenWarehouse = activeWarehouse?.name || activeWarehouse?.warehouse_name || '';
+  // The store's kind of shop (pharmacy, restaurant and bar, or general): which industry features are on here
+  const { profile: industryProfile } = useIndustryProfile(kitchenWarehouse, userCompany);
+  // Restaurant and bar: an item the kitchen already has comes off only with a manager's approval (see VoidApprovalDialog)
+  const voidApprovalOn = kitchenSettings.enabled && profileHas(industryProfile, 'void_approval');
+  const [voidRequest, setVoidRequest] = useState(null); // { lines, apply } waiting for approval
   const screensWanted = kitchenSettings.enabled && kitchenSettings.screens && kitchenSettingsStatus !== 'unavailable';
   const kitchenTickets = useKitchenTickets({ company: userCompany, warehouse: kitchenWarehouse, enabled: screensWanted });
   const [readyOpen, setReadyOpen] = useState(false);
@@ -299,7 +304,6 @@ const NewSale = () => {
   // Prescription-only medicines on the sale: who it is for and who prescribed it (kept on the invoice)
   const [dispensing, setDispensing] = useState(null);
   const [rxOpen, setRxOpen] = useState(false);
-  const [clinicalRxOpen, setClinicalRxOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const { enabled: newLook } = useNewLook(); // the redesigned till pieces show only while the shop's New look is on
   // New look: a class on the page body, so the keyboard focus ring (till-controls.css) also reaches dialogs and menus that open outside the till
@@ -960,6 +964,15 @@ const NewSale = () => {
     // Reducing something already sent to the kitchen is remembered, so the next ticket cancels it
     const before = cart.find((i) => i.item_code === itemCode);
     const cancelled = before ? voidFor(before, before.qty + delta) : null;
+    // In a restaurant or bar, taking off what the kitchen already has needs a manager first
+    if (cancelled && voidApprovalOn) {
+      setVoidRequest({ lines: [{ ...cancelled, rate: before.rate }], apply: () => changeQuantity(itemCode, delta, cancelled) });
+      return;
+    }
+    changeQuantity(itemCode, delta, cancelled);
+  };
+
+  const changeQuantity = (itemCode, delta, cancelled) => {
     if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart =>
       prevCart.map(item => {
@@ -987,6 +1000,14 @@ const NewSale = () => {
   const removeFromCart = (itemCode) => {
     const before = cart.find((i) => i.item_code === itemCode);
     const cancelled = before ? voidFor(before, 0) : null;
+    if (cancelled && voidApprovalOn) {
+      setVoidRequest({ lines: [{ ...cancelled, rate: before.rate }], apply: () => removeLine(itemCode, cancelled) });
+      return;
+    }
+    removeLine(itemCode, cancelled);
+  };
+
+  const removeLine = (itemCode, cancelled) => {
     if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart => {
       const newCart = prevCart.filter(item => item.item_code !== itemCode);
@@ -1388,21 +1409,7 @@ const NewSale = () => {
           if (result.type === 'sales/createSalesInvoice/fulfilled') {
             const createdInvoice = result.payload.salesInvoice || result.payload.data;
             setCompletedInvoice(createdInvoice);
-            if (dispensing && isDispensingComplete(dispensing)) {
-              recordDispense({
-                patient_name: dispensing.patient,
-                prescriber: dispensing.prescriber,
-                prescription_reference: dispensing.reference,
-                invoice_id: createdInvoice?.name || createdInvoice?.id,
-                items: cart.filter(isPrescriptionOnly).map((i) => ({
-                  item_code: i.item_code,
-                  item_name: i.item_name,
-                  qty: i.qty,
-                  batch_no: i.batch_no || '',
-                })),
-                company: userCompany,
-              }).catch(() => {});
-            }
+            // The dispensing record travels with the sale itself (the server keeps it on the invoice)
             // Store sale data for receipt before clearing cart
             setCompletedSaleData({
               items: cart,
@@ -1971,8 +1978,17 @@ const NewSale = () => {
   };
 
   const requestClear = () => {
-    if (kitchenEnabled && hasSentItems(cart, kitchen)) setClearSentOpen(true);
-    else setClearDialogOpen(true);
+    if (kitchenEnabled && hasSentItems(cart, kitchen)) {
+      // Clearing a bill the kitchen has started on removes every sent item: a manager approves them first
+      const sentLines = voidApprovalOn
+        ? cart.map((line) => {
+            const v = voidFor(line, 0);
+            return v ? { ...v, rate: line.rate } : null;
+          }).filter(Boolean)
+        : [];
+      if (sentLines.length > 0) setVoidRequest({ lines: sentLines, apply: () => setClearSentOpen(true) });
+      else setClearSentOpen(true);
+    } else setClearDialogOpen(true);
   };
 
   // Clearing a bill the kitchen already has: the cancellation goes out first, and the bill is cleared once it has
@@ -2133,7 +2149,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || !!voidRequest || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -2251,13 +2267,6 @@ const NewSale = () => {
     const stock = productStocks[item.item_code]?.[item.warehouse || defaultWarehouse];
     return stockNote(item.qty, stock === undefined ? null : stock);
   };
-  const business = useBusinessFeatures();
-  const isPharmacy =
-    business?.kind === 'pharmacy' ||
-    business?.features?.prescriptionOnly ||
-    user?.pos_industry_code?.toLowerCase() === 'pharmacy' ||
-    user?.pos_industry?.industry_code?.toLowerCase() === 'pharmacy' ||
-    cart.some(isPrescriptionOnly);
 
   const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
 
@@ -2297,7 +2306,6 @@ const NewSale = () => {
       kitchenPending={kitchenPending}
       onSendKitchen={startSend}
       onEditNote={setNoteCode}
-      onOpenClinicalRx={isPharmacy ? () => setClinicalRxOpen(true) : undefined}
     />
   );
 
@@ -2654,25 +2662,6 @@ const NewSale = () => {
         }}
       />
 
-      <ClinicalPrescriptionModal
-        open={clinicalRxOpen}
-        onClose={() => setClinicalRxOpen(false)}
-        defaultWarehouse={defaultWarehouse}
-        onLoadPrescriptionToCart={(rxData) => {
-          if (rxData.patient_name) {
-            setCustomer(rxData.patient_name);
-          }
-          setDispensing({
-            patient: rxData.patient_name || '',
-            prescriber: rxData.doctor || '',
-            reference: rxData.reference || '',
-          });
-          if (Array.isArray(rxData.items) && rxData.items.length > 0) {
-            setCart((prev) => [...prev, ...rxData.items]);
-          }
-        }}
-      />
-
       <ReadyTicketsDialog open={readyOpen} tickets={kitchenTickets.ready} onServe={serveTicket} onClose={() => setReadyOpen(false)} />
 
       <UnsentItemsDialog
@@ -2691,6 +2680,21 @@ const NewSale = () => {
           } finally {
             chargeCheckedRef.current = false;
           }
+        }}
+      />
+
+      <VoidApprovalDialog
+        open={!!voidRequest}
+        lines={voidRequest?.lines || []}
+        billLabel={activeHeldLabel}
+        warehouse={kitchenWarehouse}
+        company={userCompany}
+        onClose={() => setVoidRequest(null)}
+        onApproved={({ approvedBy }) => {
+          const apply = voidRequest?.apply;
+          setVoidRequest(null);
+          if (apply) apply();
+          showHeldMessage(approvedBy ? `Removed, approved by ${approvedBy}.` : 'Removed. The void is recorded.', 'success');
         }}
       />
 

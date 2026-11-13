@@ -75,8 +75,12 @@ export const isServiceBusiness = (business, user) => {
   return ['SALON', 'SERVICES', 'BARBER', 'SPA', 'BEAUTY'].includes(ind);
 };
 
+// The Appointments page calls a server module (appointment_api) that the server does not have yet, so its menu entry stays
+// hidden until it does. Switch this on in the same change that adds the server side.
+export const APPOINTMENTS_READY = false;
+
 export const resolveNavigation = (navigation, { isLive, toNew, business, user, showAppointments } = {}) => {
-  const includeAppointments = showAppointments ?? isServiceBusiness(business, user);
+  const includeAppointments = showAppointments ?? (APPOINTMENTS_READY && isServiceBusiness(business, user));
   const resolve = (item) => ({ ...item, to: item.soon ? undefined : item.page && (isLive(item.page) || !item.old) ? toNew(item.page) : item.old });
   return {
     home: resolve(navigation.home),
