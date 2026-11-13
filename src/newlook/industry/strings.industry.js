@@ -84,6 +84,25 @@ const industry = {
     label: 'Reports for your kind of shop',
     register: { title: 'Dispensing register', text: 'Every prescription-only medicine sold, with the patient and prescriber' },
     cashup: { title: 'Waiter cash-up', text: "Each waiter's takings, the cash to hand over and their voids" },
+    levy: { title: 'Tourism levy', text: "The month's 2% levy to the Tourism Fund, by store" },
+  },
+
+  levy: {
+    title: 'Tourism levy',
+    subtitle: 'Regulated restaurants and bars remit 2% of their sales to the Tourism Fund each month',
+    month: 'Month',
+    loading: 'Adding up the month…',
+    errorTitle: 'The levy could not be worked out',
+    retry: 'Try again',
+    emptyTitle: 'No restaurant or bar sales this month',
+    emptyText: 'Only stores whose kind of shop is a restaurant and bar are levied. Set it under Settings, Business.',
+    tableLabel: 'Tourism levy by store',
+    columns: { store: 'Store', salesBeforeVat: 'Sales before VAT', levyBeforeVat: 'Levy on that (2%)', salesWithVat: 'Sales with VAT', levyWithVat: 'Levy on that (2%)' },
+    total: 'Total',
+    totalBefore: 'Levy on sales before VAT',
+    totalWith: 'Levy on sales with VAT',
+    basisNote: 'We show the levy on both bases. Confirm with the Tourism Fund which one your business files on before you pay.',
+    notLevied: 'Not levied (another kind of shop): {stores}',
   },
 
   menuOptions: {

@@ -92,3 +92,14 @@ describe('the dispensing register and cash-up helpers', () => {
     expect(modesLine(undefined, String)).toBe('');
   });
 });
+
+describe('the levy month picker', () => {
+  test('lists the last twelve months, newest first', () => {
+    const { recentMonths } = require('./industryPagesModel');
+    const months = recentMonths(new Date(2026, 0, 20));
+    expect(months).toHaveLength(12);
+    expect(months[0].value).toBe('2026-01');
+    expect(months[1].value).toBe('2025-12');
+    expect(months[11].value).toBe('2025-02');
+  });
+});

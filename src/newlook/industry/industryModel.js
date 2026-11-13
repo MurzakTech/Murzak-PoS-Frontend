@@ -18,6 +18,7 @@ export const FEATURE_NAMES = [
   'void_approval',
   'waiter_on_sale',
   'waiter_cashup',
+  'tourism_levy',
 ];
 
 export const GENERAL_WORDS = T.generalWords;

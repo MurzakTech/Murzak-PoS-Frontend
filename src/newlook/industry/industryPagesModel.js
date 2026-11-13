@@ -47,3 +47,10 @@ export const modesLine = (byMode, formatMoney) =>
     .filter(([, amount]) => Number(amount) !== 0)
     .map(([mode, amount]) => `${mode} ${formatMoney(amount)}`)
     .join(' · ');
+
+/** The last 12 months, newest first, as { value: "yyyy-mm", label: "November 2026" } for the levy month picker */
+export const recentMonths = (now = new Date(), count = 12) =>
+  Array.from({ length: count }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    return { value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`, label: d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) };
+  });

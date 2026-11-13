@@ -62,3 +62,7 @@ export const listMenuOptions = async (company) =>
 /** Keeps a dish's option groups (an empty list removes them). Resolves to { item_code, groups }. */
 export const setMenuOptions = async ({ itemCode, groups, company }) =>
   (await callServer(`${OPTIONS}.set_menu_options`, withCompany({ item_code: itemCode, groups: JSON.stringify(groups || []) }, company), { fallback: 'The menu options could not be saved.' })).data;
+
+/** The tourism levy for a month ("yyyy-mm"): { month, rate_percent, stores, not_levied, totals } */
+export const getTourismLevy = async ({ company, month } = {}) =>
+  (await callServer('murzak_pos.api.levy_api.get_tourism_levy', withCompany({ month }, company), { get: true, fallback: 'The tourism levy could not be worked out.' })).data;
