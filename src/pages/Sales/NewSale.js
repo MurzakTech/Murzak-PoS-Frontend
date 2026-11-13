@@ -86,6 +86,8 @@ import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import PrescriptionDialog from './pos/PrescriptionDialog';
 import VoidApprovalDialog from './pos/VoidApprovalDialog';
 import MenuOptionsDialog from './pos/MenuOptionsDialog';
+import { isExpired, parseGs1, sameGtin } from '../../utils/gs1';
+import { todayIso } from '../../newlook/purchases/purchasesModel';
 import { listMenuOptions } from '../../api/industryApi';
 import useIndustryProfile from '../../newlook/industry/useIndustryProfile';
 import { has as profileHas } from '../../newlook/industry/industryModel';
@@ -972,6 +974,21 @@ const NewSale = () => {
   const handleSearchEnter = () => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return;
+    // A medicine pack's GS1 code: find the product by its product number, and never sell a pack that has expired
+    const pack = parseGs1(searchTerm);
+    if (pack) {
+      const found = products.find((p) => barcodesOf(p).some((b) => sameGtin(b, pack.gtin)));
+      const warn = (message, severity = 'warning') => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+      };
+      if (!found) warn(`No product has the code ${pack.gtin}. Add it to the product's barcodes, then scan again.`);
+      else if (isExpired(pack.expiry, todayIso())) warn(`This pack of ${found.item_name} expired on ${pack.expiry}. Do not sell it; put it aside to return.`, 'error');
+      else addToCart(found);
+      setSearchTerm('');
+      return;
+    }
     const exact = products.find((p) => exactCodeMatch(p, term));
     const matches = exact ? [exact] : products.filter((p) => productMatches(p, term));
     if (matches.length === 1) {

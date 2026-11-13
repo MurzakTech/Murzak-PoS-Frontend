@@ -590,3 +590,21 @@ describe('medicines received batch by batch', () => {
     expect(billRequest({ ...base, haveBill: true }, [ready], 'r1').items[0]).toMatchObject({ batch_no: 'B7', expiry_date: '2099-01-31' });
   });
 });
+
+describe('scanning a medicine pack at receiving', () => {
+  const { applyPackScan } = require('./purchasesModel');
+  const order = { lines: [{ item_code: 'AMOX', item_name: 'Amoxicillin', ordered: 10, received: 0, to_arrive: 10, rate: 30, tracks_batches: true, barcodes: ['6123456789012'] }] };
+
+  test('the pack fills its line with the batch and expiry, and ticks it', () => {
+    const lines = receiveLines(order).map((l) => ({ ...l, ticked: false }));
+    const result = applyPackScan(lines, { gtin: '06123456789012', batch: 'AB1', expiry: '2099-03-31' }, '2026-11-13');
+    expect(result.problem).toBeNull();
+    expect(result.lines[0]).toMatchObject({ ticked: true, batchNo: 'AB1', expiry: '2099-03-31' });
+  });
+
+  test('an expired pack or an unknown code changes nothing', () => {
+    const lines = receiveLines(order);
+    expect(applyPackScan(lines, { gtin: '06123456789012', batch: 'AB1', expiry: '2020-01-01' }, '2026-11-13')).toMatchObject({ problem: 'expired', lines });
+    expect(applyPackScan(lines, { gtin: '09999999999999', batch: '', expiry: null }, '2026-11-13')).toMatchObject({ problem: 'notFound', lines });
+  });
+});

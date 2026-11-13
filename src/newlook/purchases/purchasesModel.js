@@ -1,4 +1,5 @@
 import { formatMoney } from '../components/format';
+import { isExpired, sameGtin } from '../../utils/gs1';
 import fill from '../labels/fill';
 import { NEW_LOOK_PREFIX } from '../redirects/engine.js';
 import T from './strings.purchases';
@@ -216,6 +217,7 @@ export const receiveLines = (purchase) =>
     reason: SPOILT_REASONS[0],
     // Medicines received batch by batch: the batch number (optional) and expiry date (required) on the pack
     tracksBatches: l.tracks_batches === true || l.tracks_batches === 1,
+    barcodes: Array.isArray(l.barcodes) ? l.barcodes : [],
     batchNo: '',
     expiry: '',
   }));
@@ -528,4 +530,16 @@ export const taxBreakdown = (net, ratePercent) => {
   const base = Math.round((Number(net) || 0) * 100) / 100;
   const tax = Math.round(base * ((Number(ratePercent) || 0) / 100) * 100) / 100;
   return { net: base, tax, total: Math.round((base + tax) * 100) / 100 };
+};
+
+/**
+ * A scanned medicine pack (GS1 code, read by utils/gs1) applied to the delivery: the line of that product gets the pack's
+ * batch and expiry, and is ticked. { lines, name, problem } where problem is 'notFound', 'expired' or null.
+ */
+export const applyPackScan = (lines, pack, today = todayIso()) => {
+  const line = lines.find((l) => l.toArrive > 0 && (l.barcodes || []).some((b) => sameGtin(b, pack.gtin)));
+  if (!line) return { lines, name: '', problem: 'notFound' };
+  if (isExpired(pack.expiry, today)) return { lines, name: line.name, problem: 'expired' };
+  const patch = { ticked: true, ...(pack.batch ? { batchNo: pack.batch } : {}), ...(pack.expiry ? { expiry: pack.expiry } : {}) };
+  return { lines: lines.map((l) => (l === line ? { ...l, ...patch, qty: l.qty || qtyText(l.toArrive) } : l)), name: line.name, problem: null };
 };

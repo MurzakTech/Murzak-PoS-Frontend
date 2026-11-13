@@ -15,6 +15,7 @@ import fill from '../labels/fill';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
 import { createPurchaseReturn, getPurchase, receiveGoods } from '../../api/purchasesListApi';
+import { parseGs1 } from '../../utils/gs1';
 import { invalidateQuery } from './usePurchasesData';
 import './purchases.css';
 import PurchaseStatus from './PurchaseStatus';
@@ -43,6 +44,7 @@ import {
   billBreakdown,
   SPOILT_PREFIX,
   EXPIRY_PREFIX,
+  applyPackScan,
   SPOILT_REASONS,
   spoiltItems,
   spoiltTotal,
@@ -101,6 +103,8 @@ const ReceiveGoodsPage = () => {
   const [supplier, setSupplier] = useState('');
   const [purchase, setPurchase] = useState(null);
   const [lines, setLines] = useState([]);
+  const [scanText, setScanText] = useState(''); // a medicine pack's GS1 code, as the scanner types it
+  const [scanNote, setScanNote] = useState('');
   const [billNo, setBillNo] = useState('');
   const [billDate, setBillDate] = useState(isoDay(new Date()));
   const [dueDate, setDueDate] = useState('');
@@ -588,6 +592,35 @@ const ReceiveGoodsPage = () => {
         </Button>
       </div>
       <div id="rc-items" tabIndex={-1}>
+        {lines.some((l) => l.tracksBatches) ? (
+          <div className="nl-receive-scan">
+            <Field
+              id="rc-scan"
+              label={R.scanLabel}
+              helper={scanNote || R.scanHelper}
+              value={scanText}
+              autoComplete="off"
+              onChange={setScanText}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const pack = parseGs1(scanText);
+                setScanText('');
+                if (!pack) {
+                  setScanNote(R.scanNotPack);
+                  return;
+                }
+                const result = applyPackScan(lines, pack);
+                if (result.problem === 'notFound') setScanNote(R.scanNotFound);
+                else if (result.problem === 'expired') setScanNote(fill(R.scanExpired, { name: result.name }));
+                else {
+                  setLines(result.lines);
+                  setScanNote(fill(R.scanFilled, { name: result.name }));
+                }
+              }}
+            />
+          </div>
+        ) : null}
         <Table caption={R.itemsCaption} columns={lineColumns} rows={lines} rowKey={ITEM_KEY} className="nl-receive-table" />
       </div>
       {problems.general ? (
