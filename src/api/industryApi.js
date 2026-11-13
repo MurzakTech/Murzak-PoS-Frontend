@@ -76,3 +76,27 @@ export const getControlledRegister = async ({ company, fromDate, toDate, warehou
       { get: true, fallback: 'The controlled medicines register could not be loaded.' }
     )
   ).data;
+
+const SETTINGS = 'murzak_pos.api.restaurant_settings_api';
+
+/** A restaurant's happy hours, service charge, delivery platforms and tables (and the Service charge item) */
+export const getRestaurantSettings = async (company) =>
+  (await callServer(`${SETTINGS}.get_restaurant_settings`, withCompany({}, company), { get: true, fallback: 'The restaurant settings could not be loaded.' })).data;
+
+/** Keeps the restaurant settings (owner and managers). Resolves to the settings as kept. */
+export const saveRestaurantSettings = async ({ settings, company }) =>
+  (await callServer(`${SETTINGS}.save_restaurant_settings`, withCompany({ settings: JSON.stringify(settings) }, company), { fallback: 'The restaurant settings could not be saved.' })).data;
+
+/** Keeps a tip apart from the sale: { amount, mode, salesPerson?, invoice?, warehouse? } */
+export const recordTip = async ({ amount, mode, salesPerson, invoice, warehouse, company }) =>
+  (
+    await callServer(
+      `${RESTAURANT}.record_tip`,
+      withCompany({ amount, mode_of_payment: mode, sales_person: salesPerson || '', invoice: invoice || '', warehouse: warehouse || '' }, company),
+      { fallback: 'The tip could not be recorded.' }
+    )
+  ).data;
+
+/** A month's sales through each delivery platform: { platforms: [{ channel, orders, sales, commission, expected_payout }], totals } */
+export const getPlatformSales = async ({ company, month } = {}) =>
+  (await callServer(`${RESTAURANT}.get_platform_sales`, withCompany({ month }, company), { get: true, fallback: 'The delivery platform sales could not be loaded.' })).data;

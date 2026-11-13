@@ -88,7 +88,9 @@ import VoidApprovalDialog from './pos/VoidApprovalDialog';
 import MenuOptionsDialog from './pos/MenuOptionsDialog';
 import { isExpired, parseGs1, sameGtin } from '../../utils/gs1';
 import { todayIso } from '../../newlook/purchases/purchasesModel';
-import { listMenuOptions } from '../../api/industryApi';
+import { getRestaurantSettings, listMenuOptions, recordTip } from '../../api/industryApi';
+import { DeliveryOrderDialog, RestaurantToolbar, SplitBillDialog, TableMapDialog, TipDialog } from './pos/RestaurantDialogs';
+import { happyHourDiscount, happyHourFor, serviceChargeOn, splitByItem } from '../../utils/restaurant';
 import useIndustryProfile from '../../newlook/industry/useIndustryProfile';
 import { has as profileHas } from '../../newlook/industry/industryModel';
 import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
@@ -298,12 +300,22 @@ const NewSale = () => {
   const optionsOn = profileHas(industryProfile, 'kitchen_tickets');
   const [menuOptions, setMenuOptions] = useState({}); // { item_code: [groups] }
   const [optionsRequest, setOptionsRequest] = useState(null); // { product, rate } waiting for its options
+  // Restaurant and bar settings: happy hours, service charge, delivery platforms, tables (see restaurant_settings_api)
+  const [restaurantSettings, setRestaurantSettings] = useState(null);
+  const [orderChannel, setOrderChannel] = useState(null); // { channel, ref } when the bill is a delivery platform order
+  const [tablesOpen, setTablesOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [deliveryOpen, setDeliveryOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
   useEffect(() => {
     if (!optionsOn || !userCompany) return undefined;
     let live = true;
     listMenuOptions(userCompany)
       .then((options) => live && setMenuOptions(options || {}))
       .catch(() => {}); // without options the till sells the dish as it always has
+    getRestaurantSettings(userCompany)
+      .then((settings) => live && setRestaurantSettings(settings || null))
+      .catch(() => {}); // without settings: no happy hour, no service charge
     return () => {
       live = false;
     };
@@ -929,8 +941,8 @@ const NewSale = () => {
       }
       if (chosenOptions) rate += chosenOptions.extra || 0;
 
-      // Get discount for this item
-      const discountRule = discountsMap[itemCode];
+      // Get discount for this item; in a restaurant or bar, a happy hour when there is no other offer
+      const discountRule = discountsMap[itemCode] || (optionsOn ? happyHourDiscount(happyHourFor(restaurantSettings?.happy_hours, product)) : null);
       const discountAmount = discountRule ? calculateDiscountAmount(rate, discountRule) : 0;
       const discountedPrice = discountRule ? calculateDiscountedPrice(rate, discountRule) : rate;
       
@@ -1020,7 +1032,8 @@ const NewSale = () => {
       prevCart.map(item => {
         if (item.item_code === itemCode) {
           const newQuantity = Math.max(0, item.qty + delta);
-          const discountRule = discountsMap[itemCode];
+          // A happy-hour price stays with the line it was ordered at
+          const discountRule = discountsMap[itemCode] || (item.discount_rule && item.discount_rule.happy_hour ? item.discount_rule : undefined);
           const baseSubtotal = newQuantity * item.rate;
           const discountAmount = discountRule ? calculateDiscountAmount(item.rate, discountRule) * newQuantity : 0;
           const discountedSubtotal = discountRule ? calculateDiscountedPrice(item.rate, discountRule) * newQuantity : baseSubtotal;
@@ -1070,10 +1083,16 @@ const NewSale = () => {
     if (manualDiscountType === 'percentage') return round2((base * value) / 100);
     return round2(value);
   }, [cart, manualDiscountType, manualDiscountValue]);
+  // Restaurant and bar: the service charge, a percentage of what is owed after discounts, sent as its own line
+  const serviceChargePercent = optionsOn && restaurantSettings?.service_charge_item ? Number(restaurantSettings.service_charge_percent) || 0 : 0;
+  const serviceChargeAmount = useMemo(() => {
+    const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    return serviceChargeOn(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount), serviceChargePercent);
+  }, [cart, loyaltyDiscountAmount, manualDiscountAmount, serviceChargePercent]);
   const grandTotal = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    return round2(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount));
-  }, [cart, loyaltyDiscountAmount, manualDiscountAmount]);
+    return round2(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount) + serviceChargeAmount);
+  }, [cart, loyaltyDiscountAmount, manualDiscountAmount, serviceChargeAmount]);
 
   const calculateManualDiscountAmount = () => manualDiscountAmount;
   const calculateSubtotal = () => grandTotal;
@@ -1354,10 +1373,14 @@ const NewSale = () => {
       payments: paymentsPayload,
       ...(calculateManualDiscountAmount() > 0 && {
         apply_discount_on: 'Grand Total',
-        ...(manualDiscountType === 'percentage'
+        // With a service charge on the bill the discount goes as the amount the till worked out, so it is not taken off
+        // the service charge too and the server's total matches the till's
+        ...(manualDiscountType === 'percentage' && !(serviceChargeAmount > 0)
           ? { additional_discount_percentage: manualDiscountValue }
-          : { discount_amount: manualDiscountValue }),
+          : { discount_amount: manualDiscountType === 'percentage' ? calculateManualDiscountAmount() : manualDiscountValue }),
       }),
+      // Restaurant and bar: an order from a delivery platform, and its order number on the platform
+      ...(orderChannel ? { order_channel: orderChannel.channel, channel_ref: orderChannel.ref || '' } : {}),
       do_not_submit: false, // Submit immediately for POS
       is_pos: 1, // Mark as POS transaction unless credit is used
       invoice_type: "POS Invoice",
@@ -1375,6 +1398,17 @@ const NewSale = () => {
         loyalty_points: loyaltyPointsToRedeem,
       }),
     };
+    // Restaurant and bar: the service charge as its own line, so the receipt and the tax invoice show it
+    if (serviceChargeAmount > 0 && restaurantSettings?.service_charge_item) {
+      invoiceData.items.push({
+        item_code: restaurantSettings.service_charge_item,
+        qty: 1,
+        rate: serviceChargeAmount,
+        uom: 'Nos',
+        warehouse: defaultWarehouse,
+        options_text: `Service charge ${serviceChargePercent}%`,
+      });
+    }
 
     // No connection: keep a cash sale on this device and upload it later (see utils/offlineSales)
     const saveOffline = () => {
@@ -1836,6 +1870,63 @@ const NewSale = () => {
 
 
   // ---------------------------------------------------------------- hold, recall, clear
+  // ---------------------------------------------------------------- restaurant and bar
+  // Split by item: the rest of the bill is put on hold under the same table name first (so nothing can be lost), then
+  // this guest's lines are charged as their own sale
+  const splitItems = async (picks) => {
+    const { part, rest } = splitByItem(cart, picks);
+    if (!part.length || !rest.length || heldBusyRef.current) return;
+    heldBusyRef.current = true;
+    try {
+      const label = activeHeldLabel || 'Split bill';
+      const held = makeHeldSale(
+        { cart: rest, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue, kitchen },
+        label
+      );
+      const result = await holdSale(held);
+      if (!result.ok) {
+        showHeldMessage('The rest of the bill could not be kept open, so the bill was not split. Try again, or charge it whole.', 'error');
+        return;
+      }
+      setSplitOpen(false);
+      setCart(part);
+      setKitchen((k) => ({ ...k, voids: [] })); // the kitchen's pending cancellations stay with the rest of the bill
+      setActiveHeldLabel(`${label} (guest)`);
+      showHeldMessage(`The rest of ${label} is open on the table map. Charge this guest now.`, 'success');
+      startCheckoutMode();
+    } finally {
+      heldBusyRef.current = false;
+    }
+  };
+
+  // Split equally: one bill, one payment per person, using Split on the pay screen
+  const splitEqually = (people, shares) => {
+    setSplitOpen(false);
+    showHeldMessage(`${people} people: ${shares.map((s) => s.toLocaleString()).join(', ')}. On the pay screen choose Split and take one payment each.`, 'info');
+    startCheckoutMode();
+  };
+
+  // The table map: a free table names the bill on screen; an open table brings its bill back
+  const startTable = (name) => {
+    setTablesOpen(false);
+    setActiveHeldLabel(name);
+    showHeldMessage(`This bill is now ${name}. Hold it to keep the table open.`, 'info');
+  };
+  const openTable = (held) => {
+    if (cart.length > 0) {
+      showHeldMessage('Hold or finish the bill on screen first, then open the table.', 'warning');
+      return;
+    }
+    setTablesOpen(false);
+    recallHeldSale(held.id);
+  };
+
+  const saveTip = async ({ amount, mode }) => {
+    await recordTip({ amount, mode, salesPerson: salesPerson || '', warehouse: kitchenWarehouse, company: userCompany });
+    setTipOpen(false);
+    showHeldMessage('Tip recorded. It shows on the waiter cash-up.', 'success');
+  };
+
   const resetSale = () => {
     setCart([]);
     setIsCheckoutMode(false);
@@ -1848,6 +1939,7 @@ const NewSale = () => {
     setActiveHeldLabel('');
     setKitchen(EMPTY_KITCHEN);
     setDispensing(null);
+    setOrderChannel(null);
     handleSelectCustomer(null);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
@@ -2190,10 +2282,12 @@ const NewSale = () => {
     itemDiscount: itemDiscountTotal,
     manualDiscount: manualDiscountAmount,
     loyaltyDiscount: loyaltyDiscountAmount,
+    serviceCharge: serviceChargeAmount,
+    serviceChargePercent,
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || !!voidRequest || !!optionsRequest || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || !!voidRequest || !!optionsRequest || tablesOpen || splitOpen || deliveryOpen || tipOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -2347,6 +2441,20 @@ const NewSale = () => {
       onClear={requestClear}
       isBusy={isCreatingInvoice}
       footerExtra={isCheckoutMode ? <Box /> : undefined}
+      toolbar={
+        optionsOn && !isCheckoutMode ? (
+          <RestaurantToolbar
+            tablesOn
+            onTables={() => setTablesOpen(true)}
+            onSplit={() => setSplitOpen(true)}
+            onDelivery={() => setDeliveryOpen(true)}
+            onTip={() => setTipOpen(true)}
+            channel={orderChannel}
+            onClearChannel={() => setOrderChannel(null)}
+            splitDisabled={cart.length === 0}
+          />
+        ) : undefined
+      }
       kitchenEnabled={kitchenEnabled}
       kitchenPending={kitchenPending}
       onSendKitchen={startSend}
@@ -2727,6 +2835,30 @@ const NewSale = () => {
           }
         }}
       />
+
+      <TableMapDialog
+        open={tablesOpen}
+        tables={(restaurantSettings?.tables || {})[kitchenWarehouse] || []}
+        held={heldSales}
+        current={activeHeldLabel}
+        currency={currency}
+        billOnScreen={cart.length > 0}
+        onOpenTable={openTable}
+        onStartTable={startTable}
+        onClose={() => setTablesOpen(false)}
+      />
+      <SplitBillDialog open={splitOpen} cart={cart} total={grandTotal} currency={currency} onSplitItems={splitItems} onSplitEqually={splitEqually} onClose={() => setSplitOpen(false)} />
+      <DeliveryOrderDialog
+        open={deliveryOpen}
+        platforms={restaurantSettings?.platforms || []}
+        value={orderChannel}
+        onSave={(value) => {
+          setOrderChannel(value);
+          setDeliveryOpen(false);
+        }}
+        onClose={() => setDeliveryOpen(false)}
+      />
+      <TipDialog open={tipOpen} modes={payModes} currency={currency} onSave={saveTip} onClose={() => setTipOpen(false)} />
 
       <MenuOptionsDialog
         open={!!optionsRequest}

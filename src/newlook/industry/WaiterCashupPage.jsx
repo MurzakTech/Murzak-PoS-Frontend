@@ -21,6 +21,7 @@ const COLUMNS = [
   { key: 'sales', header: W.columns.sales, money: true },
   { key: 'cash_to_hand_over', header: W.columns.cash, money: true },
   { key: 'by_mode', header: W.columns.byMode, hideOnPhone: true, render: (r) => modesLine(r.by_mode, formatMoney) },
+  { key: 'tips', header: W.columns.tips, money: true, hideOnPhone: true },
   { key: 'voids', header: W.columns.voids, align: 'right', render: (r) => (r.voids ? fill(W.voidsValue, { count: r.voids, amount: formatMoney(r.voids_amount) }) : W.noVoids) },
 ];
 

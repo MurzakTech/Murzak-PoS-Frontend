@@ -195,6 +195,7 @@ const OrderPanel = ({
   onClear,
   isBusy,
   footerExtra,
+  toolbar, // restaurant and bar: tables, split bill, delivery order, tip (see RestaurantDialogs)
   kitchenEnabled,
   kitchenPending = 0,
   onSendKitchen,
@@ -301,7 +302,7 @@ const OrderPanel = ({
       {/* Totals and the one big action */}
       <Box sx={{ flexShrink: 0, p: 2, borderTop: 1, borderColor: 'divider', bgcolor: (t) => t.custom?.surface?.subtle || t.palette.background.default }}>
         <Stack spacing={0.75} sx={{ mb: 1.5 }}>
-          {totals.itemDiscount > 0 || totals.manualDiscount > 0 || totals.loyaltyDiscount > 0 ? (
+          {totals.itemDiscount > 0 || totals.manualDiscount > 0 || totals.loyaltyDiscount > 0 || totals.serviceCharge > 0 ? (
             <SummaryRow label="Items" value={money(totals.itemsTotal, currency)} />
           ) : null}
           {totals.itemDiscount > 0 && <SummaryRow label="Offers" value={`-${money(totals.itemDiscount, currency)}`} color="success.main" />}
@@ -313,6 +314,7 @@ const OrderPanel = ({
             />
           )}
           {totals.loyaltyDiscount > 0 && <SummaryRow label="Loyalty points" value={`-${money(totals.loyaltyDiscount, currency)}`} color="success.main" />}
+          {totals.serviceCharge > 0 && <SummaryRow label={`Service charge (${totals.serviceChargePercent}%)`} value={money(totals.serviceCharge, currency)} />}
         </Stack>
 
         {!readOnly && !empty && (
@@ -335,6 +337,7 @@ const OrderPanel = ({
           </Typography>
         </Box>
 
+        {!readOnly && toolbar ? toolbar : null}
         {footerExtra || (
           <>
             {kitchenEnabled && !readOnly && (

@@ -10,6 +10,7 @@ const REPORTS = [
   { key: 'controlled', feature: 'controlled_register', path: '/reports/controlled-register' },
   { key: 'cashup', feature: 'waiter_cashup', path: '/reports/waiter-cashup' },
   { key: 'levy', feature: 'tourism_levy', path: '/reports/tourism-levy' },
+  { key: 'platforms', feature: 'waiter_cashup', path: '/reports/delivery-platforms' },
 ];
 
 /**
