@@ -554,3 +554,39 @@ describe('taxBreakdown', () => {
     expect(taxBreakdown(undefined, undefined)).toEqual({ net: 0, tax: 0, total: 0 });
   });
 });
+
+describe('medicines received batch by batch', () => {
+  const order = { lines: [{ item_code: 'AMOX', item_name: 'Amoxicillin', ordered: 10, received: 0, to_arrive: 10, rate: 30, tracks_batches: true }, { item_code: 'TEA', item_name: 'Tea', ordered: 5, received: 0, to_arrive: 5, rate: 10 }] };
+
+  test('a tracked line needs its expiry date; the batch number may be left blank', () => {
+    const lines = receiveLines(order);
+    expect(lines[0].tracksBatches).toBe(true);
+    expect(lines[1].tracksBatches).toBe(false);
+    const problems = receiveProblems(lines);
+    expect(problems['expiry:AMOX']).toMatch(/expiry date printed on Amoxicillin/);
+    expect(problems['expiry:TEA']).toBeUndefined();
+  });
+
+  test('stock that has already expired is refused before it is sent', () => {
+    const lines = receiveLines(order).map((l) => (l.item_code === 'AMOX' ? { ...l, expiry: '2001-01-01' } : l));
+    expect(receiveProblems(lines)['expiry:AMOX']).toMatch(/already expired/);
+  });
+
+  test('the batch and expiry go to the server with the tracked line only', () => {
+    const lines = receiveLines(order).map((l) => (l.item_code === 'AMOX' ? { ...l, batchNo: ' bx-1 ', expiry: '2099-03-31' } : l));
+    expect(receiveProblems(lines)['expiry:AMOX']).toBeUndefined();
+    expect(receiveItems(lines)).toEqual([
+      { item_code: 'AMOX', qty_received: 10, batch_no: 'bx-1', expiry_date: '2099-03-31' },
+      { item_code: 'TEA', qty_received: 5 },
+    ]);
+  });
+
+  test('a bill already held asks for the expiry; an order does not', () => {
+    const line = { ...lineFrom({ item_code: 'AMOX', item_name: 'Amoxicillin', cost: 30, tracksBatches: true }), qty: '2' };
+    const base = { supplier: 'S1', date: '2026-11-13', haveBill: false, billNo: '', notes: '' };
+    expect(checkPurchase(base, [line])[`expiry:${line.key}`]).toBeUndefined();
+    expect(checkPurchase({ ...base, haveBill: true }, [line])[`expiry:${line.key}`]).toMatch(/expiry date/);
+    const ready = { ...line, batchNo: 'B7', expiry: '2099-01-31' };
+    expect(billRequest({ ...base, haveBill: true }, [ready], 'r1').items[0]).toMatchObject({ batch_no: 'B7', expiry_date: '2099-01-31' });
+  });
+});

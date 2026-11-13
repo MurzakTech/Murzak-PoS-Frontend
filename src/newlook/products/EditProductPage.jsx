@@ -14,7 +14,7 @@ import FT from '../forms/strings.forms';
 import fill from '../labels/fill';
 import { oldScreen } from '../redirects/engine';
 import { useAppSelector } from '../../store/hooks';
-import { findProduct, ProductSaveError, updateProduct } from '../../api/productsListApi';
+import { findProduct, ProductSaveError, setBatchTracking, updateProduct } from '../../api/productsListApi';
 import './products.css';
 import { invalidateQuery, useCategories, useUnits } from './useProductsData';
 import useShopUnits from './useShopUnits';
@@ -115,7 +115,10 @@ const EditProductPage = () => {
     setProblems({});
     setSaving(true);
     try {
-      const product = await updateProduct({ code, changes, warehouse: defaultStore, company });
+      // Batch tracking is its own step: the server refuses it for a product already sold or received, in plain words
+      const { trackBatches, ...rest } = changes;
+      if (trackBatches !== undefined) await setBatchTracking({ code, on: trackBatches, company });
+      const product = Object.keys(rest).length ? await updateProduct({ code, changes: rest, warehouse: defaultStore, company }) : { item_name: values.name.trim() };
       invalidateQuery();
       toast.success(fill(E.saved, { name: product.item_name || values.name.trim() }));
       navigate(`${PRODUCTS_PATH}?open=${encodeURIComponent(code)}`);
@@ -162,6 +165,12 @@ const EditProductPage = () => {
           <div>
             <Checkbox id="ep-prescription" label={F.prescription} checked={values.prescription === 'yes'} onChange={(on) => set('prescription')(on ? 'yes' : 'no')} />
             <p className="nl-products-note">{F.prescriptionHelper}</p>
+          </div>
+        ) : null}
+        {isPharmacy || values.batches === 'yes' ? (
+          <div>
+            <Checkbox id="ep-batches" label={F.batches} checked={values.batches === 'yes'} onChange={(on) => set('batches')(on ? 'yes' : 'no')} />
+            <p className="nl-products-note">{F.batchesLocked}</p>
           </div>
         ) : null}
 

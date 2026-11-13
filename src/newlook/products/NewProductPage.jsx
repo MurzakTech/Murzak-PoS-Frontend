@@ -83,8 +83,11 @@ const NewProductPage = () => {
     if (first) setFocusId(FIELD_IDS[first]);
   };
 
+  // Pharmacies track batches unless told not to
+  const batchesOn = isPharmacy && values.batches !== 'no';
   const submit = async (addAnother) => {
-    const found = checkForm(values);
+    const sent = { ...values, batches: batchesOn ? 'yes' : 'no' };
+    const found = checkForm(sent);
     if (Object.keys(found).length) {
       show(found);
       return;
@@ -92,7 +95,7 @@ const NewProductPage = () => {
     setProblems({});
     setSaving(true);
     try {
-      const result = await createProduct(requestFrom(values, { canSeeCost }));
+      const result = await createProduct(requestFrom(sent, { canSeeCost }));
       invalidateQuery();
       const name = result.product ? result.product.item_name : values.name.trim();
       toast.success(fill(addAnother ? F.savedAnother : F.saved, { name }));
@@ -143,6 +146,12 @@ const NewProductPage = () => {
             <p className="nl-products-note">{!values.prescription && looksLikeAntibiotic(values.name) ? F.prescriptionAntibiotic : F.prescriptionHelper}</p>
           </div>
         ) : null}
+        {isPharmacy ? (
+          <div>
+            <Checkbox id="np-batches" label={F.batches} checked={batchesOn} onChange={(on) => set('batches')(on ? 'yes' : 'no')} />
+            <p className="nl-products-note">{F.batchesHelper}</p>
+          </div>
+        ) : null}
         {business.barcodesFirst ? barcodeField : null}
         {business.unitsFirst ? unitField : null}
 
@@ -159,6 +168,12 @@ const NewProductPage = () => {
             </div>
           ) : null}
           <Field id={FIELD_IDS.stock} inputMode="decimal" label={F.stock} helper={F.stockHelper} value={values.stock} error={problems.stock} onChange={(v) => set('stock')(cleanQuantity(v))} />
+          {batchesOn && Number(values.stock) > 0 ? (
+            <div className="nl-products-formgroup">
+              <Field id="np-opening-batch" label={F.openingBatch} helper={F.openingBatchHelper} value={values.openingBatch || ''} autoComplete="off" onChange={set('openingBatch')} />
+              <Field id={FIELD_IDS.openingExpiry} kind="date" label={F.openingExpiry} value={values.openingExpiry || ''} error={problems.openingExpiry} aria-required={true} onChange={set('openingExpiry')} />
+            </div>
+          ) : null}
           <Field id={FIELD_IDS.warning} inputMode="decimal" label={F.warning} helper={F.warningHelper} value={values.warning} error={problems.warning} onChange={(v) => set('warning')(cleanQuantity(v))} />
           {business.unitsFirst ? null : unitField}
 

@@ -303,3 +303,20 @@ describe('prescription-only (pharmacies)', () => {
   });
 });
 
+
+describe('batch tracking (pharmacies)', () => {
+  test('a tracked new product sends its opening batch and needs the expiry when it has opening stock', () => {
+    expect(checkForm({ name: 'Amoxicillin', price: '300', batches: 'yes', stock: '20' })).toHaveProperty('openingExpiry');
+    expect(checkForm({ name: 'Amoxicillin', price: '300', batches: 'yes', stock: '' })).not.toHaveProperty('openingExpiry');
+    expect(checkForm({ name: 'Amoxicillin', price: '300', batches: 'yes', stock: '20', openingExpiry: '2027-03-31' })).not.toHaveProperty('openingExpiry');
+    expect(requestFrom({ name: 'Amoxicillin', price: '300', batches: 'yes', openingBatch: ' B1 ', openingExpiry: '2027-03-31' })).toMatchObject({ trackBatches: 1, openingBatch: 'B1', openingExpiry: '2027-03-31' });
+    expect(requestFrom({ name: 'Soap', price: '50', batches: 'no' })).not.toHaveProperty('trackBatches');
+  });
+
+  test('the edit form reads the setting and sends a change only', () => {
+    const form = formFromProduct({ item_name: 'Amoxicillin', price: 300, tracks_batches: 0 });
+    expect(form.batches).toBe('no');
+    expect(changesFrom({ ...form, batches: 'yes' }, form)).toMatchObject({ trackBatches: true });
+    expect(changesFrom(form, form)).not.toHaveProperty('trackBatches');
+  });
+});
