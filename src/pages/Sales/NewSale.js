@@ -88,8 +88,10 @@ import VoidApprovalDialog from './pos/VoidApprovalDialog';
 import MenuOptionsDialog from './pos/MenuOptionsDialog';
 import { isExpired, parseGs1, sameGtin } from '../../utils/gs1';
 import { todayIso } from '../../newlook/purchases/purchasesModel';
-import { getRestaurantSettings, listMenuOptions, recordTip } from '../../api/industryApi';
+import { getInsurers, getRestaurantSettings, listMenuOptions, recordTip } from '../../api/industryApi';
 import { DeliveryOrderDialog, RestaurantToolbar, SplitBillDialog, TableMapDialog, TipDialog } from './pos/RestaurantDialogs';
+import { InsuranceDialog, InsuranceToolbar } from './pos/InsuranceDialog';
+import { insuranceLines, insurancePayload } from '../../utils/insurance';
 import { happyHourDiscount, happyHourFor, serviceChargeOn, splitByItem } from '../../utils/restaurant';
 import useIndustryProfile from '../../newlook/industry/useIndustryProfile';
 import { has as profileHas } from '../../newlook/industry/industryModel';
@@ -320,6 +322,21 @@ const NewSale = () => {
       live = false;
     };
   }, [optionsOn, userCompany]);
+  // Pharmacies: a bill billed to a medical insurer, the patient paying only the co-payment (see InsuranceDialog)
+  const insuranceOn = profileHas(industryProfile, 'insurance');
+  const [insurers, setInsurers] = useState([]);
+  const [insurance, setInsurance] = useState(null); // { insurer, customer, rule, patient, member_no, scheme, preauth }
+  const [insuranceOpen, setInsuranceOpen] = useState(false);
+  useEffect(() => {
+    if (!insuranceOn || !userCompany) return undefined;
+    let live = true;
+    getInsurers(userCompany)
+      .then((data) => live && setInsurers((data && data.insurers) || []))
+      .catch(() => {}); // without insurers the till sells as it always has
+    return () => {
+      live = false;
+    };
+  }, [insuranceOn, userCompany]);
   const screensWanted = kitchenSettings.enabled && kitchenSettings.screens && kitchenSettingsStatus !== 'unavailable';
   const kitchenTickets = useKitchenTickets({ company: userCompany, warehouse: kitchenWarehouse, enabled: screensWanted });
   const [readyOpen, setReadyOpen] = useState(false);
@@ -1272,7 +1289,8 @@ const NewSale = () => {
       .filter((p) => p.mode === 'Credit')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-    if (creditUsed > 0) {
+    // A bill to an insurer is owed by the insurer, whatever credit limit a customer record has
+    if (creditUsed > 0 && !insurance) {
       // Only allow credit for non-walk-in customers
       if (!customerId) {
         setSnackbarMessage('Credit sales are only available for registered customers. Please select a customer.');
@@ -1327,7 +1345,7 @@ const NewSale = () => {
       if (p.mode === 'Credit') {
         basePayload.use_receivable_account = true;
         // Optionally include account if we have it, but use_receivable_account flag is preferred
-        if (receivableAccount) {
+        if (receivableAccount && !insurance) {
           basePayload.account = receivableAccount;
         }
       }
@@ -1390,6 +1408,8 @@ const NewSale = () => {
       ...(salesPerson ? { sales_person: salesPerson } : {}),
       // The dispensing record, for a sale that includes prescription-only medicines
       ...(rxNames.length > 0 && isDispensingComplete(dispensing) ? { dispensing } : {}),
+      // Pharmacies: the insurer billed and the patient's card details, for the claim
+      ...(insurance ? { insurance: insurancePayload(insurance) } : {}),
       // is_pos: creditUsed > 0 ? 0 : 1,
       
       // Add loyalty redemption if points are being redeemed
@@ -1586,6 +1606,7 @@ const NewSale = () => {
     dispatch(clearSelectedPOSInvoice());
     // Each new sale starts as a walk-in, so it can never be billed to the previous customer
     handleSelectCustomer(null);
+    setInsurance(null);
     setPaymentMode('Cash');
     setCreditAmount(0);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -1645,6 +1666,14 @@ const NewSale = () => {
     }
   }, [newLook, payModes, paymentMode]);
 
+  // A bill to an insurer opens the payment screen split in two: the patient's co-payment, and the rest on credit to the
+  // insurer (declared after the effect that resets the screen to one cash payment, so it runs after it)
+  useEffect(() => {
+    if (!isCheckoutMode || !insurance) return;
+    setSplitPayments(true);
+    setPayments(insuranceLines(insurance.rule, grandTotal, payModes.find((m) => m !== 'Credit') || 'Cash'));
+  }, [isCheckoutMode, insurance, grandTotal, payModes]);
+
   // Credit info helper - use selectedCustomerObj directly (more reliable than searching)
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
   const creditInfo = useMemo(() => {
@@ -1695,7 +1724,8 @@ const NewSale = () => {
   // Check if credit limit is valid for split payments
   const isSplitPaymentsCreditValid = useMemo(() => {
     if (!splitPayments) return true;
-    
+    if (insurance) return true; // the insurer owes the credit part, checked by the server
+
     const creditUsed = payments
       .filter((p) => p.mode === 'Credit')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -1709,7 +1739,7 @@ const NewSale = () => {
     
     // Check if credit used exceeds available credit
     return creditInfo.available_credit >= creditUsed - 0.01;
-  }, [splitPayments, payments, creditInfo]);
+  }, [splitPayments, payments, creditInfo, insurance]);
 
   const addPaymentRow = () => {
     setPayments((prev) => [...prev, { mode: 'Cash', amount: 0 }]);
@@ -1766,6 +1796,12 @@ const NewSale = () => {
   // Handle customer selection
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
   //       customer.customer_name is the display name (e.g., "John Doe")
+  // Takes the insurer off the bill: it goes back to a walk-in sale, paid in full
+  const clearInsurance = () => {
+    setInsurance(null);
+    handleSelectCustomer(null);
+  };
+
   const handleSelectCustomer = (selectedCustomer) => {
     // Check if it's walk-in customer
     if (!selectedCustomer || 
@@ -2453,6 +2489,8 @@ const NewSale = () => {
             onClearChannel={() => setOrderChannel(null)}
             splitDisabled={cart.length === 0}
           />
+        ) : insuranceOn && !isCheckoutMode ? (
+          <InsuranceToolbar insurance={insurance} onOpen={() => setInsuranceOpen(true)} onClear={clearInsurance} />
         ) : undefined
       }
       kitchenEnabled={kitchenEnabled}
@@ -2857,6 +2895,20 @@ const NewSale = () => {
           setDeliveryOpen(false);
         }}
         onClose={() => setDeliveryOpen(false)}
+      />
+      <InsuranceDialog
+        open={insuranceOpen}
+        insurers={insurers}
+        value={insurance}
+        total={grandTotal}
+        currency={currency}
+        creditReady={paymentModes.includes('Credit')}
+        onSave={(record) => {
+          setInsurance(record);
+          handleSelectCustomer({ name: record.customer, customer_name: record.insurer });
+          setInsuranceOpen(false);
+        }}
+        onClose={() => setInsuranceOpen(false)}
       />
       <TipDialog open={tipOpen} modes={payModes} currency={currency} onSave={saveTip} onClose={() => setTipOpen(false)} />
 

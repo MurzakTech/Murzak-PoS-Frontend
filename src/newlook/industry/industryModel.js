@@ -14,12 +14,14 @@ export const FEATURE_NAMES = [
   'dispensing_register',
   'antibiotics_prescription_only',
   'controlled_register',
+  'insurance',
   'tables',
   'kitchen_tickets',
   'void_approval',
   'waiter_on_sale',
   'waiter_cashup',
   'tourism_levy',
+  'delivery_platforms',
 ];
 
 export const GENERAL_WORDS = T.generalWords;

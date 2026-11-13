@@ -100,3 +100,66 @@ export const recordTip = async ({ amount, mode, salesPerson, invoice, warehouse,
 /** A month's sales through each delivery platform: { platforms: [{ channel, orders, sales, commission, expected_payout }], totals } */
 export const getPlatformSales = async ({ company, month } = {}) =>
   (await callServer(`${RESTAURANT}.get_platform_sales`, withCompany({ month }, company), { get: true, fallback: 'The delivery platform sales could not be loaded.' })).data;
+
+const INSURANCE = 'murzak_pos.api.insurance_api';
+const PAYOUT = 'murzak_pos.api.payout_api';
+
+/** A pharmacy's medical insurers: { insurers: [{ name, copay_percent, copay_amount, customer }], can_change } */
+export const getInsurers = async (company) =>
+  (await callServer(`${INSURANCE}.get_insurers`, withCompany({}, company), { get: true, fallback: 'The insurers could not be loaded.' })).data;
+
+/** Keeps the insurers (owner and managers); each gets its customer record. Resolves to { insurers, can_change }. */
+export const saveInsurers = async ({ insurers, company }) =>
+  (await callServer(`${INSURANCE}.save_insurers`, withCompany({ insurers: JSON.stringify(insurers) }, company), { fallback: 'The insurers could not be saved.' })).data;
+
+/** Insurance claims, newest first: { claims, by_status, insurers } */
+export const getClaims = async ({ company, insurer, status } = {}) =>
+  (await callServer(`${INSURANCE}.get_claims`, withCompany({ insurer: insurer || '', status: status || '' }, company), { get: true, fallback: 'The claims could not be loaded.' })).data;
+
+/** Marks claims as sent to the insurer, with the claim or batch reference */
+export const markClaimed = async ({ invoices, claimRef, company }) =>
+  (await callServer(`${INSURANCE}.mark_claimed`, withCompany({ invoices: JSON.stringify(invoices), claim_ref: claimRef || '' }, company), { fallback: 'The claims could not be marked as sent.' })).data;
+
+/** Marks a claim the insurer turned down, with the reason */
+export const setClaimRejected = async ({ invoice, reason, company }) =>
+  (await callServer(`${INSURANCE}.set_claim_rejected`, withCompany({ invoice, reason: reason || '' }, company), { fallback: 'The claim could not be marked as rejected.' })).data;
+
+/** An insurer's payment shared over the claims chosen, in order: { payments: [{ invoice, payment, amount, status }] } */
+export const recordInsurerPayment = async ({ invoices, amount, mode, reference, company }) =>
+  (
+    await callServer(
+      `${INSURANCE}.record_insurer_payment`,
+      withCompany({ invoices: JSON.stringify(invoices), amount, mode_of_payment: mode, reference: reference || '' }, company),
+      { fallback: 'The insurer payment could not be recorded.' }
+    )
+  ).data;
+
+/** A platform's orders no payout has settled yet: { platform, orders, total, without_number, commission_percent } */
+export const listUnsettledOrders = async ({ platform, company }) =>
+  (await callServer(`${PAYOUT}.list_unsettled_orders`, withCompany({ platform }, company), { get: true, fallback: 'The orders could not be loaded.' })).data;
+
+/** What recording a payout would do, without saving: { matched, already_settled, not_found, summary } */
+export const checkPayout = async ({ platform, orderRefs, amount, company }) =>
+  (await callServer(`${PAYOUT}.check_payout`, withCompany({ platform, order_refs: orderRefs, amount }, company), { fallback: 'The payout could not be checked.' })).data;
+
+/** Keeps the payout and marks its orders settled: { payout, matched, already_settled, not_found, summary } */
+export const recordPayout = async ({ platform, orderRefs, amount, payoutDate, statementRef, company }) =>
+  (
+    await callServer(
+      `${PAYOUT}.record_payout`,
+      withCompany({ platform, order_refs: orderRefs, amount, payout_date: payoutDate || '', statement_ref: statementRef || '' }, company),
+      { fallback: 'The payout could not be recorded.' }
+    )
+  ).data;
+
+/** The payouts recorded, newest first: { payouts: [{ name, platform, date, received, orders, sales, expected_commission, actual_commission, difference, not_found }] } */
+export const listPayouts = async ({ company, platform } = {}) =>
+  (await callServer(`${PAYOUT}.list_payouts`, withCompany({ platform: platform || '' }, company), { get: true, fallback: 'The payouts could not be loaded.' })).data;
+
+/** The modes of payment money can be received by from a business (an insurer's EFT or cheque): bank modes first */
+export const listReceiveModes = async (company) => {
+  const rows = (await callServer('murzak_pos.api.sales_api.list_payment_methods', withCompany({}, company), { get: true, fallback: 'The payment methods could not be loaded.' })).data || [];
+  const usable = rows.filter((m) => m && m.name && m.name !== 'Credit');
+  const banks = usable.filter((m) => m.type === 'Bank');
+  return (banks.length ? banks : usable).map((m) => m.name);
+};

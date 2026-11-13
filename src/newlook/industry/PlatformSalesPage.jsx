@@ -8,6 +8,8 @@ import Table from '../components/Table';
 import { formatMoney } from '../components/format';
 import { PageHeader } from '../shell';
 import { recentMonths } from './industryPagesModel';
+import PayoutSection from './PayoutSection';
+import { getRestaurantSettings } from '../../api/industryApi';
 import T from './strings.industry';
 import './industry.css';
 
@@ -45,6 +47,18 @@ const PlatformSalesPage = () => {
 
   useEffect(() => load(), [load]);
 
+  // The platforms a payout can be matched for: those in the settings, and any with sales this month
+  const [settingsPlatforms, setSettingsPlatforms] = useState([]);
+  useEffect(() => {
+    let live = true;
+    getRestaurantSettings(company)
+      .then((s) => live && setSettingsPlatforms(((s && s.platforms) || []).map((p) => p.name)))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [company]);
+
   const rows = state.data?.platforms || [];
   const totals = state.data?.totals || {};
 
@@ -69,6 +83,9 @@ const PlatformSalesPage = () => {
           <Table caption={W.tableLabel} columns={COLUMNS} rows={rows.map((r) => ({ ...r, id: r.channel }))} loading={state.status === 'loading'} empty={{ title: W.emptyTitle, description: W.emptyText }} />
           <p className="nl-industry-note">{W.note}</p>
         </>
+      )}
+      {state.status === 'error' ? null : (
+        <PayoutSection company={company} platforms={[...new Set([...settingsPlatforms, ...rows.map((r) => r.channel)])]} />
       )}
     </div>
   );
