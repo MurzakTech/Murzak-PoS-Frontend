@@ -13,7 +13,7 @@ import { GENERAL_PROFILE, readProfile, readSavedProfile, saveProfile } from './i
  *
  *   status  'loading' (nothing known yet), 'stale' (the saved answer, the server not heard yet), 'ready', 'error'
  */
-const useIndustryProfile = (warehouse, companyName) => {
+const useIndustryProfile = (warehouse, companyName, { enabled = true } = {}) => {
   const company = companyName || getUserCompany() || '';
   const [state, setState] = useState(() => {
     const saved = readSavedProfile(company, warehouse);
@@ -21,6 +21,11 @@ const useIndustryProfile = (warehouse, companyName) => {
   });
 
   useEffect(() => {
+    // Nobody signed in (or the screen does not need it): nothing is asked, and the general shop is used
+    if (!enabled) {
+      setState({ status: 'off', profile: GENERAL_PROFILE });
+      return undefined;
+    }
     let cancelled = false;
     const saved = readSavedProfile(company, warehouse);
     setState(saved ? { status: 'stale', profile: saved } : { status: 'loading', profile: GENERAL_PROFILE });
@@ -36,7 +41,7 @@ const useIndustryProfile = (warehouse, companyName) => {
     return () => {
       cancelled = true;
     };
-  }, [company, warehouse]);
+  }, [company, warehouse, enabled]);
 
   return state;
 };

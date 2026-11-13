@@ -2303,6 +2303,7 @@ const NewSale = () => {
   const orderPanel = (
     <OrderPanel
       cart={cart}
+      words={industryProfile.key !== 'general' ? industryProfile.words : undefined}
       readOnly={isCheckoutMode}
       currency={currency}
       customer={customerView}

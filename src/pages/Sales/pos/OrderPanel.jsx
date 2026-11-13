@@ -173,6 +173,7 @@ const SummaryRow = ({ label, value, color, strong }) => (
 
 const OrderPanel = ({
   cart,
+  words, // a pharmacy or restaurant store's own words (industry profile); none for a general shop, which keeps today's
   readOnly,
   currency,
   customer,
@@ -226,7 +227,7 @@ const OrderPanel = ({
         <ButtonBase
           onClick={onCustomerClick}
           disabled={readOnly}
-          aria-label={`Customer: ${customer.name}. Tap to change.`}
+          aria-label={`${words?.customer || 'Customer'}: ${customer.name}. Tap to change.`}
           sx={{ p: 1.25, borderRadius: 3, border: 1, borderColor: 'divider', justifyContent: 'flex-start', gap: 1.25, textAlign: 'left', flexGrow: 1, minWidth: 0, '&:hover': { bgcolor: 'action.hover' } }}
         >
           <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: (t) => alpha(t.palette.primary.main, 0.12), color: 'primary.main', flexShrink: 0 }}>
@@ -358,7 +359,17 @@ const OrderPanel = ({
               endIcon={isBusy ? <CircularProgress size={20} color="inherit" /> : <ArrowForward />}
               sx={{ height: 64, fontSize: '1.25rem', fontWeight: 750, borderRadius: 3, color: empty ? undefined : 'common.white', background: (t) => (empty ? undefined : t.custom.gradient), boxShadow: (t) => (empty ? 'none' : `0 8px 22px ${alpha(t.palette.primary.main, 0.32)}`) }}
             >
-              {empty ? (newLook ? tillText.labels.pay : 'Charge') : newLook ? fill(tillText.labels.payAmount, { amount: money(totals.grandTotal, currency) }) : `Charge ${money(totals.grandTotal, currency)}`}
+              {words?.charge
+                ? empty
+                  ? words.charge
+                  : `${words.charge} ${money(totals.grandTotal, currency)}`
+                : empty
+                  ? newLook
+                    ? tillText.labels.pay
+                    : 'Charge'
+                  : newLook
+                    ? fill(tillText.labels.payAmount, { amount: money(totals.grandTotal, currency) })
+                    : `Charge ${money(totals.grandTotal, currency)}`}
             </Button>
             <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
               <Button fullWidth size="small" color="inherit" startIcon={<PauseCircleOutline />} disabled={empty} onClick={onHold} sx={{ color: 'text.secondary', minHeight: 44 }}>
