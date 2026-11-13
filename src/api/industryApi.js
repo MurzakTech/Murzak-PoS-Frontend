@@ -52,3 +52,13 @@ export const approveVoid = async ({ itemCode, itemName, qty, rate, reason, billL
 /** The day's takings by waiter: { date, waiters: [...], totals } */
 export const getWaiterCashup = async ({ company, date, warehouse } = {}) =>
   (await callServer(`${RESTAURANT}.get_waiter_cashup`, withCompany({ date, warehouse }, company), { get: true, fallback: 'The waiter cash-up could not be loaded.' })).data;
+
+const OPTIONS = 'murzak_pos.api.menu_options_api';
+
+/** Every dish of the business that has menu options: { [item_code]: [groups] } */
+export const listMenuOptions = async (company) =>
+  (await callServer(`${OPTIONS}.list_menu_options`, withCompany({}, company), { get: true, fallback: 'The menu options could not be loaded.' })).data.options || {};
+
+/** Keeps a dish's option groups (an empty list removes them). Resolves to { item_code, groups }. */
+export const setMenuOptions = async ({ itemCode, groups, company }) =>
+  (await callServer(`${OPTIONS}.set_menu_options`, withCompany({ item_code: itemCode, groups: JSON.stringify(groups || []) }, company), { fallback: 'The menu options could not be saved.' })).data;

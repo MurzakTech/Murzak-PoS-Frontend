@@ -19,6 +19,7 @@ import './products.css';
 import { invalidateQuery, useCategories, useUnits } from './useProductsData';
 import useShopUnits from './useShopUnits';
 import UnitPicker from './UnitPicker';
+import MenuOptionsCard from './MenuOptionsCard';
 import useBusinessFeatures from '../setup/useBusinessFeatures';
 import useIndustryProfile from '../industry/useIndustryProfile';
 import { has as profileHas } from '../industry/industryModel';
@@ -197,6 +198,9 @@ const EditProductPage = () => {
           </p>
         </MoreOptions>
       </FormPage>
+
+      {/* Restaurants and bars: what the waiter asks when this dish is ordered (saved on its own) */}
+      {profileHas(industry, 'kitchen_tickets') ? <MenuOptionsCard code={code} company={company} /> : null}
 
       <ConfirmDialog
         open={askCancel}

@@ -85,6 +85,11 @@ const CartLine = React.memo(({ note, item, readOnly, currency, warehouses, defau
           {item.staff && (
             <Chip size="small" variant="outlined" label={`Staff: ${item.staff}`} sx={{ height: 18, fontSize: '0.6875rem', ml: 0.75 }} />
           )}
+          {item.options_text && (
+            <Typography variant="caption" component="div" sx={{ color: 'text.secondary', mt: 0.25 }}>
+              {item.options_text}
+            </Typography>
+          )}
           {kitchenEnabled && (item.note || item.sentQty > 0) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 0.25 }}>
               {item.sentQty > 0 && <Chip size="small" color="success" variant="outlined" label={`${item.sentQty} sent`} sx={{ height: 18, fontSize: '0.6875rem' }} />}

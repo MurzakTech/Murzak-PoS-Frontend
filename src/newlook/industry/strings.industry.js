@@ -86,6 +86,23 @@ const industry = {
     cashup: { title: 'Waiter cash-up', text: "Each waiter's takings, the cash to hand over and their voids" },
   },
 
+  menuOptions: {
+    title: 'Menu options',
+    subtitle: 'What the waiter asks when this dish is ordered. The choices print on the kitchen ticket and the receipt.',
+    groupName: 'Group name',
+    groupNamePlaceholder: 'For example, How cooked',
+    choices: 'Choices',
+    choicesHelper: 'Separate with commas. Add a price with +, such as Extra cheese +50.',
+    required: 'The waiter must choose',
+    multiple: 'Several can be chosen',
+    addGroup: 'Add a group',
+    removeGroup: 'Remove {name}',
+    save: 'Save menu options',
+    saved: 'Menu options saved.',
+    none: 'No options yet. Most dishes need none.',
+    loading: 'Loading the menu options…',
+  },
+
   outlets: {
     title: 'Kind of shop, by store',
     text: 'Each store can be its own kind of shop. A pharmacy counter asks for prescriptions; a restaurant or bar asks a manager before a sent item is removed. A store left on "Same as the business" follows the business.',

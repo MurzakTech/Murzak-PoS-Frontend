@@ -85,6 +85,8 @@ import KitchenTicketDialog from './pos/KitchenTicketDialog';
 import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import PrescriptionDialog from './pos/PrescriptionDialog';
 import VoidApprovalDialog from './pos/VoidApprovalDialog';
+import MenuOptionsDialog from './pos/MenuOptionsDialog';
+import { listMenuOptions } from '../../api/industryApi';
 import useIndustryProfile from '../../newlook/industry/useIndustryProfile';
 import { has as profileHas } from '../../newlook/industry/industryModel';
 import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
@@ -290,6 +292,20 @@ const NewSale = () => {
   // Restaurant and bar: an item the kitchen already has comes off only with a manager's approval (see VoidApprovalDialog)
   const voidApprovalOn = kitchenSettings.enabled && profileHas(industryProfile, 'void_approval');
   const [voidRequest, setVoidRequest] = useState(null); // { lines, apply } waiting for approval
+  // Restaurant and bar: dishes with options (how cooked, extras, leave out) ask for them when added (see MenuOptionsDialog)
+  const optionsOn = profileHas(industryProfile, 'kitchen_tickets');
+  const [menuOptions, setMenuOptions] = useState({}); // { item_code: [groups] }
+  const [optionsRequest, setOptionsRequest] = useState(null); // { product, rate } waiting for its options
+  useEffect(() => {
+    if (!optionsOn || !userCompany) return undefined;
+    let live = true;
+    listMenuOptions(userCompany)
+      .then((options) => live && setMenuOptions(options || {}))
+      .catch(() => {}); // without options the till sells the dish as it always has
+    return () => {
+      live = false;
+    };
+  }, [optionsOn, userCompany]);
   const screensWanted = kitchenSettings.enabled && kitchenSettings.screens && kitchenSettingsStatus !== 'unavailable';
   const kitchenTickets = useKitchenTickets({ company: userCompany, warehouse: kitchenWarehouse, enabled: screensWanted });
   const [readyOpen, setReadyOpen] = useState(false);
@@ -864,7 +880,7 @@ const NewSale = () => {
 
   // Add to cart with stock validation
   // enteredRate: the price typed on the "Enter price" keypad, for products with no fixed price
-  const addToCart = async (product, enteredRate) => {
+  const addToCart = async (product, enteredRate, chosenOptions) => {
     if (heldBusyRef.current) return; // a hold or bring-back is waiting for the server
     const itemCode = product.item_code;
     
@@ -903,6 +919,14 @@ const NewSale = () => {
         return;
       }
       
+      // A dish with options asks for them first; priced options add to the dish's price
+      const groups = optionsOn ? menuOptions[itemCode] : null;
+      if (groups && groups.length && !chosenOptions) {
+        setOptionsRequest({ product, rate });
+        return;
+      }
+      if (chosenOptions) rate += chosenOptions.extra || 0;
+
       // Get discount for this item
       const discountRule = discountsMap[itemCode];
       const discountAmount = discountRule ? calculateDiscountAmount(rate, discountRule) : 0;
@@ -920,6 +944,7 @@ const NewSale = () => {
           item_group: product.item_group || '', // for the cart picture only
           prescription_only: isPrescriptionOnly(product), // sold only against a prescription
           image: product.image || '', // for the cart picture only
+          ...(chosenOptions && chosenOptions.text ? { options: chosenOptions.options, options_text: chosenOptions.text } : {}),
           subtotal: discountedPrice,
           discount_amount: discountAmount,
           discount_rule: discountRule,
@@ -1292,6 +1317,8 @@ const NewSale = () => {
         uom: item.uom,
         warehouse: item.warehouse || defaultWarehouse, // Per-item warehouse (optional override)
         };
+        // A dish's chosen options go on the invoice line, as they went on the kitchen ticket
+        if (item.options_text) itemData.options_text = item.options_text;
         
         // Include discount fields if discount exists, otherwise omit to let backend auto-apply
         if (item.discount_rule) {
@@ -2149,7 +2176,7 @@ const NewSale = () => {
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || !!voidRequest || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || !!voidRequest || !!optionsRequest || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -2680,6 +2707,19 @@ const NewSale = () => {
           } finally {
             chargeCheckedRef.current = false;
           }
+        }}
+      />
+
+      <MenuOptionsDialog
+        open={!!optionsRequest}
+        product={optionsRequest?.product}
+        groups={(optionsRequest && menuOptions[optionsRequest.product.item_code]) || []}
+        basePrice={optionsRequest?.rate || 0}
+        onClose={() => setOptionsRequest(null)}
+        onAdd={(choice) => {
+          const request = optionsRequest;
+          setOptionsRequest(null);
+          if (request) addToCart(request.product, request.rate, choice);
         }}
       />
 

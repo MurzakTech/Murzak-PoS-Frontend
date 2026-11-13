@@ -13,6 +13,8 @@
  */
 
 export const MAX_NOTE = 80;
+// A ticket line holds a dish's menu options and the waiter's own note together, so it has more room than the note
+export const MAX_TICKET_NOTE = 160;
 export const DEFAULT_QUICK_NOTES = ['No onions', 'Well done', 'Extra', 'Takeaway'];
 
 /** What the till remembers about the bill's kitchen history: rounds sent, sent items since cancelled, and table or counter */
@@ -133,8 +135,10 @@ export const suggestStations = (groupNames, stations = defaultSettings().station
 
 // ---------------------------------------------------------------- what to send
 
-const lineNote = (l) => cleanNote(l.note);
-const sentNote = (l) => cleanNote(l.sentNote);
+// What the kitchen reads for a line: the dish's chosen options (menu options) and then the waiter's own note
+const ticketNote = (v) => text(v).slice(0, MAX_TICKET_NOTE);
+const lineNote = (l) => ticketNote([l.options_text, l.note].filter((v) => text(v)).join('; '));
+const sentNote = (l) => ticketNote(l.sentNote);
 
 /**
  * Works out what a send would contain, grouped by station.
@@ -187,7 +191,7 @@ export const planSend = (cart, kitchen, settings) => {
 /** The cart with everything in the plan marked as sent (quantity and note), so the next send holds only what is new */
 export const markSent = (cart, plan) => {
   const sentCodes = new Set(plan.stations.flatMap((g) => [...g.adds, ...g.changes].map((x) => x.item_code)));
-  return cart.map((line) => (sentCodes.has(line.item_code) ? { ...line, sentQty: line.qty, sentNote: cleanNote(line.note) } : line));
+  return cart.map((line) => (sentCodes.has(line.item_code) ? { ...line, sentQty: line.qty, sentNote: lineNote(line) } : line));
 };
 
 /** The bill's kitchen history after a send: one more round, and the cancellations that were just sent are cleared */
