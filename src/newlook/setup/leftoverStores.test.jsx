@@ -14,12 +14,12 @@ import SalesPage from '../sales/SalesPage';
 import NewPurchasePage from '../purchases/NewPurchasePage';
 import { getOverview } from '../../api/overviewApi';
 import { listSales } from '../../api/salesListApi';
-import { findProductsToBuy, getPaymentModes, listSuppliers } from '../../api/purchasesListApi';
+import { findProductsToBuy, getPaymentModes, getPurchaseTaxRate, listSuppliers } from '../../api/purchasesListApi';
 import { getMyAccess } from '../../api/accessApi';
 
 jest.mock('../../api/overviewApi', () => ({ getOverview: jest.fn(), getProductsWithoutCost: jest.fn() }));
 jest.mock('../../api/salesListApi', () => ({ listSales: jest.fn(), getSale: jest.fn(), takePayment: jest.fn() }));
-jest.mock('../../api/purchasesListApi', () => ({ addPurchaseNote: jest.fn(), createDirectBill: jest.fn(), findProductsToBuy: jest.fn(), getPaymentModes: jest.fn(), getProductToBuy: jest.fn(), listSuppliers: jest.fn(), saveOrder: jest.fn() }));
+jest.mock('../../api/purchasesListApi', () => ({ addPurchaseNote: jest.fn(), createDirectBill: jest.fn(), findProductsToBuy: jest.fn(), getPaymentModes: jest.fn(), getProductToBuy: jest.fn(), getPurchaseTaxRate: jest.fn(), listSuppliers: jest.fn(), saveOrder: jest.fn() }));
 jest.mock('../../api/accessApi', () => ({ getMyAccess: jest.fn() }));
 const mockShop = { warehouses: [] };
 jest.mock('../../store/hooks', () => ({
@@ -66,6 +66,7 @@ beforeEach(() => {
   listSales.mockResolvedValue({ rows: [], summary: { sold: 0, unpaid: 0, returned: 0 }, total: 0, page: 1, pageSize: 20, pages: 1 });
   listSuppliers.mockResolvedValue([{ id: 'SUP-1', name: 'Bidco Africa' }]);
   getPaymentModes.mockResolvedValue([{ name: 'Cash', kind: 'cash' }]);
+  getPurchaseTaxRate.mockResolvedValue(0);
   findProductsToBuy.mockResolvedValue([]);
   window.innerWidth = 1280;
 });

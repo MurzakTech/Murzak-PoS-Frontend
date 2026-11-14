@@ -38,11 +38,11 @@ const renderEdit = async ({ tier = 'owner', warehouse = 'Main Store - X', found 
   findProduct.mockResolvedValue(found);
   useAppSelector.mockImplementation((select) => select({ auth: { user: { company: 'X', default_warehouse: warehouse } }, warehouse: { warehouses: [] } }));
   render(
-    <MemoryRouter initialEntries={['/new-look/products/SOAP-1/edit']}>
+    <MemoryRouter initialEntries={['/products/SOAP-1/edit']}>
       <AccessProvider userKey="beth">
         <ToastProvider>
           <Routes>
-            <Route path="/new-look/products/:code/edit" element={<EditProductPage />} />
+            <Route path="/products/:code/edit" element={<EditProductPage />} />
             <Route path="*" element={<p>the list</p>} />
           </Routes>
           <Where />
@@ -81,7 +81,7 @@ describe('Edit product', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(updateProduct).toHaveBeenCalled());
     expect(updateProduct).toHaveBeenCalledWith({ code: 'SOAP-1', changes: { price: '150' }, warehouse: 'Main Store - X', company: 'X' });
-    await waitFor(() => expect(where()).toBe('/new-look/products?open=SOAP-1'));
+    await waitFor(() => expect(where()).toBe('/products?open=SOAP-1'));
   });
 
   test('a cost change goes with the default store', async () => {
@@ -134,7 +134,7 @@ describe('Edit product', () => {
     userEvent.type(name, ' large');
     userEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect((await screen.findAllByText('That category does not exist.')).length).toBeGreaterThan(0);
-    expect(where()).toBe('/new-look/products/SOAP-1/edit');
+    expect(where()).toBe('/products/SOAP-1/edit');
   });
 
   test('asks before leaving with unsaved changes', async () => {
@@ -142,13 +142,13 @@ describe('Edit product', () => {
     userEvent.type(await screen.findByLabelText('Product name'), ' large');
     userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(await screen.findByRole('alertdialog', { name: 'Leave without saving?' })).toBeInTheDocument();
-    expect(where()).toBe('/new-look/products/SOAP-1/edit');
+    expect(where()).toBe('/products/SOAP-1/edit');
   });
 
   test('a product that cannot be found says so', async () => {
     await renderEdit({ found: null });
     expect(await screen.findByText('We could not find this product. It may have been removed.')).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: 'Back to Products' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
   });
 });

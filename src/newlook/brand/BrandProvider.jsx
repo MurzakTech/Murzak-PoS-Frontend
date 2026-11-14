@@ -4,7 +4,8 @@ import { getBrand } from '../../api/brandApi';
 import { getCompany } from '../../api/businessApi';
 import { getUserCompany } from '../../utils/getUserCompany';
 import { useNewLook } from '../NewLookProvider';
-import { DEFAULT_BRAND } from './brandModel';
+import { ACCENTS, DEFAULT_ACCENT, DEFAULT_BRAND } from './brandModel';
+import useIndustryProfile from '../industry/useIndustryProfile';
 import { applyAccent, readCache, writeCache, writeDeviceBrand } from './deviceBrand';
 
 /**
@@ -59,8 +60,11 @@ export const BrandProvider = ({ children }) => {
     };
   }, [isAuthenticated, enabled, company]);
 
+  // The business's kind of shop starts it on its own colour (green for a pharmacy, amber for a restaurant and bar) while the
+  // owner keeps the default; any colour the owner chose wins
+  const { profile: industry } = useIndustryProfile(null, company, { enabled: Boolean(isAuthenticated && enabled) });
   // The accent reaches the shell only through the design tokens: one attribute on the page, removed when the New look is off
-  const accent = state.brand.accent;
+  const accent = state.brand.accent === DEFAULT_ACCENT && industry.key !== 'general' && ACCENTS.includes(industry.look.accent) ? industry.look.accent : state.brand.accent;
   // Signed out, the Sign-in page sets the accent it last knew on this device (it runs before this effect, so this must not clear it)
   useEffect(() => {
     if (isAuthenticated) applyAccent(enabled ? accent : null);

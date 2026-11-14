@@ -18,7 +18,7 @@ const renderAt = (url) =>
   render(
     <MemoryRouter initialEntries={[url]}>
       <Routes>
-        <Route path="/new-look/customers/owing" element={<OwingRedirect />} />
+        <Route path="/customers/owing" element={<OwingRedirect />} />
         <Route path="*" element={<Where />} />
       </Routes>
     </MemoryRouter>
@@ -26,13 +26,13 @@ const renderAt = (url) =>
 
 describe('the Owing address', () => {
   test('opens the Owing tab of the Customers page', () => {
-    renderAt('/new-look/customers/owing');
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/customers?tab=owing');
+    renderAt('/customers/owing');
+    expect(screen.getByTestId('where')).toHaveTextContent('/customers?tab=owing');
   });
 
   test('a customer in the address opens that customer\'s panel', () => {
-    renderAt('/new-look/customers/owing?customer=CUST-0007');
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/customers?tab=owing&open=CUST-0007');
+    renderAt('/customers/owing?customer=CUST-0007');
+    expect(screen.getByTestId('where')).toHaveTextContent('/customers?tab=owing&open=CUST-0007');
   });
 });
 
@@ -40,7 +40,7 @@ describe('the routes', () => {
   const find = (path) => newLookRoutes.filter((r) => r.path === path);
 
   test('the list, the Owing address, the New form and the Edit form each have one route of their own', () => {
-    ['/new-look/customers', '/new-look/customers/owing', '/new-look/customers/new', '/new-look/customers/:id/edit'].forEach((path) => {
+    ['/customers', '/customers/owing', '/customers/new', '/customers/:id/edit'].forEach((path) => {
       expect(find(path)).toHaveLength(1);
       expect(find(path)[0].element).not.toBe(PagePlaceholder);
     });

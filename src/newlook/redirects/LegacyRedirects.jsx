@@ -30,13 +30,18 @@ const LegacyRedirects = ({ children }) => {
     return children;
   }
 
-  if (NEW_LOOK_PREFIX && pathname.startsWith(NEW_LOOK_PREFIX)) {
+  const isLive = (page) => isPageLive(page, preview);
+  const hit = resolveRedirect(pathname, search, hash, { isLive });
+  const moves = hit && hit.to !== `${pathname}${search}${hash}`;
+
+  // Opening a New look page (the New look now uses the plain addresses, so there is usually no prefix) ends the stay
+  if ((NEW_LOOK_PREFIX && pathname.startsWith(NEW_LOOK_PREFIX)) || (!moves && isLive(pathname))) {
     stayOnCurrentScreens = false;
   }
 
-  const hit = resolveRedirect(pathname, search, hash, { isLive: (page) => isPageLive(page, preview) });
-  if (hit && hit.to !== `${pathname}${search}${hash}`) {
-    stayOnCurrentScreens = false;
+  if (moves) {
+    // Reached from a current screen opened on purpose: stay on the current screen instead of bouncing
+    if (stayOnCurrentScreens) return children;
     return <Navigate to={hit.to} replace />;
   }
   return children;

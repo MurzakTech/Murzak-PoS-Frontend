@@ -88,7 +88,7 @@ const Where = () => {
   return <p data-testid="where">{location.pathname + location.search}</p>;
 };
 
-const renderPage = async (url = '/new-look/products', tier = 'owner') => {
+const renderPage = async (url = '/products', tier = 'owner') => {
   canSeeCost = tier !== 'cashier';
   getMyAccess.mockResolvedValue({ tier, can: tier === 'cashier' ? {} : { cost_of_goods: true, profit: true } });
   const view = render(
@@ -137,7 +137,7 @@ describe('the page', () => {
     expect(within(tabs).getByRole('tab', { name: 'Categories' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('button', { name: 'New product' })).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: MORE }));
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Update many prices']);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Online store (WooCommerce)', 'Update many prices']);
     await screen.findByRole('row', { name: /Product number 39/ });
   });
 
@@ -182,7 +182,7 @@ describe('the page', () => {
   });
 
   test('a product that is not counted (a service) has a dash for stock and says so', async () => {
-    await renderPage('/new-look/products?page=2');
+    await renderPage('/products?page=2');
     const row = await screen.findByRole('row', { name: /Product number 7\b/ });
     expect(within(row).getByText('Not counted')).toBeInTheDocument();
     expect(within(row).getByText('–')).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe('paging and the count (AC-25, AC-27)', () => {
   });
 
   test('a size in the address that is not offered shows 20', async () => {
-    await renderPage('/new-look/products?size=7');
+    await renderPage('/products?size=7');
     await screen.findByRole('row', { name: /Soap bar/ });
     expect(screen.getByRole('combobox', { name: /Rows per page/ })).toHaveTextContent('20');
     expect(listProducts).toHaveBeenCalledWith(expect.objectContaining({ pageSize: 20 }));
@@ -213,7 +213,7 @@ describe('paging and the count (AC-25, AC-27)', () => {
   });
 
   test('a size of nothing or a word shows 20 as well', async () => {
-    await renderPage('/new-look/products?size=');
+    await renderPage('/products?size=');
     await screen.findByRole('row', { name: /Soap bar/ });
     expect(screen.getByRole('combobox', { name: /Rows per page/ })).toHaveTextContent('20');
   });
@@ -229,7 +229,7 @@ describe('paging and the count (AC-25, AC-27)', () => {
   });
 
   test('the last page shows what is left, and Next is off', async () => {
-    await renderPage('/new-look/products?page=3');
+    await renderPage('/products?page=3');
     expect(await screen.findByText('Showing 5 of 45')).toBeInTheDocument();
     expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
@@ -245,7 +245,7 @@ describe('paging and the count (AC-25, AC-27)', () => {
   });
 
   test('a link to a page past the last one shows the last page, not an empty list', async () => {
-    await renderPage('/new-look/products?page=9');
+    await renderPage('/products?page=9');
     expect(await screen.findByText('Showing 5 of 45')).toBeInTheDocument();
   });
 
@@ -260,7 +260,7 @@ describe('paging and the count (AC-25, AC-27)', () => {
   });
 
   test('the summary is the whole shop and stays put while the list is filtered', async () => {
-    await renderPage('/new-look/products?q=soap');
+    await renderPage('/products?q=soap');
     await screen.findByText('Showing 3 of 3');
     const summary = screen.getByLabelText('Products at a glance');
     await waitFor(() => expect(within(summary).getByText('45')).toBeInTheDocument());
@@ -269,7 +269,7 @@ describe('paging and the count (AC-25, AC-27)', () => {
 
 describe('filters live in the address', () => {
   test('the search, the category and the view are all read from the address', async () => {
-    await renderPage('/new-look/products?q=product&category=Food&status=low');
+    await renderPage('/products?q=product&category=Food&status=low');
     await screen.findByRole('searchbox', { name: 'Search products' });
     expect(listProducts).toHaveBeenCalledWith({ search: 'product', category: 'Food', status: 'low', page: 1, pageSize: 20 });
     expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue('product');
@@ -303,17 +303,17 @@ describe('filters live in the address', () => {
   });
 
   test('a view the address names but the list does not offer is the default view', async () => {
-    await renderPage('/new-look/products?status=junk');
+    await renderPage('/products?status=junk');
     await screen.findByRole('row', { name: /Soap bar/ });
     expect(listProducts).toHaveBeenCalledWith(expect.objectContaining({ status: '' }));
     expect(screen.getByRole('combobox', { name: 'Show' })).toHaveTextContent('Products in use');
   });
 
   test('Clear filters empties them all and goes to page 1', async () => {
-    await renderPage('/new-look/products?q=soap&category=Food&page=1');
+    await renderPage('/products?q=soap&category=Food&page=1');
     await screen.findByRole('searchbox', { name: 'Search products' });
     userEvent.click(await screen.findByRole('button', { name: 'Clear filters' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products'));
+    await waitFor(() => expect(where()).toBe('/products'));
     await waitFor(() => expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue(''));
   });
 
@@ -331,12 +331,12 @@ describe('empty and error states', () => {
     await renderPage();
     expect(await screen.findByRole('heading', { name: 'No products yet' })).toBeInTheDocument();
     userEvent.click(screen.getByRole('button', { name: 'Add product' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products/new'));
+    await waitFor(() => expect(where()).toBe('/products/new'));
     expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
   });
 
   test('nothing matches the filters: the action is Clear filters', async () => {
-    await renderPage('/new-look/products?q=zzz');
+    await renderPage('/products?q=zzz');
     listProducts.mockResolvedValue({ ...answer(), rows: [], total: 0, pages: 1 });
     userEvent.type(screen.getByRole('searchbox', { name: 'Search products' }), 'q{enter}');
     expect(await screen.findByRole('heading', { name: 'No products match' })).toBeInTheDocument();
@@ -408,7 +408,7 @@ describe('the product panel', () => {
   });
 
   test('a cashier sees no cost and no profit, in the list or the panel, and no actions', async () => {
-    await renderPage('/new-look/products', 'cashier');
+    await renderPage('/products', 'cashier');
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     await screen.findByRole('heading', { level: 2, name: 'Soap bar' });
     const panel = screen.getByRole('region', { name: 'Soap bar' });
@@ -421,7 +421,7 @@ describe('the product panel', () => {
 
   test('even if the server sent a cost to a cashier by mistake, the screen does not draw it', async () => {
     listProducts.mockImplementation(async (query) => ({ ...answer(query), rows: answer(query).rows.map(withCost) }));
-    await renderPage('/new-look/products', 'cashier');
+    await renderPage('/products', 'cashier');
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     await screen.findByRole('heading', { level: 2, name: 'Soap bar' });
     const panel = screen.getByRole('region', { name: 'Soap bar' });
@@ -430,7 +430,7 @@ describe('the product panel', () => {
   });
 
   test('a cashier has no New product or Import button', async () => {
-    await renderPage('/new-look/products', 'cashier');
+    await renderPage('/products', 'cashier');
     await screen.findByRole('row', { name: /Soap bar/ });
     expect(screen.queryByRole('button', { name: 'New product' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Import' })).not.toBeInTheDocument();
@@ -467,12 +467,12 @@ describe('the product panel', () => {
   });
 
   test('a shared link opens the same product', async () => {
-    await renderPage('/new-look/products?open=PRD-040');
+    await renderPage('/products?open=PRD-040');
     expect(await screen.findByRole('heading', { level: 2, name: 'Soap bar' })).toBeInTheDocument();
   });
 
   test('a shared link to a product that is not on this page asks for that one', async () => {
-    await renderPage('/new-look/products?open=PRD-003');
+    await renderPage('/products?open=PRD-003');
     expect(await screen.findByRole('heading', { level: 2, name: 'Product number 3' })).toBeInTheDocument();
     expect(listProducts).toHaveBeenCalledWith(expect.objectContaining({ search: 'PRD-003', status: 'all' }));
   });
@@ -481,7 +481,7 @@ describe('the product panel', () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     userEvent.click(await screen.findByRole('button', { name: 'Add stock' }));
-    await waitFor(() => expect(where()).toBe('/new-look/stock?action=in&item=PRD-040'));
+    await waitFor(() => expect(where()).toBe('/stock?action=in&item=PRD-040'));
   });
 
   test('once the redesigned Stock page is live, Add stock opens it with the product', async () => {
@@ -489,11 +489,11 @@ describe('the product panel', () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     userEvent.click(await screen.findByRole('button', { name: 'Add stock' }));
-    await waitFor(() => expect(where()).toBe('/new-look/stock?action=in&item=PRD-040'));
+    await waitFor(() => expect(where()).toBe('/stock?action=in&item=PRD-040'));
   });
 
   test('a product that is not counted has no Add stock button', async () => {
-    await renderPage('/new-look/products?page=2');
+    await renderPage('/products?page=2');
     userEvent.click(await screen.findByRole('row', { name: /Product number 7\b/ }));
     await screen.findByRole('heading', { level: 2, name: 'Product number 7' });
     expect(screen.queryByRole('button', { name: 'Add stock' })).not.toBeInTheDocument();
@@ -504,7 +504,7 @@ describe('the product panel', () => {
     await renderPage();
     userEvent.click(await screen.findByRole('row', { name: /Soap bar/ }));
     userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products/PRD-040/edit'));
+    await waitFor(() => expect(where()).toBe('/products/PRD-040/edit'));
   });
 });
 
@@ -512,14 +512,14 @@ describe('the header buttons', () => {
   test('New product opens the form', async () => {
     await renderPage();
     userEvent.click(screen.getByRole('button', { name: 'New product' }));
-    await waitFor(() => expect(where()).toBe('/new-look/products/new'));
+    await waitFor(() => expect(where()).toBe('/products/new'));
   });
 
   test('Import opens the new import page', async () => {
     setPreview(true);
     await renderPage();
     userEvent.click(inMore('Import'));
-    await waitFor(() => expect(where()).toBe('/new-look/products/import'));
+    await waitFor(() => expect(where()).toBe('/products/import'));
   });
 
   test('Export saves the rows on screen as a spreadsheet and says how many', async () => {
@@ -535,7 +535,7 @@ describe('the header buttons', () => {
   });
 
   test('a cashier export has no cost column', async () => {
-    await renderPage('/new-look/products', 'cashier');
+    await renderPage('/products', 'cashier');
     await screen.findByRole('row', { name: /Soap bar/ });
     userEvent.click(screen.getByRole('button', { name: 'Export' }));
     expect(saveTextFile.mock.calls[0][0].split('\r\n')[0]).not.toContain('Cost');
@@ -544,7 +544,7 @@ describe('the header buttons', () => {
 
 describe('the Categories tab', () => {
   test('the address of the tab opens the categories with their product counts', async () => {
-    await renderPage('/new-look/products/categories');
+    await renderPage('/products/categories');
     expect(await screen.findByRole('table', { name: 'Categories, A to Z' })).toBeInTheDocument();
     const row = screen.getByRole('row', { name: /Food/ });
     expect(within(row).getByText(String(CATEGORIES[0].product_count))).toBeInTheDocument();
@@ -582,7 +582,7 @@ describe('phones', () => {
 
   test('the Filters button says how many filters are on', async () => {
     window.innerWidth = 390;
-    await renderPage('/new-look/products?q=soap&category=Food');
+    await renderPage('/products?q=soap&category=Food');
     expect(await screen.findByRole('button', { name: 'Filters (2 on)' })).toBeInTheDocument();
   });
 });
@@ -595,7 +595,7 @@ describe('the More menu and the number of stores', () => {
     const store = configureStore({ reducer: (state = { auth: { user: { company: 'Demo Shop' } }, warehouse: { warehouses } }) => state });
     render(
       <Provider store={store}>
-        <MemoryRouter initialEntries={['/new-look/products']}>
+        <MemoryRouter initialEntries={['/products']}>
           <AccessProvider userKey="beth">
             <ToastProvider>
               <ProductsPage />
@@ -611,12 +611,12 @@ describe('the More menu and the number of stores', () => {
 
   test('a one-store shop is not offered Stores or the transfer screens', async () => {
     await withStores([{ name: 'Duka Kuu - DS' }]);
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Update many prices']);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Online store (WooCommerce)', 'Update many prices']);
   });
 
   test('a shop with a second store is offered Stores and both transfer screens, each opening the current screen', async () => {
     await withStores([{ name: 'Duka Kuu - DS' }, { name: 'Tawi - DS', warehouse_name: 'Tawi' }]);
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Update many prices', 'Stores', 'Stock transfers', 'Move stock between stores']);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Export', 'Import', 'Online store (WooCommerce)', 'Update many prices', 'Stores', 'Stock transfers', 'Move stock between stores']);
     userEvent.click(screen.getByRole('menuitem', { name: 'Stock transfers' }));
     expect(where()).toBe('/stock-transfers?legacy=1');
   });

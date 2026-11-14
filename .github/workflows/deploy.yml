@@ -11,11 +11,11 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      # The tests used to run with continue-on-error, so a failing test never stopped a deploy.
-      # Now a test that was passing and has started to fail stops it. Tests that were already
-      # failing are listed in test-known-failures.json (see scripts/test-gate.js).
-      - name: Run automated tests (stops the deploy if a passing test breaks)
-        run: node scripts/test-gate.js
+      # A failing test stops the deploy, so a broken build never reaches the shops
+      - name: Run automated tests
+        run: npm test -- --watchAll=false --ci
+        env:
+          CI: true
       - run: npm run build
         env:
           CI: false

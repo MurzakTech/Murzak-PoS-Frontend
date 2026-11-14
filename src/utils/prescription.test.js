@@ -46,3 +46,24 @@ describe('dispensing record', () => {
     expect(isDispensingComplete(null)).toBe(false);
   });
 });
+
+describe('antibiotics start as prescription-only in a pharmacy', () => {
+  const { looksLikeAntibiotic, prescriptionTicked } = require('./prescription');
+
+  test('common antibiotic names are recognised however they are written', () => {
+    ['Amoxicillin 500mg Capsules', 'AMOXYCILLIN SYRUP', 'Co-Trimoxazole 480mg', 'Augmentin 625', 'Metronidazole (Flagyl)', 'Antibiotic Ointment'].forEach((name) =>
+      expect(looksLikeAntibiotic(name)).toBe(true)
+    );
+  });
+
+  test('everyday products are not', () => {
+    ['Paracetamol Tablet', 'Vitamin C Tablets', 'Cough Syrup', 'ORS Sachet', '', null, undefined].forEach((name) => expect(looksLikeAntibiotic(name)).toBe(false));
+  });
+
+  test('what the person chose wins; with no choice an antibiotic shows ticked', () => {
+    expect(prescriptionTicked('no', 'Amoxicillin')).toBe(false);
+    expect(prescriptionTicked('yes', 'Paracetamol')).toBe(true);
+    expect(prescriptionTicked(undefined, 'Amoxicillin')).toBe(true);
+    expect(prescriptionTicked('', 'Paracetamol')).toBe(false);
+  });
+});

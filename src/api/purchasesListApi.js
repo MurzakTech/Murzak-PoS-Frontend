@@ -225,6 +225,7 @@ const asProduct = (r) => ({
   item_name: r.item_name || r.item_code,
   unit: r.unit || '',
   cost: r.cost_price === undefined || r.cost_price === null ? null : Number(r.cost_price),
+  tracksBatches: r.tracks_batches === 1 || r.tracks_batches === true,
 });
 
 /** Products by name or code for the New purchase form, with the cost price the shop has on record (owners and managers): [{ item_code, item_name, unit, cost }] */

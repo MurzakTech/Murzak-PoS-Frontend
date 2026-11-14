@@ -2,6 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import useHeldSales from './useHeldSales';
 import { HeldSalesError } from '../api/heldSalesApi';
 import { heldKey } from '../utils/heldSales';
+import { _resetIdbForTest } from '../utils/indexedDb';
+
+// Each test starts with nothing kept on the device
+beforeEach(() => _resetIdbForTest());
 
 jest.mock('../api/axiosInstance', () => ({ __esModule: true, default: { post: jest.fn() } }));
 

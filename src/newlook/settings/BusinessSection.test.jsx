@@ -177,7 +177,8 @@ test('only the owner can change them: a manager can read, and has no Save', asyn
 });
 
 test('a failed load says so and tries again', async () => {
-  const load = jest.fn().mockRejectedValueOnce(new Error('x')).mockResolvedValue(COMPANY);
+  // The page asks for the shop by name and then, as a fallback, for the default company: both must fail
+  const load = jest.fn().mockRejectedValueOnce(new Error('x')).mockRejectedValueOnce(new Error('x')).mockResolvedValue(COMPANY);
   show('owner', { load });
   expect(await screen.findByRole('heading', { name: 'We could not load your business details' })).toBeInTheDocument();
   userEvent.click(screen.getByRole('button', { name: 'Try again' }));

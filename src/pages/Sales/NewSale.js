@@ -84,9 +84,17 @@ import KitchenSettingsDialog from './pos/KitchenSettingsDialog';
 import KitchenTicketDialog from './pos/KitchenTicketDialog';
 import ReadyTicketsDialog from './pos/ReadyTicketsDialog';
 import PrescriptionDialog from './pos/PrescriptionDialog';
-import ClinicalPrescriptionModal from './pos/ClinicalPrescriptionModal';
-import { recordDispense } from '../../api/pharmacyHealthApi';
-import useBusinessFeatures from '../../newlook/setup/useBusinessFeatures';
+import VoidApprovalDialog from './pos/VoidApprovalDialog';
+import MenuOptionsDialog from './pos/MenuOptionsDialog';
+import { isExpired, parseGs1, sameGtin } from '../../utils/gs1';
+import { todayIso } from '../../newlook/purchases/purchasesModel';
+import { getInsurers, getRestaurantSettings, listMenuOptions, recordTip } from '../../api/industryApi';
+import { DeliveryOrderDialog, RestaurantToolbar, SplitBillDialog, TableMapDialog, TipDialog } from './pos/RestaurantDialogs';
+import { InsuranceDialog, InsuranceToolbar } from './pos/InsuranceDialog';
+import { insuranceLines, insurancePayload } from '../../utils/insurance';
+import { happyHourDiscount, happyHourFor, serviceChargeOn, splitByItem } from '../../utils/restaurant';
+import useIndustryProfile from '../../newlook/industry/useIndustryProfile';
+import { has as profileHas } from '../../newlook/industry/industryModel';
 import { prescriptionItems, isDispensingComplete, isPrescriptionOnly } from '../../utils/prescription';
 import { UnsentItemsDialog, ClearSentSaleDialog } from './pos/KitchenPrompts';
 import useHeldSales from '../../hooks/useHeldSales';
@@ -285,6 +293,50 @@ const NewSale = () => {
     saveDevice: saveKitchenDevice,
   } = useKitchenSettings({ company: userCompany });
   const kitchenWarehouse = activeWarehouse?.name || activeWarehouse?.warehouse_name || '';
+  // The store's kind of shop (pharmacy, restaurant and bar, or general): which industry features are on here
+  const { profile: industryProfile } = useIndustryProfile(kitchenWarehouse, userCompany);
+  // Restaurant and bar: an item the kitchen already has comes off only with a manager's approval (see VoidApprovalDialog)
+  const voidApprovalOn = kitchenSettings.enabled && profileHas(industryProfile, 'void_approval');
+  const [voidRequest, setVoidRequest] = useState(null); // { lines, apply } waiting for approval
+  // Restaurant and bar: dishes with options (how cooked, extras, leave out) ask for them when added (see MenuOptionsDialog)
+  const optionsOn = profileHas(industryProfile, 'kitchen_tickets');
+  const [menuOptions, setMenuOptions] = useState({}); // { item_code: [groups] }
+  const [optionsRequest, setOptionsRequest] = useState(null); // { product, rate } waiting for its options
+  // Restaurant and bar settings: happy hours, service charge, delivery platforms, tables (see restaurant_settings_api)
+  const [restaurantSettings, setRestaurantSettings] = useState(null);
+  const [orderChannel, setOrderChannel] = useState(null); // { channel, ref } when the bill is a delivery platform order
+  const [tablesOpen, setTablesOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [deliveryOpen, setDeliveryOpen] = useState(false);
+  const [tipOpen, setTipOpen] = useState(false);
+  useEffect(() => {
+    if (!optionsOn || !userCompany) return undefined;
+    let live = true;
+    listMenuOptions(userCompany)
+      .then((options) => live && setMenuOptions(options || {}))
+      .catch(() => {}); // without options the till sells the dish as it always has
+    getRestaurantSettings(userCompany)
+      .then((settings) => live && setRestaurantSettings(settings || null))
+      .catch(() => {}); // without settings: no happy hour, no service charge
+    return () => {
+      live = false;
+    };
+  }, [optionsOn, userCompany]);
+  // Pharmacies: a bill billed to a medical insurer, the patient paying only the co-payment (see InsuranceDialog)
+  const insuranceOn = profileHas(industryProfile, 'insurance');
+  const [insurers, setInsurers] = useState([]);
+  const [insurance, setInsurance] = useState(null); // { insurer, customer, rule, patient, member_no, scheme, preauth }
+  const [insuranceOpen, setInsuranceOpen] = useState(false);
+  useEffect(() => {
+    if (!insuranceOn || !userCompany) return undefined;
+    let live = true;
+    getInsurers(userCompany)
+      .then((data) => live && setInsurers((data && data.insurers) || []))
+      .catch(() => {}); // without insurers the till sells as it always has
+    return () => {
+      live = false;
+    };
+  }, [insuranceOn, userCompany]);
   const screensWanted = kitchenSettings.enabled && kitchenSettings.screens && kitchenSettingsStatus !== 'unavailable';
   const kitchenTickets = useKitchenTickets({ company: userCompany, warehouse: kitchenWarehouse, enabled: screensWanted });
   const [readyOpen, setReadyOpen] = useState(false);
@@ -299,7 +351,6 @@ const NewSale = () => {
   // Prescription-only medicines on the sale: who it is for and who prescribed it (kept on the invoice)
   const [dispensing, setDispensing] = useState(null);
   const [rxOpen, setRxOpen] = useState(false);
-  const [clinicalRxOpen, setClinicalRxOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const { enabled: newLook } = useNewLook(); // the redesigned till pieces show only while the shop's New look is on
   // New look: a class on the page body, so the keyboard focus ring (till-controls.css) also reaches dialogs and menus that open outside the till
@@ -860,7 +911,7 @@ const NewSale = () => {
 
   // Add to cart with stock validation
   // enteredRate: the price typed on the "Enter price" keypad, for products with no fixed price
-  const addToCart = async (product, enteredRate) => {
+  const addToCart = async (product, enteredRate, chosenOptions) => {
     if (heldBusyRef.current) return; // a hold or bring-back is waiting for the server
     const itemCode = product.item_code;
     
@@ -899,8 +950,16 @@ const NewSale = () => {
         return;
       }
       
-      // Get discount for this item
-      const discountRule = discountsMap[itemCode];
+      // A dish with options asks for them first; priced options add to the dish's price
+      const groups = optionsOn ? menuOptions[itemCode] : null;
+      if (groups && groups.length && !chosenOptions) {
+        setOptionsRequest({ product, rate });
+        return;
+      }
+      if (chosenOptions) rate += chosenOptions.extra || 0;
+
+      // Get discount for this item; in a restaurant or bar, a happy hour when there is no other offer
+      const discountRule = discountsMap[itemCode] || (optionsOn ? happyHourDiscount(happyHourFor(restaurantSettings?.happy_hours, product)) : null);
       const discountAmount = discountRule ? calculateDiscountAmount(rate, discountRule) : 0;
       const discountedPrice = discountRule ? calculateDiscountedPrice(rate, discountRule) : rate;
       
@@ -916,6 +975,7 @@ const NewSale = () => {
           item_group: product.item_group || '', // for the cart picture only
           prescription_only: isPrescriptionOnly(product), // sold only against a prescription
           image: product.image || '', // for the cart picture only
+          ...(chosenOptions && chosenOptions.text ? { options: chosenOptions.options, options_text: chosenOptions.text } : {}),
           subtotal: discountedPrice,
           discount_amount: discountAmount,
           discount_rule: discountRule,
@@ -943,6 +1003,21 @@ const NewSale = () => {
   const handleSearchEnter = () => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return;
+    // A medicine pack's GS1 code: find the product by its product number, and never sell a pack that has expired
+    const pack = parseGs1(searchTerm);
+    if (pack) {
+      const found = products.find((p) => barcodesOf(p).some((b) => sameGtin(b, pack.gtin)));
+      const warn = (message, severity = 'warning') => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+      };
+      if (!found) warn(`No product has the code ${pack.gtin}. Add it to the product's barcodes, then scan again.`);
+      else if (isExpired(pack.expiry, todayIso())) warn(`This pack of ${found.item_name} expired on ${pack.expiry}. Do not sell it; put it aside to return.`, 'error');
+      else addToCart(found);
+      setSearchTerm('');
+      return;
+    }
     const exact = products.find((p) => exactCodeMatch(p, term));
     const matches = exact ? [exact] : products.filter((p) => productMatches(p, term));
     if (matches.length === 1) {
@@ -960,12 +1035,22 @@ const NewSale = () => {
     // Reducing something already sent to the kitchen is remembered, so the next ticket cancels it
     const before = cart.find((i) => i.item_code === itemCode);
     const cancelled = before ? voidFor(before, before.qty + delta) : null;
+    // In a restaurant or bar, taking off what the kitchen already has needs a manager first
+    if (cancelled && voidApprovalOn) {
+      setVoidRequest({ lines: [{ ...cancelled, rate: before.rate }], apply: () => changeQuantity(itemCode, delta, cancelled) });
+      return;
+    }
+    changeQuantity(itemCode, delta, cancelled);
+  };
+
+  const changeQuantity = (itemCode, delta, cancelled) => {
     if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart =>
       prevCart.map(item => {
         if (item.item_code === itemCode) {
           const newQuantity = Math.max(0, item.qty + delta);
-          const discountRule = discountsMap[itemCode];
+          // A happy-hour price stays with the line it was ordered at
+          const discountRule = discountsMap[itemCode] || (item.discount_rule && item.discount_rule.happy_hour ? item.discount_rule : undefined);
           const baseSubtotal = newQuantity * item.rate;
           const discountAmount = discountRule ? calculateDiscountAmount(item.rate, discountRule) * newQuantity : 0;
           const discountedSubtotal = discountRule ? calculateDiscountedPrice(item.rate, discountRule) * newQuantity : baseSubtotal;
@@ -987,6 +1072,14 @@ const NewSale = () => {
   const removeFromCart = (itemCode) => {
     const before = cart.find((i) => i.item_code === itemCode);
     const cancelled = before ? voidFor(before, 0) : null;
+    if (cancelled && voidApprovalOn) {
+      setVoidRequest({ lines: [{ ...cancelled, rate: before.rate }], apply: () => removeLine(itemCode, cancelled) });
+      return;
+    }
+    removeLine(itemCode, cancelled);
+  };
+
+  const removeLine = (itemCode, cancelled) => {
     if (cancelled) setKitchen((k) => ({ ...k, voids: [...k.voids, cancelled] }));
     setCart(prevCart => {
       const newCart = prevCart.filter(item => item.item_code !== itemCode);
@@ -1007,10 +1100,16 @@ const NewSale = () => {
     if (manualDiscountType === 'percentage') return round2((base * value) / 100);
     return round2(value);
   }, [cart, manualDiscountType, manualDiscountValue]);
+  // Restaurant and bar: the service charge, a percentage of what is owed after discounts, sent as its own line
+  const serviceChargePercent = optionsOn && restaurantSettings?.service_charge_item ? Number(restaurantSettings.service_charge_percent) || 0 : 0;
+  const serviceChargeAmount = useMemo(() => {
+    const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    return serviceChargeOn(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount), serviceChargePercent);
+  }, [cart, loyaltyDiscountAmount, manualDiscountAmount, serviceChargePercent]);
   const grandTotal = useMemo(() => {
     const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    return round2(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount));
-  }, [cart, loyaltyDiscountAmount, manualDiscountAmount]);
+    return round2(Math.max(0, subtotal - loyaltyDiscountAmount - manualDiscountAmount) + serviceChargeAmount);
+  }, [cart, loyaltyDiscountAmount, manualDiscountAmount, serviceChargeAmount]);
 
   const calculateManualDiscountAmount = () => manualDiscountAmount;
   const calculateSubtotal = () => grandTotal;
@@ -1190,7 +1289,8 @@ const NewSale = () => {
       .filter((p) => p.mode === 'Credit')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-    if (creditUsed > 0) {
+    // A bill to an insurer is owed by the insurer, whatever credit limit a customer record has
+    if (creditUsed > 0 && !insurance) {
       // Only allow credit for non-walk-in customers
       if (!customerId) {
         setSnackbarMessage('Credit sales are only available for registered customers. Please select a customer.');
@@ -1245,7 +1345,7 @@ const NewSale = () => {
       if (p.mode === 'Credit') {
         basePayload.use_receivable_account = true;
         // Optionally include account if we have it, but use_receivable_account flag is preferred
-        if (receivableAccount) {
+        if (receivableAccount && !insurance) {
           basePayload.account = receivableAccount;
         }
       }
@@ -1271,6 +1371,8 @@ const NewSale = () => {
         uom: item.uom,
         warehouse: item.warehouse || defaultWarehouse, // Per-item warehouse (optional override)
         };
+        // A dish's chosen options go on the invoice line, as they went on the kitchen ticket
+        if (item.options_text) itemData.options_text = item.options_text;
         
         // Include discount fields if discount exists, otherwise omit to let backend auto-apply
         if (item.discount_rule) {
@@ -1289,10 +1391,14 @@ const NewSale = () => {
       payments: paymentsPayload,
       ...(calculateManualDiscountAmount() > 0 && {
         apply_discount_on: 'Grand Total',
-        ...(manualDiscountType === 'percentage'
+        // With a service charge on the bill the discount goes as the amount the till worked out, so it is not taken off
+        // the service charge too and the server's total matches the till's
+        ...(manualDiscountType === 'percentage' && !(serviceChargeAmount > 0)
           ? { additional_discount_percentage: manualDiscountValue }
-          : { discount_amount: manualDiscountValue }),
+          : { discount_amount: manualDiscountType === 'percentage' ? calculateManualDiscountAmount() : manualDiscountValue }),
       }),
+      // Restaurant and bar: an order from a delivery platform, and its order number on the platform
+      ...(orderChannel ? { order_channel: orderChannel.channel, channel_ref: orderChannel.ref || '' } : {}),
       do_not_submit: false, // Submit immediately for POS
       is_pos: 1, // Mark as POS transaction unless credit is used
       invoice_type: "POS Invoice",
@@ -1302,6 +1408,8 @@ const NewSale = () => {
       ...(salesPerson ? { sales_person: salesPerson } : {}),
       // The dispensing record, for a sale that includes prescription-only medicines
       ...(rxNames.length > 0 && isDispensingComplete(dispensing) ? { dispensing } : {}),
+      // Pharmacies: the insurer billed and the patient's card details, for the claim
+      ...(insurance ? { insurance: insurancePayload(insurance) } : {}),
       // is_pos: creditUsed > 0 ? 0 : 1,
       
       // Add loyalty redemption if points are being redeemed
@@ -1310,6 +1418,17 @@ const NewSale = () => {
         loyalty_points: loyaltyPointsToRedeem,
       }),
     };
+    // Restaurant and bar: the service charge as its own line, so the receipt and the tax invoice show it
+    if (serviceChargeAmount > 0 && restaurantSettings?.service_charge_item) {
+      invoiceData.items.push({
+        item_code: restaurantSettings.service_charge_item,
+        qty: 1,
+        rate: serviceChargeAmount,
+        uom: 'Nos',
+        warehouse: defaultWarehouse,
+        options_text: `Service charge ${serviceChargePercent}%`,
+      });
+    }
 
     // No connection: keep a cash sale on this device and upload it later (see utils/offlineSales)
     const saveOffline = () => {
@@ -1388,21 +1507,7 @@ const NewSale = () => {
           if (result.type === 'sales/createSalesInvoice/fulfilled') {
             const createdInvoice = result.payload.salesInvoice || result.payload.data;
             setCompletedInvoice(createdInvoice);
-            if (dispensing && isDispensingComplete(dispensing)) {
-              recordDispense({
-                patient_name: dispensing.patient,
-                prescriber: dispensing.prescriber,
-                prescription_reference: dispensing.reference,
-                invoice_id: createdInvoice?.name || createdInvoice?.id,
-                items: cart.filter(isPrescriptionOnly).map((i) => ({
-                  item_code: i.item_code,
-                  item_name: i.item_name,
-                  qty: i.qty,
-                  batch_no: i.batch_no || '',
-                })),
-                company: userCompany,
-              }).catch(() => {});
-            }
+            // The dispensing record travels with the sale itself (the server keeps it on the invoice)
             // Store sale data for receipt before clearing cart
             setCompletedSaleData({
               items: cart,
@@ -1501,6 +1606,7 @@ const NewSale = () => {
     dispatch(clearSelectedPOSInvoice());
     // Each new sale starts as a walk-in, so it can never be billed to the previous customer
     handleSelectCustomer(null);
+    setInsurance(null);
     setPaymentMode('Cash');
     setCreditAmount(0);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 100);
@@ -1560,6 +1666,14 @@ const NewSale = () => {
     }
   }, [newLook, payModes, paymentMode]);
 
+  // A bill to an insurer opens the payment screen split in two: the patient's co-payment, and the rest on credit to the
+  // insurer (declared after the effect that resets the screen to one cash payment, so it runs after it)
+  useEffect(() => {
+    if (!isCheckoutMode || !insurance) return;
+    setSplitPayments(true);
+    setPayments(insuranceLines(insurance.rule, grandTotal, payModes.find((m) => m !== 'Credit') || 'Cash'));
+  }, [isCheckoutMode, insurance, grandTotal, payModes]);
+
   // Credit info helper - use selectedCustomerObj directly (more reliable than searching)
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
   const creditInfo = useMemo(() => {
@@ -1610,7 +1724,8 @@ const NewSale = () => {
   // Check if credit limit is valid for split payments
   const isSplitPaymentsCreditValid = useMemo(() => {
     if (!splitPayments) return true;
-    
+    if (insurance) return true; // the insurer owes the credit part, checked by the server
+
     const creditUsed = payments
       .filter((p) => p.mode === 'Credit')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
@@ -1624,7 +1739,7 @@ const NewSale = () => {
     
     // Check if credit used exceeds available credit
     return creditInfo.available_credit >= creditUsed - 0.01;
-  }, [splitPayments, payments, creditInfo]);
+  }, [splitPayments, payments, creditInfo, insurance]);
 
   const addPaymentRow = () => {
     setPayments((prev) => [...prev, { mode: 'Cash', amount: 0 }]);
@@ -1681,6 +1796,12 @@ const NewSale = () => {
   // Handle customer selection
   // Note: customer.name is the Customer ID (unique identifier, e.g., "CUST-00001")
   //       customer.customer_name is the display name (e.g., "John Doe")
+  // Takes the insurer off the bill: it goes back to a walk-in sale, paid in full
+  const clearInsurance = () => {
+    setInsurance(null);
+    handleSelectCustomer(null);
+  };
+
   const handleSelectCustomer = (selectedCustomer) => {
     // Check if it's walk-in customer
     if (!selectedCustomer || 
@@ -1785,6 +1906,63 @@ const NewSale = () => {
 
 
   // ---------------------------------------------------------------- hold, recall, clear
+  // ---------------------------------------------------------------- restaurant and bar
+  // Split by item: the rest of the bill is put on hold under the same table name first (so nothing can be lost), then
+  // this guest's lines are charged as their own sale
+  const splitItems = async (picks) => {
+    const { part, rest } = splitByItem(cart, picks);
+    if (!part.length || !rest.length || heldBusyRef.current) return;
+    heldBusyRef.current = true;
+    try {
+      const label = activeHeldLabel || 'Split bill';
+      const held = makeHeldSale(
+        { cart: rest, customer, customerId, selectedCustomerObj, customerPriceList, manualDiscountType, manualDiscountValue, kitchen },
+        label
+      );
+      const result = await holdSale(held);
+      if (!result.ok) {
+        showHeldMessage('The rest of the bill could not be kept open, so the bill was not split. Try again, or charge it whole.', 'error');
+        return;
+      }
+      setSplitOpen(false);
+      setCart(part);
+      setKitchen((k) => ({ ...k, voids: [] })); // the kitchen's pending cancellations stay with the rest of the bill
+      setActiveHeldLabel(`${label} (guest)`);
+      showHeldMessage(`The rest of ${label} is open on the table map. Charge this guest now.`, 'success');
+      startCheckoutMode();
+    } finally {
+      heldBusyRef.current = false;
+    }
+  };
+
+  // Split equally: one bill, one payment per person, using Split on the pay screen
+  const splitEqually = (people, shares) => {
+    setSplitOpen(false);
+    showHeldMessage(`${people} people: ${shares.map((s) => s.toLocaleString()).join(', ')}. On the pay screen choose Split and take one payment each.`, 'info');
+    startCheckoutMode();
+  };
+
+  // The table map: a free table names the bill on screen; an open table brings its bill back
+  const startTable = (name) => {
+    setTablesOpen(false);
+    setActiveHeldLabel(name);
+    showHeldMessage(`This bill is now ${name}. Hold it to keep the table open.`, 'info');
+  };
+  const openTable = (held) => {
+    if (cart.length > 0) {
+      showHeldMessage('Hold or finish the bill on screen first, then open the table.', 'warning');
+      return;
+    }
+    setTablesOpen(false);
+    recallHeldSale(held.id);
+  };
+
+  const saveTip = async ({ amount, mode }) => {
+    await recordTip({ amount, mode, salesPerson: salesPerson || '', warehouse: kitchenWarehouse, company: userCompany });
+    setTipOpen(false);
+    showHeldMessage('Tip recorded. It shows on the waiter cash-up.', 'success');
+  };
+
   const resetSale = () => {
     setCart([]);
     setIsCheckoutMode(false);
@@ -1797,6 +1975,7 @@ const NewSale = () => {
     setActiveHeldLabel('');
     setKitchen(EMPTY_KITCHEN);
     setDispensing(null);
+    setOrderChannel(null);
     handleSelectCustomer(null);
     if (shouldRefocusSearch()) setTimeout(() => searchInputRef.current?.focus(), 0);
   };
@@ -1971,8 +2150,17 @@ const NewSale = () => {
   };
 
   const requestClear = () => {
-    if (kitchenEnabled && hasSentItems(cart, kitchen)) setClearSentOpen(true);
-    else setClearDialogOpen(true);
+    if (kitchenEnabled && hasSentItems(cart, kitchen)) {
+      // Clearing a bill the kitchen has started on removes every sent item: a manager approves them first
+      const sentLines = voidApprovalOn
+        ? cart.map((line) => {
+            const v = voidFor(line, 0);
+            return v ? { ...v, rate: line.rate } : null;
+          }).filter(Boolean)
+        : [];
+      if (sentLines.length > 0) setVoidRequest({ lines: sentLines, apply: () => setClearSentOpen(true) });
+      else setClearSentOpen(true);
+    } else setClearDialogOpen(true);
   };
 
   // Clearing a bill the kitchen already has: the cancellation goes out first, and the bill is cleared once it has
@@ -2130,10 +2318,12 @@ const NewSale = () => {
     itemDiscount: itemDiscountTotal,
     manualDiscount: manualDiscountAmount,
     loyaltyDiscount: loyaltyDiscountAmount,
+    serviceCharge: serviceChargeAmount,
+    serviceChargePercent,
     grandTotal,
   };
 
-  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
+  const anyDialogOpen = customerDialogOpen || closeSessionDialogOpen || receiptDialogOpen || heldDialogOpen || holdDialogOpen || kitchenSettingsOpen || ticketDialog.open || readyOpen || rxOpen || noteCode !== null || unsentOpen || clearSentOpen || !!voidRequest || !!optionsRequest || tablesOpen || splitOpen || deliveryOpen || tipOpen || leaveDialogOpen || clearDialogOpen || cartSheetOpen || !!priceEntryProduct;
 
   // The slide-up sale only exists on phones; never leave it open behind the desktop layout
   useEffect(() => {
@@ -2251,13 +2441,6 @@ const NewSale = () => {
     const stock = productStocks[item.item_code]?.[item.warehouse || defaultWarehouse];
     return stockNote(item.qty, stock === undefined ? null : stock);
   };
-  const business = useBusinessFeatures();
-  const isPharmacy =
-    business?.kind === 'pharmacy' ||
-    business?.features?.prescriptionOnly ||
-    user?.pos_industry_code?.toLowerCase() === 'pharmacy' ||
-    user?.pos_industry?.industry_code?.toLowerCase() === 'pharmacy' ||
-    cart.some(isPrescriptionOnly);
 
   const cartItemCount = cart.reduce((n, item) => n + (Number(item.qty) || 0), 0);
 
@@ -2267,6 +2450,7 @@ const NewSale = () => {
   const orderPanel = (
     <OrderPanel
       cart={cart}
+      words={industryProfile.key !== 'general' ? industryProfile.words : undefined}
       readOnly={isCheckoutMode}
       currency={currency}
       customer={customerView}
@@ -2293,11 +2477,26 @@ const NewSale = () => {
       onClear={requestClear}
       isBusy={isCreatingInvoice}
       footerExtra={isCheckoutMode ? <Box /> : undefined}
+      toolbar={
+        optionsOn && !isCheckoutMode ? (
+          <RestaurantToolbar
+            tablesOn
+            onTables={() => setTablesOpen(true)}
+            onSplit={() => setSplitOpen(true)}
+            onDelivery={() => setDeliveryOpen(true)}
+            onTip={() => setTipOpen(true)}
+            channel={orderChannel}
+            onClearChannel={() => setOrderChannel(null)}
+            splitDisabled={cart.length === 0}
+          />
+        ) : insuranceOn && !isCheckoutMode ? (
+          <InsuranceToolbar insurance={insurance} onOpen={() => setInsuranceOpen(true)} onClear={clearInsurance} />
+        ) : undefined
+      }
       kitchenEnabled={kitchenEnabled}
       kitchenPending={kitchenPending}
       onSendKitchen={startSend}
       onEditNote={setNoteCode}
-      onOpenClinicalRx={isPharmacy ? () => setClinicalRxOpen(true) : undefined}
     />
   );
 
@@ -2654,25 +2853,6 @@ const NewSale = () => {
         }}
       />
 
-      <ClinicalPrescriptionModal
-        open={clinicalRxOpen}
-        onClose={() => setClinicalRxOpen(false)}
-        defaultWarehouse={defaultWarehouse}
-        onLoadPrescriptionToCart={(rxData) => {
-          if (rxData.patient_name) {
-            setCustomer(rxData.patient_name);
-          }
-          setDispensing({
-            patient: rxData.patient_name || '',
-            prescriber: rxData.doctor || '',
-            reference: rxData.reference || '',
-          });
-          if (Array.isArray(rxData.items) && rxData.items.length > 0) {
-            setCart((prev) => [...prev, ...rxData.items]);
-          }
-        }}
-      />
-
       <ReadyTicketsDialog open={readyOpen} tickets={kitchenTickets.ready} onServe={serveTicket} onClose={() => setReadyOpen(false)} />
 
       <UnsentItemsDialog
@@ -2691,6 +2871,72 @@ const NewSale = () => {
           } finally {
             chargeCheckedRef.current = false;
           }
+        }}
+      />
+
+      <TableMapDialog
+        open={tablesOpen}
+        tables={(restaurantSettings?.tables || {})[kitchenWarehouse] || []}
+        held={heldSales}
+        current={activeHeldLabel}
+        currency={currency}
+        billOnScreen={cart.length > 0}
+        onOpenTable={openTable}
+        onStartTable={startTable}
+        onClose={() => setTablesOpen(false)}
+      />
+      <SplitBillDialog open={splitOpen} cart={cart} total={grandTotal} currency={currency} onSplitItems={splitItems} onSplitEqually={splitEqually} onClose={() => setSplitOpen(false)} />
+      <DeliveryOrderDialog
+        open={deliveryOpen}
+        platforms={restaurantSettings?.platforms || []}
+        value={orderChannel}
+        onSave={(value) => {
+          setOrderChannel(value);
+          setDeliveryOpen(false);
+        }}
+        onClose={() => setDeliveryOpen(false)}
+      />
+      <InsuranceDialog
+        open={insuranceOpen}
+        insurers={insurers}
+        value={insurance}
+        total={grandTotal}
+        currency={currency}
+        creditReady={paymentModes.includes('Credit')}
+        onSave={(record) => {
+          setInsurance(record);
+          handleSelectCustomer({ name: record.customer, customer_name: record.insurer });
+          setInsuranceOpen(false);
+        }}
+        onClose={() => setInsuranceOpen(false)}
+      />
+      <TipDialog open={tipOpen} modes={payModes} currency={currency} onSave={saveTip} onClose={() => setTipOpen(false)} />
+
+      <MenuOptionsDialog
+        open={!!optionsRequest}
+        product={optionsRequest?.product}
+        groups={(optionsRequest && menuOptions[optionsRequest.product.item_code]) || []}
+        basePrice={optionsRequest?.rate || 0}
+        onClose={() => setOptionsRequest(null)}
+        onAdd={(choice) => {
+          const request = optionsRequest;
+          setOptionsRequest(null);
+          if (request) addToCart(request.product, request.rate, choice);
+        }}
+      />
+
+      <VoidApprovalDialog
+        open={!!voidRequest}
+        lines={voidRequest?.lines || []}
+        billLabel={activeHeldLabel}
+        warehouse={kitchenWarehouse}
+        company={userCompany}
+        onClose={() => setVoidRequest(null)}
+        onApproved={({ approvedBy }) => {
+          const apply = voidRequest?.apply;
+          setVoidRequest(null);
+          if (apply) apply();
+          showHeldMessage(approvedBy ? `Removed, approved by ${approvedBy}.` : 'Removed. The void is recorded.', 'success');
         }}
       />
 

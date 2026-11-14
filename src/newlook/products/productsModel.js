@@ -147,11 +147,12 @@ export const FIELD_IDS = {
   unit: 'np-unit',
   category: 'np-category',
   barcode: 'np-barcode',
+  openingExpiry: 'np-opening-expiry',
   general: 'np-top',
 };
-export const FIELD_ORDER = ['name', 'price', 'cost', 'stock', 'warning', 'unit', 'category', 'barcode', 'general'];
+export const FIELD_ORDER = ['name', 'price', 'cost', 'stock', 'openingExpiry', 'warning', 'unit', 'category', 'barcode', 'general'];
 /** The fields that live under More options */
-export const MORE_FIELDS = ['cost', 'stock', 'warning', 'unit', 'category', 'barcode'];
+export const MORE_FIELDS = ['cost', 'stock', 'openingExpiry', 'warning', 'unit', 'category', 'barcode'];
 
 /** What is wrong with the form before it is sent: { name?, price? }. Only the name and the price are required. */
 export const checkForm = (values) => {
@@ -160,6 +161,8 @@ export const checkForm = (values) => {
   if (!name) problems.name = T.form.nameRequired;
   else if (name.length > 140) problems.name = T.form.nameTooLong;
   if (String(values.price === undefined || values.price === null ? '' : values.price).trim() === '') problems.price = T.form.priceRequired;
+  // A medicine received batch by batch: its opening stock needs the expiry printed on the pack
+  if (values.batches === 'yes' && Number(values.stock) > 0 && !values.openingExpiry) problems.openingExpiry = T.form.openingExpiryRequired;
   return problems;
 };
 
@@ -177,6 +180,12 @@ export const requestFrom = (values, { canSeeCost = false } = {}) => ({
   stock: values.stock,
   warning: values.warning,
   ...(canSeeCost ? { cost: values.cost } : {}),
+  // Pharmacies only: sent only when the person ticked or unticked it; otherwise the server decides (antibiotics start ticked)
+  ...(values.prescription === 'yes' ? { prescriptionOnly: 1 } : values.prescription === 'no' ? { prescriptionOnly: 0 } : {}),
+  // Medicines received batch by batch: the opening stock's batch and expiry go with it
+  ...(values.controlled === 'yes' ? { controlled: 1 } : {}),
+  ...(String(values.ppb || '').trim() ? { ppb: String(values.ppb).trim() } : {}),
+  ...(values.batches === 'yes' ? { trackBatches: 1, openingBatch: String(values.openingBatch || '').trim(), openingExpiry: values.openingExpiry || '' } : {}),
 });
 
 /**
@@ -233,7 +242,7 @@ export const canDeleteCategory = (category) => !isRootCategory(category.name) &&
 
 // ---------- The Edit product form ----------
 
-const EDIT_KEYS = ['name', 'price', 'cost', 'unit', 'category', 'enabled'];
+const EDIT_KEYS = ['name', 'price', 'cost', 'unit', 'category', 'enabled', 'prescription', 'batches', 'controlled', 'ppb'];
 
 /** The form's starting values from a row of the list. The cost is there only when the person may see it. */
 export const formFromProduct = (product, { canSeeCost = false } = {}) => ({
@@ -244,6 +253,11 @@ export const formFromProduct = (product, { canSeeCost = false } = {}) => ({
   category: isRootCategory(product.category) ? '' : product.category || '',
   barcode: product.barcode || '',
   enabled: product.status !== 'disabled',
+  // Pharmacies: whether a sale needs a prescription ('yes' or 'no', as the New product form keeps it)
+  prescription: product.prescription_only === 1 || product.prescription_only === true ? 'yes' : 'no',
+  batches: product.tracks_batches === 1 || product.tracks_batches === true ? 'yes' : 'no',
+  controlled: product.controlled_drug === 1 || product.controlled_drug === true ? 'yes' : 'no',
+  ppb: product.ppb_registration_no || '',
 });
 
 /** Has anything on the Edit form been changed? */
@@ -258,6 +272,10 @@ export const changesFrom = (values, baseline, { canSeeCost = false } = {}) => {
   if (values.unit !== baseline.unit) out.unit = values.unit;
   if (values.category !== baseline.category && values.category) out.category = values.category;
   if (values.enabled !== baseline.enabled) out.disabled = !values.enabled;
+  if (values.prescription && values.prescription !== baseline.prescription) out.prescriptionOnly = values.prescription === 'yes';
+  if (values.batches && values.batches !== baseline.batches) out.trackBatches = values.batches === 'yes';
+  if (values.controlled && values.controlled !== baseline.controlled) out.controlled = values.controlled === 'yes';
+  if (values.ppb !== undefined && String(values.ppb).trim() !== String(baseline.ppb || '').trim()) out.ppb = String(values.ppb).trim();
   return out;
 };
 

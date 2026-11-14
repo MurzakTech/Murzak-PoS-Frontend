@@ -202,8 +202,7 @@ const ROUTE_GROUPS = {
   ],
   // Kitchen and bar station screen (anyone who can use the till can have one on a tablet)
   KITCHEN: ['/kitchen'],
-  // Appointment book (salons, barbers, clinics): booking, checking a customer in and sending the visit
-  // to the till. For the people who act on an appointment, so it goes with the till, not with the back office.
+  // Bookings for a salon, barber or other service shop (anyone who can use the till takes and serves bookings)
   APPOINTMENTS: ['/appointments'],
 };
 
@@ -341,7 +340,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD', 'SALES_TILL', 'RECONCILIATION_STEP'),
     '/sales/invoice/new',
     '/kitchen', // station screen on a tablet
-    '/appointments', // book, check in and send a visit to the till
+    '/appointments', // bookings, for service shops
     '/customers',
     '/customers/new',
     '/products', // View products for sales
@@ -441,7 +440,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
-    '/appointments', // book, check in and send a visit to the till
+    '/appointments', // bookings, for service shops
     '/products', // View products for POS
     '/customers', // View customers
     '/inventory/stock-summary', // Check stock
@@ -459,7 +458,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
-    '/appointments', // book, check in and send a visit to the till
+    '/appointments', // bookings, for service shops
     '/products',
     '/customers',
     '/inventory/stock-summary',
@@ -494,7 +493,7 @@ export const ROLE_ACCESS_CONFIG = {
     ...combineRoutes('DASHBOARD'),
     ...combineRoutes('SALES_TILL'),
     '/kitchen', // station screen on a tablet
-    '/appointments', // book, check in and send a visit to the till
+    '/appointments', // bookings, for service shops
     '/customers',
     '/products',
   ],

@@ -306,8 +306,8 @@ describe('suppliers and products', () => {
       ],
     });
     await expect(findProductsToBuy({ search: 'su' })).resolves.toEqual([
-      { item_code: 'A', item_name: 'Sugar', unit: 'Kg', cost: 95.5 },
-      { item_code: 'B', item_name: 'Rice', unit: '', cost: null },
+      { item_code: 'A', item_name: 'Sugar', unit: 'Kg', cost: 95.5, tracksBatches: false },
+      { item_code: 'B', item_name: 'Rice', unit: '', cost: null, tracksBatches: false },
     ]);
     expect(listProducts).toHaveBeenCalledWith({ search: 'su', pageSize: 24 });
   });
@@ -319,7 +319,7 @@ describe('suppliers and products', () => {
         { item_code: 'A', item_name: 'Sugar', cost_price: 8 },
       ],
     });
-    await expect(getProductToBuy('A')).resolves.toEqual({ item_code: 'A', item_name: 'Sugar', unit: '', cost: 8 });
+    await expect(getProductToBuy('A')).resolves.toEqual({ item_code: 'A', item_name: 'Sugar', unit: '', cost: 8, tracksBatches: false });
     listProducts.mockResolvedValue({ rows: [] });
     await expect(getProductToBuy('Z')).resolves.toBeNull();
   });

@@ -93,7 +93,7 @@ const answer = ({ category, search = '', page = 1, pageSize = 20 } = {}) => {
   };
 };
 
-const renderPage = async (url = '/new-look/expenses', tier = 'owner') => {
+const renderPage = async (url = '/expenses', tier = 'owner') => {
   getMyAccess.mockResolvedValue({ tier, can: tier === 'cashier' ? {} : { profit: true, money_owed: true } });
   listExpenses.mockImplementation(async (query) => answer(query));
   const view = render(
@@ -191,7 +191,7 @@ describe('the list (List page pattern)', () => {
   });
 
   test('the rows-per-page box is never blank, even for a bad address, and a change goes in the address', async () => {
-    await renderPage('/new-look/expenses?size=7');
+    await renderPage('/expenses?size=7');
     await screen.findByRole('row', { name: /Note 001/ });
     expect(screen.getByRole('combobox', { name: /Rows per page/ })).toHaveTextContent('20');
     userEvent.click(screen.getByRole('combobox', { name: /Rows per page/ }));
@@ -219,7 +219,7 @@ describe('filters live in the address', () => {
   });
 
   test('Custom asks for two dates and sends them', async () => {
-    await renderPage('/new-look/expenses?period=custom&from=2026-10-01&to=2026-10-10');
+    await renderPage('/expenses?period=custom&from=2026-10-01&to=2026-10-10');
     await screen.findAllByRole('row');
     expect(listExpenses).toHaveBeenCalledWith(expect.objectContaining({ period: 'custom', from: '2026-10-01', to: '2026-10-10' }));
     expect(screen.getByLabelText('From')).toHaveValue('01/10/2026');
@@ -253,7 +253,7 @@ describe('filters live in the address', () => {
   });
 
   test('a link with a category, a search and a period opens the same view after a refresh', async () => {
-    await renderPage('/new-look/expenses?q=note&category=Office+Rent+-+DS&period=7d&page=1');
+    await renderPage('/expenses?q=note&category=Office+Rent+-+DS&period=7d&page=1');
     await screen.findAllByRole('row');
     expect(listExpenses).toHaveBeenCalledWith(expect.objectContaining({ search: 'note', category: 'Office Rent - DS', period: '7d' }));
     expect(screen.getByRole('searchbox', { name: 'Search expenses' })).toHaveValue('note');
@@ -261,7 +261,7 @@ describe('filters live in the address', () => {
   });
 
   test('Clear filters appears with a filter and takes it away', async () => {
-    await renderPage('/new-look/expenses?q=note&period=7d');
+    await renderPage('/expenses?q=note&period=7d');
     await screen.findAllByRole('row');
     userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     await waitFor(() => expect(where()).not.toContain('q='));
@@ -271,7 +271,7 @@ describe('filters live in the address', () => {
 
 describe('Export CSV', () => {
   test('saves the rows on screen under a name with the period and the date', async () => {
-    await renderPage('/new-look/expenses?period=7d');
+    await renderPage('/expenses?period=7d');
     await screen.findByRole('row', { name: /Note 001/ });
     userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
     expect(saveTextFile).toHaveBeenCalledTimes(1);
@@ -286,7 +286,7 @@ describe('Export CSV', () => {
     getMyAccess.mockResolvedValue({ tier: 'owner', can: {} });
     listExpenses.mockResolvedValue({ rows: [], summary: { total: 0, count: 0, topCategory: null }, total: 0, page: 1, pageSize: 20, pages: 1 });
     render(
-      <MemoryRouter initialEntries={['/new-look/expenses']}>
+      <MemoryRouter initialEntries={['/expenses']}>
         <AccessProvider userKey="amina">
           <ToastProvider>
             <ExpensesPage />
@@ -316,16 +316,16 @@ describe('the empty states', () => {
   };
 
   test('with nothing in the period, names the next action: Add expense', async () => {
-    await renderEmpty('/new-look/expenses');
+    await renderEmpty('/expenses');
     expect(await screen.findByRole('heading', { name: 'No expenses in this period' })).toBeInTheDocument();
     const buttons = within(screen.getByRole('heading', { name: 'No expenses in this period' }).parentElement).getAllByRole('button');
     expect(buttons.map((b) => b.textContent)).toEqual(['Add expense']);
     userEvent.click(buttons[0]);
-    expect(where()).toBe('/new-look/expenses/new');
+    expect(where()).toBe('/expenses/new');
   });
 
   test('with filters on, says nothing matches and offers Clear filters', async () => {
-    await renderEmpty('/new-look/expenses?q=zzz');
+    await renderEmpty('/expenses?q=zzz');
     expect(await screen.findByRole('heading', { name: 'No expenses match' })).toBeInTheDocument();
     const box = screen.getByRole('heading', { name: 'No expenses match' }).parentElement;
     userEvent.click(within(box).getByRole('button', { name: 'Clear filters' }));
@@ -336,7 +336,7 @@ describe('the empty states', () => {
     getMyAccess.mockResolvedValue({ tier: 'owner', can: {} });
     listExpenses.mockRejectedValue(new Error('We could not reach the server.'));
     render(
-      <MemoryRouter initialEntries={['/new-look/expenses']}>
+      <MemoryRouter initialEntries={['/expenses']}>
         <AccessProvider userKey="amina">
           <ToastProvider>
             <ExpensesPage />
@@ -415,7 +415,7 @@ describe('the expense panel', () => {
   });
 
   test('a link with an expense open shows its panel', async () => {
-    await renderPage(`/new-look/expenses?open=${encodeURIComponent(ALL[1].key)}`);
+    await renderPage(`/expenses?open=${encodeURIComponent(ALL[1].key)}`);
     expect(await screen.findByRole('region', { name: 'Airtime' })).toBeInTheDocument();
   });
 
@@ -424,7 +424,7 @@ describe('the expense panel', () => {
     const refund = { ...ALL[0], amount: -200, note: 'Rent refund', key: 'Journal Entry:ACC-JV-900:Office Rent - DS', id: 'ACC-JV-900', reference: 'ACC-JV-900', kind: 'other' };
     listExpenses.mockResolvedValue({ rows: [refund], summary: SUMMARY, total: 1, page: 1, pageSize: 20, pages: 1 });
     render(
-      <MemoryRouter initialEntries={['/new-look/expenses']}>
+      <MemoryRouter initialEntries={['/expenses']}>
         <AccessProvider userKey="amina">
           <ToastProvider>
             <ExpensesPage />
@@ -440,26 +440,26 @@ describe('the expense panel', () => {
 
 describe('owners and managers only', () => {
   test('a manager sees the page', async () => {
-    await renderPage('/new-look/expenses', 'manager');
+    await renderPage('/expenses', 'manager');
     expect(await screen.findByRole('row', { name: /Note 001/ })).toBeInTheDocument();
   });
 
   test('a cashier sees a plain message with a way back to Home, and nothing is asked for', async () => {
-    await renderPage('/new-look/expenses', 'cashier');
+    await renderPage('/expenses', 'cashier');
     expect(await screen.findByRole('heading', { name: 'Expenses are for owners and managers' })).toBeInTheDocument();
     expect(screen.getByText('Your sign-in does not include expenses. Ask the owner of the shop if you need to add one.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(listExpenses).not.toHaveBeenCalled();
     expect(getExpenseOptions).not.toHaveBeenCalled();
     userEvent.click(screen.getByRole('button', { name: 'Back to Home' }));
-    expect(where()).toBe('/new-look');
+    expect(where()).toBe('/');
   });
 
   test('nothing is asked for until the server has said who the person is', async () => {
     getMyAccess.mockReturnValue(new Promise(() => {}));
     listExpenses.mockResolvedValue(answer());
     render(
-      <MemoryRouter initialEntries={['/new-look/expenses']}>
+      <MemoryRouter initialEntries={['/expenses']}>
         <AccessProvider userKey="amina">
           <ToastProvider>
             <ExpensesPage />

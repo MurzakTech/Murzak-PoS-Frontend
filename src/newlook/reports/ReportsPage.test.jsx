@@ -14,7 +14,7 @@ jest.mock('../../api/reportsApi', () => ({ listReportQuestions: jest.fn() }));
 
 const draw = () =>
   render(
-    <MemoryRouter initialEntries={['/new-look/reports']}>
+    <MemoryRouter initialEntries={['/reports']}>
       <ReportsPage />
     </MemoryRouter>
   );
@@ -38,12 +38,12 @@ describe('the questions', () => {
       'What is not selling?',
     ]);
     expect(links.map((l) => l.getAttribute('href'))).toEqual([
-      '/new-look/reports/sales',
-      '/new-look/reports/profit',
-      '/new-look/reports/owed',
-      '/new-look/reports/running-costs',
-      '/new-look/reports/stock-summary',
-      '/new-look/reports/aging-stock',
+      '/reports/sales',
+      '/reports/profit',
+      '/reports/owed',
+      '/reports/running-costs',
+      '/reports/stock-summary',
+      '/reports/aging-stock',
     ]);
   });
 

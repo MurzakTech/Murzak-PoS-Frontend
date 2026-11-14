@@ -88,9 +88,11 @@ describe('the unit choice', () => {
 
   test('nothing is asked while the New look is off', async () => {
     render(
-      <ToastProvider>
-        <Harness />
-      </ToastProvider>
+      <NewLookContext.Provider value={{ enabled: false, status: 'ready', company: 'Shop A', setEnabled: async () => true }}>
+        <ToastProvider>
+          <Harness />
+        </ToastProvider>
+      </NewLookContext.Provider>
     );
     await screen.findByRole('combobox', { name: /Unit/ });
     expect(getIndustryUnits).not.toHaveBeenCalled();

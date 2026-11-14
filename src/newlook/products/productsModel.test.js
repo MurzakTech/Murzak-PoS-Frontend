@@ -17,6 +17,8 @@ import {
   profitLine,
   profitOf,
   requestFrom,
+  formFromProduct,
+  changesFrom,
   showFromParam,
   showOptions,
   statusView,
@@ -29,10 +31,10 @@ import {
 
 describe('tabs', () => {
   test('the categories address is the Categories tab and any other is the list', () => {
-    expect(tabFromPath('/new-look/products/categories')).toBe('categories');
-    expect(tabFromPath('/new-look/products/categories/')).toBe('categories');
-    expect(tabFromPath('/new-look/products')).toBe('products');
-    expect(tabFromPath('/new-look/products/new')).toBe('products');
+    expect(tabFromPath('/products/categories')).toBe('categories');
+    expect(tabFromPath('/products/categories/')).toBe('categories');
+    expect(tabFromPath('/products')).toBe('products');
+    expect(tabFromPath('/products/new')).toBe('products');
     expect(tabFromPath(undefined)).toBe('products');
   });
 });
@@ -115,7 +117,7 @@ describe('the list filters', () => {
   });
 
   test('the address of a category in the list', () => {
-    expect(categoryAddress('Fresh & Dry')).toBe('/new-look/products?category=Fresh%20%26%20Dry');
+    expect(categoryAddress('Fresh & Dry')).toBe('/products?category=Fresh%20%26%20Dry');
   });
 });
 
@@ -282,5 +284,56 @@ describe('similarCategories', () => {
     expect(similarCategories(['Beverages', 'Drinks'])).toEqual([]);
     expect(similarCategories(['Glass', 'Glas'])).toEqual([]);
     expect(similarCategories([])).toEqual([]);
+  });
+});
+
+describe('prescription-only (pharmacies)', () => {
+  test('the new product sends the choice only when the person ticked or unticked the box', () => {
+    expect(requestFrom({ name: 'Amoxicillin', price: '300' })).not.toHaveProperty('prescriptionOnly');
+    expect(requestFrom({ name: 'Amoxicillin', price: '300', prescription: 'yes' })).toMatchObject({ prescriptionOnly: 1 });
+    expect(requestFrom({ name: 'Amoxicillin', price: '300', prescription: 'no' })).toMatchObject({ prescriptionOnly: 0 });
+  });
+
+  test('the edit form reads the setting and sends it only when it changed', () => {
+    const form = formFromProduct({ item_name: 'Amoxicillin', price: 300, prescription_only: 1 });
+    expect(form.prescription).toBe('yes');
+    expect(changesFrom(form, form)).not.toHaveProperty('prescriptionOnly');
+    expect(changesFrom({ ...form, prescription: 'no' }, form)).toMatchObject({ prescriptionOnly: false });
+    expect(formFromProduct({ item_name: 'Soap', price: 50 }).prescription).toBe('no');
+  });
+});
+
+
+describe('batch tracking (pharmacies)', () => {
+  test('a tracked new product sends its opening batch and needs the expiry when it has opening stock', () => {
+    expect(checkForm({ name: 'Amoxicillin', price: '300', batches: 'yes', stock: '20' })).toHaveProperty('openingExpiry');
+    expect(checkForm({ name: 'Amoxicillin', price: '300', batches: 'yes', stock: '' })).not.toHaveProperty('openingExpiry');
+    expect(checkForm({ name: 'Amoxicillin', price: '300', batches: 'yes', stock: '20', openingExpiry: '2027-03-31' })).not.toHaveProperty('openingExpiry');
+    expect(requestFrom({ name: 'Amoxicillin', price: '300', batches: 'yes', openingBatch: ' B1 ', openingExpiry: '2027-03-31' })).toMatchObject({ trackBatches: 1, openingBatch: 'B1', openingExpiry: '2027-03-31' });
+    expect(requestFrom({ name: 'Soap', price: '50', batches: 'no' })).not.toHaveProperty('trackBatches');
+  });
+
+  test('the edit form reads the setting and sends a change only', () => {
+    const form = formFromProduct({ item_name: 'Amoxicillin', price: 300, tracks_batches: 0 });
+    expect(form.batches).toBe('no');
+    expect(changesFrom({ ...form, batches: 'yes' }, form)).toMatchObject({ trackBatches: true });
+    expect(changesFrom(form, form)).not.toHaveProperty('trackBatches');
+  });
+});
+
+describe('controlled medicines and the PPB number (pharmacies)', () => {
+  test('a new product sends them only when given', () => {
+    expect(requestFrom({ name: 'Diazepam', price: '10', controlled: 'yes', ppb: ' H123 ' })).toMatchObject({ controlled: 1, ppb: 'H123' });
+    const plain = requestFrom({ name: 'Soap', price: '10' });
+    expect(plain).not.toHaveProperty('controlled');
+    expect(plain).not.toHaveProperty('ppb');
+  });
+
+  test('the edit form sends only what changed', () => {
+    const form = formFromProduct({ item_name: 'Diazepam', price: 10, controlled_drug: 0, ppb_registration_no: 'H1' });
+    expect(form.controlled).toBe('no');
+    expect(form.ppb).toBe('H1');
+    expect(changesFrom(form, form)).toEqual({});
+    expect(changesFrom({ ...form, controlled: 'yes', ppb: 'H2' }, form)).toMatchObject({ controlled: true, ppb: 'H2' });
   });
 });

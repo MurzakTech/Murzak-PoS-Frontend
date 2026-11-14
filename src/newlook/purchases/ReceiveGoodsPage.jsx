@@ -15,6 +15,7 @@ import fill from '../labels/fill';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { listWarehouses } from '../../store/warehouseSlice';
 import { createPurchaseReturn, getPurchase, receiveGoods } from '../../api/purchasesListApi';
+import { parseGs1 } from '../../utils/gs1';
 import { invalidateQuery } from './usePurchasesData';
 import './purchases.css';
 import PurchaseStatus from './PurchaseStatus';
@@ -42,6 +43,8 @@ import {
   reviewTotal,
   billBreakdown,
   SPOILT_PREFIX,
+  EXPIRY_PREFIX,
+  applyPackScan,
   SPOILT_REASONS,
   spoiltItems,
   spoiltTotal,
@@ -100,6 +103,8 @@ const ReceiveGoodsPage = () => {
   const [supplier, setSupplier] = useState('');
   const [purchase, setPurchase] = useState(null);
   const [lines, setLines] = useState([]);
+  const [scanText, setScanText] = useState(''); // a medicine pack's GS1 code, as the scanner types it
+  const [scanNote, setScanNote] = useState('');
   const [billNo, setBillNo] = useState('');
   const [billDate, setBillDate] = useState(isoDay(new Date()));
   const [dueDate, setDueDate] = useState('');
@@ -202,7 +207,7 @@ const ReceiveGoodsPage = () => {
   const show = (found) => {
     setProblems(found);
     const first = Object.keys(found).find((k) => k !== 'general') || (found.general ? 'general' : '');
-    const id = first === 'general' ? 'rc-items' : first.startsWith(SPOILT_PREFIX) ? `rc-spoilt-${first.slice(SPOILT_PREFIX.length)}` : `rc-qty-${first}`;
+    const id = first === 'general' ? 'rc-items' : first.startsWith(SPOILT_PREFIX) ? `rc-spoilt-${first.slice(SPOILT_PREFIX.length)}` : first.startsWith(EXPIRY_PREFIX) ? `rc-expiry-${first.slice(EXPIRY_PREFIX.length)}` : `rc-qty-${first}`;
     setTimeout(() => {
       const el = document.getElementById(id);
       if (el && el.focus) el.focus();
@@ -215,6 +220,7 @@ const ReceiveGoodsPage = () => {
     lines.forEach((l) => {
       if (problems[l.item_code]) list.push({ id: `rc-qty-${l.item_code}`, message: problems[l.item_code] });
       if (problems[`${SPOILT_PREFIX}${l.item_code}`]) list.push({ id: `rc-spoilt-${l.item_code}`, message: problems[`${SPOILT_PREFIX}${l.item_code}`] });
+      if (problems[`${EXPIRY_PREFIX}${l.item_code}`]) list.push({ id: `rc-expiry-${l.item_code}`, message: problems[`${EXPIRY_PREFIX}${l.item_code}`] });
     });
     if (problems.dueDate) list.push({ id: 'rc-due-date', message: problems.dueDate });
     if (failure) list.push({ id: 'rc-bill-no', message: failure });
@@ -490,6 +496,37 @@ const ReceiveGoodsPage = () => {
           </div>
         ) : null,
     },
+    ...(lines.some((l) => l.tracksBatches)
+      ? [
+          {
+            key: 'batch',
+            header: R.columns.batch,
+            render: (l) =>
+              l.tracksBatches && l.toArrive > 0 ? (
+                <div className="nl-receive-qty">
+                  <Field
+                    id={`rc-batch-${l.item_code}`}
+                    label={fill(R.batchLabel, { name: l.name })}
+                    helper={R.batchHelper}
+                    value={l.batchNo}
+                    disabled={!l.ticked}
+                    autoComplete="off"
+                    onChange={(v) => changeLine(l.item_code, { batchNo: v })}
+                  />
+                  <Field
+                    id={`rc-expiry-${l.item_code}`}
+                    kind="date"
+                    label={fill(R.expiryLabel, { name: l.name })}
+                    value={l.expiry}
+                    disabled={!l.ticked}
+                    error={problems[`${EXPIRY_PREFIX}${l.item_code}`]}
+                    onChange={(v) => changeLine(l.item_code, { expiry: v })}
+                  />
+                </div>
+              ) : null,
+          },
+        ]
+      : []),
     {
       key: 'spoilt',
       header: R.columns.spoilt,
@@ -555,6 +592,35 @@ const ReceiveGoodsPage = () => {
         </Button>
       </div>
       <div id="rc-items" tabIndex={-1}>
+        {lines.some((l) => l.tracksBatches) ? (
+          <div className="nl-receive-scan">
+            <Field
+              id="rc-scan"
+              label={R.scanLabel}
+              helper={scanNote || R.scanHelper}
+              value={scanText}
+              autoComplete="off"
+              onChange={setScanText}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const pack = parseGs1(scanText);
+                setScanText('');
+                if (!pack) {
+                  setScanNote(R.scanNotPack);
+                  return;
+                }
+                const result = applyPackScan(lines, pack);
+                if (result.problem === 'notFound') setScanNote(R.scanNotFound);
+                else if (result.problem === 'expired') setScanNote(fill(R.scanExpired, { name: result.name }));
+                else {
+                  setLines(result.lines);
+                  setScanNote(fill(R.scanFilled, { name: result.name }));
+                }
+              }}
+            />
+          </div>
+        ) : null}
         <Table caption={R.itemsCaption} columns={lineColumns} rows={lines} rowKey={ITEM_KEY} className="nl-receive-table" />
       </div>
       {problems.general ? (
