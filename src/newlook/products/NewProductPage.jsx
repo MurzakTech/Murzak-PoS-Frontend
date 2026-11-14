@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import Checkbox from '../components/Checkbox';
 import { Chip } from '../components/Chip';
 import { ConfirmDialog } from '../components/Dialog';
 import Field from '../components/Field';
@@ -12,6 +13,9 @@ import FT from '../forms/strings.forms';
 import fill from '../labels/fill';
 import { createProduct, ProductSaveError } from '../../api/productsListApi';
 import useBusinessFeatures from '../setup/useBusinessFeatures';
+import useIndustryProfile from '../industry/useIndustryProfile';
+import { has as profileHas } from '../industry/industryModel';
+import { looksLikeAntibiotic, prescriptionTicked } from '../../utils/prescription';
 import './products.css';
 import CategoryDialog from './CategoryDialog';
 import { invalidateQuery, useCategories, useUnits } from './useProductsData';
@@ -35,6 +39,9 @@ const NewProductPage = () => {
   const units = useUnits();
   const shopUnits = useShopUnits();
   const business = useBusinessFeatures().features; // a retail shop ("What do you sell?") sees the barcode and the unit first
+  const industry = useIndustryProfile(null).profile;
+  // A pharmacy (by "What do you sell?" or by its kind of shop) marks medicines that need a prescription
+  const isPharmacy = business.prescriptionOnly || profileHas(industry, 'prescription_only');
 
   const [values, setValues] = useState(EMPTY_FORM);
   const [baseline, setBaseline] = useState(EMPTY_FORM);
@@ -76,8 +83,11 @@ const NewProductPage = () => {
     if (first) setFocusId(FIELD_IDS[first]);
   };
 
+  // Pharmacies track batches unless told not to
+  const batchesOn = isPharmacy && values.batches !== 'no';
   const submit = async (addAnother) => {
-    const found = checkForm(values);
+    const sent = { ...values, batches: batchesOn ? 'yes' : 'no' };
+    const found = checkForm(sent);
     if (Object.keys(found).length) {
       show(found);
       return;
@@ -85,7 +95,7 @@ const NewProductPage = () => {
     setProblems({});
     setSaving(true);
     try {
-      const result = await createProduct(requestFrom(values, { canSeeCost }));
+      const result = await createProduct(requestFrom(sent, { canSeeCost }));
       invalidateQuery();
       const name = result.product ? result.product.item_name : values.name.trim();
       toast.success(fill(addAnother ? F.savedAnother : F.saved, { name }));
@@ -125,6 +135,34 @@ const NewProductPage = () => {
         <div id={FIELD_IDS.general} tabIndex={-1} className="nl-products-formtop" />
         <Field id={FIELD_IDS.name} label={F.name} placeholder={F.namePlaceholder} value={values.name} error={problems.name} aria-required={true} autoComplete="off" onChange={set('name')} />
         <Field id={FIELD_IDS.price} kind="money" label={F.price} helper={F.priceHelper} value={values.price} error={problems.price} aria-required={true} onChange={set('price')} />
+        {isPharmacy ? (
+          <div>
+            <Checkbox
+              id="np-prescription"
+              label={F.prescription}
+              checked={prescriptionTicked(values.prescription, values.name)}
+              onChange={(on) => set('prescription')(on ? 'yes' : 'no')}
+            />
+            <p className="nl-products-note">{!values.prescription && looksLikeAntibiotic(values.name) ? F.prescriptionAntibiotic : F.prescriptionHelper}</p>
+          </div>
+        ) : null}
+        {isPharmacy ? (
+          <div>
+            <Checkbox id="np-controlled" label={F.controlled} checked={values.controlled === 'yes'} onChange={(on) => {
+                set('controlled')(on ? 'yes' : 'no');
+                if (on) set('prescription')('yes'); // a controlled medicine is always prescription-only
+              }}
+            />
+            <p className="nl-products-note">{F.controlledHelper}</p>
+            <Field id="np-ppb" label={F.ppb} helper={F.ppbHelper} value={values.ppb || ''} autoComplete="off" onChange={set('ppb')} />
+          </div>
+        ) : null}
+        {isPharmacy ? (
+          <div>
+            <Checkbox id="np-batches" label={F.batches} checked={batchesOn} onChange={(on) => set('batches')(on ? 'yes' : 'no')} />
+            <p className="nl-products-note">{F.batchesHelper}</p>
+          </div>
+        ) : null}
         {business.barcodesFirst ? barcodeField : null}
         {business.unitsFirst ? unitField : null}
 
@@ -141,6 +179,12 @@ const NewProductPage = () => {
             </div>
           ) : null}
           <Field id={FIELD_IDS.stock} inputMode="decimal" label={F.stock} helper={F.stockHelper} value={values.stock} error={problems.stock} onChange={(v) => set('stock')(cleanQuantity(v))} />
+          {batchesOn && Number(values.stock) > 0 ? (
+            <div className="nl-products-formgroup">
+              <Field id="np-opening-batch" label={F.openingBatch} helper={F.openingBatchHelper} value={values.openingBatch || ''} autoComplete="off" onChange={set('openingBatch')} />
+              <Field id={FIELD_IDS.openingExpiry} kind="date" label={F.openingExpiry} value={values.openingExpiry || ''} error={problems.openingExpiry} aria-required={true} onChange={set('openingExpiry')} />
+            </div>
+          ) : null}
           <Field id={FIELD_IDS.warning} inputMode="decimal" label={F.warning} helper={F.warningHelper} value={values.warning} error={problems.warning} onChange={(v) => set('warning')(cleanQuantity(v))} />
           {business.unitsFirst ? null : unitField}
 

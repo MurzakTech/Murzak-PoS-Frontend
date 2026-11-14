@@ -326,3 +326,17 @@ describe('station screens setting', () => {
     expect(shared.screens).toBe(true);
   });
 });
+
+describe('menu options on the ticket', () => {
+  it("prints a dish's options before the waiter's own note", () => {
+    const cart = [line('B', 'Beef burger', 'Food', 1, { options_text: 'Well done; Extra cheese (+50)', note: 'Allergic to nuts' })];
+    const plan = planSend(cart, EMPTY_KITCHEN, settingsWith());
+    expect(plan.stations[0].adds[0].note).toBe('Well done; Extra cheese (+50); Allergic to nuts');
+  });
+
+  it('a dish sent with its options is not sent again as a change', () => {
+    const cart = [line('B', 'Beef burger', 'Food', 1, { options_text: 'Well done' })];
+    const sent = markSent(cart, planSend(cart, EMPTY_KITCHEN, settingsWith()));
+    expect(planSend(sent, EMPTY_KITCHEN, settingsWith()).count).toBe(0);
+  });
+});

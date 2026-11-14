@@ -280,6 +280,35 @@ const NewPurchaseForm = () => {
         </div>
       ),
     },
+    ...(values.haveBill && lines.some((l) => l.tracksBatches)
+      ? [
+          {
+            key: 'batch',
+            header: T.receive.columns.batch,
+            render: (l) =>
+              l.tracksBatches ? (
+                <div className="nl-receive-qty">
+                  <Field
+                    id={`np-batch-${l.key}`}
+                    label={fill(T.receive.batchLabel, { name: l.name })}
+                    helper={T.receive.batchHelper}
+                    value={l.batchNo}
+                    autoComplete="off"
+                    onChange={(v) => changeLine(l.key, { batchNo: v })}
+                  />
+                  <Field
+                    id={`np-expiry-${l.key}`}
+                    kind="date"
+                    label={fill(T.receive.expiryLabel, { name: l.name })}
+                    value={l.expiry}
+                    error={problems[`expiry:${l.key}`]}
+                    onChange={(v) => changeLine(l.key, { expiry: v }, `expiry:${l.key}`)}
+                  />
+                </div>
+              ) : null,
+          },
+        ]
+      : []),
     { key: 'amount', header: F.columns.amount, money: true, nowrap: true, render: (l) => formatMoney(lineAmount(l)) },
     { key: 'remove', header: F.columns.remove, render: (l) => <Button variant="ghost" size="small" icon="x" aria-label={fill(F.remove, { name: l.name })} onClick={() => removeLine(l)} /> },
   ];

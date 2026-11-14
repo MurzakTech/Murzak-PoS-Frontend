@@ -1,4 +1,5 @@
 import { formatMoney } from '../components/format';
+import { isExpired, sameGtin } from '../../utils/gs1';
 import fill from '../labels/fill';
 import { NEW_LOOK_PREFIX } from '../redirects/engine.js';
 import T from './strings.purchases';
@@ -214,6 +215,11 @@ export const receiveLines = (purchase) =>
     qty: Number(l.to_arrive) > 0 ? qtyText(l.to_arrive) : '',
     spoilt: '',
     reason: SPOILT_REASONS[0],
+    // Medicines received batch by batch: the batch number (optional) and expiry date (required) on the pack
+    tracksBatches: l.tracks_batches === true || l.tracks_batches === 1,
+    barcodes: Array.isArray(l.barcodes) ? l.barcodes : [],
+    batchNo: '',
+    expiry: '',
   }));
 
 /** Why goods are spoilt; the first is the one offered. These words go on the return note to the supplier. */
@@ -258,15 +264,34 @@ export const receiveProblems = (lines) => {
     if (spoilt === null) problems[`${SPOILT_PREFIX}${l.item_code}`] = fill(T.receive.problems.spoiltBad, { name: l.name });
     else if (arrived !== null && spoilt > arrived + 1e-9) problems[`${SPOILT_PREFIX}${l.item_code}`] = fill(T.receive.problems.spoiltTooMuch, { name: l.name, arrived: qtyText(arrived) });
   });
+  ticked.forEach((l) => {
+    if (!l.tracksBatches || dupes.includes(l.item_code)) return;
+    if (!l.expiry) problems[`${EXPIRY_PREFIX}${l.item_code}`] = fill(T.receive.problems.expiryRequired, { name: l.name });
+    else if (l.expiry < todayIso()) problems[`${EXPIRY_PREFIX}${l.item_code}`] = fill(T.receive.problems.expiryPast, { name: l.name });
+  });
   if (ticked.length === 0) problems.general = T.receive.problems.noneTicked;
   return problems;
 };
+
+/** The key an expiry problem is held under, beside the quantity problem of the same line */
+export const EXPIRY_PREFIX = 'expiry:';
+
+const pad2 = (n) => String(n).padStart(2, '0');
+/** Today as yyyy-mm-dd in the shop's own day */
+export const todayIso = (now = new Date()) => `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
 
 /** The key a spoilt problem is held under, beside the quantity problem of the same line */
 export const SPOILT_PREFIX = 'spoilt:';
 
 /** The lines sent to the server: only the ticked ones, with their quantity as a number */
-export const receiveItems = (lines) => lines.filter((l) => l.ticked && l.toArrive > 0 && parseQty(l.qty) !== null).map((l) => ({ item_code: l.item_code, qty_received: parseQty(l.qty) }));
+export const receiveItems = (lines) =>
+  lines
+    .filter((l) => l.ticked && l.toArrive > 0 && parseQty(l.qty) !== null)
+    .map((l) => ({
+      item_code: l.item_code,
+      qty_received: parseQty(l.qty),
+      ...(l.tracksBatches ? { batch_no: String(l.batchNo || '').trim(), expiry_date: l.expiry } : {}),
+    }));
 
 /** The lines being received, with their amounts and what part is spoilt, for the review step */
 export const reviewLines = (lines) =>
@@ -393,6 +418,10 @@ export const lineFrom = (product, qty = '1') => {
     unit: product.unit || '',
     qty,
     cost: product.cost === null || product.cost === undefined ? '' : String(product.cost),
+    // Medicines received batch by batch: asked only on a bill already held (the stock goes up at once)
+    tracksBatches: Boolean(product.tracksBatches),
+    batchNo: '',
+    expiry: '',
   };
 };
 
@@ -419,6 +448,12 @@ export const checkPurchase = (values, lines, { modes = [] } = {}) => {
     if (String(l.cost).trim() === '') problems[`cost:${l.key}`] = fill(P.cost, { name: l.name });
   });
   if (values.haveBill) {
+    // A bill already held raises the stock at once, so a medicine received batch by batch needs its expiry now
+    lines.forEach((l) => {
+      if (!l.tracksBatches) return;
+      if (!l.expiry) problems[`expiry:${l.key}`] = fill(T.receive.problems.expiryRequired, { name: l.name });
+      else if (l.expiry < todayIso()) problems[`expiry:${l.key}`] = fill(T.receive.problems.expiryPast, { name: l.name });
+    });
     if (values.billDate && values.dueDate && values.dueDate < values.billDate) problems.dueDate = P.dueBefore;
     if (values.paid) {
       const total = linesTotal(lines);
@@ -441,6 +476,7 @@ export const summaryOf = (problems, lines = []) => {
       lines.forEach((l) => {
         if (problems[`qty:${l.key}`]) out.push({ id: `np-qty-${l.key}`, message: problems[`qty:${l.key}`] });
         if (problems[`cost:${l.key}`]) out.push({ id: `np-cost-${l.key}`, message: problems[`cost:${l.key}`] });
+        if (problems[`expiry:${l.key}`]) out.push({ id: `np-expiry-${l.key}`, message: problems[`expiry:${l.key}`] });
       });
     } else if (problems[key]) out.push({ id: FIELD_IDS[key], message: problems[key] });
   });
@@ -453,7 +489,13 @@ export const isDirty = (values, lines, baseline, baselineLines = []) =>
   JSON.stringify([values, lines.map((l) => [l.item_code, l.qty, l.cost])]) !== JSON.stringify([baseline, baselineLines.map((l) => [l.item_code, l.qty, l.cost])]);
 
 /** The lines as the server takes them for an order or a bill */
-export const serverLines = (lines) => lines.map((l) => ({ item_code: l.item_code, qty: parseQty(l.qty), rate: amountOf(l.cost) }));
+export const serverLines = (lines, { withBatches = false } = {}) =>
+  lines.map((l) => ({
+    item_code: l.item_code,
+    qty: parseQty(l.qty),
+    rate: amountOf(l.cost),
+    ...(withBatches && l.tracksBatches ? { batch_no: String(l.batchNo || '').trim(), expiry_date: l.expiry } : {}),
+  }));
 
 /** Which save this is: a direct bill (stock goes up at once) when the person holds the bill, otherwise an order */
 export const isDirectBill = (values) => Boolean(values.haveBill);
@@ -461,7 +503,7 @@ export const isDirectBill = (values) => Boolean(values.haveBill);
 /** The request for a direct bill */
 export const billRequest = (values, lines, requestId) => ({
   supplier: values.supplier,
-  items: serverLines(lines),
+  items: serverLines(lines, { withBatches: true }),
   billNo: values.billNo.trim() || undefined,
   billDate: values.billDate || undefined,
   dueDate: values.dueDate || undefined,
@@ -488,4 +530,16 @@ export const taxBreakdown = (net, ratePercent) => {
   const base = Math.round((Number(net) || 0) * 100) / 100;
   const tax = Math.round(base * ((Number(ratePercent) || 0) / 100) * 100) / 100;
   return { net: base, tax, total: Math.round((base + tax) * 100) / 100 };
+};
+
+/**
+ * A scanned medicine pack (GS1 code, read by utils/gs1) applied to the delivery: the line of that product gets the pack's
+ * batch and expiry, and is ticked. { lines, name, problem } where problem is 'notFound', 'expired' or null.
+ */
+export const applyPackScan = (lines, pack, today = todayIso()) => {
+  const line = lines.find((l) => l.toArrive > 0 && (l.barcodes || []).some((b) => sameGtin(b, pack.gtin)));
+  if (!line) return { lines, name: '', problem: 'notFound' };
+  if (isExpired(pack.expiry, today)) return { lines, name: line.name, problem: 'expired' };
+  const patch = { ticked: true, ...(pack.batch ? { batchNo: pack.batch } : {}), ...(pack.expiry ? { expiry: pack.expiry } : {}) };
+  return { lines: lines.map((l) => (l === line ? { ...l, ...patch, qty: l.qty || qtyText(l.toArrive) } : l)), name: line.name, problem: null };
 };

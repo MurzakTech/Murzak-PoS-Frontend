@@ -88,6 +88,12 @@ const KEYS = {
   stock: 'opening_stock',
   warning: 'low_stock_warning',
   store: 'warehouse',
+  prescriptionOnly: 'prescription_only',
+  trackBatches: 'track_batches',
+  openingBatch: 'opening_batch_no',
+  openingExpiry: 'opening_expiry',
+  controlled: 'controlled_drug',
+  ppb: 'ppb_registration_no',
 };
 
 /**
@@ -125,6 +131,22 @@ export const createProduct = async (values) => {
  * changes: { name?, price?, cost?, unit?, category?, disabled? }. A cost needs a store to belong to.
  * Resolves to the server's product; rejects with a ProductSaveError.
  */
+/**
+ * Switches a product to (or off) tracking batches and expiry dates. Allowed only before its first sale or delivery; a
+ * product with history is refused with a plain sentence. Resolves to { item_code, batches }.
+ */
+export const setBatchTracking = async ({ code, on, company }) => {
+  let response;
+  try {
+    response = await axiosInstance.post('murzak_pos.api.batches.set_batch_tracking', { item_code: code, on: on ? 1 : 0, ...(company ? { company } : {}) }, { allowRefusal: true });
+  } catch (error) {
+    throw new ProductSaveError(friendlyErrorMessage(error, 'Batch tracking could not be changed. Please try again.'));
+  }
+  const reply = body(response);
+  if (!reply || reply.success === false) throw new ProductSaveError(humanizeMessage(reply?.message, 'Batch tracking could not be changed. Please try again.'));
+  return reply.data;
+};
+
 export const updateProduct = async ({ code, changes, warehouse, company }) => {
   const params = { item_code: code };
   if (changes.name !== undefined) params.item_name = changes.name;
@@ -132,6 +154,9 @@ export const updateProduct = async ({ code, changes, warehouse, company }) => {
   if (changes.category !== undefined) params.item_group = changes.category;
   if (changes.unit !== undefined) params.stock_uom = changes.unit;
   if (changes.disabled !== undefined) params.disabled = changes.disabled;
+  if (changes.prescriptionOnly !== undefined) params.prescription_only = changes.prescriptionOnly ? 1 : 0;
+  if (changes.controlled !== undefined) params.controlled_drug = changes.controlled ? 1 : 0;
+  if (changes.ppb !== undefined) params.ppb_registration_no = changes.ppb;
   if (changes.cost !== undefined) {
     params.buying_price = Number(changes.cost);
     params.warehouse = warehouse;

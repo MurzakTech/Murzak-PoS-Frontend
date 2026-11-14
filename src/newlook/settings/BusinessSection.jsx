@@ -13,6 +13,11 @@ import RecentChangesCard from './RecentChangesCard';
 import SettingsCopyCard from './SettingsCopyCard';
 import SetupHealthCard from './SetupHealthCard';
 import ShopTypeCard from './ShopTypeCard';
+import OutletIndustryCard from './OutletIndustryCard';
+import InsurersCard from './InsurersCard';
+import RestaurantSettingsCard from './RestaurantSettingsCard';
+import useIndustryProfile from '../industry/useIndustryProfile';
+import { has as profileHas } from '../industry/industryModel';
 import { OLD, cardFromSearch, legacy } from './settingsModel';
 import useSettingsUser from './useSettingsUser';
 import T from './strings.settings';
@@ -32,6 +37,7 @@ const B = T.business;
 const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' }) => {
   const access = useAccess();
   const { company: name } = useSettingsUser();
+  const { profile: industry } = useIndustryProfile(null, name || undefined);
   const [state, setState] = useState({ status: 'loading', company: null });
   const owner = access.tier === 'owner';
   const wanted = cardFromSearch(search);
@@ -130,6 +136,9 @@ const BusinessSection = ({ load = getCompany, save = updateCompany, search = '' 
       <SetupHealthCard />
       {body}
       <ShopTypeCard />
+      <OutletIndustryCard />
+      {profileHas(industry, 'kitchen_tickets') ? <RestaurantSettingsCard /> : null}
+      {profileHas(industry, 'insurance') ? <InsurersCard /> : null}
       <RecentChangesCard />
       <SettingsCopyCard />
       <LinkList id="business-banks" title={B.banks.title} subtitle={B.banks.subtitle} items={[{ key: 'bank-accounts', text: B.banks.note, to: legacy(OLD.bankAccounts) }]} />

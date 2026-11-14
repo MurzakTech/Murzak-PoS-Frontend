@@ -6,6 +6,7 @@ import { PageHeader } from '../shell';
 import { toNewAddress } from '../redirects/engine';
 import './reports.css';
 import MoreReports from './MoreReports';
+import IndustryReports from '../industry/IndustryReports';
 import { answerFor, reportAddress } from './reportsModel';
 import { useQuestions } from './useReportData';
 import T from './strings.reports';
@@ -67,6 +68,7 @@ const ReportsPage = () => {
     <div className="nl-reports">
       <PageHeader title={T.title} subtitle={T.subtitle} />
       {body}
+      {status === 'ready' && role !== 'cashier' ? <IndustryReports /> : null}
       {status === 'error' || (status === 'ready' && role !== 'cashier') ? <MoreReports /> : null}
     </div>
   );
