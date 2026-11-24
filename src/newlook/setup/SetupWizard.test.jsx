@@ -3,7 +3,7 @@
  * finishing. The server calls are replaced by made-up answers.
  */
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ToastProvider } from '../components/Toast';
@@ -110,7 +110,8 @@ describe('step 1, What do you sell', () => {
     await heading('Your shop');
     expect(api.saveBusinessKind).toHaveBeenCalledWith('pharmacy', 'Shop A');
     expect(JSON.parse(localStorage.getItem('murzak_new_look:business-features:Shop A')).features.expiry).toBe(true);
-    expect(screen.getByTestId('where')).toHaveTextContent('/new-look/setup?step=shop');
+    // React Router 7 applies an address change as a low-priority update, so it can land a moment after the new screen
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/new-look/setup?step=shop'));
   });
 
   test('a kind chosen at sign-up is offered as the starting choice', async () => {

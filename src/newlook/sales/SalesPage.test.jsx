@@ -211,11 +211,12 @@ describe('the list (AC-24, AC-25)', () => {
     await renderPage();
     await screen.findByRole('row', { name: /#0045\b/ });
     userEvent.click(screen.getByRole('button', { name: /Next/ }));
-    await screen.findByRole('row', { name: /#0025\b/ });
+    // Each page change draws 20 rows. On a slow build machine that takes longer than the default one second wait
+    await screen.findByRole('row', { name: /#0025\b/ }, { timeout: 5000 });
     expect(where()).toContain('page=2');
     expect(listSales).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }));
     userEvent.click(screen.getByRole('button', { name: /Next/ }));
-    await screen.findByRole('row', { name: /#0005\b/ });
+    await screen.findByRole('row', { name: /#0005\b/ }, { timeout: 5000 });
     expect(screen.getByText('Showing 5 of 45')).toBeInTheDocument();
   }, 15000);
 
