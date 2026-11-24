@@ -24,3 +24,17 @@ jobs:
         run: npm test -- --watchAll=false --ci
         env:
           CI: true
+
+  # The rules that decide which dependency updates may be merged at night. They run on a schedule with
+  # no one watching, so they are tested here first.
+  dependency-update-rules:
+    name: Night-update rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: python .github/scripts/test_merge_dependency_updates.py
