@@ -19,8 +19,10 @@ export const readProductFile = async (file) => {
 
   try {
     if (EXCEL.test(file.name)) {
-      const { default: readXlsxFile } = await import('read-excel-file');
-      return { rows: cellsToText(await readXlsxFile(file)) };
+      // Version 9 of the library has no main entry: the browser build is imported by name, and readSheet reads the
+      // first sheet, as the old default function did
+      const { readSheet } = await import('read-excel-file/browser');
+      return { rows: cellsToText(await readSheet(file)) };
     }
 
     if (TEXT.test(file.name) || file.type === 'text/csv') {
