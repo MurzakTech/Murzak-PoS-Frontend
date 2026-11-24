@@ -29,7 +29,7 @@ jobs:
       - run: node scripts/add-security-policy.js build
         env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-      - uses: burnett01/rsync-deployments@7.0.1
+      - uses: burnett01/rsync-deployments@9.0.4
         with:
           switches: -avzr --delete
           path: build/
@@ -53,7 +53,7 @@ jobs:
       - run: node scripts/add-security-policy.js build-tenant
         env:
           REACT_APP_API_URL: /api/method
-      - uses: burnett01/rsync-deployments@7.0.1
+      - uses: burnett01/rsync-deployments@9.0.4
         with:
           switches: -avzr --delete
           path: build-tenant/
