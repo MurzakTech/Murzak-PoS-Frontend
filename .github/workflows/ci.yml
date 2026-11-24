@@ -19,6 +19,9 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 20
+      # Dependabot writes package-lock.json with npm 11. npm 10 (which Node 20 brings) refuses those files
+      # ("Missing: yaml from lock file"), so every update it opened failed here. npm 11 reads both.
+      - run: npm install -g npm@11
       - run: npm ci
       - name: Run automated tests
         run: npm test -- --watchAll=false --ci

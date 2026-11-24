@@ -8,7 +8,8 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+# npm 11 is the version Dependabot writes package-lock.json with; npm 10 (Node 20's) refuses some of those files
+RUN npm install -g npm@11 --no-audit --no-fund && npm ci --no-audit --no-fund
 COPY . .
 # No API address is baked in: the shop's own nginx passes /api to that shop's ERP site (same origin, no CORS).
 ENV REACT_APP_STOREFRONT_ONLY=true \
