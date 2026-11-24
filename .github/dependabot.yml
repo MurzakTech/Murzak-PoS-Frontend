@@ -1,0 +1,38 @@
+# Dependabot opens the update pull requests; .github/workflows/night-dependency-updates.yml merges the safe
+# ones at night (see docs/DEPENDENCY_UPDATES.md). Small updates (minor and patch) come together in one pull
+# request a week. A major version arrives as its own pull request and is never merged automatically.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "01:00"
+      timezone: Africa/Nairobi
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "01:00"
+      timezone: Africa/Nairobi
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
