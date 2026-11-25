@@ -32,6 +32,31 @@ jobs:
       - run: node scripts/add-security-policy.js build
         env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+      # Make sure the deploy is talking to OUR server before it sends anything. The rsync action does not check the
+      # server's identity itself (it trusts whatever answers), so this compares the server's SSH fingerprint with the one
+      # kept in the repository variable VPS_HOST_FINGERPRINT. See docs/DEPLOY_SECURITY.md.
+      - name: Check the server's identity
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          EXPECTED: ${{ vars.VPS_HOST_FINGERPRINT }}
+        run: |
+          if [ -z "$EXPECTED" ]; then
+            echo "::warning::VPS_HOST_FINGERPRINT is not set, so this deploy does not check which server it is talking to. See docs/DEPLOY_SECURITY.md."
+            exit 0
+          fi
+          # Pasted values often carry stray spaces or line endings; ignore those
+          expected="$(printf '%s\n' "$EXPECTED" | tr -d '\r' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; /^$/d')"
+          scanned="$(ssh-keyscan -T 15 "$HOST" 2>/dev/null | ssh-keygen -lf - 2>/dev/null | awk '{print $2}')"
+          if [ -z "$scanned" ]; then
+            echo "::error::Could not read the server's SSH host key, so its identity could not be checked."
+            exit 1
+          fi
+          if printf '%s\n' "$scanned" | grep -qxFf <(printf '%s\n' "$expected"); then
+            echo "The server's fingerprint matches the one on record."
+            exit 0
+          fi
+          echo "::error::The server's SSH fingerprint is not the one on record. Seen: $(printf '%s ' $scanned). Nothing was sent. If the server was rebuilt on purpose, update VPS_HOST_FINGERPRINT."
+          exit 1
       - uses: burnett01/rsync-deployments@9.0.4
         with:
           switches: -avzr --delete
