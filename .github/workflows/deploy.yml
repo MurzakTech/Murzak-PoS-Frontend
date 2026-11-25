@@ -34,9 +34,7 @@ jobs:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
       - uses: burnett01/rsync-deployments@9.0.4
         with:
-          # DRY RUN: lists what rsync would send and delete, and changes nothing on the server. Remove --dry-run in
-          # the next change, once the list in this run has been read.
-          switches: -avzr --delete --dry-run
+          switches: -avzr --delete
           path: build/
           remote_path: /var/www/pos/
           remote_host: ${{ secrets.VPS_HOST }}
@@ -60,9 +58,7 @@ jobs:
           REACT_APP_API_URL: /api/method
       - uses: burnett01/rsync-deployments@9.0.4
         with:
-          # DRY RUN: lists what rsync would send and delete, and changes nothing on the server. Remove --dry-run in
-          # the next change, once the list in this run has been read.
-          switches: -avzr --delete --dry-run
+          switches: -avzr --delete
           path: build-tenant/
           remote_path: /var/www/pos-tenant/
           remote_host: ${{ secrets.VPS_HOST }}
