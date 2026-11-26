@@ -31,7 +31,7 @@
     "workbox-core": "^6.6.0",
     "workbox-expiration": "^6.6.0",
     "workbox-precaching": "^6.6.0",
-    "workbox-routing": "^6.6.0",
+    "workbox-routing": "^7.4.1",
     "workbox-strategies": "^6.6.0"
   },
   "scripts": {
